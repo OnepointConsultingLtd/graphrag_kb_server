@@ -1,6 +1,7 @@
 import shutil
 import subprocess
 import re
+import yaml
 
 from pathlib import Path
 from enum import StrEnum
@@ -58,9 +59,13 @@ def override_env(input_dir: Path):
     env.write_text(env_text)
 
 
-def override_settings(root_dir: Path):
+def read_settings(root_dir):
     settings = root_dir / "settings.yaml"
-    settings_text = settings.read_text()
+    return settings, settings.read_text()
+
+
+def override_settings(root_dir: Path):
+    settings, settings_text = read_settings(root_dir)
     settings_text = re.sub(
         r"(model: )text-embedding-3-small",
         r"\1" + cfg.openai_api_model_embedding,
@@ -69,14 +74,25 @@ def override_settings(root_dir: Path):
     settings.write_text(settings_text)
 
 
+def activate_claims(project_dir: Path, enabled: bool):
+    if enabled:
+        settings_file, settings_text = read_settings(project_dir)
+        settings = yaml.safe_load(settings_text)
+        settings["claim_extraction"]["enabled"] = enabled
+        with open(settings_file, "w") as f:
+            yaml.safe_dump(settings, f)
+
+
 def create_graph_rag(create_if_not_exists: bool = True) -> GenerationStatus:
     if create_if_not_exists:
         if ROOT_DIR.exists() and (ROOT_DIR / "settings.yaml").exists():
             return GenerationStatus.EXISTS
     input_dir = copy_files_to_root_dir()
-    initialize_project_at(input_dir.parent)
+    project_dir = input_dir.parent
+    initialize_project_at(project_dir)
     override_env(input_dir)
-    override_settings(input_dir.parent)
+    override_settings(project_dir)
+    activate_claims(project_dir, cfg.claims_enabled)
     index_cli(
         root_dir=input_dir.parent,
         verbose=cfg.index_verbose,

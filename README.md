@@ -35,6 +35,9 @@ GRAPHRAG_ROOT_DIR
 
 # The director where the vectors are stored
 STORAGE_BASE_DIR
+
+# Whether claims are turned on or not
+CLAIMS_ENABLED=false
 ```
 
 # Indexing

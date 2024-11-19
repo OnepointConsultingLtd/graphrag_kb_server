@@ -7,7 +7,7 @@ from graphrag_kb_server.service.index import (
 from graphrag_kb_server.logger import logger
 
 if __name__ == "__main__":
-    type = "cmd"
+    type = "normal"
     if len(sys.argv) > 1:
         type = sys.argv[1]
     clear_rag()

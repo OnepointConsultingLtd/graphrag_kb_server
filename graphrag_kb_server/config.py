@@ -57,6 +57,8 @@ class Config:
     graphrag_exe = os.getenv("GRAPHRAG_EXE")
     index_verbose = os.getenv("INDEX_VERBOSE") == "true"
 
+    claims_enabled = os.getenv("CLAIMS_ENABLED") == "true"
+
 
 class WebsocketConfig:
     websocket_server = os.getenv("SERVER")
