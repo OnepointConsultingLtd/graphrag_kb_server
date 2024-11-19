@@ -141,12 +141,14 @@ async def query(request: web.Request) -> web.Response:
         description: The format of the output (json, html)
         schema:
           type: string
+          enum: [json, html]  # Enumeration for the dropdown
       - name: search
         in: query
         required: false
         description: The type of the search (local, global)
         schema:
           type: string
+          enum: [local, global]  # Enumeration for the dropdown
     responses:
       '200':
         description: Expected response to a valid request
@@ -200,6 +202,7 @@ async def context(request: web.Request) -> web.Response:
         description: The type of the search (local, global)
         schema:
           type: string
+          enum: [local, global]  # Enumeration for the dropdown
     responses:
       '200':
         description: Expected response to a valid request
