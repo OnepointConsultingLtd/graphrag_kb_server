@@ -13,6 +13,30 @@ pip install poetry
 poetry install
 ```
 
+# Configuration
+
+The application is configured used environment variables which you can set in a `.env` file.
+
+And example with all variables can be found here:
+
+[.env_local](.env_local)
+
+The most important variables are:
+
+```
+# The Open API key
+OPENAI_API_KEY
+
+# The directory with the text files with the knowledge base.
+DOCS_DIR
+
+# The directory where the whole GraphRAG files are stored after generation
+GRAPHRAG_ROOT_DIR
+
+# The director where the vectors are stored
+STORAGE_BASE_DIR
+```
+
 # Indexing
 
 ```bash

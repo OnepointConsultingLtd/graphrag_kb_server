@@ -59,9 +59,9 @@ class Config:
 
 
 class WebsocketConfig:
-    websocket_server = os.getenv("WEBSOCKET_SERVER")
+    websocket_server = os.getenv("SERVER")
     assert websocket_server is not None, "Please specify the websocket server"
-    websocket_port_str = os.getenv("WEBSOCKET_PORT")
+    websocket_port_str = os.getenv("PORT")
     assert websocket_server is not None, "Please specify the websocket port"
     websocket_port = int(websocket_port_str)
 
