@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "graphrag-kb-server"
+version = "0.1.0"
+description = "Project with indexing scripts to create the knowledge graph and the embeddings that can be used in AI Agents."
+authors = ["Gil Fernandes <gil.fernandes@onepointltd.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.12.7"
+graphrag = "^0.4.1"
+python-dotenv = "^1.0.1"
+numba = "0.59.1"
+markdown = "^3.7"
+aiohttp = "^3.11.2"
+python-socketio = "^5.11.4"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+pytest = "^8.3.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
