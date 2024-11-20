@@ -256,7 +256,10 @@ def rag_global_build_context(query: str, project_dir: Path) -> Tuple[str, dict]:
     context_text, context_records = global_search.context_builder.build_context(
         query=query, conversation_history=None
     )
-    return context_text, context_records
+    context_str = ""
+    if isinstance(context_text, list):
+        context_str = "\n".join(context_text)
+    return context_str, context_records
 
 
 async def rag_global(query: str, project_dir: Path) -> str:
