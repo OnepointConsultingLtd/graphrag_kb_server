@@ -132,7 +132,7 @@ async def query(request: web.Request) -> web.Response:
       - name: question
         in: query
         required: true
-        description: The question for which the context is retrieved
+        description: The question for which the context is retrieved. For example: 'What are the main topics?'
         schema:
           type: string
       - name: format
@@ -187,7 +187,7 @@ async def context(request: web.Request) -> web.Response:
       - name: question
         in: query
         required: true
-        description: The question for which the context is retrieved
+        description: The question for which the context is retrieved. For example: 'What are the main topics?'
         schema:
           type: string
       - name: use_context_records

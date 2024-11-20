@@ -11,6 +11,7 @@ conda create -n graphrag_kb_server python=3.12
 conda activate graphrag_kb_server
 pip install poetry
 poetry install
+pip install aiohttp_swagger3
 ```
 
 # Configuration
