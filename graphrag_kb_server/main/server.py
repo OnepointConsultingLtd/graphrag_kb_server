@@ -9,7 +9,7 @@ from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.config import websocket_cfg
 from graphrag_kb_server.service.query import rag_local, rag_global
-from graphrag_kb_server.service.query import rag_local_build_context, rag_global_build_context
+from graphrag_kb_server.service.query import rag_local_build_context, rag_global_build_context, rag_combined_context
 
 from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
 
@@ -31,6 +31,7 @@ class Format(StrEnum):
 class Search(StrEnum):
     LOCAL = "local"
     GLOBAL = "global"
+    ALL = "all"
 
 
 @sio.event
@@ -202,7 +203,7 @@ async def context(request: web.Request) -> web.Response:
         description: The type of the search (local, global)
         schema:
           type: string
-          enum: [local, global]  # Enumeration for the dropdown
+          enum: [local, global, all]  # Enumeration for the dropdown
     responses:
       '200':
         description: Expected response to a valid request
@@ -214,23 +215,37 @@ async def context(request: web.Request) -> web.Response:
             request.rel_url.query.get("use_context_records", "false") == "true"
         )
 
+        def process_records(records):
+            return (
+                        {kv[0]: kv[1].to_dict() for kv in records.items()}
+                        if use_context_records
+                        else None
+                    )
+
         match search:
             case Search.GLOBAL:
                 context_text, context_records = rag_global_build_context(
                     question, cfg.graphrag_root_dir_path
                 )
+                context_records = process_records(context_records)
+            case Search.ALL:
+                context_text, context_records = rag_combined_context(
+                    question, cfg.graphrag_root_dir_path
+                )
+                context_records = {
+                    "local": process_records(context_records["local"]),
+                    "global": process_records(context_records["global"]),
+                }
             case _:
                 context_text, context_records = rag_local_build_context(
                     question, cfg.graphrag_root_dir_path
                 )
+                context_records = process_records(context_records)
+
         return web.json_response(
             {
                 "context_text": context_text,
-                "context_records": (
-                    {kv[0]: kv[1].to_dict() for kv in context_records.items()}
-                    if use_context_records
-                    else None
-                ),
+                "context_records": context_records,
             }
         )
 

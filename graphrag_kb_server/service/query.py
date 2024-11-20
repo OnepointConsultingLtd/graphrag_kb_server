@@ -262,6 +262,28 @@ def rag_global_build_context(query: str, project_dir: Path) -> Tuple[str, dict]:
     return context_str, context_records
 
 
+def rag_combined_context(query: str, project_dir: Path) -> Tuple[str, dict]:
+
+    local_context_text, local_context_records = rag_local_build_context(query, project_dir)
+    global_context_text, global_context_records = rag_global_build_context(query, project_dir)
+
+    template = """
+# LOCAL CONTEXT
+
+{local_context_text}
+
+# GLOBAL CONTEXT
+
+{global_context_text}
+"""
+    context_text = template.format(local_context_text=local_context_text, global_context_text=global_context_text)
+    context_records = {
+        "local": local_context_records,
+        "global": global_context_records
+    }
+    return context_text, context_records
+
+
 async def rag_global(query: str, project_dir: Path) -> str:
 
     search_engine = prepare_global_search(project_dir)
