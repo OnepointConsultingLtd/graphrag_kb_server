@@ -9,6 +9,7 @@ from graphrag_kb_server.service.query import (
 )
 from graphrag_kb_server.service.index import create_graph_rag, GenerationStatus
 from graphrag_kb_server.config import cfg
+from graphrag_kb_server.model.rag_parameters import ContextParameters
 
 
 # Define a fixture for resource initialization
@@ -44,7 +45,10 @@ def test_build_local_context_builder(resource_setup: GenerationStatus):
 
 def test_rag_local(resource_setup: GenerationStatus):
     assert resource_setup is not None
-    response = asyncio.run(
-        rag_local("What is the value of questions?", cfg.graphrag_root_dir_path)
+    context_params = ContextParameters(
+        query="What is the value of questions?",
+        project_dir=cfg.graphrag_root_dir_path,
+        context_size=cfg.local_context_max_tokens,
     )
+    response = asyncio.run(rag_local(context_params))
     assert response is not None, "There is no responses"

@@ -4,6 +4,8 @@ import tiktoken
 
 import pandas as pd
 
+from graphrag_kb_server.model.rag_parameters import ContextParameters
+
 from graphrag.model import CommunityReport, Entity
 from graphrag.query.indexer_adapters import (
     read_indexer_entities,
@@ -66,7 +68,7 @@ def load_project_data(
     return reports, entities
 
 
-def init_local_params() -> Tuple[dict, dict]:
+def init_local_params(context_parameters: ContextParameters) -> Tuple[dict, dict]:
     local_context_params = {
         "text_unit_prop": 0.5,
         "community_prop": 0.1,
@@ -79,7 +81,7 @@ def init_local_params() -> Tuple[dict, dict]:
         "include_community_rank": False,
         "return_candidate_context": False,
         "embedding_vectorstore_key": EntityVectorStoreKey.ID,  # set this to EntityVectorStoreKey.TITLE if the vectorstore uses entity title as ids
-        "max_tokens": 12_000,  # change this based on the token limit you have on your model (if you are using a model with 8k limit, a good setting could be 5000)
+        "max_tokens": context_parameters.context_size,  # change this based on the token limit you have on your model (if you are using a model with 8k limit, a good setting could be 5000)
     }
 
     llm_params = {
@@ -162,11 +164,11 @@ def build_local_context_builder(project_dir: Path) -> LocalSearchMixedContext:
 
 def build_global_context_builder(project_dir: Path) -> GlobalCommunityContext:
 
-    _, default_entity_description_table_df = (
-        prepare_vector_store()
-    )
+    _, default_entity_description_table_df = prepare_vector_store()
 
-    reports, entities = load_project_data(project_dir, default_entity_description_table_df)
+    reports, entities = load_project_data(
+        project_dir, default_entity_description_table_df
+    )
 
     return GlobalCommunityContext(
         community_reports=reports,
@@ -175,10 +177,10 @@ def build_global_context_builder(project_dir: Path) -> GlobalCommunityContext:
     )
 
 
-def prepare_local_search(project_dir: Path) -> LocalSearch:
-    context_builder = build_local_context_builder(project_dir)
+def prepare_local_search(context_parameters: ContextParameters) -> LocalSearch:
+    context_builder = build_local_context_builder(context_parameters.project_dir)
 
-    local_context_params, llm_params = init_local_params()
+    local_context_params, llm_params = init_local_params(context_parameters)
 
     return LocalSearch(
         llm=cfg.llm,
@@ -190,25 +192,25 @@ def prepare_local_search(project_dir: Path) -> LocalSearch:
     )
 
 
-async def rag_local(query: str, project_dir: Path) -> str:
+async def rag_local(context_parameters: ContextParameters) -> str:
 
-    search_engine = prepare_local_search(project_dir)
+    search_engine = prepare_local_search(context_parameters)
 
-    result = await search_engine.asearch(query)
+    result = await search_engine.asearch(context_parameters.query)
     return markdown(result.response)
 
 
-def rag_local_build_context(query:str, project_dir: Path) -> Tuple[str, dict]:
+def rag_local_build_context(context_parameters: ContextParameters) -> Tuple[str, dict]:
 
-    search_engine = prepare_local_search(project_dir)
+    search_engine = prepare_local_search(context_parameters)
     context_text, context_records = search_engine.context_builder.build_context(
-        query=query, conversation_history=None
+        query=context_parameters.query, conversation_history=None, **search_engine.context_builder_params
     )
     return context_text, context_records
 
 
-def prepare_global_search(project_dir: Path) -> GlobalSearch:
-    context_builder = build_global_context_builder(project_dir)
+def prepare_global_search(context_parameters: ContextParameters) -> GlobalSearch:
+    context_builder = build_global_context_builder(context_parameters.project_dir)
 
     context_builder_params = {
         "use_community_summary": False,  # False means using full community reports. True means using community short summaries.
@@ -219,7 +221,7 @@ def prepare_global_search(project_dir: Path) -> GlobalSearch:
         "include_community_weight": True,
         "community_weight_name": "occurrence weight",
         "normalize_community_weight": True,
-        "max_tokens": 12_000,  # change this based on the token limit you have on your model (if you are using a model with 8k limit, a good setting could be 5000)
+        "max_tokens": context_parameters.context_size,  # change this based on the token limit you have on your model (if you are using a model with 8k limit, a good setting could be 5000)
         "context_name": "Reports",
     }
 
@@ -249,12 +251,12 @@ def prepare_global_search(project_dir: Path) -> GlobalSearch:
     )
 
 
-def rag_global_build_context(query: str, project_dir: Path) -> Tuple[str, dict]:
+def rag_global_build_context(context_parameters: ContextParameters) -> Tuple[str, dict]:
 
-    global_search: GlobalSearch = prepare_global_search(project_dir)
+    global_search: GlobalSearch = prepare_global_search(context_parameters)
 
     context_text, context_records = global_search.context_builder.build_context(
-        query=query, conversation_history=None
+        query=context_parameters.query, conversation_history=None, **global_search.context_builder_params
     )
     context_str = ""
     if isinstance(context_text, list):
@@ -262,10 +264,14 @@ def rag_global_build_context(query: str, project_dir: Path) -> Tuple[str, dict]:
     return context_str, context_records
 
 
-def rag_combined_context(query: str, project_dir: Path) -> Tuple[str, dict]:
+def rag_combined_context(context_parameters: ContextParameters) -> Tuple[str, dict]:
 
-    local_context_text, local_context_records = rag_local_build_context(query, project_dir)
-    global_context_text, global_context_records = rag_global_build_context(query, project_dir)
+    local_context_text, local_context_records = rag_local_build_context(
+        context_parameters
+    )
+    global_context_text, global_context_records = rag_global_build_context(
+        context_parameters
+    )
 
     template = """
 # LOCAL CONTEXT
@@ -276,17 +282,16 @@ def rag_combined_context(query: str, project_dir: Path) -> Tuple[str, dict]:
 
 {global_context_text}
 """
-    context_text = template.format(local_context_text=local_context_text, global_context_text=global_context_text)
-    context_records = {
-        "local": local_context_records,
-        "global": global_context_records
-    }
+    context_text = template.format(
+        local_context_text=local_context_text, global_context_text=global_context_text
+    )
+    context_records = {"local": local_context_records, "global": global_context_records}
     return context_text, context_records
 
 
-async def rag_global(query: str, project_dir: Path) -> str:
+async def rag_global(context_parameters: ContextParameters) -> str:
 
-    search_engine = prepare_global_search(project_dir)
+    search_engine = prepare_global_search(context_parameters)
 
-    result = await search_engine.asearch(query)
+    result = await search_engine.asearch(context_parameters.query)
     return markdown(result.response)

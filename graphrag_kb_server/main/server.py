@@ -5,16 +5,25 @@ from aiohttp import web
 from enum import StrEnum
 from typing import Awaitable
 
+from yarl import URL
+
+from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
+
+from graphrag_kb_server.model.rag_parameters import ContextParameters
+
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.config import websocket_cfg
 from graphrag_kb_server.service.query import rag_local, rag_global
-from graphrag_kb_server.service.query import rag_local_build_context, rag_global_build_context, rag_combined_context
-
-from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
+from graphrag_kb_server.service.query import (
+    rag_local_build_context,
+    rag_global_build_context,
+    rag_combined_context,
+)
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
 routes = web.RouteTableDef()
+
 
 class Command(StrEnum):
     START_SESSION = "start_session"
@@ -47,7 +56,13 @@ async def connect(sid: str, environ):
 @sio.event
 async def query(sid: str, question: str):
     logger.info(f"Query from {sio}: {question}")
-    response = await rag_local(question, cfg.graphrag_root_dir_path)
+    response = await rag_local(
+        ContextParameters(
+            query=question,
+            project_dir=cfg.graphrag_root_dir_path,
+            context_size=cfg.local_context_max_tokens,
+        )
+    )
     await sio.emit(Command.RESPONSE, {"data": response}, to=sid)
 
 
@@ -55,7 +70,11 @@ async def query(sid: str, question: str):
 async def build_context(sid: str, question: str):
     logger.info(f"Building context for {sio}: {question}")
     context_text, context_records = rag_local_build_context(
-        question, cfg.graphrag_root_dir_path
+        ContextParameters(
+            query=question,
+            project_dir=cfg.graphrag_root_dir_path,
+            context_size=cfg.local_context_max_tokens,
+        )
     )
     await sio.emit(
         Command.BUILD_CONTEXT,
@@ -107,9 +126,16 @@ async def about(request: web.Request) -> web.Response:
       '200':
         description: Expected response to a valid request
     """
+
     async def handle_request(request: web.Request):
         question = "What are the main topics?"
-        response = await rag_local(question, cfg.graphrag_root_dir_path)
+        response = await rag_local(
+            ContextParameters(
+                query=question,
+                project_dir=cfg.graphrag_root_dir_path,
+                context_size=cfg.local_context_max_tokens,
+            )
+        )
         return web.Response(
             text=HTML_CONTENT.format(question=question, response=response),
             content_type="text/html",
@@ -142,35 +168,47 @@ async def query(request: web.Request) -> web.Response:
         description: The format of the output (json, html)
         schema:
           type: string
-          enum: [json, html]  # Enumeration for the dropdown
+          enum: [json, html]
       - name: search
         in: query
         required: false
         description: The type of the search (local, global)
         schema:
           type: string
-          enum: [local, global]  # Enumeration for the dropdown
+          enum: [local, global]
+      - name: context_size
+        in: query
+        required: false
+        description: The size of the context, like eg 14000
+        schema:
+          type: integer
+          format: int32
     responses:
       '200':
         description: Expected response to a valid request
     """
+
     async def handle_request(request: web.Request):
-        question = request.rel_url.query.get("question", DEFAULT_QUESTION)
         format = request.rel_url.query.get("format", Format.JSON.value)
         search = request.rel_url.query.get("search", Search.LOCAL.value)
+        context_params = create_context_parameters(request.rel_url)
         match search:
             case Search.GLOBAL:
-                response = await rag_global(question, cfg.graphrag_root_dir_path)
+                response = await rag_global(context_params)
             case _:
-                response = await rag_local(question, cfg.graphrag_root_dir_path)
+                response = await rag_local(context_params)
         match format:
             case Format.HTML:
                 return web.Response(
-                    text=HTML_CONTENT.format(question=question, response=response),
+                    text=HTML_CONTENT.format(
+                        question=context_params.query, response=response
+                    ),
                     content_type="text/html",
                 )
             case _:
-                return web.json_response({"question": question, "response": response})
+                return web.json_response(
+                    {"question": context_params.query, "response": response}
+                )
         raise web.HTTPBadRequest(text="Please make sure the format is specified.")
 
     return await handle_error(handle_request, request=request)
@@ -194,7 +232,7 @@ async def context(request: web.Request) -> web.Response:
       - name: use_context_records
         in: query
         required: false
-        description: The format of the output
+        description: Whether to output the context records or not.
         schema:
           type: boolean
       - name: search
@@ -204,42 +242,44 @@ async def context(request: web.Request) -> web.Response:
         schema:
           type: string
           enum: [local, global, all]  # Enumeration for the dropdown
+      - name: context_size
+        in: query
+        required: false
+        description: The size of the context, like eg 14000
+        schema:
+          type: integer
+          format: int32
     responses:
       '200':
         description: Expected response to a valid request
     """
+
     async def handle_request(request: web.Request):
-        question = request.rel_url.query.get("question", DEFAULT_QUESTION)
         search = request.rel_url.query.get("search", Search.LOCAL.value)
         use_context_records = (
             request.rel_url.query.get("use_context_records", "false") == "true"
         )
+        context_params = create_context_parameters(request.rel_url)
 
         def process_records(records):
             return (
-                        {kv[0]: kv[1].to_dict() for kv in records.items()}
-                        if use_context_records
-                        else None
-                    )
+                {kv[0]: kv[1].to_dict() for kv in records.items()}
+                if use_context_records
+                else None
+            )
 
         match search:
             case Search.GLOBAL:
-                context_text, context_records = rag_global_build_context(
-                    question, cfg.graphrag_root_dir_path
-                )
+                context_text, context_records = rag_global_build_context(context_params)
                 context_records = process_records(context_records)
             case Search.ALL:
-                context_text, context_records = rag_combined_context(
-                    question, cfg.graphrag_root_dir_path
-                )
+                context_text, context_records = rag_combined_context(context_params)
                 context_records = {
                     "local": process_records(context_records["local"]),
                     "global": process_records(context_records["global"]),
                 }
             case _:
-                context_text, context_records = rag_local_build_context(
-                    question, cfg.graphrag_root_dir_path
-                )
+                context_text, context_records = rag_local_build_context(context_params)
                 context_records = process_records(context_records)
 
         return web.json_response(
@@ -250,6 +290,16 @@ async def context(request: web.Request) -> web.Response:
         )
 
     return await handle_error(handle_request, request=request)
+
+
+def create_context_parameters(url: URL) -> ContextParameters:
+    question = url.query.get("question", DEFAULT_QUESTION)
+    context_size = url.query.get("context_size", cfg.local_context_max_tokens)
+    return ContextParameters(
+        query=question,
+        project_dir=cfg.graphrag_root_dir_path,
+        context_size=context_size,
+    )
 
 
 def run_server():
@@ -265,7 +315,9 @@ def run_server():
         version="1.0.0",
         description="APIs for RAG based on a pre-determined knowledge base",
     )
-    swagger = SwaggerDocs(app, info=swagger_info, swagger_ui_settings=SwaggerUiSettings(path="/docs/"))
+    swagger = SwaggerDocs(
+        app, info=swagger_info, swagger_ui_settings=SwaggerUiSettings(path="/docs/")
+    )
     swagger.add_routes(routes)
 
     app.add_routes(routes)

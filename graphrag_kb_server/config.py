@@ -59,6 +59,12 @@ class Config:
 
     claims_enabled = os.getenv("CLAIMS_ENABLED") == "true"
 
+    local_context_max_tokens_str = os.getenv("LOCAL_CONTEXT_MAX_TOKENS", "20000")
+    local_context_max_tokens = int(local_context_max_tokens_str)
+
+    global_context_max_tokens_str = os.getenv("GLOBAL_CONTEXT_MAX_TOKENS", "20000")
+    global_context_max_tokens = int(global_context_max_tokens_str)
+
 
 class WebsocketConfig:
     websocket_server = os.getenv("SERVER")
