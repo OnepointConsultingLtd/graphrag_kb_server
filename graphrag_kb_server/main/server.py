@@ -281,14 +281,14 @@ async def context(request: web.Request) -> web.Response:
             case _:
                 context_text, context_records = rag_local_build_context(context_params)
                 context_records = process_records(context_records)
-
+        logger.info(f"Sending context with length: {len(context_text)}.")
         return web.json_response(
             {
                 "context_text": context_text,
                 "context_records": context_records,
             }
         )
-
+    
     return await handle_error(handle_request, request=request)
 
 
