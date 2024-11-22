@@ -3,6 +3,12 @@
 Project with indexing and search functions to create the knowledge graph and the embeddings that can be used for GraphRAG.
 It also provides a simple API to expose GraphRAG as an API.
 
+The API has three main methods:
+
+- Upload a zip file with the knowledge base
+- Perform local and global queries on an existing knowledge base
+- Retrieve the GraphRAG context based on a question
+
 # Install
 
 ```bash
@@ -85,3 +91,8 @@ http://127.0.0.1:9999/context?question=What%20are%20the%20most%20important%20pri
 Please open to see the exposed API and its parameters:
 
 http://127.0.0.1:9999/docs
+
+Here is a brief screenshot of the methods in the Swagger API:
+
+![Description of the image](./docs/screenshots/kb_server.png)
+
