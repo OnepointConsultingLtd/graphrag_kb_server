@@ -204,7 +204,9 @@ def rag_local_build_context(context_parameters: ContextParameters) -> Tuple[str,
 
     search_engine = prepare_local_search(context_parameters)
     context_text, context_records = search_engine.context_builder.build_context(
-        query=context_parameters.query, conversation_history=None, **search_engine.context_builder_params
+        query=context_parameters.query,
+        conversation_history=None,
+        **search_engine.context_builder_params,
     )
     return context_text, context_records
 
@@ -256,7 +258,9 @@ def rag_global_build_context(context_parameters: ContextParameters) -> Tuple[str
     global_search: GlobalSearch = prepare_global_search(context_parameters)
 
     context_text, context_records = global_search.context_builder.build_context(
-        query=context_parameters.query, conversation_history=None, **global_search.context_builder_params
+        query=context_parameters.query,
+        conversation_history=None,
+        **global_search.context_builder_params,
     )
     context_str = ""
     if isinstance(context_text, list):

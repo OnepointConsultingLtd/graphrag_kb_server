@@ -65,6 +65,15 @@ class Config:
     global_context_max_tokens_str = os.getenv("GLOBAL_CONTEXT_MAX_TOKENS", "20000")
     global_context_max_tokens = int(global_context_max_tokens_str)
 
+    upload_dir_str = os.getenv("UPLOAD_DIR")
+    assert upload_dir_str is not None
+    upload_dir = Path(upload_dir_str)
+    if not upload_dir.exists():
+        upload_dir.mkdir(parents=True)
+
+    upload_secret = os.getenv("UPLOAD_SECRET")
+    assert upload_secret is not None, "Please specify the upload secret."
+
 
 class WebsocketConfig:
     websocket_server = os.getenv("SERVER")

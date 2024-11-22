@@ -4,7 +4,9 @@ import re
 import yaml
 
 from pathlib import Path
+from typing import Tuple
 from enum import StrEnum
+from typing import Union
 
 from collections.abc import AsyncIterable
 from graphrag.index.typing import PipelineRunResult
@@ -16,6 +18,7 @@ from graphrag.index.emit.types import TableEmitterType
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.service.index_support import index
 
 
 ROOT_DIR = Path(cfg.graphrag_root_dir)
@@ -30,8 +33,8 @@ class GenerationStatus(StrEnum):
     CREATED = "created"
 
 
-def copy_files_to_root_dir() -> Path:
-    kb_path = cfg.docs_dir_path
+def copy_files_to_root_dir(kb_path: Union[Path, None]) -> Path:
+    kb_path = cfg.docs_dir_path if kb_path is None else kb_path
     input_path: Path = INPUT_DIR
     if not input_path.exists():
         input_path.mkdir(**create_folder_props)
@@ -47,9 +50,9 @@ async def run_pipeline(pipelines: AsyncIterable[PipelineRunResult]):
 
 def clear_rag():
     if cfg.graphrag_root_dir_path.exists():
-        shutil.rmtree(cfg.graphrag_root_dir_path)
+        shutil.rmtree(cfg.graphrag_root_dir_path, ignore_errors=True)
     if DIR_VECTOR_DB.exists():
-        shutil.rmtree(DIR_VECTOR_DB)
+        shutil.rmtree(DIR_VECTOR_DB, ignore_errors=True)
 
 
 def override_env(input_dir: Path):
@@ -83,29 +86,51 @@ def activate_claims(project_dir: Path, enabled: bool):
             yaml.safe_dump(settings, f)
 
 
-def create_graph_rag(create_if_not_exists: bool = True) -> GenerationStatus:
-    if create_if_not_exists:
-        if ROOT_DIR.exists() and (ROOT_DIR / "settings.yaml").exists():
-            return GenerationStatus.EXISTS
-    input_dir = copy_files_to_root_dir()
+def _prepare_graph_rag(kb_path: Union[Path, None]) -> Path:
+    input_dir = copy_files_to_root_dir(kb_path)
     project_dir = input_dir.parent
     initialize_project_at(project_dir)
     override_env(input_dir)
     override_settings(project_dir)
     activate_claims(project_dir, cfg.claims_enabled)
-    index_cli(
-        root_dir=input_dir.parent,
-        verbose=cfg.index_verbose,
-        resume=None,
-        memprofile=False,
-        cache=True,
-        reporter=ReporterType.RICH,
-        config_filepath=None,
-        emit=[TableEmitterType.Parquet, TableEmitterType.CSV],
-        dry_run=False,
-        skip_validation=False,
-        output_dir=None,
-    )
+    return input_dir
+
+
+def prepare_index_args(root_dir: Path):
+    return {
+        "root_dir": root_dir,
+        "verbose": cfg.index_verbose,
+        "resume": None,
+        "memprofile": False,
+        "cache": True,
+        "reporter": ReporterType.RICH,
+        "config_filepath": None,
+        "emit": [TableEmitterType.Parquet, TableEmitterType.CSV],
+        "dry_run": False,
+        "skip_validation": False,
+        "output_dir": None,
+    }
+
+
+def create_graph_rag(
+    create_if_not_exists: bool = True, kb_path: Union[Path, None] = None
+) -> GenerationStatus:
+    if create_if_not_exists:
+        if ROOT_DIR.exists() and (ROOT_DIR / "settings.yaml").exists():
+            return GenerationStatus.EXISTS
+    input_dir = _prepare_graph_rag(kb_path)
+    index_cli(**prepare_index_args(input_dir.parent))
+    return GenerationStatus.CREATED
+
+
+async def acreate_graph_rag(
+    create_if_not_exists: bool = True, kb_path: Union[Path, None] = None
+) -> GenerationStatus:
+    if create_if_not_exists:
+        if ROOT_DIR.exists() and (ROOT_DIR / "settings.yaml").exists():
+            return GenerationStatus.EXISTS
+    input_dir = _prepare_graph_rag(kb_path)
+    await index(**prepare_index_args(input_dir.parent))
     return GenerationStatus.CREATED
 
 

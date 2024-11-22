@@ -1,5 +1,8 @@
 import asyncio
 import socketio
+import base64
+import zipfile
+from typing import Tuple, Dict
 
 from aiohttp import web
 from enum import StrEnum
@@ -20,6 +23,7 @@ from graphrag_kb_server.service.query import (
     rag_global_build_context,
     rag_combined_context,
 )
+from graphrag_kb_server.service.index import clear_rag, acreate_graph_rag
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
 routes = web.RouteTableDef()
@@ -54,7 +58,7 @@ async def connect(sid: str, environ):
 
 
 @sio.event
-async def query(sid: str, question: str):
+async def query_websocket(sid: str, question: str):
     logger.info(f"Query from {sio}: {question}")
     response = await rag_local(
         ContextParameters(
@@ -109,9 +113,13 @@ async def handle_error(fun: Awaitable, **kwargs) -> any:
         return await fun(request)
     except Exception as e:
         logger.error(f"Error occurred: {e}", exc_info=True)
-        return web.Response(
-            text=f"<html><body>{e}</body></html>", content_type="text/html"
-        )
+        match kwargs["response_format"]:
+            case Format.JSON:
+                return web.json_response({"error": e})
+            case _:
+                return web.Response(
+                    text=f"<html><body>{e}</body></html>", content_type="text/html"
+                )
 
 
 @routes.get("/about")
@@ -145,6 +153,82 @@ async def about(request: web.Request) -> web.Response:
 
 
 DEFAULT_QUESTION = "What are the main topics?"
+
+
+@routes.post("/upload_index")
+async def upload_index(request: web.Request) -> web.Response:
+    """
+    File Upload and Index
+    ---
+    summary: Uploads a files with a knowledge base
+    tags:
+      - index
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+                description: The zip file to be uploaded.
+              upload_secret:
+                type: string
+    responses:
+      "200":
+        description: Successful upload
+        content:
+          application/json:
+            example:
+              status: "success"
+              message: "1 file uploaded and extracted to /path/to/upload/dir."
+      "400":
+        description: Bad Request - No file uploaded or invalid file format.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No file was uploaded"
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        saved_files = []
+        body = request["data"]["body"]
+        file = body["file"]
+        file_name = body["file_name"]
+        upload_secret = body["upload_secret"]
+        if upload_secret != cfg.upload_secret:
+            return web.json_response({"error": "The secret is not right."}, status=401)
+        # Save zip file
+        if file_name is not None and file_name.lower().endswith(".zip"):
+            with open(uploaded_file := cfg.upload_dir / file_name, "wb") as f:
+                f.write(base64.b64decode(file))
+                saved_files.append(uploaded_file)
+        if (file_length := len(saved_files)) == 0:
+            return web.json_response({"error": "No file was uploaded"}, status=400)
+        # Extract the zip file
+        upload_folder = cfg.upload_dir / saved_files[0].stem
+        try:
+            with zipfile.ZipFile(saved_files[0], "r") as zip_ref:
+                zip_ref.extractall(upload_folder)
+        except zipfile.BadZipFile:
+            return web.json_response(
+                {"error": "Uploaded file is not a valid zip file"}, status=400
+            )
+        clear_rag()
+        await acreate_graph_rag(True, upload_folder)
+        return web.json_response(
+            {
+                "message": f"{file_length} file{"" if len(saved_files) == 0 else ""} uploaded, extracted and indexed from {cfg.upload_dir}."
+            },
+            status=200,
+        )
+
+    return await handle_error(
+        handle_request, request=request, response_format=Format.JSON.value
+    )
 
 
 @routes.get("/query")
@@ -288,7 +372,7 @@ async def context(request: web.Request) -> web.Response:
                 "context_records": context_records,
             }
         )
-    
+
     return await handle_error(handle_request, request=request)
 
 
@@ -300,6 +384,22 @@ def create_context_parameters(url: URL) -> ContextParameters:
         project_dir=cfg.graphrag_root_dir_path,
         context_size=context_size,
     )
+
+
+async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
+    reader = await request.multipart()
+    d = {}
+    while True:
+        field = await reader.next()
+        if field is None:
+            break
+        field_name = field.name
+        if field_name == "file":
+            d[field_name] = base64.b64encode(await field.read())
+            d[f"{field_name}_name"] = field.filename
+        else:
+            d[field_name] = (await field.read()).decode("utf-8")
+    return d, True
 
 
 def run_server():
@@ -317,6 +417,9 @@ def run_server():
     )
     swagger = SwaggerDocs(
         app, info=swagger_info, swagger_ui_settings=SwaggerUiSettings(path="/docs/")
+    )
+    swagger.register_media_type_handler(
+        media_type="multipart/form-data", handler=multipart_form
     )
     swagger.add_routes(routes)
 

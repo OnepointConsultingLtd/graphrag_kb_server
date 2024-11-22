@@ -11,5 +11,5 @@ if __name__ == "__main__":
     context_text, context_records = rag_local_build_context(
         question, cfg.graphrag_root_dir_path
     )
-    logger.info(f"==== Text =====")
+    logger.info("==== Text =====")
     logger.info(context_text)
