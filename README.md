@@ -56,20 +56,20 @@ python ./graphrag_kb_server/main/index.py
 # Searching 
 
 ```bash
-python .\graphrag_kb_server\main\search.py "Why are questions so important?"
-python .\graphrag_kb_server\main\search.py "Why are the main topics related to a healthy enterprise data environment?"
+python ./graphrag_kb_server/main/search.py "Why are questions so important?"
+python ./graphrag_kb_server/main/search.py "Why are the main topics related to a healthy enterprise data environment?"
 ```
 
 # Build context
 
 ```bash
-python .\graphrag_kb_server\main\build_context.py "Why are questions so important?" 
+python ./graphrag_kb_server/main/build_context.py "Why are questions so important?" 
 ```
 
 # Running the server
 
 ```bash
-poetry run python .\graphrag_kb_server\main\server.py
+poetry run python ./graphrag_kb_server/main/server.py
 ```
 
 Check the content of the server on for example:
