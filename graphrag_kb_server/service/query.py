@@ -6,7 +6,8 @@ import pandas as pd
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
 
-from graphrag.model import CommunityReport, Entity
+from graphrag.model.entity import Entity
+from graphrag.index.operations.summarize_communities.typing import CommunityReport
 from graphrag.query.indexer_adapters import (
     read_indexer_entities,
     read_indexer_reports,
@@ -14,9 +15,7 @@ from graphrag.query.indexer_adapters import (
     read_indexer_covariates,
     read_indexer_text_units,
 )
-from graphrag.query.input.loaders.dfs import (
-    store_entity_semantic_embeddings,
-)
+
 from graphrag.query.llm.oai.embedding import OpenAIEmbedding
 from graphrag.query.context_builder.entity_extraction import EntityVectorStoreKey
 from graphrag.vector_stores.lancedb import LanceDBVectorStore
@@ -29,6 +28,8 @@ from graphrag.query.structured_search.global_search.community_context import (
 from graphrag.query.llm.oai.typing import OpenaiApiType
 from graphrag.query.structured_search.local_search.search import LocalSearch
 from graphrag.query.structured_search.global_search.search import GlobalSearch
+from graphrag.vector_stores.base import BaseVectorStore, VectorStoreDocument
+
 from markdown import markdown
 
 from graphrag_kb_server.config import cfg
@@ -115,6 +116,28 @@ def prepare_vector_store() -> Tuple[LanceDBVectorStore, pd.DataFrame]:
     return description_embedding_store, default_entity_description_table_df
 
 
+def store_entity_semantic_embeddings(
+    entities: list[Entity],
+    vectorstore: BaseVectorStore,
+) -> BaseVectorStore:
+    """Store entity semantic embeddings in a vectorstore."""
+    documents = [
+        VectorStoreDocument(
+            id=entity.id,
+            text=entity.description,
+            vector=entity.description_embedding,
+            attributes=(
+                {"title": entity.title, **entity.attributes}
+                if entity.attributes
+                else {"title": entity.title}
+            ),
+        )
+        for entity in entities
+    ]
+    vectorstore.load_documents(documents=documents)
+    return vectorstore
+
+
 def build_local_context_builder(project_dir: Path) -> LocalSearchMixedContext:
 
     description_embedding_store, default_entity_description_table_df = (
@@ -125,9 +148,15 @@ def build_local_context_builder(project_dir: Path) -> LocalSearchMixedContext:
         project_dir, default_entity_description_table_df
     )
 
-    store_entity_semantic_embeddings(
-        entities=entities, vectorstore=description_embedding_store
-    )
+    # description_embedding_store = store_entity_semantic_embeddings(
+    #     entities=entities, vectorstore=description_embedding_store
+    # )
+
+    # description_embedding_store = LanceDBVectorStore(
+    #     collection_name="default-entity-description",
+    # )
+    # LANCEDB_URI = f"{project_dir}/lancedb"
+    # description_embedding_store.connect(db_uri=LANCEDB_URI)
 
     relationship_df = pd.read_parquet(
         f"{project_dir}/output/{RELATIONSHIP_TABLE}.parquet"

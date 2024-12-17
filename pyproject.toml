@@ -7,12 +7,12 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.12.7"
-graphrag = "^0.5.0"
+python = ">=3.12.7,<3.13"
+graphrag = "^1.0.0"
 python-dotenv = "^1.0.1"
 numba = "0.59.1"
 markdown = "^3.7"
-aiohttp = "^3.11.2"
+aiohttp = "^3.10.11"
 python-socketio = "^5.11.4"
 
 [tool.poetry.group.dev.dependencies]

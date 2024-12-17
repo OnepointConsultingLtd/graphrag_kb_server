@@ -113,13 +113,14 @@ async def handle_error(fun: Awaitable, **kwargs) -> any:
         return await fun(request)
     except Exception as e:
         logger.error(f"Error occurred: {e}", exc_info=True)
-        match kwargs["response_format"]:
-            case Format.JSON:
-                return web.json_response({"error": e})
-            case _:
-                return web.Response(
-                    text=f"<html><body>{e}</body></html>", content_type="text/html"
-                )
+        if "response_format" in kwargs:
+            match kwargs["response_format"]:
+                case Format.JSON:
+                    return web.json_response({"error": e}, status=400)
+        return web.json_response(
+            {"message": str(e)},
+            status=500,
+        )
 
 
 @routes.get("/about")
@@ -238,7 +239,7 @@ async def query(request: web.Request) -> web.Response:
     ---
     summary: returns the response to a query from an LLM
     tags:
-      - context
+      - query
     parameters:
       - name: question
         in: query
@@ -370,6 +371,30 @@ async def context(request: web.Request) -> web.Response:
             {
                 "context_text": context_text,
                 "context_records": context_records,
+            }
+        )
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.delete("/delete_index")
+async def delete_index(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns the response to a query from an LLM
+    tags:
+      - delete
+    responses:
+      '200':
+        description: Expected response to a valid request
+    """
+
+    async def handle_request(request: web.Request):
+        deleted = clear_rag()
+        return web.json_response(
+            {
+                "deleted": deleted,
             }
         )
 

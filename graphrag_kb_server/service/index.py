@@ -4,7 +4,6 @@ import re
 import yaml
 
 from pathlib import Path
-from typing import Tuple
 from enum import StrEnum
 from typing import Union
 
@@ -13,8 +12,7 @@ from graphrag.index.typing import PipelineRunResult
 
 from graphrag.cli.index import index_cli
 from graphrag.cli.initialize import initialize_project_at
-from graphrag.logging import ReporterType
-from graphrag.index.emit.types import TableEmitterType
+from graphrag.logger.factory import LoggerType
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
@@ -48,11 +46,14 @@ async def run_pipeline(pipelines: AsyncIterable[PipelineRunResult]):
         logger.info(p)
 
 
-def clear_rag():
+def clear_rag() -> bool:
+    deleted = False
     if cfg.graphrag_root_dir_path.exists():
         shutil.rmtree(cfg.graphrag_root_dir_path, ignore_errors=True)
+        deleted = True
     if DIR_VECTOR_DB.exists():
         shutil.rmtree(DIR_VECTOR_DB, ignore_errors=True)
+    return deleted
 
 
 def override_env(input_dir: Path):
@@ -103,9 +104,8 @@ def prepare_index_args(root_dir: Path):
         "resume": None,
         "memprofile": False,
         "cache": True,
-        "reporter": ReporterType.RICH,
+        "logger": LoggerType.RICH,
         "config_filepath": None,
-        "emit": [TableEmitterType.Parquet, TableEmitterType.CSV],
         "dry_run": False,
         "skip_validation": False,
         "output_dir": None,

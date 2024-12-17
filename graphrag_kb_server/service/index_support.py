@@ -2,39 +2,39 @@ import logging
 import time
 import sys
 import graphrag.api as api
+import asyncio
 
 from pathlib import Path
 
-from graphrag.config import (
-    CacheType,
-    enable_logging_with_config,
-    load_config,
-    resolve_paths,
-)
 
-from graphrag.logging import ProgressReporter, ReporterType, create_progress_reporter
-from graphrag.index.emit.types import TableEmitterType
+from graphrag.config.enums import CacheType
+from graphrag.config.logging import enable_logging_with_config
+from graphrag.config.load_config import load_config
+from graphrag.config.resolve_path import resolve_paths
+
+from graphrag.logger.base import ProgressLogger
+from graphrag.logger.factory import LoggerFactory, LoggerType
 from graphrag.index.validate_config import validate_config_names
 from graphrag.utils.cli import redact
 
 log = logging.getLogger(__name__)
 
 
-def _logger(reporter: ProgressReporter):
+def _logger(logger: ProgressLogger):
     def info(msg: str, verbose: bool = False):
         log.info(msg)
         if verbose:
-            reporter.info(msg)
+            logger.info(msg)
 
     def error(msg: str, verbose: bool = False):
         log.error(msg)
         if verbose:
-            reporter.error(msg)
+            logger.error(msg)
 
     def success(msg: str, verbose: bool = False):
         log.info(msg)
         if verbose:
-            reporter.success(msg)
+            logger.success(msg)
 
     return info, error, success
 
@@ -45,9 +45,8 @@ async def index(
     resume: str | None,
     memprofile: bool,
     cache: bool,
-    reporter: ReporterType,
+    logger: LoggerType.RICH,
     config_filepath: Path | None,
-    emit: list[TableEmitterType],
     dry_run: bool,
     skip_validation: bool,
     output_dir: Path | None,
@@ -61,22 +60,23 @@ async def index(
         resume=resume,
         memprofile=memprofile,
         cache=cache,
-        reporter=reporter,
-        emit=emit,
+        logger=logger,
         dry_run=dry_run,
         skip_validation=skip_validation,
         output_dir=output_dir,
     )
 
 
-def _register_signal_handlers(reporter: ProgressReporter):
+def _register_signal_handlers(logger: ProgressLogger):
     import signal
 
     def handle_signal(signum, _):
         # Handle the signal here
-        reporter.info(f"Received signal {signum}, exiting...")
-        reporter.dispose()
-        reporter.info("All tasks cancelled. Exiting...")
+        logger.info(f"Received signal {signum}, exiting...")  # noqa: G004
+        logger.dispose()
+        for task in asyncio.all_tasks():
+            task.cancel()
+        logger.info("All tasks cancelled. Exiting...")
 
     # Register signal handlers for SIGINT and SIGHUP
     signal.signal(signal.SIGINT, handle_signal)
@@ -91,14 +91,13 @@ async def _run_index(
     resume,
     memprofile,
     cache,
-    reporter,
-    emit,
+    logger,
     dry_run,
     skip_validation,
     output_dir,
 ):
-    progress_reporter = create_progress_reporter(reporter)
-    info, error, success = _logger(progress_reporter)
+    progress_logger = LoggerFactory().create_logger(logger)
+    info, error, success = _logger(progress_logger)
     run_id = resume or time.strftime("%Y%m%d-%H%M%S")
 
     config.storage.base_dir = str(output_dir) if output_dir else config.storage.base_dir
@@ -120,7 +119,7 @@ async def _run_index(
         )
 
     if skip_validation:
-        validate_config_names(progress_reporter, config)
+        validate_config_names(progress_logger, config)
 
     info(f"Starting pipeline run for: {run_id}, {dry_run=}", verbose)
     info(
@@ -132,22 +131,21 @@ async def _run_index(
         info("Dry run complete, exiting...", True)
         return
 
-    _register_signal_handlers(progress_reporter)
+    _register_signal_handlers(progress_logger)
 
     outputs = await api.build_index(
         config=config,
         run_id=run_id,
         is_resume_run=bool(resume),
         memory_profile=memprofile,
-        progress_reporter=progress_reporter,
-        emit=emit,
+        progress_logger=progress_logger,
     )
 
     encountered_errors = any(
         output.errors and len(output.errors) > 0 for output in outputs
     )
 
-    progress_reporter.stop()
+    progress_logger.stop()
     if encountered_errors:
         error(
             "Errors occurred during the pipeline run, see logs for more details.", True
