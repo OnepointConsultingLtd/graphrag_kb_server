@@ -28,7 +28,7 @@ def resource_setup():
 def test_load_data(resource_setup: GenerationStatus):
     assert resource_setup is not None
     _, default_entity_description_table_df = prepare_vector_store()
-    reports, entities = load_project_data(
+    reports, entities, communities = load_project_data(
         cfg.graphrag_root_dir_path, default_entity_description_table_df
     )
     assert reports is not None, "Reports are None"

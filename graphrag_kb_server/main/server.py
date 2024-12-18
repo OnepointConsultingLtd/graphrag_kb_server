@@ -2,7 +2,7 @@ import asyncio
 import socketio
 import base64
 import zipfile
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 
 from aiohttp import web
 from enum import StrEnum
@@ -13,15 +13,17 @@ from yarl import URL
 from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
+from graphrag_kb_server.model.context import Search
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.config import websocket_cfg
-from graphrag_kb_server.service.query import rag_local, rag_global
+from graphrag_kb_server.service.query import rag_local, rag_global, rag_drift
 from graphrag_kb_server.service.query import (
     rag_local_build_context,
     rag_global_build_context,
     rag_combined_context,
+    rag_drift_context
 )
 from graphrag_kb_server.service.index import clear_rag, acreate_graph_rag
 
@@ -39,12 +41,6 @@ class Command(StrEnum):
 class Format(StrEnum):
     HTML = "html"
     JSON = "json"
-
-
-class Search(StrEnum):
-    LOCAL = "local"
-    GLOBAL = "global"
-    ALL = "all"
 
 
 @sio.event
@@ -257,10 +253,10 @@ async def query(request: web.Request) -> web.Response:
       - name: search
         in: query
         required: false
-        description: The type of the search (local, global)
+        description: The type of the search (local, global, drift)
         schema:
           type: string
-          enum: [local, global]
+          enum: [local, global, drift]
       - name: context_size
         in: query
         required: false
@@ -280,6 +276,8 @@ async def query(request: web.Request) -> web.Response:
         match search:
             case Search.GLOBAL:
                 response = await rag_global(context_params)
+            case Search.DRIFT:
+                response = await rag_drift(context_params)
             case _:
                 response = await rag_local(context_params)
         match format:
@@ -326,7 +324,7 @@ async def context(request: web.Request) -> web.Response:
         description: The type of the search (local, global)
         schema:
           type: string
-          enum: [local, global, all]  # Enumeration for the dropdown
+          enum: [local, global, drift, all]  # Enumeration for the dropdown
       - name: context_size
         in: query
         required: false
@@ -346,7 +344,9 @@ async def context(request: web.Request) -> web.Response:
         )
         context_params = create_context_parameters(request.rel_url)
 
-        def process_records(records):
+        def process_records(records: Optional[dict]):
+            if not records:
+                return {}
             return (
                 {kv[0]: kv[1].to_dict() for kv in records.items()}
                 if use_context_records
@@ -355,22 +355,22 @@ async def context(request: web.Request) -> web.Response:
 
         match search:
             case Search.GLOBAL:
-                context_text, context_records = rag_global_build_context(context_params)
-                context_records = process_records(context_records)
+                context_builder_result = await rag_global_build_context(context_params)
             case Search.ALL:
-                context_text, context_records = rag_combined_context(context_params)
-                context_records = {
-                    "local": process_records(context_records["local"]),
-                    "global": process_records(context_records["global"]),
-                }
+                context_builder_result = await rag_combined_context(context_params)
+            case Search.DRIFT:
+                context_builder_result = await rag_drift_context(context_params)
             case _:
-                context_text, context_records = rag_local_build_context(context_params)
-                context_records = process_records(context_records)
-        logger.info(f"Sending context with length: {len(context_text)}.")
+                context_builder_result = rag_local_build_context(context_params)
         return web.json_response(
             {
-                "context_text": context_text,
-                "context_records": context_records,
+                "context_text": context_builder_result.context_text,
+                "local_context_records": process_records(
+                    context_builder_result.local_context_records
+                ),
+                "global_context_records": process_records(
+                    context_builder_result.global_context_records
+                ),
             }
         )
 

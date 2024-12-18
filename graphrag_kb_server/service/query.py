@@ -14,6 +14,7 @@ from graphrag.query.indexer_adapters import (
     read_indexer_relationships,
     read_indexer_covariates,
     read_indexer_text_units,
+    read_indexer_communities,
 )
 
 from graphrag.query.llm.oai.embedding import OpenAIEmbedding
@@ -26,18 +27,34 @@ from graphrag.query.structured_search.global_search.community_context import (
     GlobalCommunityContext,
 )
 from graphrag.query.llm.oai.typing import OpenaiApiType
+from graphrag.query.structured_search.base import SearchResult
 from graphrag.query.structured_search.local_search.search import LocalSearch
 from graphrag.query.structured_search.global_search.search import GlobalSearch
+from graphrag.query.structured_search.drift_search.search import DRIFTSearch
 from graphrag.vector_stores.base import BaseVectorStore, VectorStoreDocument
+from graphrag.query.context_builder.builders import ContextBuilderResult
+from graphrag.model.community import Community
+from graphrag.query.indexer_adapters import embed_community_reports
 
 from markdown import markdown
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.service.index import DIR_VECTOR_DB
+from graphrag_kb_server.model.context import (
+    ContextResult,
+    Search,
+    create_context_result,
+    create_global_context_result,
+)
+from graphrag_kb_server.model.context_builder_data import ContextBuilderData
+from graphrag.query.structured_search.drift_search.drift_context import (
+    DRIFTSearchContextBuilder,
+)
 
 ENTITY_TABLE = "create_final_nodes"
 ENTITY_EMBEDDING_TABLE = "create_final_entities"
 COMMUNITY_REPORT_TABLE = "create_final_community_reports"
+COMMUNITY_TABLE = "create_final_communities"
 RELATIONSHIP_TABLE = "create_final_relationships"
 TEXT_UNIT_TABLE = "create_final_text_units"
 COVARIATE_TABLE = "create_final_covariates"
@@ -51,22 +68,28 @@ token_encoder = tiktoken.get_encoding("cl100k_base")
 
 def load_project_data(
     project_dir: Path, default_entity_description_table_df: pd.DataFrame
-) -> Tuple[list[CommunityReport], list[Entity]]:
-    entity_df = pd.read_parquet(f"{project_dir}/output/{ENTITY_TABLE}.parquet")
-    entity_embedding_df = pd.read_parquet(
-        f"{project_dir}/output/{ENTITY_EMBEDDING_TABLE}.parquet"
-    )
-    report_df = pd.read_parquet(
-        f"{project_dir}/output/{COMMUNITY_REPORT_TABLE}.parquet"
+) -> Tuple[list[CommunityReport], list[Entity], list[Community], OpenAIEmbedding]:
+    output = f"{project_dir}/output"
+    entity_df = pd.read_parquet(f"{output}/{ENTITY_TABLE}.parquet")
+    entity_embedding_df = pd.read_parquet(f"{output}/{ENTITY_EMBEDDING_TABLE}.parquet")
+    report_df = pd.read_parquet(f"{output}/{COMMUNITY_REPORT_TABLE}.parquet")
+    text_embedder = create_text_embedder()
+    embed_community_reports(
+        report_df, text_embedder, embedding_col="full_content_embedding"
     )
 
     entity_embedding_df["description_embedding"] = default_entity_description_table_df[
         "vector"
     ].copy()
+
     reports = read_indexer_reports(report_df, entity_df, COMMUNITY_LEVEL)
     entities = read_indexer_entities(entity_df, entity_embedding_df, COMMUNITY_LEVEL)
 
-    return reports, entities
+    community_df = pd.read_parquet(f"{output}/{COMMUNITY_TABLE}.parquet")
+
+    communities = read_indexer_communities(community_df, entity_df, report_df)
+
+    return reports, entities, communities, text_embedder
 
 
 def init_local_params(context_parameters: ContextParameters) -> Tuple[dict, dict]:
@@ -138,37 +161,8 @@ def store_entity_semantic_embeddings(
     return vectorstore
 
 
-def build_local_context_builder(project_dir: Path) -> LocalSearchMixedContext:
-
-    description_embedding_store, default_entity_description_table_df = (
-        prepare_vector_store()
-    )
-
-    reports, entities = load_project_data(
-        project_dir, default_entity_description_table_df
-    )
-
-    # description_embedding_store = store_entity_semantic_embeddings(
-    #     entities=entities, vectorstore=description_embedding_store
-    # )
-
-    # description_embedding_store = LanceDBVectorStore(
-    #     collection_name="default-entity-description",
-    # )
-    # LANCEDB_URI = f"{project_dir}/lancedb"
-    # description_embedding_store.connect(db_uri=LANCEDB_URI)
-
-    relationship_df = pd.read_parquet(
-        f"{project_dir}/output/{RELATIONSHIP_TABLE}.parquet"
-    )
-    relationships = read_indexer_relationships(relationship_df)
-
-    covariates = get_claims(project_dir)
-
-    text_unit_df = pd.read_parquet(f"{project_dir}/output/{TEXT_UNIT_TABLE}.parquet")
-    text_units = read_indexer_text_units(text_unit_df)
-
-    text_embedder = OpenAIEmbedding(
+def create_text_embedder() -> OpenAIEmbedding:
+    return OpenAIEmbedding(
         api_key=cfg.openai_api_key,
         api_base=None,
         api_type=OpenaiApiType.OpenAI,
@@ -177,16 +171,48 @@ def build_local_context_builder(project_dir: Path) -> LocalSearchMixedContext:
         max_retries=20,
     )
 
-    return LocalSearchMixedContext(
-        community_reports=reports,
-        text_units=text_units,
+
+def create_context_builder_data(project_dir: Path) -> ContextBuilderData:
+    description_embedding_store, default_entity_description_table_df = (
+        prepare_vector_store()
+    )
+
+    reports, entities, _communities, text_embedder = load_project_data(
+        project_dir, default_entity_description_table_df
+    )
+    relationship_df = pd.read_parquet(
+        f"{project_dir}/output/{RELATIONSHIP_TABLE}.parquet"
+    )
+    relationships = read_indexer_relationships(relationship_df)
+    text_unit_df = pd.read_parquet(f"{project_dir}/output/{TEXT_UNIT_TABLE}.parquet")
+    text_units = read_indexer_text_units(text_unit_df)
+    covariates = get_claims(project_dir)
+
+    return ContextBuilderData(
+        text_embedder=text_embedder,
+        reports=reports,
         entities=entities,
         relationships=relationships,
-        # if you did not run covariates during indexing, set this to None
+        text_units=text_units,
         covariates=covariates,
-        entity_text_embeddings=description_embedding_store,
+        description_embedding_store=description_embedding_store,
+    )
+
+
+def build_local_context_builder(project_dir: Path) -> LocalSearchMixedContext:
+
+    context_builder_data = create_context_builder_data(project_dir)
+
+    return LocalSearchMixedContext(
+        community_reports=context_builder_data.reports,
+        text_units=context_builder_data.text_units,
+        entities=context_builder_data.entities,
+        relationships=context_builder_data.relationships,
+        # if you did not run covariates during indexing, set this to None
+        covariates=context_builder_data.covariates,
+        entity_text_embeddings=context_builder_data.description_embedding_store,
         embedding_vectorstore_key=EntityVectorStoreKey.ID,  # if the vectorstore uses entity title as ids, set this to EntityVectorStoreKey.TITLE
-        text_embedder=text_embedder,
+        text_embedder=context_builder_data.text_embedder,
         token_encoder=token_encoder,
     )
 
@@ -195,15 +221,31 @@ def build_global_context_builder(project_dir: Path) -> GlobalCommunityContext:
 
     _, default_entity_description_table_df = prepare_vector_store()
 
-    reports, entities = load_project_data(
+    reports, entities, communities, _text_embedder = load_project_data(
         project_dir, default_entity_description_table_df
     )
 
     return GlobalCommunityContext(
         community_reports=reports,
+        communities=communities,
         entities=entities,  # default to None if you don't want to use community weights for ranking
         token_encoder=token_encoder,
     )
+
+
+def build_local_drift_context_builder(project_dir: Path) -> DRIFTSearchContextBuilder:
+
+    context_builder_data = create_context_builder_data(project_dir)
+    context_builder = DRIFTSearchContextBuilder(
+        chat_llm=cfg.llm,
+        text_embedder=context_builder_data.text_embedder,
+        entities=context_builder_data.entities,
+        relationships=context_builder_data.relationships,
+        reports=context_builder_data.reports,
+        entity_text_embeddings=context_builder_data.description_embedding_store,
+        text_units=context_builder_data.text_units,
+    )
+    return context_builder
 
 
 def prepare_local_search(context_parameters: ContextParameters) -> LocalSearch:
@@ -221,23 +263,26 @@ def prepare_local_search(context_parameters: ContextParameters) -> LocalSearch:
     )
 
 
-async def rag_local(context_parameters: ContextParameters) -> str:
+async def prepare_rag_drift(context_parameters: ContextParameters) -> SearchResult:
+    context_builder = build_local_drift_context_builder(context_parameters.project_dir)
+    search = DRIFTSearch(
+        llm=cfg.llm, context_builder=context_builder, token_encoder=token_encoder
+    )
+    result = await search.asearch(context_parameters.query)
+    return result
+
+
+def rag_local_build_context(
+    context_parameters: ContextParameters,
+) -> ContextResult:
 
     search_engine = prepare_local_search(context_parameters)
-
-    result = await search_engine.asearch(context_parameters.query)
-    return markdown(result.response)
-
-
-def rag_local_build_context(context_parameters: ContextParameters) -> Tuple[str, dict]:
-
-    search_engine = prepare_local_search(context_parameters)
-    context_text, context_records = search_engine.context_builder.build_context(
+    context_builder_result = search_engine.context_builder.build_context(
         query=context_parameters.query,
         conversation_history=None,
         **search_engine.context_builder_params,
     )
-    return context_text, context_records
+    return create_context_result(context_builder_result, Search.LOCAL)
 
 
 def prepare_global_search(context_parameters: ContextParameters) -> GlobalSearch:
@@ -282,49 +327,49 @@ def prepare_global_search(context_parameters: ContextParameters) -> GlobalSearch
     )
 
 
-def rag_global_build_context(context_parameters: ContextParameters) -> Tuple[str, dict]:
-
-    global_search: GlobalSearch = prepare_global_search(context_parameters)
-
-    context_text, context_records = global_search.context_builder.build_context(
-        query=context_parameters.query,
-        conversation_history=None,
-        **global_search.context_builder_params,
-    )
-    context_str = ""
-    if isinstance(context_text, list):
-        context_str = "\n".join(context_text)
-    return context_str, context_records
+async def rag_drift(context_parameters: ContextParameters) -> str:
+    result = await prepare_rag_drift(context_parameters)
+    response = result.response
+    if "nodes" in response and len(response["nodes"]) > 0 and "answer" in response["nodes"][0]:
+        return response["nodes"][0]["answer"]
+    return "Could not fetch content"
 
 
-def rag_combined_context(context_parameters: ContextParameters) -> Tuple[str, dict]:
-
-    local_context_text, local_context_records = rag_local_build_context(
-        context_parameters
-    )
-    global_context_text, global_context_records = rag_global_build_context(
-        context_parameters
-    )
-
-    template = """
-# LOCAL CONTEXT
-
-{local_context_text}
-
-# GLOBAL CONTEXT
-
-{global_context_text}
-"""
-    context_text = template.format(
-        local_context_text=local_context_text, global_context_text=global_context_text
-    )
-    context_records = {"local": local_context_records, "global": global_context_records}
-    return context_text, context_records
+async def rag_local(context_parameters: ContextParameters) -> str:
+    search_engine = prepare_local_search(context_parameters)
+    result = await search_engine.asearch(context_parameters.query)
+    return markdown(result.response)
 
 
 async def rag_global(context_parameters: ContextParameters) -> str:
-
     search_engine = prepare_global_search(context_parameters)
-
     result = await search_engine.asearch(context_parameters.query)
     return markdown(result.response)
+
+
+async def rag_global_build_context(
+    context_parameters: ContextParameters,
+) -> ContextResult:
+    global_search: GlobalSearch = prepare_global_search(context_parameters)
+    context_builder_result: ContextBuilderResult = (
+        await global_search.context_builder.build_context(
+            query=context_parameters.query,
+            conversation_history=None,
+            **global_search.context_builder_params,
+        )
+    )
+    return create_context_result(context_builder_result, Search.GLOBAL)
+
+
+async def rag_combined_context(
+    context_parameters: ContextParameters,
+) -> ContextResult:
+    local_build_result = rag_local_build_context(context_parameters)
+    global_build_result = await rag_global_build_context(context_parameters)
+    return create_global_context_result(local_build_result, global_build_result)
+
+
+async def rag_drift_context(context_parameters: ContextParameters) -> ContextResult:
+    response = await prepare_rag_drift(context_parameters)
+    questions = "\n".join([f"- {s}" for s in response.context_data.keys()])
+    return ContextResult(context_text=questions, local_context_records={}, global_context_records={})

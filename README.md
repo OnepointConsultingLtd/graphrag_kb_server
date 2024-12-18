@@ -6,7 +6,7 @@ It also provides a simple API to expose GraphRAG as an API.
 The API has three main methods:
 
 - Upload a zip file with the knowledge base
-- Perform local and global queries on an existing knowledge base
+- Perform local, global and drift queries on an existing knowledge base
 - Retrieve the GraphRAG context based on a question
 
 # Install
