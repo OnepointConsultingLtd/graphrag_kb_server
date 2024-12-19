@@ -8,8 +8,9 @@ from graphrag.model.relationship import Relationship
 from graphrag.model.entity import Entity
 from graphrag.model.text_unit import TextUnit
 
+
 @dataclass
-class ContextBuilderData():
+class ContextBuilderData:
     text_embedder: OpenAIEmbedding
     reports: list[CommunityReport]
     entities: list[Entity]

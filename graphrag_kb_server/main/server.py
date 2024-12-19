@@ -23,7 +23,7 @@ from graphrag_kb_server.service.query import (
     rag_local_build_context,
     rag_global_build_context,
     rag_combined_context,
-    rag_drift_context
+    rag_drift_context,
 )
 from graphrag_kb_server.service.index import clear_rag, acreate_graph_rag
 

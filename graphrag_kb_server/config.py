@@ -83,7 +83,7 @@ class WebsocketConfig:
     websocket_port = int(websocket_port_str)
 
 
-class JWTConfig():
+class JWTConfig:
     secret = os.getenv("JWT_SECRET")
     assert secret is not None, "Cannot find JWT secret"
     algorithm = os.getenv("JWT_ALGORITHM")

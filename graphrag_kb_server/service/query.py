@@ -330,7 +330,11 @@ def prepare_global_search(context_parameters: ContextParameters) -> GlobalSearch
 async def rag_drift(context_parameters: ContextParameters) -> str:
     result = await prepare_rag_drift(context_parameters)
     response = result.response
-    if "nodes" in response and len(response["nodes"]) > 0 and "answer" in response["nodes"][0]:
+    if (
+        "nodes" in response
+        and len(response["nodes"]) > 0
+        and "answer" in response["nodes"][0]
+    ):
         return response["nodes"][0]["answer"]
     return "Could not fetch content"
 
@@ -372,4 +376,6 @@ async def rag_combined_context(
 async def rag_drift_context(context_parameters: ContextParameters) -> ContextResult:
     response = await prepare_rag_drift(context_parameters)
     questions = "\n".join([f"- {s}" for s in response.context_data.keys()])
-    return ContextResult(context_text=questions, local_context_records={}, global_context_records={})
+    return ContextResult(
+        context_text=questions, local_context_records={}, global_context_records={}
+    )

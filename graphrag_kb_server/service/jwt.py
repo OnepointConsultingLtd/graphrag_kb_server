@@ -34,15 +34,15 @@ async def generate_token(token_data: JWTTokenData) -> Optional[JWTToken]:
 
 def insert_jwt_token(jwt_token: JWTToken) -> str:
     folder_name = jwt_token.folder_name
-    folder_path = cfg.graphrag_root_dir_path/folder_name
+    folder_path = cfg.graphrag_root_dir_path / folder_name
     if not folder_path.exists():
         folder_path.mkdir()
-        descriptor = folder_path/"project.json"
+        descriptor = folder_path / "project.json"
         descriptor.write_text(jwt_token.json(), encoding="utf-8")
     else:
         raise ValueError(f"Folder {folder_name} already exists. Choose another one.")
     return folder_name
-    
+
 
 async def decode_token(token: str) -> dict:
     return jwt.decode(token, jwt_cfg.secret, jwt_cfg.algorithm)

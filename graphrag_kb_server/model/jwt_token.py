@@ -8,7 +8,9 @@ class JWTToken(BaseModel):
 
     email: str = Field(..., description="The email")
     token: str = Field(..., description="The whole token")
-    folder_name: str = Field(..., description="The name of the folder with all of the GraphRAG files")
+    folder_name: str = Field(
+        ..., description="The name of the folder with all of the GraphRAG files"
+    )
 
 
 class JWTTokenData(BaseModel):
