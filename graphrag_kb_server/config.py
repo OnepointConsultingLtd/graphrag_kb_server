@@ -83,6 +83,18 @@ class WebsocketConfig:
     websocket_port = int(websocket_port_str)
 
 
+class JWTConfig():
+    secret = os.getenv("JWT_SECRET")
+    assert secret is not None, "Cannot find JWT secret"
+    algorithm = os.getenv("JWT_ALGORITHM")
+    assert algorithm is not None, "Cannot find JWT algorithm. Please specify one"
+    timedelta_minutes = os.getenv("JWT_TIME_DELTA_MINUTES")
+    assert timedelta_minutes is not None, "No time delta in minutes available"
+    timedelta_minutes = int(timedelta_minutes)
+
+
 cfg = Config()
 
 websocket_cfg = WebsocketConfig()
+
+jwt_cfg = JWTConfig()
