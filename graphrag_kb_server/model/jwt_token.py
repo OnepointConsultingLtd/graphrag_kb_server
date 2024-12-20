@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 
 class JWTToken(BaseModel):
@@ -16,6 +16,4 @@ class JWTToken(BaseModel):
 class JWTTokenData(BaseModel):
     name: str = Field(..., description="The subject on the token")
     email: str = Field(..., description="The email")
-    time_delta_minutes: Optional[int] = Field(
-        ..., description="Determines the expiry date of the token"
-    )
+    time_delta_minutes: Optional[int] = Field(default=None, description="Determines the expiry date of the token")

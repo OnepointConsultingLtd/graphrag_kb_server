@@ -1,23 +1,18 @@
-import asyncio
-import socketio
 import base64
 import zipfile
-from typing import Tuple, Dict, Optional
+from typing import Optional
 
+import socketio
 from aiohttp import web
 from enum import StrEnum
-from typing import Awaitable
 
 from yarl import URL
-
-from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
 from graphrag_kb_server.model.context import Search
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg
-from graphrag_kb_server.config import websocket_cfg
 from graphrag_kb_server.service.query import rag_local, rag_global, rag_drift
 from graphrag_kb_server.service.query import (
     rag_local_build_context,
@@ -26,8 +21,11 @@ from graphrag_kb_server.service.query import (
     rag_drift_context,
 )
 from graphrag_kb_server.service.index import clear_rag, acreate_graph_rag
+from graphrag_kb_server.model.web_format import Format
+from graphrag_kb_server.main.error_handler import handle_error
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
+
 routes = web.RouteTableDef()
 
 
@@ -36,11 +34,6 @@ class Command(StrEnum):
     RESPONSE = "response"
     BUILD_CONTEXT = "build_context"
     ERROR = "error"
-
-
-class Format(StrEnum):
-    HTML = "html"
-    JSON = "json"
 
 
 @sio.event
@@ -101,22 +94,6 @@ async def index(request: web.Request) -> web.Response:
 HTML_CONTENT = (
     "<html><body><h1>{question}</h1><section>{response}</section></body></html>"
 )
-
-
-async def handle_error(fun: Awaitable, **kwargs) -> any:
-    try:
-        request = kwargs["request"]
-        return await fun(request)
-    except Exception as e:
-        logger.error(f"Error occurred: {e}", exc_info=True)
-        if "response_format" in kwargs:
-            match kwargs["response_format"]:
-                case Format.JSON:
-                    return web.json_response({"error": e}, status=400)
-        return web.json_response(
-            {"message": str(e)},
-            status=500,
-        )
 
 
 @routes.get("/about")
@@ -410,55 +387,3 @@ def create_context_parameters(url: URL) -> ContextParameters:
         context_size=context_size,
     )
 
-
-async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
-    reader = await request.multipart()
-    d = {}
-    while True:
-        field = await reader.next()
-        if field is None:
-            break
-        field_name = field.name
-        if field_name == "file":
-            d[field_name] = base64.b64encode(await field.read())
-            d[f"{field_name}_name"] = field.filename
-        else:
-            d[field_name] = (await field.read()).decode("utf-8")
-    return d, True
-
-
-def run_server():
-
-    app = web.Application()
-    sio.attach(app)
-
-    loop = asyncio.new_event_loop()
-
-    # Define Swagger schema
-    swagger_info = SwaggerInfo(
-        title="Graph RAG Knowledge Base Server",
-        version="1.0.0",
-        description="APIs for RAG based on a pre-determined knowledge base",
-    )
-    swagger = SwaggerDocs(
-        app, info=swagger_info, swagger_ui_settings=SwaggerUiSettings(path="/docs/")
-    )
-    swagger.register_media_type_handler(
-        media_type="multipart/form-data", handler=multipart_form
-    )
-    swagger.add_routes(routes)
-
-    app.add_routes(routes)
-
-    web.run_app(
-        app,
-        host=websocket_cfg.websocket_server,
-        port=websocket_cfg.websocket_port,
-        loop=loop,
-    )
-
-
-if __name__ == "__main__":
-    logger.info("Starting server ...")
-    run_server()
-    logger.info("Graph RAG Knowledge Base Server stopped.")
