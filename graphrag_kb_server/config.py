@@ -33,6 +33,10 @@ class Config:
     docs_dir_path = Path(docs_dir)
     assert docs_dir_path.exists(), "The path with the documents does not exist."
 
+    config_dir_str = os.getenv("CONFIG_DIR")
+    assert config_dir_str is not None, "The configuration directory with Swagger files"
+    config_dir = Path(config_dir_str)
+
     graphrag_root_dir = os.getenv("GRAPHRAG_ROOT_DIR")
     assert graphrag_root_dir is not None, "Please specify the Graphrag root directory."
     graphrag_root_dir_path = Path(graphrag_root_dir)
@@ -91,6 +95,8 @@ class JWTConfig:
     timedelta_minutes = os.getenv("JWT_TIME_DELTA_MINUTES")
     assert timedelta_minutes is not None, "No time delta in minutes available"
     timedelta_minutes = int(timedelta_minutes)
+    admin_jwt = os.getenv("ADMIN_JWT")
+    assert admin_jwt is not None, "Administration JWT is none."
 
 
 cfg = Config()

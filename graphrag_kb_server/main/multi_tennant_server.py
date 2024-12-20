@@ -3,13 +3,44 @@ from aiohttp import web
 from graphrag_kb_server.main.error_handler import handle_error
 from graphrag_kb_server.model.jwt_token import JWTToken, JWTTokenData
 from graphrag_kb_server.model.error import Error, ErrorCode
-from graphrag_kb_server.service.jwt import generate_token
+from graphrag_kb_server.service.jwt_service import generate_token, decode_token
+from graphrag_kb_server.logger import logger
 
 
 routes = web.RouteTableDef()
 
 
-@routes.post("/create_tennant")
+async def authenticate_request(request):
+    auth_header = request.headers.get("Authorization", None)
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise web.HTTPUnauthorized(reason="Missing or invalid Authorization header")
+    token = auth_header[len("Bearer ") :]
+    try:
+        decode_token(token)
+    except Exception:
+        logger.error("Cannot decode token")
+        raise web.HTTPUnauthorized(reason="Invalid JWT token")
+    
+
+@web.middleware
+async def auth_middleware(request, handler):
+
+    # Check if the request path is unprotected
+    if not str(request.path).startswith("/protected"):
+        return await handler(request)
+
+    # Authenticate for protected routes
+    try:
+        await authenticate_request(request)
+    except web.HTTPUnauthorized as e:
+        logger.error(f"Unauthorized access attempt: {e.reason}")
+        return web.json_response({"error": e.reason}, status=401)
+
+    # If authenticated, proceed to the next handler
+    return await handler(request)
+
+
+@routes.post("/protected/create_tennant")
 async def create_tennant(request: web.Request) -> web.Response:
     """
     Optional route description
@@ -17,6 +48,8 @@ async def create_tennant(request: web.Request) -> web.Response:
     summary: creates a tennant and returns a JSON token which can be used to operate in the context of the tennant.
     tags:
       - tennant
+    security:
+      - bearerAuth: []
     requestBody:
       required: true
       content:
@@ -74,6 +107,8 @@ async def create_tennant(request: web.Request) -> web.Response:
                 description:
                   type: string
                   description: The description of the error
+      '401':
+        description: Unauthorized
     """
 
     async def handle_request(request: web.Request) -> web.Response:
@@ -95,7 +130,9 @@ async def create_tennant(request: web.Request) -> web.Response:
                 status=400,
             )
 
-    import traceback
-
-    traceback.print_stack()
     return await handle_error(handle_request, request=request)
+
+
+@routes.delete("/protected/delete_tennant")
+async def delete_tennant(request: web.Request) -> web.Response:
+    pass

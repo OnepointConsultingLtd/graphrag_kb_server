@@ -6,8 +6,8 @@ from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
 from aiohttp import web
 
 from graphrag_kb_server.logger import logger
-from graphrag_kb_server.config import websocket_cfg
-from graphrag_kb_server.main import all_routes
+from graphrag_kb_server.config import cfg, websocket_cfg
+from graphrag_kb_server.main import all_routes, auth_middleware
 from graphrag_kb_server.main.server import sio
 
 
@@ -30,6 +30,7 @@ async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
 def run_server():
 
     app = web.Application()
+    app.middlewares.append(auth_middleware)
     sio.attach(app)
 
     loop = asyncio.new_event_loop()
@@ -41,7 +42,10 @@ def run_server():
         description="APIs for RAG based on a pre-determined knowledge base",
     )
     swagger = SwaggerDocs(
-        app, info=swagger_info, swagger_ui_settings=SwaggerUiSettings(path="/docs/")
+        app,
+        info=swagger_info,
+        swagger_ui_settings=SwaggerUiSettings(path="/docs/"),
+        security=cfg.config_dir / "security.yaml",
     )
     swagger.register_media_type_handler(
         media_type="multipart/form-data", handler=multipart_form
