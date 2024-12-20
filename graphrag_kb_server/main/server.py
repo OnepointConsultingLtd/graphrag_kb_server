@@ -386,4 +386,3 @@ def create_context_parameters(url: URL) -> ContextParameters:
         project_dir=cfg.graphrag_root_dir_path,
         context_size=context_size,
     )
-

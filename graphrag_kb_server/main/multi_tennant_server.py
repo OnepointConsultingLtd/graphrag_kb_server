@@ -77,11 +77,11 @@ async def create_tennant(request: web.Request) -> web.Response:
     """
 
     async def handle_request(request: web.Request) -> web.Response:
-        body = request["data"]["body"]
+        body = await request.json()
         if "email" in body and "tennant_name" in body:
             token_data = JWTTokenData(name=body["tennant_name"], email=body["email"])
             jwt_token: JWTToken | Error = await generate_token(token_data)
-            if jwt_token:
+            if isinstance(jwt_token, JWTToken):
                 return web.json_response(jwt_token.model_dump())
             else:
                 return web.json_response(jwt_token.model_dump(), status=400)
@@ -94,4 +94,8 @@ async def create_tennant(request: web.Request) -> web.Response:
                 ).model_dump(),
                 status=400,
             )
+
+    import traceback
+
+    traceback.print_stack()
     return await handle_error(handle_request, request=request)

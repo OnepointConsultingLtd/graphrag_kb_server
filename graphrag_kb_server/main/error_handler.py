@@ -4,6 +4,7 @@ from aiohttp import web
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.web_format import Format
 
+
 async def handle_error(fun: Awaitable, **kwargs) -> any:
     try:
         request = kwargs["request"]
