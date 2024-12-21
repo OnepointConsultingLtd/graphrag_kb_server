@@ -36,8 +36,6 @@ from graphrag.query.context_builder.builders import ContextBuilderResult
 from graphrag.model.community import Community
 from graphrag.query.indexer_adapters import embed_community_reports
 
-from markdown import markdown
-
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.context import (
     ContextResult,
@@ -219,7 +217,7 @@ def build_local_context_builder(project_dir: Path) -> LocalSearchMixedContext:
 
 def build_global_context_builder(project_dir: Path) -> GlobalCommunityContext:
 
-    _, default_entity_description_table_df = prepare_vector_store()
+    _, default_entity_description_table_df = prepare_vector_store(project_dir)
 
     reports, entities, communities, _text_embedder = load_project_data(
         project_dir, default_entity_description_table_df
@@ -342,13 +340,13 @@ async def rag_drift(context_parameters: ContextParameters) -> str:
 async def rag_local(context_parameters: ContextParameters) -> str:
     search_engine = prepare_local_search(context_parameters)
     result = await search_engine.asearch(context_parameters.query)
-    return markdown(result.response)
+    return result.response
 
 
 async def rag_global(context_parameters: ContextParameters) -> str:
     search_engine = prepare_global_search(context_parameters)
     result = await search_engine.asearch(context_parameters.query)
-    return markdown(result.response)
+    return result.response
 
 
 async def rag_global_build_context(

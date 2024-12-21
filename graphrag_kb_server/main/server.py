@@ -8,6 +8,7 @@ from aiohttp import web
 from enum import StrEnum
 
 from yarl import URL
+from markdown import markdown
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
 from graphrag_kb_server.model.context import Search
@@ -110,6 +111,31 @@ def extract_tennant_folder(request: web.Request) -> Path | Response:
     return tennant_folder
 
 
+def handle_project_folder(
+    request: web.Request, tennant_folder: Path
+) -> Path | Response:
+    project = request.rel_url.query.get("project", Format.JSON.value)
+    project_dir = tennant_folder / project
+    if not project_dir.exists():
+        return invalid_response(
+            "No project folder found",
+            f"There is no project folder {project}",
+        )
+    return project_dir
+
+
+def match_process_dir(request: web.Request) -> Response | Path:
+    match extract_tennant_folder(request):
+        case Response() as error_response:
+            return error_response
+        case Path() as tennant_folder:
+            match handle_project_folder(request, tennant_folder):
+                case Response() as error_response:
+                    return error_response
+                case Path() as project_dir:
+                    return project_dir
+
+
 @routes.get("/protected/project/about")
 async def about(request: web.Request) -> web.Response:
     """
@@ -118,6 +144,8 @@ async def about(request: web.Request) -> web.Response:
     summary: returns the information about the current knowledge base of a specific project.
     tags:
       - project
+    security:
+      - bearerAuth: []
     parameters:
       - name: project
         in: query
@@ -137,31 +165,29 @@ async def about(request: web.Request) -> web.Response:
               message: "No file was uploaded"
     """
 
-    async def handle_request(request: web.Request):
-        tennant_folder_or_response = extract_tennant_folder(request)
-        match tennant_folder_or_response:
+    async def handle_request(request: web.Request) -> web.Response:
+        match extract_tennant_folder(request):
             case Response() as error_response:
                 return error_response
             case Path() as tennant_folder:
-                project = request.rel_url.query.get("project", Format.JSON.value)
-                project_dir = tennant_folder / project
-                if not project_dir.exists():
-                    return invalid_response(
-                        "No project folder found",
-                        f"There is no project folder {project}",
-                    )
-                question = "What are the main topics?"
-                response = await rag_local(
-                    ContextParameters(
-                        query=question,
-                        project_dir=project_dir,
-                        context_size=cfg.local_context_max_tokens,
-                    )
-                )
-                return web.Response(
-                    text=HTML_CONTENT.format(question=question, response=response),
-                    content_type="text/html",
-                )
+                match handle_project_folder(request, tennant_folder):
+                    case Response() as error_response:
+                        return error_response
+                    case Path() as project_dir:
+                        question = "What are the main topics?"
+                        response = await rag_local(
+                            ContextParameters(
+                                query=question,
+                                project_dir=project_dir,
+                                context_size=cfg.local_context_max_tokens,
+                            )
+                        )
+                        return web.Response(
+                            text=HTML_CONTENT.format(
+                                question=question, response=response
+                            ),
+                            content_type="text/html",
+                        )
 
     return await handle_error(handle_request, request=request)
 
@@ -177,6 +203,8 @@ async def upload_index(request: web.Request) -> web.Response:
     summary: Uploads a files with a knowledge base for a specific tennant
     tags:
       - project
+    security:
+      - bearerAuth: []
     requestBody:
       required: true
       content:
@@ -210,8 +238,7 @@ async def upload_index(request: web.Request) -> web.Response:
         body = request["data"]["body"]
         file = body["file"]
         file_name = body["file_name"]
-        tennant_folder_or_response = extract_tennant_folder(request)
-        match tennant_folder_or_response:
+        match extract_tennant_folder(request):
             case Response() as error_response:
                 return error_response
             case Path() as tennant_folder:
@@ -256,15 +283,23 @@ async def upload_index(request: web.Request) -> web.Response:
     )
 
 
-@routes.get("/query")
+@routes.get("/protected/project/query")
 async def query(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
     summary: returns the response to a query from an LLM
     tags:
-      - query
+      - project
+    security:
+      - bearerAuth: []
     parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
       - name: question
         in: query
         required: true
@@ -277,7 +312,7 @@ async def query(request: web.Request) -> web.Response:
         description: The format of the output (json, html)
         schema:
           type: string
-          enum: [json, html]
+          enum: [json, html, markdown]
       - name: search
         in: query
         required: false
@@ -295,45 +330,81 @@ async def query(request: web.Request) -> web.Response:
     responses:
       '200':
         description: Expected response to a valid request
+      '400':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No project found"
     """
 
-    async def handle_request(request: web.Request):
-        format = request.rel_url.query.get("format", Format.JSON.value)
-        search = request.rel_url.query.get("search", Search.LOCAL.value)
-        context_params = create_context_parameters(request.rel_url)
-        match search:
-            case Search.GLOBAL:
-                response = await rag_global(context_params)
-            case Search.DRIFT:
-                response = await rag_drift(context_params)
-            case _:
-                response = await rag_local(context_params)
-        match format:
-            case Format.HTML:
-                return web.Response(
-                    text=HTML_CONTENT.format(
-                        question=context_params.query, response=response
-                    ),
-                    content_type="text/html",
-                )
-            case _:
-                return web.json_response(
-                    {"question": context_params.query, "response": response}
-                )
-        raise web.HTTPBadRequest(text="Please make sure the format is specified.")
+    async def handle_request(request: web.Request) -> web.Response:
+        match extract_tennant_folder(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as tennant_folder:
+                match handle_project_folder(request, tennant_folder):
+                    case Response() as error_response:
+                        return error_response
+                    case Path() as project_dir:
+                        format = request.rel_url.query.get("format", Format.JSON.value)
+                        search = request.rel_url.query.get("search", Search.LOCAL.value)
+                        context_params = create_context_parameters(
+                            request.rel_url, project_dir
+                        )
+                        match search:
+                            case Search.GLOBAL:
+                                response = await rag_global(context_params)
+                            case Search.DRIFT:
+                                response = await rag_drift(context_params)
+                            case _:
+                                response = await rag_local(context_params)
+                        match format:
+                            case Format.HTML:
+                                return web.Response(
+                                    text=HTML_CONTENT.format(
+                                        question=context_params.query,
+                                        response=markdown(response),
+                                    ),
+                                    content_type="text/html",
+                                )
+                            case Format.MARKDOWN:
+                                return web.Response(
+                                    text=response,
+                                    content_type="text/plain",
+                                )
+                            case Format.JSON:
+                                return web.json_response(
+                                    {
+                                        "question": context_params.query,
+                                        "response": response,
+                                    }
+                                )
+                        raise web.HTTPBadRequest(
+                            text="Please make sure the format is specified."
+                        )
 
     return await handle_error(handle_request, request=request)
 
 
-@routes.get("/context")
+@routes.get("/protected/project/context")
 async def context(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
     summary: returns the context used by on a specific request
     tags:
-      - context
+      - project
+    security:
+      - bearerAuth: []
     parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
       - name: question
         in: query
         required: true
@@ -363,77 +434,105 @@ async def context(request: web.Request) -> web.Response:
     responses:
       '200':
         description: Expected response to a valid request
+      '400':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No project found"
     """
 
-    async def handle_request(request: web.Request):
-        search = request.rel_url.query.get("search", Search.LOCAL.value)
-        use_context_records = (
-            request.rel_url.query.get("use_context_records", "false") == "true"
-        )
-        context_params = create_context_parameters(request.rel_url)
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                search = request.rel_url.query.get("search", Search.LOCAL.value)
+                use_context_records = (
+                    request.rel_url.query.get("use_context_records", "false") == "true"
+                )
+                context_params = create_context_parameters(request.rel_url, project_dir)
 
-        def process_records(records: Optional[dict]):
-            if not records:
-                return {}
-            return (
-                {kv[0]: kv[1].to_dict() for kv in records.items()}
-                if use_context_records
-                else None
-            )
+                def process_records(records: Optional[dict]):
+                    if not records:
+                        return {}
+                    return (
+                        {kv[0]: kv[1].to_dict() for kv in records.items()}
+                        if use_context_records
+                        else None
+                    )
 
-        match search:
-            case Search.GLOBAL:
-                context_builder_result = await rag_global_build_context(context_params)
-            case Search.ALL:
-                context_builder_result = await rag_combined_context(context_params)
-            case Search.DRIFT:
-                context_builder_result = await rag_drift_context(context_params)
-            case _:
-                context_builder_result = rag_local_build_context(context_params)
-        return web.json_response(
-            {
-                "context_text": context_builder_result.context_text,
-                "local_context_records": process_records(
-                    context_builder_result.local_context_records
-                ),
-                "global_context_records": process_records(
-                    context_builder_result.global_context_records
-                ),
-            }
-        )
+                match search:
+                    case Search.GLOBAL:
+                        context_builder_result = await rag_global_build_context(
+                            context_params
+                        )
+                    case Search.ALL:
+                        context_builder_result = await rag_combined_context(
+                            context_params
+                        )
+                    case Search.DRIFT:
+                        context_builder_result = await rag_drift_context(context_params)
+                    case _:
+                        context_builder_result = rag_local_build_context(context_params)
+                return web.json_response(
+                    {
+                        "context_text": context_builder_result.context_text,
+                        "local_context_records": process_records(
+                            context_builder_result.local_context_records
+                        ),
+                        "global_context_records": process_records(
+                            context_builder_result.global_context_records
+                        ),
+                    }
+                )
 
     return await handle_error(handle_request, request=request)
 
 
-@routes.delete("/delete_index")
+@routes.delete("/protected/project/delete_index")
 async def delete_index(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
     summary: returns the response to a query from an LLM
     tags:
-      - delete
+      - project
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+    security:
+      - bearerAuth: []
     responses:
       '200':
-        description: Expected response to a valid request
+        description: Expected response to a valid request. Tells whether the project was deleted or not.
     """
 
-    async def handle_request(request: web.Request):
-        deleted = clear_rag()
-        return web.json_response(
-            {
-                "deleted": deleted,
-            }
-        )
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                deleted = clear_rag(project_dir)
+                return web.json_response(
+                    {
+                        "deleted": deleted,
+                    }
+                )
 
     return await handle_error(handle_request, request=request)
 
 
-def create_context_parameters(url: URL) -> ContextParameters:
+def create_context_parameters(url: URL, project_dir: Path) -> ContextParameters:
     question = url.query.get("question", DEFAULT_QUESTION)
     context_size = url.query.get("context_size", cfg.local_context_max_tokens)
     return ContextParameters(
         query=question,
-        project_dir=cfg.graphrag_root_dir_path,
+        project_dir=project_dir,
         context_size=context_size,
     )
