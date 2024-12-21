@@ -56,3 +56,6 @@ docsite/
 
 docs/data_wellness
 docs/kb
+
+# Config stuff
+config/administration.yaml

@@ -5,7 +5,10 @@ from graphrag_kb_server.main.error_handler import handle_error
 from graphrag_kb_server.model.jwt_token import JWTToken, JWTTokenData
 from graphrag_kb_server.model.error import Error, ErrorCode
 from graphrag_kb_server.service.jwt_service import generate_token, decode_token
-from graphrag_kb_server.service.tennant import delete_tennant_folder_by_folder
+from graphrag_kb_server.service.tennant import (
+    delete_tennant_folder_by_folder,
+    list_tennants as local_list_tennants,
+)
 from graphrag_kb_server.service.validations import validate_email
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import admin_cfg
@@ -172,7 +175,7 @@ async def delete_tennant(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
-    summary: creates a tennant and returns a JSON token which can be used to operate in the context of the tennant.
+    summary: Deletes a single tennant
     tags:
       - tennant
     security:
@@ -241,5 +244,48 @@ async def delete_tennant(request: web.Request) -> web.Response:
                 ErrorCode.TENNANT_DOES_NOT_EXIST,
             )
         return web.json_response({"message": "Tennant deleted"})
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.get("/protected/tennant/list_tennants")
+async def list_tennants(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: lists all available tennants in the system.
+    tags:
+      - tennant
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Returns the list of tennants
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required:
+                  - folder_name
+                  - creation_timestamp
+                properties:
+                  folder_name:
+                    type: string
+                    description: The name of the folder in which the tennant's projects are located.
+                  creation_timestamp:
+                    type: string
+                    format: date-time
+                    description: The timestamp indicating when the tennant was created.
+      '401':
+        description: Unauthorized. The client must provide a valid Bearer token.
+      '500':
+        description: Internal server error.
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        tennants = local_list_tennants()
+        return web.json_response([t.as_dict() for t in tennants])
 
     return await handle_error(handle_request, request=request)
