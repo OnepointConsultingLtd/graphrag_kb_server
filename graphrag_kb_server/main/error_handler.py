@@ -1,8 +1,10 @@
 from typing import Awaitable
 from aiohttp import web
+from aiohttp.web import Response
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.web_format import Format
+from graphrag_kb_server.model.error import Error, ErrorCode
 
 
 async def handle_error(fun: Awaitable, **kwargs) -> any:
@@ -19,3 +21,18 @@ async def handle_error(fun: Awaitable, **kwargs) -> any:
             {"message": str(e)},
             status=500,
         )
+
+
+def invalid_response(
+    error_name: str,
+    error_description: str,
+    error_code: ErrorCode = ErrorCode.INVALID_INPUT,
+) -> Response:
+    return web.json_response(
+        Error(
+            error_code=error_code,
+            error=error_name,
+            description=error_description,
+        ).model_dump(),
+        status=400,
+    )

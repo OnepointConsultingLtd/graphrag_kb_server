@@ -1,5 +1,6 @@
 import base64
 import zipfile
+from pathlib import Path
 from typing import Optional
 
 import socketio
@@ -22,7 +23,8 @@ from graphrag_kb_server.service.query import (
 )
 from graphrag_kb_server.service.index import clear_rag, acreate_graph_rag
 from graphrag_kb_server.model.web_format import Format
-from graphrag_kb_server.main.error_handler import handle_error
+from graphrag_kb_server.main.error_handler import handle_error, invalid_response
+from aiohttp.web import Response
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
 
@@ -96,32 +98,70 @@ HTML_CONTENT = (
 )
 
 
-@routes.get("/about")
+def extract_tennant_folder(request: web.Request) -> Path | Response:
+    token_data = request["token_data"]
+    if token_data is None:
+        return invalid_response(
+            "No tennant information", "No tennant information available in request"
+        )
+    tennant_folder = cfg.graphrag_root_dir_path / token_data["sub"]
+    if not tennant_folder.exists():
+        return invalid_response("No tennant folder", "Tennant folder was deleted.")
+    return tennant_folder
+
+
+@routes.get("/protected/project/about")
 async def about(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
-    summary: returns the information about the current knowledge base
+    summary: returns the information about the current knowledge base of a specific project.
     tags:
-      - context
+      - project
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
     responses:
       '200':
         description: Expected response to a valid request
+      '400':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No file was uploaded"
     """
 
     async def handle_request(request: web.Request):
-        question = "What are the main topics?"
-        response = await rag_local(
-            ContextParameters(
-                query=question,
-                project_dir=cfg.graphrag_root_dir_path,
-                context_size=cfg.local_context_max_tokens,
-            )
-        )
-        return web.Response(
-            text=HTML_CONTENT.format(question=question, response=response),
-            content_type="text/html",
-        )
+        tennant_folder_or_response = extract_tennant_folder(request)
+        match tennant_folder_or_response:
+            case Response() as error_response:
+                return error_response
+            case Path() as tennant_folder:
+                project = request.rel_url.query.get("project", Format.JSON.value)
+                project_dir = tennant_folder / project
+                if not project_dir.exists():
+                    return invalid_response(
+                        "No project folder found",
+                        f"There is no project folder {project}",
+                    )
+                question = "What are the main topics?"
+                response = await rag_local(
+                    ContextParameters(
+                        query=question,
+                        project_dir=project_dir,
+                        context_size=cfg.local_context_max_tokens,
+                    )
+                )
+                return web.Response(
+                    text=HTML_CONTENT.format(question=question, response=response),
+                    content_type="text/html",
+                )
 
     return await handle_error(handle_request, request=request)
 
@@ -129,14 +169,14 @@ async def about(request: web.Request) -> web.Response:
 DEFAULT_QUESTION = "What are the main topics?"
 
 
-@routes.post("/upload_index")
+@routes.post("/protected/project/upload_index")
 async def upload_index(request: web.Request) -> web.Response:
     """
     File Upload and Index
     ---
-    summary: Uploads a files with a knowledge base
+    summary: Uploads a files with a knowledge base for a specific tennant
     tags:
-      - index
+      - project
     requestBody:
       required: true
       content:
@@ -147,9 +187,7 @@ async def upload_index(request: web.Request) -> web.Response:
               file:
                 type: string
                 format: binary
-                description: The zip file to be uploaded.
-              upload_secret:
-                type: string
+                description: The zip file with the text files to be uploaded.
     responses:
       "200":
         description: Successful upload
@@ -172,33 +210,46 @@ async def upload_index(request: web.Request) -> web.Response:
         body = request["data"]["body"]
         file = body["file"]
         file_name = body["file_name"]
-        upload_secret = body["upload_secret"]
-        if upload_secret != cfg.upload_secret:
-            return web.json_response({"error": "The secret is not right."}, status=401)
-        # Save zip file
-        if file_name is not None and file_name.lower().endswith(".zip"):
-            with open(uploaded_file := cfg.upload_dir / file_name, "wb") as f:
-                f.write(base64.b64decode(file))
-                saved_files.append(uploaded_file)
-        if (file_length := len(saved_files)) == 0:
-            return web.json_response({"error": "No file was uploaded"}, status=400)
-        # Extract the zip file
-        upload_folder = cfg.upload_dir / saved_files[0].stem
-        try:
-            with zipfile.ZipFile(saved_files[0], "r") as zip_ref:
-                zip_ref.extractall(upload_folder)
-        except zipfile.BadZipFile:
-            return web.json_response(
-                {"error": "Uploaded file is not a valid zip file"}, status=400
-            )
-        clear_rag()
-        await acreate_graph_rag(True, upload_folder)
-        return web.json_response(
-            {
-                "message": f"{file_length} file{"" if len(saved_files) == 0 else ""} uploaded, extracted and indexed from {cfg.upload_dir}."
-            },
-            status=200,
-        )
+        tennant_folder_or_response = extract_tennant_folder(request)
+        match tennant_folder_or_response:
+            case Response() as error_response:
+                return error_response
+            case Path() as tennant_folder:
+                if file_name is not None and file_name.lower().endswith(".zip"):
+                    uploaded_file: Path = tennant_folder / file_name
+                    if uploaded_file.exists():
+                        uploaded_file.unlink()
+                        uploaded_file.touch()
+                    with open(uploaded_file, "wb") as f:
+                        f.write(base64.b64decode(file))
+                        saved_files.append(uploaded_file)
+                if (file_length := len(saved_files)) == 0:
+                    return web.json_response(
+                        {"error": "No file was uploaded"}, status=400
+                    )
+                # Extract the zip file
+                upload_folder: Path = tennant_folder / saved_files[0].stem
+                clear_rag(upload_folder)
+                if not upload_folder.exists():
+                    upload_folder.mkdir(parents=True)
+                try:
+                    with zipfile.ZipFile(saved_files[0], "r") as zip_ref:
+                        zip_ref.extractall(upload_folder / "input")
+                except zipfile.BadZipFile:
+                    return web.json_response(
+                        {"error": "Uploaded file is not a valid zip file"}, status=400
+                    )
+                await acreate_graph_rag(True, upload_folder)
+                return web.json_response(
+                    {
+                        "message": f"{file_length} file{"" if len(saved_files) == 0 else ""} uploaded, extracted and indexed from {upload_folder}."
+                    },
+                    status=200,
+                )
+            case _:
+                return web.json_response(
+                    {"error": "Could not extract tennant folder."}, status=500
+                )
 
     return await handle_error(
         handle_request, request=request, response_format=Format.JSON.value

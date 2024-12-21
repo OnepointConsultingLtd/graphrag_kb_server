@@ -39,7 +39,6 @@ from graphrag.query.indexer_adapters import embed_community_reports
 from markdown import markdown
 
 from graphrag_kb_server.config import cfg
-from graphrag_kb_server.service.index import DIR_VECTOR_DB
 from graphrag_kb_server.model.context import (
     ContextResult,
     Search,
@@ -125,15 +124,16 @@ def get_claims(project_dir: Path) -> Union[dict, None]:
     return None
 
 
-def prepare_vector_store() -> Tuple[LanceDBVectorStore, pd.DataFrame]:
+def prepare_vector_store(project_dir: Path) -> Tuple[LanceDBVectorStore, pd.DataFrame]:
     # load description embeddings to an in-memory lancedb vectorstore
     # to connect to a remote db, specify url and port values.
+    entity_description_table = "default-entity-description"
     description_embedding_store = LanceDBVectorStore(
-        collection_name="entity_description_embeddings",
+        collection_name=entity_description_table,
     )
-    description_embedding_store.connect(db_uri=DIR_VECTOR_DB)
+    description_embedding_store.connect(db_uri=project_dir / cfg.vector_db_dir)
     default_entity_description_table = description_embedding_store.db_connection[
-        "default-entity-description"
+        entity_description_table
     ]
     default_entity_description_table_df = default_entity_description_table.to_pandas()
     return description_embedding_store, default_entity_description_table_df
@@ -174,7 +174,7 @@ def create_text_embedder() -> OpenAIEmbedding:
 
 def create_context_builder_data(project_dir: Path) -> ContextBuilderData:
     description_embedding_store, default_entity_description_table_df = (
-        prepare_vector_store()
+        prepare_vector_store(project_dir)
     )
 
     reports, entities, _communities, text_embedder = load_project_data(

@@ -1,7 +1,6 @@
 from aiohttp import web
-from aiohttp.web import Response
 
-from graphrag_kb_server.main.error_handler import handle_error
+from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.model.jwt_token import JWTToken, JWTTokenData
 from graphrag_kb_server.model.error import Error, ErrorCode
 from graphrag_kb_server.service.jwt_service import generate_token, decode_token
@@ -34,7 +33,7 @@ async def authenticate_request(request) -> dict:
 
 
 @web.middleware
-async def auth_middleware(request, handler):
+async def auth_middleware(request: web.Request, handler):
 
     request_path = str(request.path)
     # Check if the request path is unprotected
@@ -44,6 +43,7 @@ async def auth_middleware(request, handler):
     # Authenticate for protected routes
     try:
         token_dict = await authenticate_request(request)
+        request["token_data"] = token_dict
 
         # All tennant routes are only accessible to administrators
         if request_path.startswith("/protected/tennant"):
@@ -59,21 +59,6 @@ async def auth_middleware(request, handler):
 
     # If authenticated, proceed to the next handler
     return await handler(request)
-
-
-def invalid_response(
-    error_name: str,
-    error_description: str,
-    error_code: ErrorCode = ErrorCode.INVALID_INPUT,
-) -> Response:
-    return web.json_response(
-        Error(
-            error_code=error_code,
-            error=error_name,
-            description=error_description,
-        ).model_dump(),
-        status=400,
-    )
 
 
 @routes.post("/protected/tennant/create")

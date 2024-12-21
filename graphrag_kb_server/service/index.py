@@ -46,13 +46,11 @@ async def run_pipeline(pipelines: AsyncIterable[PipelineRunResult]):
         logger.info(p)
 
 
-def clear_rag() -> bool:
+def clear_rag(rag_folder: Path) -> bool:
     deleted = False
-    if cfg.graphrag_root_dir_path.exists():
-        shutil.rmtree(cfg.graphrag_root_dir_path, ignore_errors=True)
+    if rag_folder.exists():
+        shutil.rmtree(rag_folder, ignore_errors=True)
         deleted = True
-    if DIR_VECTOR_DB.exists():
-        shutil.rmtree(DIR_VECTOR_DB, ignore_errors=True)
     return deleted
 
 
@@ -88,8 +86,8 @@ def activate_claims(project_dir: Path, enabled: bool):
 
 
 def _prepare_graph_rag(kb_path: Union[Path, None]) -> Path:
-    input_dir = copy_files_to_root_dir(kb_path)
-    project_dir = input_dir.parent
+    project_dir = kb_path
+    input_dir = kb_path / "input"
     initialize_project_at(project_dir)
     override_env(input_dir)
     override_settings(project_dir)
@@ -126,8 +124,8 @@ def create_graph_rag(
 async def acreate_graph_rag(
     create_if_not_exists: bool = True, kb_path: Union[Path, None] = None
 ) -> GenerationStatus:
-    if create_if_not_exists:
-        if ROOT_DIR.exists() and (ROOT_DIR / "settings.yaml").exists():
+    if not create_if_not_exists:
+        if kb_path.exists() and (kb_path / "settings.yaml").exists():
             return GenerationStatus.EXISTS
     input_dir = _prepare_graph_rag(kb_path)
     await index(**prepare_index_args(input_dir.parent))
