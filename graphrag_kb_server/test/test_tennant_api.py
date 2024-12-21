@@ -6,6 +6,7 @@ from aiohttp.test_utils import TestClient
 from graphrag_kb_server.main.multi_tennant_server import routes
 from graphrag_kb_server.model.jwt_token import JWTToken
 from graphrag_kb_server.model.error import Error, ErrorCode
+from graphrag_kb_server.config import jwt_cfg
 
 
 @pytest.fixture
@@ -35,8 +36,13 @@ async def test_create_tennant_success(test_app, aiohttp_client):
         # Define the request payload
         payload = {"email": test_email, "tennant_name": test_folder_name}
 
+        admin_token = jwt_cfg.admin_jwt
         # Make the POST request
-        response = await client.post("/create_tennant", json=payload)
+        response = await client.post(
+            "/protected/tennant/create",
+            json=payload,
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
 
         assert response.status == 200
         data = await response.json()
@@ -59,7 +65,7 @@ async def test_create_tennant_error(test_app, aiohttp_client):
         client: TestClient = await aiohttp_client(test_app)
         payload = {"email": "dummy@test.com", "tennant_name": "dummy"}
         # Make the POST request
-        response = await client.post("/create_tennant", json=payload)
+        response = await client.post("/protected/tennant/create", json=payload)
         assert response.status == 400
         data = await response.json()
         assert data["error"] == expected_error.error

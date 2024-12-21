@@ -30,7 +30,12 @@ def create_tennant_folder(jwt_token: JWTToken) -> str | Error:
 
 
 def delete_tennant_folder(jwt_token: JWTToken) -> str | None:
-    folder_path, folder_name = get_folder(jwt_token)
+    _, folder_name = get_folder(jwt_token)
+    delete_tennant_folder_by_folder(folder_name)
+
+
+def delete_tennant_folder_by_folder(folder_name: str) -> str | None:
+    folder_path: Path = cfg.graphrag_root_dir_path / folder_name
     if folder_path.exists():
         shutil.rmtree(folder_path)
         return folder_name

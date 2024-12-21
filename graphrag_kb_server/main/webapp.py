@@ -7,7 +7,8 @@ from aiohttp import web
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg, websocket_cfg
-from graphrag_kb_server.main import all_routes, auth_middleware
+from graphrag_kb_server.main import all_routes
+from graphrag_kb_server.main.multi_tennant_server import auth_middleware
 from graphrag_kb_server.main.server import sio
 
 

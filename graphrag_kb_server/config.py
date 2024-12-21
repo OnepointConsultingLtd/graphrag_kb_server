@@ -1,4 +1,5 @@
 import os
+import yaml
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -101,6 +102,16 @@ class JWTConfig:
 
 cfg = Config()
 
+
+class AdminConfig:
+    admins = cfg.config_dir / "administration.yaml"
+    yaml_text = admins.read_text()
+    content = yaml.safe_load(yaml_text)
+    administrators = content["administrators"]
+
+
 websocket_cfg = WebsocketConfig()
 
 jwt_cfg = JWTConfig()
+
+admin_cfg = AdminConfig()

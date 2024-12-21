@@ -6,6 +6,7 @@ class ErrorCode(IntEnum):
     INVALID_INPUT = 1
     TENNANT_EXISTS = 100
     PROJECT_EXISTS = 101
+    TENNANT_DOES_NOT_EXIST = 102
 
 
 class Error(BaseModel):

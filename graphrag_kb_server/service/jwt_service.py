@@ -22,7 +22,12 @@ async def generate_token(
         token_data.time_delta_minutes,
     )
     folder_name = rename_to_folder(name)
-    payload = {"sub": str(folder_name), "name": name, "iat": int(time.time())}
+    payload = {
+        "sub": str(folder_name),
+        "name": name,
+        "iat": int(time.time()),
+        "email": email,
+    }
     if time_delta_minutes is not None:
         payload["exp"] = datetime.now(timezone.utc) + timedelta(
             seconds=time_delta_minutes
