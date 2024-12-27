@@ -1,0 +1,38 @@
+Category: Data Infrastructure, Governance, Security
+Topic: DataOps
+
+
+DataOps presents organizations with a set of principles that when correctly implemented, help to solve many of the challenges data, business and operations teams encounter. While the benefits of DataOps are clear, the best implementation path can be unclear. 
+
+DataOps describes a set of tools and processes that, improve the speed and agility of developing data and analytics solutions while improving overall data quality. Inspired by DevOps, DataOps uses a set of principles and best practices in order to achieve its objectives: 
+1.	Achieving high data quality with continuous error detection 
+2.	Building transparency by monitoring and measuring results 
+3.	Streamlining data ingestion through process automation 
+4.	Improving collaboration between delivery and business teams 
+5.	Delivering with shorter release cycles
+
+To understand DataOps, we need to start by understanding the concept in context with other similar methodologies. DataOps shares many of the objectives and practices of MLOps and DevOps – in fact, many organizations aspire to leverage multiple Ops cohesively to benefit from the natural synergies.
+
+Our approach is measuring and evaluating the efforts teams are spending on performing recurring data tasks and investigating data issues.
+The data or ops team is consumed with data promotions or releasing data engineering features. The team may also be slowed down on other repeatable activities which are part of the data engineering workflow including but not limited to creating test data and retrieving real production data to get tasks started. On the business side, the time spent by the data team for each feature release is perceived as a black box with limited perceived value, serving only to delay attainment of business objectives.
+Reducing Data Tasks: Your team will benefit greatly from automating sections of your data pipeline as well as reducing friction introduced by recurring data engineering tasks.
+Reducing Data Issues: The business consumers of the analytics outputs are frequently asking the team to investigate either real or perceived data issues. This can bog down either ops or data teams, forcing them to investigate high priority issues which can be critical for decision making or sensitive downstream processes. End-users view the data as unrecognizable and potentially loose trust in the analytics. Your team will benefit substantially from statistical structural data validation of both the input source data and output analytics data. In this scenario, we recommend focusing on one of the dimensions to bring immediate value to the most impactful pain points. 
+
+Introducing statistical and structural testing doesn’t have to be overly complicated or engineered. Both statistical and structural data testing can be done by simple queries and scripts. When integrated in data pipelines it provides continuous validation in ongoing delivery, and achieves the following objectives: 
+1.	Improve transparency between data and business teams by defining pipeline input and output expectations 
+2.	Detect potential data anomalies before production release to enable proactive investigation
+3.	Increase data pipeline reliability by validating data sources are in the correct formats and within the expected range of values 
+4.	Reduce breaks and errors by rejecting incompatible and erroneous data
+
+We can continue to improve upon the data pipeline by implementing a quantitative and statistical evaluation to assess whether the results of our data transformation or aggregation output meets consumer expectations. The data pipeline workflow can be engineered to notify the Ops team where a data load doesn’t meet these threshold criteria (tip: don’t send notifications for regular, successful events to avoid notification fatigue). Naturally, the above rules we’ve defined will become part of a regular review cycle to ensure they are kept in alignment with end-user expectations and expanded as new pipeline features are developed.
+In addition to the rule and threshold-based validation strategy, implementing a statistical validation of data provides significant benefits.
+
+The Apache incubator, open-source projects and DataOps focused platforms are advancing the tool and technology landscape by providing continuous integration and development features for data projects. Data processing workflow & orchestrations as code, native source control integration for data structures and automation of data promotion processes are all contributing to this advancement. Existing progress is also encouraging new approaches to developing data pipelines often adopted by and integrated into existing products. Ultimately, the industry is evolving to achieve many of the desired outcomes listed are also objectives of DevOps. There are however substantial differences introduced with data centric applications. 
+1.	Visibility & Sensitivity 
+A large portion of data analytics is used by systems or humans as input into varying levels of decision making. It can be argued that the use of data analytics for decision making purposes, inherently makes these types of solutions intrinsically sensitive to data issues. In many cases, the data validation process is partially composed of a subjective evaluation to determine if the data falls into a feel-good range. High volume data projects make this type of validation exercise significantly challenging. 
+2.	Application State 
+Most data analytics applications (as a whole) can be classified as stateful, since the output typically reflects a set of results for a specific context for a moment in time. Consequently, the change of state caused by an ongoing data refresh (sometimes happening on a frequent basis in production), or new feature release, has the potential to negatively impact the validity of the data. The results presented to the consumer could be dramatically different over the course of days, minutes or even seconds. Volatility in the results presented to a user in support of critical business decisions can significantly diminish their trust in the solution. 
+3.	Data Engineering Workflow 
+DataOps pipeline typically consists of several stages that collectively manage and streamline the end-to-end data operations process. These stages help ensure that data is efficiently and reliably delivered from source systems to its destination, whether for analytics, reporting, or other purposes. While the specific stages may vary depending on the organization and its data needs, the following are common stages in a DataOps pipeline: data extraction, data transformation, data ingestion, data quality checks and validation, data storage, data cataloging and metadata management, data access and security, data consumption, data monitoring and alerts, data versioning, testing, deployment automation.
+4.	Quantitative Testing Benefits
+A larger proportion of the output from data analytics applications is numerical. Using a statistical approach to validate the application offers greater value (in most cases) than in software development projects.

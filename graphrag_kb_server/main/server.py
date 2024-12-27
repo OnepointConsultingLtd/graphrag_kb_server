@@ -22,7 +22,11 @@ from graphrag_kb_server.service.query import (
     rag_combined_context,
     rag_drift_context,
 )
-from graphrag_kb_server.service.index import clear_rag, acreate_graph_rag
+from graphrag_kb_server.service.project import (
+    clear_rag,
+    acreate_graph_rag,
+    list_projects as project_listing,
+)
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from aiohttp.web import Response
@@ -491,6 +495,38 @@ async def context(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
+@routes.get("/protected/projects")
+async def list_projects(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns all projects of a tennant
+    tags:
+      - project
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Expected response to a valid request. Lists the projects of a tennant
+      '400':
+        description: Bad Request - No projects found
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
+    """
+    async def handle_request(request: web.Request) -> web.Response:
+        match extract_tennant_folder(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                projects = project_listing(project_dir)
+                return web.json_response(projects.model_dump())
+    return await handle_error(handle_request, request=request)
+
+
 @routes.delete("/protected/project/delete_index")
 async def delete_index(request: web.Request) -> web.Response:
     """
@@ -511,6 +547,14 @@ async def delete_index(request: web.Request) -> web.Response:
     responses:
       '200':
         description: Expected response to a valid request. Tells whether the project was deleted or not.
+      '400':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
     """
 
     async def handle_request(request: web.Request) -> web.Response:

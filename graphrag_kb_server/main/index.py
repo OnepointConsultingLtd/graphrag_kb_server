@@ -1,5 +1,5 @@
 import sys
-from graphrag_kb_server.service.index import (
+from graphrag_kb_server.service.project import (
     clear_rag,
     create_graph_rag,
     create_graph_rag_cmd,

@@ -1,0 +1,110 @@
+Categories: Analyse, Consume, Infrastructure
+Topic: Data Sharing
+
+What Is Data Sharing and Why Is It Important?
+Data sharing is the ability to make the same data available to one or many stakeholders — both external and internal. Nowadays, the ever-growing amount of data has become a strategic asset for any company. Data sharing — within your organization or externally — is an enabling technology for data commercialization and enhanced analysis. Sharing data as well as consuming data from external sources allow companies to collaborate with partners, establish new partnerships and generate new revenue streams with data monetization. Data sharing can deliver benefits to business groups across the enterprise. For those business groups, data sharing can get them access to data needed to make critical decisions. This includes but is not limited to roles such as the data analyst, data scientist and data engineer.
+
+What are the key benefits of data sharing?
+The benefits of data sharing include: 
+
+Ability to generate new revenue streams: With data sharing, organizations can generate new revenue streams by offering data products or data services to their end consumers. 
+
+Greater collaboration with existing partners: In today’s hyper connected digital economy, no organization can advance their business objectives without partnerships. Data sharing helps cement existing partnerships and establish new ones. 
+
+Ease of producing new products, services or business models: Product teams can leverage both first-party data and third-party data to refine their products and services and expand their product/ service catalog.
+
+Greater efficiency of internal operations: Teams across the organization can meet their business goals far more quickly when they don’t have to spend time figuring out how to free data from silos. When teams have access to live data, there’s no lag time between the need for data and the connection with the appropriate data source.
+
+What are the Conventional Methods of Data Sharing and Their Challenges
+Sharing data across different platforms, companies and clouds is no easy task. In the past, organizations have hesitated to share data more freely because of the perceived lack of secure technology, their competitive concerns and the cost of implementing data-sharing solutions. Even for companies that have the budget to implement data-sharing technology, many of the current approaches can’t keep up with today’s requirements for open-format, multicloud, high-performance solutions. Most data-sharing solutions are tied to a single vendor, which creates friction for data providers and data consumers who use noncompatible platforms. Over the past 30 years, data-sharing solutions have come in three forms: legacy and homegrown solutions, cloud object storage, and closed source commercial solutions. 
+
+THE PITFALLS OF USING APIS FOR DATA SHARING AND HOW TO AVOID THEM
+If you are just starting out in your data monetization journey, you might be tempted to develop APIs as a way of sharing data. Although APIs are a great way to connect different systems and automate processes, they have a series of additional challenges when they are used for data exchange, including: 
+1.	Requiring in-house expertise to develop and maintain them 
+2.	Requiring recurring effort and costs to develop and maintain them 
+3.	Limiting the volume of accessible data 
+4.	Requiring data consumers to learn how to use the API 
+5.	Limiting the types of questions the data buyer can ask against the data 
+6.	Causing performance and quality issues that are difficult to resolve
+
+Legacy and homegrown solutions: Many companies have built homegrown data-sharing solutions based on legacy technologies such as email, (S)FTP or APIs
+
+Proprietary vendor solutions: Commercial data-sharing solutions such as Snowflake Data Sharing are a popular option among companies that don’t want to devote the time and resources to building an in-house solution yet also want more control than what cloud object storage can offer. Commercial data-sharing solutions also offer managed packaged solutions in marketplace to allow ease of sharing.
+Cloud object storage Object storage is considered a good fit for the cloud because it is elastic and it can more easily scale into multiple petabytes to support unlimited data growth. The big three cloud providers all offer object storage services (AWS S3, Azure Blob, Google Cloud Storage) that are cheap, scalable and extremely reliable. An interesting feature of cloud object storage is the ability to generate signed URLs, which grant time-limited permission to download objects. Anyone who receives the presigned URL can then access the specified objects, making this a convenient way to share data.
+
+What are the use cases for Data Sharing?
+Data sharing with partners or suppliers (B2B) 
+Many companies now strive to share data with partners and suppliers as similarly as they share it across their own organizations. For example, retailers and their suppliers continue to work more closely together as they seek to keep their products moving in an era of ever-changing consumer tastes. Retailers can keep suppliers posted by sharing sales data by SKU in real time, while suppliers can share real-time inventory data with retailers so they know what to expect. Scientific research organizations can make their data available to pharmaceutical companies engaged in drug discovery. Public safety agencies can provide real-time public data feeds of environmental data, such as climate change statistics or updates on potential volcanic eruptions. 
+
+Internal lines of business (LOBs) sharing 
+Within any company, different departments, lines of business and subsidiaries seek to share data so that everyone can make decisions based on a complete view of the current business reality. For example, finance and HR departments need to share data as they analyze the true costs of each employee. Marketing and sales teams need a common view of data as they seek to determine the effectiveness of recent marketing campaigns. And different subsidiaries of the same company need a unified view of the health of the business. Removing data silos — which are often established for the important purpose of preventing unauthorized access to data — is critical for digital transformation initiatives and maximizing business value of data. 
+
+Data Monetization
+Companies across industries are commercializing data, and this segment continues to grow across industries. Large multinational organizations have formed exclusively to monetize data, while other organizations are looking for ways to monetize their data and generate additional revenue streams. Examples of these companies can range from an agency with an identity graph to a telecommunication company with proprietary 5G data or to retailers that have a unique ability to combine online and offline data. Data vendors are growing in importance as companies realize they need external data for better decision-making.
+
+FOUR STEPS TO START YOUR DATA MONETIZATION JOURNEY
+STEP 1: IDENTIFY YOUR DATA ASSETS 
+The first order of business is to define the inventory of potentially shareable data. Information that would disclose trade secrets, otherwise jeopardize competitiveness, or run afoul of legal protections and privacy policies obviously won’t make the cut. That still leaves a wealth of possible inventory, including Operational data that includes Transaction records and sensor logs,  Commercial data that includes Industry developments, sentiment, and prices, Marketing data that includes Aggregated or de-identified customer information, preferences, web traffic,Behavioral data that includes Data captured in digital and physical environments and SaaS data that Serves the customer data that’s created by your app back to your clients Alternatively, you may have analytical information that incorporates open-source data such as social network posts or government statistics. And, last but not least, every organization has “dark data,” information that is collected as part of regular business activities but is not used or analyzed. When mined and combined with other signals, this data can provide interesting insights and be a valuable component of monetization strategies.
+COMMON TYPES OF DATA OFFERINGS The type of data offering may determine how to charge for it and how much to charge. Here are five of the most common types of data or data services you can monetize: 
+1.	Raw Data in its original form that has not been processed, analyzed, or transformed 
+2.	Packaged data product or Ready-to-consume data that includes aggregation and requires little or no analysis/transformation
+3.	Data analysis or insights using Dashboards, metrics, and indices 
+4.	Data enhancement as a service that augments customer data with additional insights 
+5.	Data trade or exchange or Using your data to pay for data access
+As you identify the types of data you own, you will have to decide whether giving access to the raw data is of value to customers or if the data needs to be combined or enhanced with additional data sets. For example, a retailer’s store-level data is valuable to suppliers as is, but they might be willing to pay a premium if that data were enriched or scored with weather and demographics data sets.
+Depending on the types of customers you have, adding a layer of analytics to the data—that is, creating specific dashboards and reports—might be exactly what they need to make better decisions, especially if they lack the expertise or resources to perform the data analysis themselves. The more insights and enrichments you add to the data, either by incorporating more data sets into the original source or through the creation of prebuilt analyses, the higher its potential value. Adding insights to a data set increases its value.
+
+STEP 2: CHOOSE A PRICING STRATEGY 
+Different methodologies exist for pricing your data, each with its own benefits. Two of the most common ways of looking at how to price your data products are cost pricing and value pricing. Cost pricing Cost pricing involves understanding your costs for data collection, storage, preparation, transformation, and sharing so you can add a percentage margin as you price your data above your costs. You should consider the following: 
+1.	Cost of data sourcing: The time and effort taken to select and extract data sets, 
+2.	Cost of data packaging: The time and effort related to preparing the data for consumption and any related augmentation or enrichment done to the data, 
+3.	Cost of data sharing: The time, effort, and other costs associated with copying, storing, and transferring data to the consumer.
+What if your goal is not to maximize data revenue, but rather to use the offering as a customer acquisition tool? In that case, you might price your data at or below cost as a loss leader, or even give some of it away for free. The size of the discount might then depend on the value of the new business sought and the expected conversion rate of prospects into clients.
+Value pricing 
+Value pricing involves looking at your data from a customer’s perspective and identifying the value it will bring. With this pricing strategy, consider the following: 
+1.	Uniqueness: Is this data unique in any way or form? 
+2.	Access restrictions: Is the data difficult for customers to access? Are there specific barriers (physical or regional data locality laws or otherwise) preventing customers from obtaining the data themselves in some other way? 
+3.	Technology and expertise: Is aggregating or using this data technically difficult? Does it require specific expertise not found in many companies? 
+4.	Market alternatives: Are there other companies already providing similar data sets? Where would customers have to go in order to acquire similar data sets and at what cost? 
+5.	Analysis and insights: Is the analysis of the data time-consuming and costly? Are customers already paying (either in consulting fees or in additional internal resources) to analyze this type of data? 
+6.	Business value: Most importantly, will this data help companies improve their business operations, performance, or customer satisfaction? Could it help them develop better products or services
+Packaging 
+The final element in the pricing analysis is what we call packaging. Determining costs and value is helpful in establishing different pricing tiers, or packages. The traditional “good, better, best” framework also applies to your data products, with the following elements to consider: 
+1.	Timeliness: How fresh is the data? Should there be options for acquiring new versus historical data sets? What about updates or corrections to previously delivered data? 
+2.	Update frequency: How often would you need to update the data? Would customers be willing to pay for more frequent updates? 
+3.	Scope: How broad is the data product and is there potential to offer segmentation or various “cuts” of a set of data by separately packaging and pricing different intersections of tables, rows, and columns? Some customers may be willing to pay a premium for larger data sets while others might be interested only in narrower data sets. 
+4.	Distribution breadth: Will you offer data products to anyone who wants to buy them, or only for certain types of buyers or use cases? Will you limit the number of parties that can buy each sleeve of data, to increase scarcity and therefore positively affect price? 
+5.	Additional services: Would adding access to analytics, prebuilt dashboards, or preconfigured schema and chart metadata for the most commonly used visualization tools make the data more attractive?
+A tiered pricing plan can help attract new users by offering data access-only plans at lower costs, while ensuring that your existing customers get the data and services they need at a cost that best fits their needs and budget. You’ll also need to decide whether to sell data by the set or by subscription, perhaps monthly or annually, or if you want to charge based on usage.
+Consider a freemium structure featuring limited teaser access for new leads, a charge for standard access, and premium fees for additional service features. Let freemium data be broad in terms of coverage scope (all geographies, for example), but limit the number of data columns, or raise the level of aggregation to leave freemium users “wanting more.”
+
+STEP 3: SELECT A DISTRIBUTION CHANNEL 
+Data sellers now have a large and often bewildering array of choices for distributing data to data buyers, each with its advantages and drawbacks. Traditional methods include: 
+1. Doing a direct data transfer (for example via SFTP or Amazon S3) 
+2. Using a third-party data broker 
+3. Using a data marketplace 
+4. Use an open protocol over HTTPS such as delta sharing
+
+A direct data transfer to clients cuts out intermediaries and gives you more control over the final product. However, you do all the work, often with standards such as FTP and APIs, which have multiple disadvantages when it comes to storage and ETL costs, security vulnerabilities, service costs, and the potential for latency that can affect customer experience. Such solution are point to point solutions.
+
+A data broker such as revelate can help market your data and will sometimes also control pricing. But you’ll miss out on forging direct relationships with the ultimate users of your data, and you may not have the ability to choose who sees the data, or get a sense of how they are using it. Moreover, if you need to update the data on a regular basis, every engagement with a less sophisticated data broker may be like the first, requiring all the data transformation and loading you did the first time. 
+
+Traditional data marketplaces also promise to help with client acquisition and pricing plans. But they offer limited opportunities for promotion and incomplete control over the presentation, in addition to the usual file transfer and update hassles. API based data marketplaces require both the buyer and seller to code to a bespoke API, and then maintain, troubleshoot, and update that code over time. Traditional distribution channels move data from point A to point B, often with a couple of stops in between. This means they all have a common problem: when data travels, it becomes vulnerable to corruption, loss, theft, latency, and obsolescence. 
+
+What is Delta Sharing? Delta Sharing provides an open solution to securely share live data from your lakehouse to any computing platform. Recipients don’t have to be on the Databricks platform or on the same cloud or a cloud at all. Data providers can share live data without replicating it or moving it to another system. Recipients benefit from always having access to the latest version of data and can quickly query shared data using tools of their choice for BI, analytics and machine learning, reducing time-to-value.
+Data providers can centrally manage, govern, audit and track usage of the shared data on one platform. 
+
+STEP 4: CHOOSE A DATA SHARING SOLUTION 
+By leveraging solution such as Deltashare open protocol or vendor proprietary Snowflake Secure Data Sharing capabilities, data sellers can easily publish a variety of data products, which then become immediately available for use or purchase. This has multiple benefits for both data sellers and data buyers. 
+Snowflake’s Collaboration technology enables organizations to share data directly with their customers, suppliers, and business partners, without actually moving it. The data remains fully encrypted and stays put in the data seller’s Snowflake account; there are no duplicate data sets held by the buyer to chase down if regulations or relationships change, and data access is fully revocable at any time. The data is updated in near real time, not just whenever the IT schedules a refresh job. The data seller retains real-time, fine-grained control and determines who has access rights and can change or revoke them at any time.
+
+Snowflake Marketplace offers a more sustainable approach to providing data access to a broad audience. As a data seller, you can offer your data product under your own guidelines and update schedule—as a free offering or a commercial offering with your preferred pricing model. Anyone can find, try, and buy data products and services on Snowflake Marketplace with minimum effort and maximum efficiency.
+
+Delta Sharing is natively integrated with Unity Catalog, enabling organizations to centrally manage and audit shared data across organizations and confidently share data assets while meeting security and compliance needs. With Delta Sharing, organizations can easily share existing large scale data sets based on the open source formats Apache Parquet and Delta Lake without moving data. Teams gain the flexibility to query, visualize, transform, ingest or enrich shared data with their tools of choice.
+
+Databricks designed Delta Sharing with five goals in mind: 
+1.	Provide an open cross-platform sharing solution 
+2.	Share live data without copying it to another system 
+3.	Support a wide range of clients such as Power BI, Tableau, Apache Spark™, pandas and Java, and provide flexibility to consume data using the tools of choice for BI, machine learning and AI use cases 
+4.	Provide strong security, auditing and governance 
+5.	Scale to massive structured data sets and also allow sharing of unstructured data and future data derivatives such as ML models, dashboards and notebooks, in addition to tabular data

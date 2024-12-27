@@ -1,13 +1,14 @@
 # GraphRag Knowledge Base Engine
 
-Project with indexing and search functions to create the knowledge graph and the embeddings that can be used for GraphRAG.
+Project with support for multi tennant indexing and search functions to create the knowledge graphs and the embeddings that can be used for GraphRAG.
 It also provides a simple API to expose GraphRAG as an API.
 
-The API has three main methods:
+The tennant API has three main methods:
 
 - Upload a zip file with the knowledge base
 - Perform local, global and drift queries on an existing knowledge base
 - Retrieve the GraphRAG context based on a question
+- Delete a specific index or project
 
 # Install
 
@@ -69,7 +70,7 @@ python ./graphrag_kb_server/main/build_context.py "Why are questions so importan
 # Running the server
 
 ```bash
-poetry run python ./graphrag_kb_server/main/server.py
+poetry run python ./graphrag_kb_server/main/webapp.py
 ```
 
 Check the content of the server on for example:

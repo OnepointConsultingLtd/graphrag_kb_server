@@ -4,6 +4,7 @@ import re
 import yaml
 
 from pathlib import Path
+from datetime import datetime
 from enum import StrEnum
 from typing import Union
 
@@ -17,6 +18,7 @@ from graphrag.logger.factory import LoggerType
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.index_support import index
+from graphrag_kb_server.model.project import Project, ProjectListing
 
 
 ROOT_DIR = Path(cfg.graphrag_root_dir)
@@ -52,6 +54,29 @@ def clear_rag(rag_folder: Path) -> bool:
         shutil.rmtree(rag_folder, ignore_errors=True)
         deleted = True
     return deleted
+
+
+def list_projects(projects_dir: Path) -> ProjectListing:
+    if not projects_dir.exists():
+        return []
+    projects = []
+    for f in projects_dir.glob("*"):
+        if (
+            f.is_dir()
+            and len(list(f.glob("settings.yaml"))) > 0
+            and (input_files_dir := f / "input").exists()
+        ):
+            input_files = list([p.name for p in input_files_dir.glob("*")])
+            name = f.name
+            updated_timestamp = datetime.fromtimestamp(f.stat().st_mtime)
+            projects.append(
+                Project(
+                    name=name,
+                    updated_timestamp=updated_timestamp,
+                    input_files=input_files,
+                )
+            )
+    return ProjectListing(projects=projects)
 
 
 def override_env(input_dir: Path):

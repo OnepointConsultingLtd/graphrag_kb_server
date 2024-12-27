@@ -1,0 +1,62 @@
+Category: Data Infrastructure, Governance, Security
+Additional Category: Organise & Prepara
+Topic: Data Quality
+
+What Is Data Quality? 
+Data quality refers to the degree of accuracy, consistency, completeness, reliability, and relevance of the data collected, stored, and used within an organization or a specific context. High-quality data is essential for making well-informed decisions, performing accurate analyses, and developing effective strategies. Data quality can be influenced by various factors, such as data collection methods, data entry processes, data storage, and data integration. Maintaining high data quality is crucial for organizations to gain valuable insights, make informed decisions, and achieve their goals.
+
+Why Is Data Quality Important?
+Here are several reasons data quality is critical for organizations:
+
+1. Informed decision making: Low-quality data can result in incomplete or incorrect information, which negatively affects an organization’s decision-making process. With access to accurate and dependable data, business leaders can make informed decisions that promote growth and profitability.
+2. Operational efficiency: Data quality has a direct influence on operational efficiency by providing all departments with the accurate information needed for everyday tasks, including inventory management and order processing. Improved data quality leads to reduced errors in these processes and increases productivity.
+3. Customer satisfaction: Inaccurate customer records can make it more difficult to provide quality service to customers. Maintaining high-quality customer databases is crucial for improving satisfaction among existing clients.
+4. Revenue opportunities: Data quality directly affects an organization’s bottom line by enabling more effective marketing strategies based on precise customer segmentation and targeting. By using high-quality data to create personalized offers for specific customer segments, companies can better convert leads into sales and improve the ROI of marketing campaigns.
+
+
+Data Quality vs. Data Integrity
+Data integrity concentrates on maintaining consistent data across systems while preventing unauthorized changes or corruption of information during storage or transmission. The primary focus of data integrity is protecting data from any unintentional or malicious modifications, whether it is in storage or transit.
+Key differences between data quality and data integrity include:
+1. Objective: While both concepts aim to improve overall trustworthiness in an organization’s information assets, their primary focus differs. Data quality targets specific attributes of individual records, while data integrity ensures reliability throughout the entire data lifecycle, including creation, update, deletion, storage, and transmission.
+2. Methods: Enhancing data quality might involve cleansing, standardizing, enriching, or validating data elements, while preserving data integrity necessitates robust access controls, encryption measures, and backup/recovery strategies.
+3. Scope: Data quality primarily deals with dataset content, while data integrity is more concerned with the overall system architecture and processes that ensure consistency across different platforms or applications.
+
+What are the six key elements that contribute to data quality?
+1. Completeness: Is all the necessary data included in the dataset?  Completeness concerns whether a dataset contains all necessary records, without missing values or gaps. A complete dataset allows for more comprehensive analysis and decision-making. To improve the completeness, you can use techniques like imputing missing values, merging multiple information sources, or utilizing external reference datasets.
+2. Consistency: Is the data consistent between sources and over time? Consistency measures the extent to which data values are coherent and compatible across different datasets or systems. Incorrect data can cause wrong conclusions and confusion among different users who rely on the information to make decisions. To improve consistency, you can implement data standardization techniques, such as using consistent naming conventions, formats, and units of measurement.
+3. Validity: Does the data conform to the required format or structure? 
+4. Uniqueness: Are there any duplicates in the dataset? Uniqueness refers to the absence of duplicate records in a dataset. Duplicate entries can skew analysis by over-representing specific data points or trends. The primary action taken to improve the uniqueness of a dataset is to identify and remove duplicates. You can use automated deduplication tools to identify and eliminate redundant records from your database.
+5. Accuracy: How correctly does the data reflect what occurred in the real world? Accuracy refers to the extent to which data accurately represents real-world values or events. Ensuring accuracy involves identifying and correcting errors in your dataset, such as incorrect entries or misrepresentations. One way to improve accuracy is by implementing data validation rules, which help prevent inaccurate information from entering your system.
+6. Timeliness: Is the data available when it is expected and needed? Timeliness ensure that your data is up-to-date and relevant when used for analysis or decision-making purposes. Outdated information can lead to incorrect conclusions, so maintaining up-to-date datasets is essential. Techniques like incremental updates, scheduled refreshes, or real-time streaming can help keep datasets current.
+
+To manage data quality effectively, we recommend focusing your efforts on the following five areas:
+1.	Oversight: Your data is a strategic asset for your organization, and it needs to be managed as such. Key stakeholders that depend on the quality of the data should meet on a regular basis to drive organizational accountability for maintaining data quality. Data governance initiatives may include both employee education on the importance of data quality, as well as the introduction of data policies and procedures to help avoid downstream data problems. 
+2.	Validate: Before the data is enriched or published to the data lake, it is preferable to verify its quality using data profiling and cleansing tools. It might also be helpful to establish data standards to make it easier to spot egregious issues. 
+3.	Prevent: A key preemptive measure to keep data clean is to create documentation around the data attributes or create a data dictionary. For example, it can be helpful to maintain a metric/dimension glossary that users can reference and establish naming conventions for datasets and their various sub-elements to keep them consistent over time. 
+4.	Monitor: It’s helpful to keep a watchful eye on the incoming data and setting up alerts to monitor key metrics or datasets. 
+5.	Audit & Fix: Once an issue has been identified, you need a systematic process for resolving data problems. Rather than introducing a Band-Aid solution, we recommend tracing the issue back to its root cause to avoid future issues that might appear due to a temporary fix.
+
+Strategies for Improving Data Quality
+1. Establish Data Governance Policies
+Creating data governance policies ensures uniformity in handling and managing data throughout your organization. These policies should outline roles, responsibilities, standards, and processes related to data management. Implementing clear guidelines on collecting, storing, processing, and sharing information within the company can, over time, significantly improve overall data quality.
+
+2. Offer Data Quality Training
+Providing training programs focused on data quality management equips employees with the knowledge and skills needed to handle information responsibly. Regular workshops or seminars, covering topics like data collection practices or error detection techniques, will empower team members to contribute to high data quality standards.
+
+3. Keep Documentation Accurate and Up-to-Date
+Maintaining current documentation about your data sources, processes, and systems helps users understand the context of the information they are working with. This documentation should include details about data lineage (how it was collected), transformations applied to it, and any assumptions made during analysis. Accurate documentation can help prevent misunderstandings that may lead to incorrect insights.
+
+4. Implement Data Validation Techniques
+Data validation techniques are essential to guarantee accurate input into your systems. Introducing checks like format validation (e.g., validating that email addresses are correct), range constraints (e.g., age limits), or referential integrity rules (e.g., foreign key constraints) helps prevent incorrect or inconsistent values from entering your databases.
+
+5. Implement Feedback Loops
+Feedback loops involve gathering input from end-users regarding potential inaccuracies in datasets or reporting outputs. Fostering a culture of open communication around possible errors allows organizations to identify problems quickly and proactively implement necessary changes, rather than reacting after the fact when consequences may already have occurred.
+
+6. Use Data Cleansing Tools
+Data cleansing tools are designed to automatically identify errors in datasets by comparing them against predefined rules or patterns. These tools can also be used for tasks like removing duplicates from records or normalizing values according to specific criteria (e.g., capitalization). Regularly using these tools ensures that your systems store only high-quality information.
+
+7. Monitor Data Quality Metrics
+Measuring data quality metrics, such as completeness, accuracy, consistency, timeliness, or uniqueness, is crucial for identifying areas where improvements can be made. Regularly monitoring these metrics enables you to detect issues early on and take corrective actions before they affect business operations.
+
+What is data Obervability?
+Data observability, often referred to as data observability or data monitoring, is a practice in data management and data engineering that focuses on ensuring the reliability, quality, and performance of data pipelines and data-related processes. It involves the continuous monitoring, tracking, and analysis of data as it flows through various stages of data processing, storage, and transformation. The primary goal of data observability is to maintain data integrity, detect anomalies, and troubleshoot issues in real-time or near-real-time.
