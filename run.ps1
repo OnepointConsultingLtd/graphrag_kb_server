@@ -1,1 +1,1 @@
-poetry run python .\graphrag_kb_server\main\server.py
+poetry run python ./graphrag_kb_server/main/webapp.py
