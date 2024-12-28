@@ -1,5 +1,6 @@
 import os
 import yaml
+import shutil
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -102,6 +103,8 @@ cfg = Config()
 
 class AdminConfig:
     admins = cfg.config_dir / "administration.yaml"
+    if not admins.exists():
+        shutil.copyfile(cfg.config_dir / "administration_local.yaml", admins)
     yaml_text = admins.read_text()
     content = yaml.safe_load(yaml_text)
     administrators = content["administrators"]
