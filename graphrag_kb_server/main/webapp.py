@@ -10,7 +10,7 @@ from graphrag_kb_server.config import cfg, websocket_cfg
 from graphrag_kb_server.main import all_routes
 
 from graphrag_kb_server.main.multi_tennant_server import auth_middleware
-from graphrag_kb_server.main.server import sio
+from graphrag_kb_server.main.project_server import sio
 
 
 async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:

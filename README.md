@@ -48,44 +48,42 @@ STORAGE_BASE_DIR
 CLAIMS_ENABLED=false
 ```
 
-# Indexing
+# How the system works
+
+This is a Knowledge Base service which supports multiple tennants with multiple projects each. You have two roles:
+
+- Administrators: administrators can manage tennants
+- Tennants: tennants can manage projects
+
+A tennant will create a project when he/she uploads a file that is indexed. After the project has been created the tennant can query it or use its extracted context.
+
+The whole authentication system is based on tokens. The administrator will have his/her own token as well as the tennant.
+
+In order to promote a user to an administrator you will to create a token for the administrator (see next chapter) and then you need to add his / her email to the file:
+
+[./config/administration.yaml](./config/administration.yaml)
+
+An example of this file can be found here:
+
+[./config/administration_local.yaml](./config/administration_local.yaml)
+
+# Creating the administration token
+
+In order to create tennants via the API you will need to create an administration token first. The administrator is the one who can create tennants and therefore needs a token.
+
+This is the command that allows to generate the administration token:
 
 ```bash
-python ./graphrag_kb_server/main/index.py
+python ./graphrag_kb_server/cli/jwt_main.py "<name>" "<email>"
 ```
 
-# Searching 
-
-```bash
-python ./graphrag_kb_server/main/search.py "Why are questions so important?"
-python ./graphrag_kb_server/main/search.py "Why are the main topics related to a healthy enterprise data environment?"
-```
-
-# Build context
-
-```bash
-python ./graphrag_kb_server/main/build_context.py "Why are questions so important?" 
-```
+This will produce a file admin_token.md with the token.
 
 # Running the server
 
 ```bash
 poetry run python ./graphrag_kb_server/main/webapp.py
 ```
-
-Check the content of the server on for example:
-
-http://127.0.0.1:9999/about
-
-## Example requests
-
-http://127.0.0.1:9999/about
-
-http://127.0.0.1:9999/context?use_context_records=true&question=What%20are%20the%20most%20important%20principles%20of%20data%20governance?
-
-http://127.0.0.1:9999/query?format=html&question=What%20are%20the%20most%20important%20principles%20of%20data%20governance?
-
-http://127.0.0.1:9999/context?question=What%20are%20the%20most%20important%20principles%20of%20data%20governance?
 
 ## Swagger UI
 
@@ -96,4 +94,7 @@ http://127.0.0.1:9999/docs
 Here is a brief screenshot of the methods in the Swagger API:
 
 ![Description of the image](./docs/screenshots/kb_server.png)
+
+
+
 

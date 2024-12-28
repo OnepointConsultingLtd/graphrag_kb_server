@@ -16,7 +16,7 @@ async def handle_error(fun: Awaitable, **kwargs) -> any:
         if "response_format" in kwargs:
             match kwargs["response_format"]:
                 case Format.JSON:
-                    return web.json_response({"error": e}, status=400)
+                    return web.json_response({"error": str(e)}, status=400)
         return web.json_response(
             {"message": str(e)},
             status=500,

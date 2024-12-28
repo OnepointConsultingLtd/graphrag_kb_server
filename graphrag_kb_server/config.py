@@ -76,9 +76,6 @@ class Config:
     if not upload_dir.exists():
         upload_dir.mkdir(parents=True)
 
-    upload_secret = os.getenv("UPLOAD_SECRET")
-    assert upload_secret is not None, "Please specify the upload secret."
-
 
 class WebsocketConfig:
     websocket_server = os.getenv("SERVER")

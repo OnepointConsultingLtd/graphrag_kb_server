@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.12.7,<3.13"
-graphrag = "^1.0.0"
+graphrag = "^1.0.1"
 python-dotenv = "^1.0.1"
 numba = "0.59.1"
 markdown = "^3.7"
@@ -30,3 +30,6 @@ build-backend = "poetry.core.masonry.api"
 line-length = 120
 indent-width = 4
 target-version = "py39"
+
+[tool.poe.tasks]
+sort_imports = "ruff check --select I --fix ."

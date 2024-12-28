@@ -1,5 +1,6 @@
 import base64
 import zipfile
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -188,7 +189,7 @@ async def about(request: web.Request) -> web.Response:
                         )
                         return web.Response(
                             text=HTML_CONTENT.format(
-                                question=question, response=response
+                                question=question, response=markdown(response)
                             ),
                             content_type="text/html",
                         )
@@ -220,6 +221,9 @@ async def upload_index(request: web.Request) -> web.Response:
                 type: string
                 format: binary
                 description: The zip file with the text files to be uploaded.
+              project:
+                type: string
+                description: The name of the project
     responses:
       "200":
         description: Successful upload
@@ -242,6 +246,8 @@ async def upload_index(request: web.Request) -> web.Response:
         body = request["data"]["body"]
         file = body["file"]
         file_name = body["file_name"]
+        project = body["project"]
+        project = re.sub(r"[^a-z0-9_-]", "_", project.lower())
         match extract_tennant_folder(request):
             case Response() as error_response:
                 return error_response
@@ -259,13 +265,14 @@ async def upload_index(request: web.Request) -> web.Response:
                         {"error": "No file was uploaded"}, status=400
                     )
                 # Extract the zip file
-                upload_folder: Path = tennant_folder / saved_files[0].stem
+                upload_folder: Path = tennant_folder / project
+                input_folder = upload_folder / "input"
                 clear_rag(upload_folder)
-                if not upload_folder.exists():
-                    upload_folder.mkdir(parents=True)
+                if not input_folder.exists():
+                    input_folder.mkdir(parents=True, exist_ok=True)
                 try:
                     with zipfile.ZipFile(saved_files[0], "r") as zip_ref:
-                        zip_ref.extractall(upload_folder / "input")
+                        zip_ref.extractall(input_folder)
                 except zipfile.BadZipFile:
                     return web.json_response(
                         {"error": "Uploaded file is not a valid zip file"}, status=400
