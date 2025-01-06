@@ -1,6 +1,5 @@
 import asyncio
 import argparse
-import yaml
 
 from graphrag_kb_server.model.jwt_token import JWTTokenData, JWTToken
 from graphrag_kb_server.service.jwt_service import generate_token
@@ -32,10 +31,21 @@ administrators:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generates the administrator's token and prints it on the console")
-    parser.add_argument("name", type=str, help="The name of the administrator or organisation")
-    parser.add_argument("email", type=str, help="The email of the administrator or organisation")
-    parser.add_argument("token_file", nargs='?', type=str, help="The file which will store the administration token")
+    parser = argparse.ArgumentParser(
+        description="Generates the administrator's token and prints it on the console"
+    )
+    parser.add_argument(
+        "name", type=str, help="The name of the administrator or organisation"
+    )
+    parser.add_argument(
+        "email", type=str, help="The email of the administrator or organisation"
+    )
+    parser.add_argument(
+        "token_file",
+        nargs="?",
+        type=str,
+        help="The file which will store the administration token",
+    )
     args = parser.parse_args()
 
     token_file = args.token_file or "admin_token.md"

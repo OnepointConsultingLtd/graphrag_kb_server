@@ -3,7 +3,11 @@ import shutil
 import tempfile
 
 from pathlib import Path
-from graphrag_kb_server.service.project import override_settings, acreate_graph_rag, list_projects
+from graphrag_kb_server.service.project import (
+    override_settings,
+    acreate_graph_rag,
+    list_projects,
+)
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.service.project import clear_rag
 

@@ -74,6 +74,7 @@ In order to create tennants via the API you will need to create an administratio
 This is the command that allows to generate the administration token:
 
 ```bash
+conda activate graphrag_kb_server
 python ./graphrag_kb_server/cli/jwt_main.py "<name>" "<email>"
 ```
 

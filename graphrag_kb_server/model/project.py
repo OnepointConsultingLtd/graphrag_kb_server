@@ -9,7 +9,7 @@ class Project(BaseModel):
         ..., description="The list of file names in this project"
     )
 
-    @field_serializer('updated_timestamp')
+    @field_serializer("updated_timestamp")
     def serialize_updated_timestamp(self, dt: datetime, _info):
         return dt.isoformat()
 
