@@ -623,7 +623,9 @@ async def download_input(request: web.Request) -> web.Response:
                         "CONTENT-DISPOSITION": f'attachment; filename="{zip_file.name}"'
                     },
                 )
+
     return await handle_error(handle_request, request=request)
+
 
 def create_context_parameters(url: URL, project_dir: Path) -> ContextParameters:
     question = url.query.get("question", DEFAULT_QUESTION)

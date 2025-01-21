@@ -172,14 +172,18 @@ def convert_all_pdfs(folders: list[str], delete_previous: bool = False):
 def compact_files(folders: list[str]) -> dict[Path, list[Path]]:
     all_aggregate_files = {}
     for path in __process_folders(folders):
+        previous_files = path.rglob("**/*_aggregate.md")
+        for pf in previous_files:
+            pf.unlink()
         md_files = path.rglob("**/*.md")
         aggregate_dict = defaultdict(list)
         for md_file in md_files:
-            if not "_aggregate" in md_file.name:
+            if not "_aggregate" in md_file.name and re.match(r".+\_\d+\.md", md_file.name):
                 key = re.sub(r"(.+)\_\d+\.md", r"\1", md_file.name)
                 aggregate_dict[md_file.parent/f"{key}_aggregate.md"].append(md_file)
         aggregate_files = []
         for target_file, pages in aggregate_dict.items():
+            print(target_file)
             with open(target_file, "wt", encoding="utf-8") as f:
                 for page in pages:
                     content = page.read_text(encoding="utf-8")

@@ -98,6 +98,12 @@ def override_settings(root_dir: Path):
         r"\1" + cfg.openai_api_model_embedding,
         settings_text,
     )
+    # Add support for markdown file parsing.
+    settings_text = re.sub(
+        r"file_pattern: .+",
+        'file_pattern: ".*\\.(txt|md)$"',
+        settings_text
+    )
     settings.write_text(settings_text)
 
 
