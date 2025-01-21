@@ -60,3 +60,4 @@ docs/kb
 # Config stuff
 config/administration.yaml
 admin_token.md
+tokens.txt
