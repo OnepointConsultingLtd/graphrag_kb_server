@@ -183,13 +183,14 @@ def compact_files(folders: list[str]) -> dict[Path, list[Path]]:
                 aggregate_dict[md_file.parent/f"{key}_aggregate.md"].append(md_file)
         aggregate_files = []
         for target_file, pages in aggregate_dict.items():
-            print(target_file)
             with open(target_file, "wt", encoding="utf-8") as f:
                 for page in pages:
                     content = page.read_text(encoding="utf-8")
                     if not CANNOT_CONVERT in content:
                         f.write(content)
                 f.write("\n")
+            remove_markdown_tags(target_file, True)
+            logger.info(f"Finished {target_file}")
             aggregate_files.append(target_file)
         all_aggregate_files[path] = aggregate_files
     return all_aggregate_files
@@ -204,6 +205,27 @@ def zip_md_files(folder_files: dict[Path, list[Path]]) -> list[Path]:
                 zipf.write(file, arcname=file.relative_to(folder.parent))
         zipped_files.append(output_zip)
     return zipped_files
+
+
+def remove_markdown_tags(markdown_file: Path, override: bool=False) -> str:
+    output = []
+    with open(markdown_file, "r", encoding="utf-8") as f:
+        tag_open = True
+        for line in f:
+            if "```markdown" in line:
+                tag_open = True
+                output.append(line.replace("```markdown", ""))
+            elif "```" in line and tag_open:
+                tag_open = False
+                output.append(line.replace("```", ""))
+            else:
+                output.append(line)
+    clean = "".join(output)
+    if override:                      
+        markdown_file.write_text(clean, encoding="utf-8")
+    return clean
+    
+
 
 if __name__ == "__main__":
 
