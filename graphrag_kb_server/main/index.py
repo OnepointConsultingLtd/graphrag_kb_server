@@ -7,6 +7,7 @@ from graphrag_kb_server.service.project import (
     create_graph_rag_cmd,
 )
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.service.index_support import unzip_file
 
 if __name__ == "__main__":
     type = "normal"
@@ -28,6 +29,7 @@ if __name__ == "__main__":
     clear_rag(indexed_path)
 
     indexed_path.mkdir(parents=True)
+    unzip_file(indexed_path, zip_file)
 
     if type == "cmd":
         logger.debug("Using command line calls.")

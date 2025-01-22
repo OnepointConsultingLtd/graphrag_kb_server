@@ -3,6 +3,7 @@ import time
 import sys
 import graphrag.api as api
 import asyncio
+import zipfile
 
 from pathlib import Path
 
@@ -152,3 +153,11 @@ async def _run_index(
         )
     else:
         success("All workflows completed successfully.", True)
+
+
+def unzip_file(upload_folder: Path, zip_file: Path):
+    input_folder = upload_folder / "input"
+    if not input_folder.exists():
+        input_folder.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_file, "r") as zip_ref:
+        zip_ref.extractall(input_folder)

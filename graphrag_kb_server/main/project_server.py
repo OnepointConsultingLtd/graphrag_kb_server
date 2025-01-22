@@ -10,6 +10,7 @@ from enum import StrEnum
 
 from yarl import URL
 from markdown import markdown
+from aiohttp.web import Response
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
 from graphrag_kb_server.model.context import Search
@@ -31,7 +32,7 @@ from graphrag_kb_server.service.project import (
 from graphrag_kb_server.service.zip_service import zip_input
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
-from aiohttp.web import Response
+from graphrag_kb_server.service.index_support import unzip_file
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
 
@@ -267,16 +268,16 @@ async def upload_index(request: web.Request) -> web.Response:
                     )
                 # Extract the zip file
                 upload_folder: Path = tennant_folder / project
-                input_folder = upload_folder / "input"
                 clear_rag(upload_folder)
-                if not input_folder.exists():
-                    input_folder.mkdir(parents=True, exist_ok=True)
                 try:
-                    with zipfile.ZipFile(saved_files[0], "r") as zip_ref:
-                        zip_ref.extractall(input_folder)
+                    unzip_file(upload_folder, saved_files[0])
                 except zipfile.BadZipFile:
                     return web.json_response(
                         {"error": "Uploaded file is not a valid zip file"}, status=400
+                    )
+                except Exception as e:
+                    return web.json_response(
+                        {"error": f"Failed to process uploaded file: {e}"}, status=500
                     )
                 await acreate_graph_rag(True, upload_folder)
                 return web.json_response(

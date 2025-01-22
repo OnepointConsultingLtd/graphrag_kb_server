@@ -72,7 +72,7 @@ input:
   file_type: text # or csv
   base_dir: "input"
   file_encoding: utf-8
-  file_pattern: ".*\\.txt$"
+  file_pattern: ".*\\.(txt|md)$"
 
 cache:
   type: file # or blob
