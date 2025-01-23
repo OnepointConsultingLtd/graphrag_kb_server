@@ -63,28 +63,70 @@ COMMUNITY_LEVEL = 2
 token_encoder = tiktoken.get_encoding("cl100k_base")
 
 
+class Cache:
+    entity_df: pd.DataFrame | None = None 
+    report_df: pd.DataFrame | None = None
+    entity_embedding_df: pd.DataFrame | None = None
+    community_df: pd.DataFrame | None = None
+    reports: list[CommunityReport] | None = None
+    entities: list[Entity] | None = None
+    communities: list[Community] | None = None
+
+
 def load_project_data(
     project_dir: Path, default_entity_description_table_df: pd.DataFrame
 ) -> Tuple[list[CommunityReport], list[Entity], list[Community], OpenAIEmbedding]:
     output = f"{project_dir}/output"
-    entity_df = pd.read_parquet(f"{output}/{ENTITY_TABLE}.parquet")
-    entity_embedding_df = pd.read_parquet(f"{output}/{ENTITY_EMBEDDING_TABLE}.parquet")
-    report_df = pd.read_parquet(f"{output}/{COMMUNITY_REPORT_TABLE}.parquet")
+    
+    if Cache.entity_df is None:
+        Cache.entity_df = entity_df = pd.read_parquet(f"{output}/{ENTITY_TABLE}.parquet")
+    else:
+        entity_df = Cache.entity_df
+
+    if Cache.entity_embedding_df is None:
+        Cache.entity_embedding_df = entity_embedding_df = pd.read_parquet(f"{output}/{ENTITY_EMBEDDING_TABLE}.parquet")
+    else:
+        entity_embedding_df = Cache.entity_embedding_df
+
     text_embedder = create_text_embedder()
-    embed_community_reports(
-        report_df, text_embedder, embedding_col="full_content_embedding"
-    )
+    
+    if Cache.report_df is None:
+        report_embeddings_df_path = Path(f"{output}/{COMMUNITY_REPORT_TABLE}_embeddings.parquet")
+        if report_embeddings_df_path.exists():
+            Cache.report_df = report_df = pd.read_parquet(report_embeddings_df_path)
+        else:
+            report_df = pd.read_parquet(f"{output}/{COMMUNITY_REPORT_TABLE}.parquet")
+            embed_community_reports(
+                report_df, text_embedder, embedding_col="full_content_embedding"
+            )
+            report_df.to_parquet(report_embeddings_df_path)
+            Cache.report_df = report_df
+    else:
+        report_df = Cache.report_df
 
     entity_embedding_df["description_embedding"] = default_entity_description_table_df[
         "vector"
     ].copy()
 
-    reports = read_indexer_reports(report_df, entity_df, COMMUNITY_LEVEL)
-    entities = read_indexer_entities(entity_df, entity_embedding_df, COMMUNITY_LEVEL)
+    if Cache.reports is None: 
+        Cache.reports = reports = read_indexer_reports(report_df, entity_df, COMMUNITY_LEVEL)
+    else:
+        reports = Cache.reports
+    
+    if Cache.entities is None:
+        Cache.entities = entities = read_indexer_entities(entity_df, entity_embedding_df, COMMUNITY_LEVEL)
+    else:
+        entities = Cache.entities
 
-    community_df = pd.read_parquet(f"{output}/{COMMUNITY_TABLE}.parquet")
+    if Cache.community_df is None:
+        Cache.community_df = community_df = pd.read_parquet(f"{output}/{COMMUNITY_TABLE}.parquet")
+    else:
+        community_df = Cache.community_df
 
-    communities = read_indexer_communities(community_df, entity_df, report_df)
+    if Cache.communities is None:
+        Cache.communities = communities = read_indexer_communities(community_df, entity_df, report_df)
+    else:
+        communities = Cache.communities
 
     return reports, entities, communities, text_embedder
 
