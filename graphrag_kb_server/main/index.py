@@ -12,7 +12,7 @@ from graphrag_kb_server.service.index_support import unzip_file
 if __name__ == "__main__":
     type = "normal"
     indexed_folder = "/tmp/graphrag/sample"
-    zip_file = Path(__file__)/"../../../docs/fitzgerald/the_great_gatsby.zip"
+    zip_file = Path(__file__) / "../../../docs/fitzgerald/the_great_gatsby.zip"
     if len(sys.argv) > 2:
         type = sys.argv[1]
         indexed_folder = sys.argv[2]
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     assert zip_file.exists, f"The zip file ({zip_file}) does not exist."
 
     indexed_path = Path(indexed_folder)
-    
+
     clear_rag(indexed_path)
 
     indexed_path.mkdir(parents=True)

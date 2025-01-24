@@ -33,6 +33,7 @@ from graphrag_kb_server.service.zip_service import zip_input
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.service.index_support import unzip_file
+from graphrag_kb_server.service.community_service import prepare_community_extraction
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
 
@@ -624,6 +625,90 @@ async def download_input(request: web.Request) -> web.Response:
                         "CONTENT-DISPOSITION": f'attachment; filename="{zip_file.name}"'
                     },
                 )
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.get("/protected/project/topics")
+async def topics(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns a list of topics based on the level
+    tags:
+      - project
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: levels
+        in: query
+        required: true
+        description: Comma separated list of integers representing the level with 0 as the highest abstraction level. Example '0,1'
+        schema:
+          type: string
+      - name: format
+        in: query
+        required: false
+        description: The format of the output (json, html)
+        schema:
+          type: string
+          enum: [json, html]
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: A list of topics matching the specified levels
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                levels_str = request.rel_url.query.get("levels", "0")
+                levels = [int(level.strip()) for level in levels_str.split(",")]
+                community_df = prepare_community_extraction(project_dir, levels)
+                community_list = [
+                    c
+                    for c in zip(
+                        community_df["title_y"],
+                        community_df["summary"],
+                        community_df["rank"],
+                        community_df["level"],
+                    )
+                ]
+                format = request.rel_url.query.get("format", "json")
+                match format:
+                    case Format.HTML:
+                        html_header = "\n".join(
+                            [
+                                f"<th>{t}</th>"
+                                for t in ["Title", "Summary", "Rank", "Level"]
+                            ]
+                        )
+                        html_list = [
+                            f"<tr><td>{c[0]}</td><td>{c[1]}</td><td>{c[2]}</td><td>{c[3]}</td></tr>"
+                            for c in zip(
+                                community_df["title_y"],
+                                community_df["summary"],
+                                community_df["rank"],
+                                community_df["level"],
+                            )
+                        ]
+                        html_table = f"""<table><tr>{html_header}</tr>{"\n".join(html_list)}</table>"""
+                        return web.Response(
+                            text=HTML_CONTENT.format(
+                                question="Topics", response=html_table
+                            ),
+                            content_type="text/html",
+                        )
+                    case _:
+                        return web.json_response(community_list)
+                return web.json_response(community_list)
 
     return await handle_error(handle_request, request=request)
 

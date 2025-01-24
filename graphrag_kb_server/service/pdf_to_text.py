@@ -49,17 +49,25 @@ async def convert_pdf_to_markdown(
     try:
         pages = convert_from_path(file)
         batch_size = 5
-        batches = [
-            pages[i : i + batch_size] for i in range(0, len(pages), batch_size)
-        ]
+        batches = [pages[i : i + batch_size] for i in range(0, len(pages), batch_size)]
 
         for i, batch in enumerate(batches):
-            async_batch = [__process_page(file, max_retries, current_datetime, new_file_name, j + batch_size * i, page) for j, page in enumerate(batch)]
+            async_batch = [
+                __process_page(
+                    file,
+                    max_retries,
+                    current_datetime,
+                    new_file_name,
+                    j + batch_size * i,
+                    page,
+                )
+                for j, page in enumerate(batch)
+            ]
             results = await asyncio.gather(*async_batch)
             for result in results:
                 if isinstance(result, Exception):
                     logger.error(f"Task failed with exception: {result}")
-    except Exception as e:
+    except Exception:
         logger.exception(f"Cannot process {file}")
 
 
@@ -68,9 +76,7 @@ async def __process_page(file, max_retries, current_datetime, new_file_name, i, 
     retry_count = 0
     while not success and retry_count < max_retries:
         try:
-            page_file = (
-                    file.parent / f"{new_file_name}_{current_datetime}_{i+1}.jpg"
-                )
+            page_file = file.parent / f"{new_file_name}_{current_datetime}_{i+1}.jpg"
             logger.info(f"Processing {page_file}")
             page.save(page_file, "JPEG")
             image_data = __encode_image(page_file)
@@ -78,8 +84,8 @@ async def __process_page(file, max_retries, current_datetime, new_file_name, i, 
             if not new_file.exists():
                 messages = __build_messages(image_data)
                 response = await openai_client.chat.completions.create(
-                        model=cfg.openai_api_model, messages=messages
-                    )
+                    model=cfg.openai_api_model, messages=messages
+                )
                 markdown = response.choices[0].message.content
                 new_file.write_text(markdown, encoding="utf-8")
             else:
@@ -178,15 +184,17 @@ def compact_files(folders: list[str]) -> dict[Path, list[Path]]:
         md_files = path.rglob("**/*.md")
         aggregate_dict = defaultdict(list)
         for md_file in md_files:
-            if not "_aggregate" in md_file.name and re.match(r".+\_\d+\.md", md_file.name):
+            if "_aggregate" not in md_file.name and re.match(
+                r".+\_\d+\.md", md_file.name
+            ):
                 key = re.sub(r"(.+)\_\d+\.md", r"\1", md_file.name)
-                aggregate_dict[md_file.parent/f"{key}_aggregate.md"].append(md_file)
+                aggregate_dict[md_file.parent / f"{key}_aggregate.md"].append(md_file)
         aggregate_files = []
         for target_file, pages in aggregate_dict.items():
             with open(target_file, "wt", encoding="utf-8") as f:
                 for page in pages:
                     content = page.read_text(encoding="utf-8")
-                    if not CANNOT_CONVERT in content:
+                    if CANNOT_CONVERT not in content:
                         f.write(content)
                 f.write("\n")
             remove_markdown_tags(target_file, True)
@@ -199,15 +207,15 @@ def compact_files(folders: list[str]) -> dict[Path, list[Path]]:
 def zip_md_files(folder_files: dict[Path, list[Path]]) -> list[Path]:
     zipped_files = []
     for folder, files in folder_files.items():
-        output_zip = folder.parent/f"{folder.name}.zip"
-        with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        output_zip = folder.parent / f"{folder.name}.zip"
+        with zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file in files:
                 zipf.write(file, arcname=file.relative_to(folder.parent))
         zipped_files.append(output_zip)
     return zipped_files
 
 
-def remove_markdown_tags(markdown_file: Path, override: bool=False) -> str:
+def remove_markdown_tags(markdown_file: Path, override: bool = False) -> str:
     output = []
     with open(markdown_file, "r", encoding="utf-8") as f:
         tag_open = True
@@ -221,18 +229,19 @@ def remove_markdown_tags(markdown_file: Path, override: bool=False) -> str:
             else:
                 output.append(line)
     clean = "".join(output)
-    if override:                      
+    if override:
         markdown_file.write_text(clean, encoding="utf-8")
     return clean
-    
 
 
 if __name__ == "__main__":
 
     if len(sys.argv) < 3:
-        sys.stderr.write("""Please specify the command and the directory
+        sys.stderr.write(
+            """Please specify the command and the directory
 Example: convert python ./graphrag_kb_server/service/pdf_to_text.py /development/onepoint/thinqwin/graphrag_kb_server/docs/hypergility
-""")
+"""
+        )
         sys.exit(1)
 
     command = sys.argv[1]
