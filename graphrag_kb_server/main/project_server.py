@@ -33,7 +33,7 @@ from graphrag_kb_server.service.zip_service import zip_input
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.service.index_support import unzip_file
-from graphrag_kb_server.service.community_service import prepare_community_extraction
+from graphrag_kb_server.service.community_service import prepare_community_extraction, generate_gexf_file
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
 
@@ -103,7 +103,7 @@ async def index(request: web.Request) -> web.Response:
 
 
 HTML_CONTENT = (
-    "<html><body><h1>{question}</h1><section>{response}</section></body></html>"
+    "<html><body style='font-family: sans-serif'><h1>{question}</h1><section>{response}</section></body></html>"
 )
 
 
@@ -661,7 +661,7 @@ async def topics(request: web.Request) -> web.Response:
       - bearerAuth: []
     responses:
       '200':
-        description: A list of topics matching the specified levels
+        description: A list of topics matching the specified levels either in HTML of JSON
     """
 
     async def handle_request(request: web.Request) -> web.Response:
@@ -710,6 +710,43 @@ async def topics(request: web.Request) -> web.Response:
                         return web.json_response(community_list)
                 return web.json_response(community_list)
 
+    return await handle_error(handle_request, request=request)
+
+
+@routes.get("/protected/project/topics_network")
+async def topics(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns a file with the community graph structure in nexf format.
+    tags:
+      - project
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: A file representing the graph of community nodes.
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                graph_file = generate_gexf_file(project_dir)
+                return web.FileResponse(
+                    graph_file,
+                    headers={
+                        "CONTENT-DISPOSITION": f'attachment; filename="{graph_file.name}"'
+                    },
+                )
     return await handle_error(handle_request, request=request)
 
 
