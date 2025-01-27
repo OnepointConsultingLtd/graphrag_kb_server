@@ -33,16 +33,6 @@ class GenerationStatus(StrEnum):
     CREATED = "created"
 
 
-def copy_files_to_root_dir(kb_path: Union[Path, None]) -> Path:
-    kb_path = cfg.docs_dir_path if kb_path is None else kb_path
-    input_path: Path = INPUT_DIR
-    if not input_path.exists():
-        input_path.mkdir(**create_folder_props)
-    for f in kb_path.rglob("**/*.txt"):
-        shutil.copy(f, input_path)
-    return input_path
-
-
 async def run_pipeline(pipelines: AsyncIterable[PipelineRunResult]):
     async for p in pipelines:
         logger.info(p)
@@ -161,8 +151,7 @@ async def acreate_graph_rag(
     return GenerationStatus.CREATED
 
 
-def create_graph_rag_cmd() -> GenerationStatus:
-    input_dir = copy_files_to_root_dir()
+def create_graph_rag_cmd(input_dir: Path) -> GenerationStatus:
     executable = cfg.graphrag_exe
     subprocess.call(
         ["python", executable, "init", "--root", input_dir.parent.as_posix()]

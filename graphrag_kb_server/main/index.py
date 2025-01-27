@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     if type == "cmd":
         logger.debug("Using command line calls.")
-        create_graph_rag_cmd()
+        create_graph_rag_cmd(indexed_path)
     else:
         logger.debug("Using index cli interface.")
         create_graph_rag(False, indexed_path)

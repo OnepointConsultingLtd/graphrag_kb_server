@@ -28,13 +28,6 @@ class Config:
         openai_api_model_embedding is not None
     ), "Please specify the OPENAI_API_MODEL_EMBEDDING environment variable."
 
-    docs_dir = os.getenv("DOCS_DIR")
-    assert (
-        docs_dir is not None
-    ), "The document directory is not available. Please specify it using the DOCS_DIR environment variable."
-    docs_dir_path = Path(docs_dir)
-    assert docs_dir_path.exists(), "The path with the documents does not exist."
-
     config_dir_str = os.getenv("CONFIG_DIR")
     assert config_dir_str is not None, "The configuration directory with Swagger files"
     config_dir = Path(config_dir_str)
