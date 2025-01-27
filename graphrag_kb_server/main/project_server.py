@@ -33,7 +33,10 @@ from graphrag_kb_server.service.zip_service import zip_input
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.service.index_support import unzip_file
-from graphrag_kb_server.service.community_service import prepare_community_extraction, generate_gexf_file
+from graphrag_kb_server.service.community_service import (
+    prepare_community_extraction,
+    generate_gexf_file,
+)
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
 
@@ -102,9 +105,7 @@ async def index(request: web.Request) -> web.Response:
     return web.json_response({"status": "OK"})
 
 
-HTML_CONTENT = (
-    "<html><body style='font-family: sans-serif'><h1>{question}</h1><section>{response}</section></body></html>"
-)
+HTML_CONTENT = "<html><body style='font-family: sans-serif'><h1>{question}</h1><section>{response}</section></body></html>"
 
 
 def extract_tennant_folder(request: web.Request) -> Path | Response:
@@ -714,7 +715,7 @@ async def topics(request: web.Request) -> web.Response:
 
 
 @routes.get("/protected/project/topics_network")
-async def topics(request: web.Request) -> web.Response:
+async def topics_network(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
@@ -747,6 +748,7 @@ async def topics(request: web.Request) -> web.Response:
                         "CONTENT-DISPOSITION": f'attachment; filename="{graph_file.name}"'
                     },
                 )
+
     return await handle_error(handle_request, request=request)
 
 

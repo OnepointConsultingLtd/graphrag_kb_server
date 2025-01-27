@@ -31,7 +31,11 @@ def generate_digraph(project_dir: Path) -> nx.DiGraph:
     nodes = []
     edges = []
     labels = {}
-    for community, parent, title in zip(df_merged_simple['community'], df_merged_simple['parent'], df_merged_simple['title_y']):
+    for community, parent, title in zip(
+        df_merged_simple["community"],
+        df_merged_simple["parent"],
+        df_merged_simple["title_y"],
+    ):
         nodes.append(community)
         if parent > 0:
             edges.append((community, parent))
@@ -39,13 +43,13 @@ def generate_digraph(project_dir: Path) -> nx.DiGraph:
     G.add_nodes_from(nodes)
     G.add_edges_from(edges)
     for n in nodes:
-        G.nodes[n]['label'] = labels[n]
+        G.nodes[n]["label"] = labels[n]
     return G
 
 
 def generate_gexf_file(project_dir: Path) -> Path:
     G = generate_digraph(project_dir)
-    generated_file = project_dir/"output/communities.gexf"
+    generated_file = project_dir / "output/communities.gexf"
     nx.write_gexf(G, generated_file)
     return generated_file
 
