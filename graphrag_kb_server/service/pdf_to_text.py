@@ -6,12 +6,12 @@ import re
 import base64
 from typing import Iterator
 import zipfile
+from collections import defaultdict
 
 from pdf2image import convert_from_path
 import pymupdf
 from openai import AsyncOpenAI
-
-from collections import defaultdict
+from PIL import Image
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg
@@ -71,7 +71,7 @@ async def convert_pdf_to_markdown(
         logger.exception(f"Cannot process {file}")
 
 
-async def __process_page(file, max_retries, current_datetime, new_file_name, i, page):
+async def __process_page(file: Path, max_retries: int, current_datetime: str, new_file_name: str, i: int, page: Image.Image):
     success = False
     retry_count = 0
     while not success and retry_count < max_retries:
