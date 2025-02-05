@@ -21,6 +21,9 @@ routes = web.RouteTableDef()
 
 async def authenticate_request(request) -> dict:
     auth_header = request.headers.get("Authorization", None)
+    if request.method == "OPTIONS":
+        # Options should be not authenticated.
+        return {}
     if not auth_header or not auth_header.startswith("Bearer "):
         raise web.HTTPUnauthorized(reason="Missing or invalid Authorization header")
     token = auth_header[len("Bearer ") :]

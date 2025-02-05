@@ -62,3 +62,6 @@ docs/hypergility
 config/administration.yaml
 admin_token.md
 tokens.txt
+
+.parcel-cache
+node_modules

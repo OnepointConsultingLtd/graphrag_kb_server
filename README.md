@@ -15,6 +15,7 @@ The tennant API has three main methods:
 ```bash
 # conda remove -n graphrag_kb_server --all
 conda create -n graphrag_kb_server python=3.12
+# conda remove -n graphrag_kb_server --all
 conda activate graphrag_kb_server
 pip install poetry
 poetry install
@@ -86,6 +87,12 @@ This will produce a file admin_token.md with the token.
 poetry run python ./graphrag_kb_server/main/webapp.py
 ```
 
+Alternatively:
+
+```bash
+poetry run webapp
+```
+
 ## Swagger UI
 
 Please open to see the exposed API and its parameters:
@@ -95,6 +102,38 @@ http://127.0.0.1:9999/docs
 Here is a brief screenshot of the methods in the Swagger API:
 
 ![Description of the image](./docs/screenshots/kb_server.png)
+
+## Install the server as a service in Linux
+
+You can use the file graph_kb_server_sample.service as a template for installing a service in Linux using systemd.
+
+The installation commands are typically:
+
+```bash
+sudo cp *.service /etc/systemd/system/
+sudo systemctl enable graphrag_kb_server.service
+sudo systemctl start graphrag_kb_server.service
+sudo systemctl status graphrag_kb_server.service
+```
+
+## Building the front end
+
+You can build the front-end using this command:
+
+```bash
+poetry run build_web
+```
+
+## Starting the front end
+
+To start the front end just run:
+
+```bash
+poetry run webapp
+```
+
+You can access it via: http://localhost:9999/index
+
 
 
 

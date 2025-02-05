@@ -1,4 +1,5 @@
 from typing import Tuple, Dict
+from pathlib import Path
 import asyncio
 import base64
 
@@ -11,6 +12,17 @@ from graphrag_kb_server.main import all_routes
 
 from graphrag_kb_server.main.multi_tennant_server import auth_middleware
 from graphrag_kb_server.main.project_server import sio
+
+
+FILE_INDEX = "index.html"
+PATH_INDEX = (Path(__file__) / f"../../../front_end/dist/{FILE_INDEX}").resolve()
+INDEX_LINKS = ["/index.htm", "/index.html", "/index"]
+
+assert PATH_INDEX.exists(), "Cannot find the path of the user interface"
+
+
+async def get_index(_: web.Request) -> web.Response:
+    return web.FileResponse(PATH_INDEX)
 
 
 async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
@@ -54,6 +66,12 @@ def run_server():
     )
     for routes in all_routes:
         swagger.add_routes(routes)
+
+    for url in INDEX_LINKS:
+        app.router.add_get(url, get_index)
+    app.router.add_static(
+        "/", path=PATH_INDEX.parent, name="root"
+    )
 
     web.run_app(
         app,

@@ -42,6 +42,8 @@ sio = socketio.AsyncServer(async_mode="aiohttp")
 
 routes = web.RouteTableDef()
 
+CORS_HEADERS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*"}
+
 
 class Command(StrEnum):
     START_SESSION = "start_session"
@@ -506,6 +508,11 @@ async def context(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
+@routes.options("/protected/projects")
+async def list_projects_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
 @routes.get("/protected/projects")
 async def list_projects(request: web.Request) -> web.Response:
     """
@@ -535,7 +542,7 @@ async def list_projects(request: web.Request) -> web.Response:
                 return error_response
             case Path() as project_dir:
                 projects = project_listing(project_dir)
-                return web.json_response(projects.model_dump())
+                return web.json_response(projects.model_dump(), headers=CORS_HEADERS)
 
     return await handle_error(handle_request, request=request)
 
@@ -714,6 +721,11 @@ async def topics(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
+@routes.options("/protected/project/topics_network")
+async def topics_network_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
 @routes.get("/protected/project/topics_network")
 async def topics_network(request: web.Request) -> web.Response:
     """
@@ -745,7 +757,8 @@ async def topics_network(request: web.Request) -> web.Response:
                 return web.FileResponse(
                     graph_file,
                     headers={
-                        "CONTENT-DISPOSITION": f'attachment; filename="{graph_file.name}"'
+                        "CONTENT-DISPOSITION": f'attachment; filename="{project_dir.name}.gexf"',
+                        **CORS_HEADERS
                     },
                 )
 

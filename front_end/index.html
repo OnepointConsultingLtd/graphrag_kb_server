@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sigma.js Graph</title>
+    <style>
+        /* Make sure the graph container fills the screen */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .buttons {
+            margin: 0;
+            height: 40px;
+            padding: 10px
+        }
+
+        #network-container {
+            overflow: hidden;
+            width: calc(100vw - 2px);
+            height: calc(100vh - 40px);
+        }
+
+        #token {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        label[for=token] {
+            padding: 10px 0
+        }
+    </style>
+</head>
+
+<body x-data="{ token: '' }">
+
+    <template x-if="token">
+        <div class="buttons">
+            <div x-data="{projects: [], selectedProject: ''}"
+                x-init="window.listProjects(token).then(data => projects = data)" x-model="selectedProject"
+                @change="if (selectedProject !== '') window.loadGraph(selectedProject, token)">
+                <label for="projectSelect">Project:</label>
+                <select id="projectSelect">
+                    <option value="" disabled selected>Select a project</option>
+                    <template x-for="project in projects" :key="project">
+                        <option x-text="project"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+    </template>
+    <template x-if="token">
+        <div id="network-container"></div>
+    </template>
+    <template x-if="!token">
+        <div class="buttons">
+            <form @submit.prevent="token = $refs.tokenInput.value">
+                <label for="token">Please enter your token:</label>
+                <input id="token" type="text" name="token" x-ref="tokenInput"/>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </template>
+
+    <!-- Load the bundled JavaScript file -->
+    <script type="module" src="./index.js"></script>
+
+</body>
+
+</html>

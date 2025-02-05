@@ -1,0 +1,24 @@
+{
+  "name": "sigma",
+  "version": "1.0.0",
+  "description": "Trying to visualize Gexf files",
+  "source": "./index.html",
+  "scripts": {
+    "test": "test",
+    "start": "parcel index.html",
+    "build": "parcel build"
+  },
+  "author": "Gil Fernandes",
+  "license": "MIT",
+  "dependencies": {
+    "alpinejs": "^3.14.8",
+    "graphology": "^0.26.0",
+    "graphology-gexf": "^0.13.2",
+    "sigma": "^3.0.1",
+    "vis-data": "^7.1.9",
+    "vis-network": "^9.1.9"
+  },
+  "devDependencies": {
+    "parcel": "^2.13.3"
+  }
+}

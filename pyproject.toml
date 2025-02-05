@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.12.7,<3.13"
-graphrag = "^1.1.0"
+graphrag = "^1.2.0"
 python-dotenv = "^1.0.1"
 numba = "0.59.1"
 markdown = "^3.7"
@@ -16,8 +16,11 @@ aiohttp = "^3.10.11"
 python-socketio = "^5.11.4"
 aiohttp-test-utils = "^0.5.0"
 pytest-aiohttp = "^1.0.5"
-pymupdf = "^1.25.2"
-pdf2image = "^1.17.0"
+pdf-to-markdown-llm = "0.1.5"
+
+[tool.poetry.scripts]
+build_web = "graphrag_kb_server.cli.build_web:run"
+webapp = "graphrag_kb_server.main.webapp:run_server"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"
