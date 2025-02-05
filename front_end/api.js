@@ -1,5 +1,5 @@
 
-export const BASE_SERVER = "http://localhost:9999"
+import { BASE_SERVER } from "./server.js";
 
 export function createHeaders(token) {
     return {

@@ -44,13 +44,16 @@
             <div x-data="{projects: [], selectedProject: ''}"
                 x-init="window.listProjects(token).then(data => projects = data)" x-model="selectedProject"
                 @change="if (selectedProject !== '') window.loadGraph(selectedProject, token)">
-                <label for="projectSelect">Project:</label>
+                <label for="projectSelect">Knowledge graph:</label>
                 <select id="projectSelect">
                     <option value="" disabled selected>Select a project</option>
                     <template x-for="project in projects" :key="project">
                         <option x-text="project"></option>
                     </template>
                 </select>
+                <template x-if="selectedProject">
+                    <button type="submit" @click="window.loadGraph(selectedProject, token)">Reload</button>
+                </template>
             </div>
         </div>
     </template>
