@@ -5,54 +5,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sigma.js Graph</title>
-    <style>
-        /* Make sure the graph container fills the screen */
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .buttons {
-            margin: 0;
-            height: 40px;
-            padding: 10px
-        }
-
-        #network-container {
-            overflow: hidden;
-            width: calc(100vw - 2px);
-            height: calc(100vh - 40px);
-        }
-
-        #token {
-            width: 100%;
-            max-width: 400px;
-        }
-
-        label[for=token] {
-            padding: 10px 0
-        }
-    </style>
+    <link rel="stylesheet" href="./styles/index.css" type="text/css" as="style"/>
 </head>
 
-<body x-data="{ token: '' }">
+<body x-data="{ token: '', selectedProject: '', query: '' }">
 
     <template x-if="token">
         <div class="buttons">
-            <div x-data="{projects: [], selectedProject: ''}"
+            <div class="row justify-between">
+                <div x-data="{projects: []}"
                 x-init="window.listProjects(token).then(data => projects = data)" x-model="selectedProject"
                 @change="if (selectedProject !== '') window.loadGraph(selectedProject, token)">
-                <label for="projectSelect">Knowledge graph:</label>
-                <select id="projectSelect">
-                    <option value="" disabled selected>Select a project</option>
-                    <template x-for="project in projects" :key="project">
-                        <option x-text="project"></option>
+                    <label for="projectSelect">Knowledge graph:</label>
+                    <select id="projectSelect">
+                        <option value="" disabled selected>Select a project</option>
+                        <template x-for="project in projects" :key="project">
+                            <option x-text="project"></option>
+                        </template>
+                    </select>
+                    <template x-if="selectedProject">
+                        <button type="submit" @click="window.loadGraph(selectedProject, token)">Reload</button>
                     </template>
-                </select>
+                </div>
                 <template x-if="selectedProject">
-                    <button type="submit" @click="window.loadGraph(selectedProject, token)">Reload</button>
+                    <div class="search-block">
+                        <label for="search">Search:</label>
+                        <input id="search" type="search" placeholder="Enter search and then press enter" x-model="query" @keyup.enter="searchGraph"/>
+                    </div>
                 </template>
             </div>
         </div>
@@ -67,6 +46,23 @@
                 <input id="token" type="text" name="token" x-ref="tokenInput"/>
                 <button type="submit">Submit</button>
             </form>
+        </div>
+    </template>
+
+    <template x-if="selectedProject != ''">
+        <div class="legend">
+            <div class="row">
+                <div class="colour-node main-colour" ></div>
+                <div class="legend-text">Main node</div>
+            </div>
+            <div class="row">
+                <div class="colour-node intermediate-colour" ></div>
+                <div class="legend-text">Intermediate node</div>
+            </div>
+            <div class="row">
+                <div class="colour-node leaf-colour" ></div>
+                <div class="legend-text">Leaf node</div>
+            </div>
         </div>
     </template>
 

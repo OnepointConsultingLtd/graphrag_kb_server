@@ -1,0 +1,92 @@
+/* Make sure the graph container fills the screen */
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.buttons {
+    margin: 0;
+    height: 40px;
+    padding: 10px
+}
+
+#network-container {
+    overflow: hidden;
+    width: calc(100vw - 2px);
+    height: calc(100vh - 40px);
+}
+
+#token {
+    width: 100%;
+    max-width: 400px;
+}
+
+label[for=token] {
+    padding: 10px 0
+}
+
+select, label, button {
+    font-size: large;
+}
+
+input[type=text], input[type=search], select {
+    padding: 5px 2px
+}
+
+.search-block {
+    display: flex;
+    align-items: center;
+    width: 40%
+}
+
+.search-block label {
+    margin: 0 5px
+}
+
+.search-block input {
+    flex: 1;
+}
+
+.legend {
+    position: absolute;
+    top: 50px;
+    border: 1px solid gray;
+    max-width: 200px;
+    width: 100%;
+    margin-left: 10px;
+    padding: 2px 4px;
+    z-index: 1000;
+    background: white
+}
+
+.row {
+    display: flex
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.colour-node {
+    width: 20px;
+    height: 20px;
+    margin: 4px 5px;
+}
+
+.main-colour {
+    background-color: #ff6666;
+}
+
+.intermediate-colour {
+    background-color: #0084d7;
+}
+
+.leaf-colour {
+    background-color: gray;
+}
+
+.legend-text {
+    margin: 5px 0 0 1px;
+}
