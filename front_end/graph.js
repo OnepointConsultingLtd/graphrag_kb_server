@@ -1,4 +1,7 @@
 import { Network } from "vis-network";
+import { getCommunityDetails } from "./api.js"
+import Alpine from "alpinejs";
+import {changeVisibilityNodeDetails } from "./index.js"
 
 const LIMIT = 1000
 const MIN_QUERY_SIZE = 3
@@ -8,6 +11,7 @@ function createData(nodes, edges) {
 }
 
 export function createGraph(nodes, edges) {
+    changeVisibilityNodeDetails(false)
     const data = createData(nodes, edges);
 
     // Define options
@@ -31,6 +35,23 @@ export function createGraph(nodes, edges) {
         const foundNodes = params.nodes
         recreateGraphWithFilter(foundNodes)
     });
+
+    network.on("click", (params) => {
+        if (params.nodes.length > 0) {
+            const clickedNodeId = params.nodes[0];
+            const token = Alpine.$data(document.querySelector('[x-ref="main"]')).token
+            if (token) {
+                getCommunityDetails(clickedNodeId, token)
+                    .then(json => {
+                        const summary = json["summary"]
+                        if (summary && typeof summary === "string") {
+                            changeVisibilityNodeDetails(true)
+                            document.getElementById("node-details").innerHTML = `<strong>${json["title"]}</strong><br /><p>${summary}</p>`
+                        }
+                    })
+            }
+        }
+    })
 
     window.network = network
 
@@ -126,7 +147,7 @@ export function searchGraph(event) {
             if (matched) { console.log(label) };
             return matched
         })
-        if(foundNodes.length === 0) {
+        if (foundNodes.length === 0) {
             alert("No results")
         }
         recreateGraphWithFilter(foundNodes)

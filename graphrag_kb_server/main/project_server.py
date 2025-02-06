@@ -17,6 +17,7 @@ from graphrag_kb_server.model.context import Search
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg
+from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.service.query import rag_local, rag_global, rag_drift
 from graphrag_kb_server.service.query import (
     rag_local_build_context,
@@ -36,13 +37,12 @@ from graphrag_kb_server.service.index_support import unzip_file
 from graphrag_kb_server.service.community_service import (
     prepare_community_extraction,
     generate_gexf_file,
+    find_community
 )
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
 
 routes = web.RouteTableDef()
-
-CORS_HEADERS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*"}
 
 
 class Command(StrEnum):
@@ -733,7 +733,7 @@ async def topics_network(request: web.Request) -> web.Response:
     ---
     summary: returns a file with the community graph structure in nexf format.
     tags:
-      - project
+      - graph
     parameters:
       - name: project
         in: query
@@ -763,6 +763,79 @@ async def topics_network(request: web.Request) -> web.Response:
                 )
 
     return await handle_error(handle_request, request=request)
+
+
+@routes.options("/protected/project/topics_network/community/{id}")
+async def topics_network_community_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+
+@routes.get("/protected/project/topics_network/community/{id}")
+async def topics_network_community(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns the details of a single community
+    tags:
+      - graph
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        description: The community id
+        schema:
+          type: string
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: A file representing the graph of community nodes.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                title:
+                  type: string
+                summary:
+                  type: string
+      '404':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
+    """
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                community_id = request.match_info.get("id", None)
+                if community_id is None:
+                    return invalid_response(
+                        "No community id", "Please specify the community id."
+                    )
+                community_report = find_community(project_dir, community_id)
+                if community_report:
+                    return web.json_response(community_report.model_dump(), headers=CORS_HEADERS)
+                else:
+                    return invalid_response(
+                        "Cannot find community report", "Please specify another community id.", status=404
+                    )
+    return await handle_error(handle_request, request=request)
+
 
 
 def create_context_parameters(url: URL, project_dir: Path) -> ContextParameters:

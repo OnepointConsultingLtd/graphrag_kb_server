@@ -4,7 +4,7 @@ import { parse } from "graphology-gexf";
 import Alpine from "alpinejs";
 import listProjects, { createHeaders } from "./api.js"
 import { BASE_SERVER } from "./server.js";
-import { createGraph, recreateGraphWithFilter, extractEdges, extractNodes } from "./graph.js";
+import { createGraph, extractEdges, extractNodes } from "./graph.js";
 
 let token = ""
 
@@ -30,8 +30,16 @@ function loadGraph(project, token) {
 
             createGraph(nodes, edges)
 
+            window.project = project
+
         })
         .catch(error => console.error("Error loading GEXF:", error));
+}
+
+export function changeVisibilityNodeDetails(show) {
+    const nodeDetails = document.querySelector(".node-details-container")
+    nodeDetails?.classList.remove(show ? "hidden" : "flex")
+    nodeDetails?.classList.add(show ? "flex" : "hidden")
 }
 
 window.loadGraph = loadGraph

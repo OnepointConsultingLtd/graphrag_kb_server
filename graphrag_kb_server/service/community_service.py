@@ -4,6 +4,7 @@ import pandas as pd
 import networkx as nx
 
 from graphrag_kb_server.service.query import COMMUNITY_REPORT_TABLE, COMMUNITY_TABLE
+from graphrag_kb_server.model.graph import CommunityReport
 
 
 def prepare_community_extraction(
@@ -52,6 +53,17 @@ def generate_gexf_file(project_dir: Path) -> Path:
     generated_file = project_dir / "output/communities.gexf"
     nx.write_gexf(G, generated_file)
     return generated_file
+
+
+def find_community(project_dir: Path, id: str | int) -> CommunityReport | None:
+    community_df = prepare_community_extraction(project_dir, levels=None)
+    id = int(id)
+    community_dict = community_df[community_df['community'] == id].to_dict()
+    summary_res = community_dict['summary']
+    if len(summary_res) == 0:
+        return None
+    title_res = community_dict['title_y']
+    return CommunityReport(id=id, title=title_res[id], summary=summary_res[id])
 
 
 if __name__ == "__main__":

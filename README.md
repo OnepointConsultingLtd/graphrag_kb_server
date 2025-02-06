@@ -126,7 +126,18 @@ poetry run build_web
 
 ## Starting the front end
 
-To start the front end just run:
+To start the front end in development mode:
+
+```bash
+cd front_end
+yarn run start
+```
+
+Make sure to start the server with the command below.
+
+You can access it via: http://localhost:1234/index
+
+To start the front end in production mode in the root folder of the project:
 
 ```bash
 poetry run webapp

@@ -5,7 +5,7 @@ from aiohttp.web import Response
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.model.error import Error, ErrorCode
-
+from graphrag_kb_server.main.cors import CORS_HEADERS
 
 async def handle_error(fun: Awaitable, **kwargs) -> any:
     try:
@@ -27,6 +27,7 @@ def invalid_response(
     error_name: str,
     error_description: str,
     error_code: ErrorCode = ErrorCode.INVALID_INPUT,
+    status: int = 400
 ) -> Response:
     return web.json_response(
         Error(
@@ -34,5 +35,6 @@ def invalid_response(
             error=error_name,
             description=error_description,
         ).model_dump(),
-        status=400,
+        status=status,
+        headers=CORS_HEADERS
     )

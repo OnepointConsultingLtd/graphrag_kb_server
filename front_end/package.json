@@ -2,23 +2,26 @@
   "name": "sigma",
   "version": "1.0.0",
   "description": "Trying to visualize Gexf files",
-  "source": "./index.html",
   "scripts": {
     "test": "test",
-    "start": "parcel index.html",
-    "build": "parcel build"
+    "dev": "vite --open",
+    "preview": "vite preview",
+    "build": "vite build"
   },
   "author": "Gil Fernandes",
   "license": "MIT",
   "dependencies": {
+    "@tailwindcss/vite": "^4.0.4",
     "alpinejs": "^3.14.8",
     "graphology": "^0.26.0",
     "graphology-gexf": "^0.13.2",
     "sigma": "^3.0.1",
+    "tailwindcss": "^4.0.4",
     "vis-data": "^7.1.9",
     "vis-network": "^9.1.9"
   },
   "devDependencies": {
-    "parcel": "^2.13.3"
+    "daisyui": "^5.0.0-beta.6",
+    "vite": "^6.1.0"
   }
 }
