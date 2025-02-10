@@ -39,6 +39,7 @@ from graphrag_kb_server.service.community_service import (
     generate_gexf_file,
     find_community
 )
+from graphrag_kb_server.utils.file_support import write_uploaded_file
 
 sio = socketio.AsyncServer(async_mode="aiohttp")
 
@@ -260,12 +261,8 @@ async def upload_index(request: web.Request) -> web.Response:
             case Path() as tennant_folder:
                 if file_name is not None and file_name.lower().endswith(".zip"):
                     uploaded_file: Path = tennant_folder / file_name
-                    if uploaded_file.exists():
-                        uploaded_file.unlink()
-                        uploaded_file.touch()
-                    with open(uploaded_file, "wb") as f:
-                        f.write(base64.b64decode(file))
-                        saved_files.append(uploaded_file)
+                    write_uploaded_file(file, uploaded_file)
+                    saved_files.append(uploaded_file)
                 if (file_length := len(saved_files)) == 0:
                     return web.json_response(
                         {"error": "No file was uploaded"}, status=400
@@ -303,7 +300,7 @@ async def upload_index(request: web.Request) -> web.Response:
 @routes.get("/protected/project/query")
 async def query(request: web.Request) -> web.Response:
     """
-    Optional route description
+    Query RAG index
     ---
     summary: returns the response to a query from an LLM
     tags:
