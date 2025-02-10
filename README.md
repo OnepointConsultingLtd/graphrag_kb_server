@@ -118,11 +118,22 @@ sudo systemctl status graphrag_kb_server.service
 
 ## Building the front end
 
+You will need node version 18 or later for this.
+
 You can build the front-end using this command:
 
 ```bash
 poetry run build_web
 ```
+
+Alternatively you can build the UI by running these commands:
+
+```bash
+cd front_end
+yarn run build
+```
+
+You can also use npm instead of yarn.
 
 ## Starting the front end
 
