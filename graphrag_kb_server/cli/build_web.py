@@ -5,8 +5,8 @@ import re
 def run():
     print("Building web server ...")
 
-    front_end_path = Path(__file__)/"../../../front_end"
-    assert front_end_path.exists(), "The front end path does not exist."
+    front_end_path = (Path(__file__)/"../../../front_end").resolve()
+    assert front_end_path.exists(), f"The front end path '{front_end_path}' does not exist."
     print(f"Found {front_end_path}")
     params = {"cwd": front_end_path.as_posix(), "check": True, "shell": True}
     server_path = front_end_path/"server.js"
