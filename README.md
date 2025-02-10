@@ -20,6 +20,8 @@ conda activate graphrag_kb_server
 pip install poetry
 poetry install
 pip install aiohttp_swagger3
+# Linux
+sudo apt-get install poppler-utils
 ```
 
 # Configuration
@@ -134,6 +136,20 @@ yarn run build
 ```
 
 You can also use npm instead of yarn.
+
+Also change the file [front_end/server.js](front_end/server.js) so that the UI is linked to your server domain.
+
+So change:
+
+```js
+export const BASE_SERVER = "http://localhost:9999"
+```
+
+to 
+
+```js
+export const BASE_SERVER = "https://yourdomain.com"
+```
 
 ## Starting the front end
 
