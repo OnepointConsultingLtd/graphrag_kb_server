@@ -16,7 +16,7 @@ aiohttp = "^3.10.11"
 python-socketio = "^5.11.4"
 aiohttp-test-utils = "^0.5.0"
 pytest-aiohttp = "^1.0.5"
-pdf-to-markdown-llm = "0.1.5"
+pdf-to-markdown-llm = "0.1.6"
 
 [tool.poetry.scripts]
 build_web = "graphrag_kb_server.cli.build_web:run"
