@@ -1,12 +1,12 @@
 from typing import Tuple
 from pathlib import Path
 import shutil
-from datetime import datetime
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.jwt_token import JWTToken
 from graphrag_kb_server.model.error import Error, ErrorCode
 from graphrag_kb_server.model.tennant import Tennant
+from graphrag_kb_server.utils.file_support import get_creation_time
 
 TENNANT_JSON = "tennant.json"
 
@@ -52,9 +52,7 @@ def list_tennants() -> list[Tennant]:
                 tennants.append(
                     Tennant(
                         folder_name=d.name,
-                        creation_timestamp=datetime.fromtimestamp(
-                            d.stat().st_birthtime
-                        ),
+                        creation_timestamp=get_creation_time(d),
                     )
                 )  #
     return tennants
