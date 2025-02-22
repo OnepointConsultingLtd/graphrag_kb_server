@@ -9,6 +9,7 @@ from graphrag_kb_server.main.error_handler import handle_error
 
 routes = web.RouteTableDef()
 
+
 @routes.post("/protected/pdf")
 async def convert_single_pdf(request: web.Request) -> web.Response:
     """
@@ -45,15 +46,16 @@ async def convert_single_pdf(request: web.Request) -> web.Response:
               status: "error"
               message: "No file was uploaded"
     """
+
     async def handle_request(request: web.Request) -> web.Response:
         body = request["data"]["body"]
         file = body["file"]
         file_name = body["file_name"]
         if file_name is not None and file_name.lower().endswith(".pdf"):
-            pdf_dir = cfg.upload_dir/f"pdfs_{uuid.uuid4()}"
+            pdf_dir = cfg.upload_dir / f"pdfs_{uuid.uuid4()}"
             if not pdf_dir.exists():
                 pdf_dir.mkdir(parents=True, exist_ok=True)
-            local_pdf: Path = write_uploaded_file(file, pdf_dir/file_name)
+            local_pdf: Path = write_uploaded_file(file, pdf_dir / file_name)
             process_result = await convert_single_file(local_pdf)
             if len(process_result.exceptions):
                 return web.json_response(
@@ -69,8 +71,6 @@ async def convert_single_pdf(request: web.Request) -> web.Response:
                         "CONTENT-DISPOSITION": f'attachment; filename="{markdown_file.name}"'
                     },
                 )
-            return web.json_response(
-                {"error": "No file generated"}, status=404
-            )
+            return web.json_response({"error": "No file generated"}, status=404)
+
     return await handle_error(handle_request, request=request)
-            

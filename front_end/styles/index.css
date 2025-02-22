@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "daisyui";
 
 /* Make sure the graph container fills the screen */
@@ -10,11 +10,11 @@ body {
 }
 
 .buttons {
-    @apply h-32 px-4 py-3 lg:h-18
+    @apply h-32 px-4 py-3 lg:h-18;
 }
 
 .row {
-    @apply flex flex-wrap
+    @apply flex flex-wrap;
 }
 
 #network-container {
@@ -28,28 +28,32 @@ body {
     max-width: 400px;
 }
 
-.project, .search-block {
-    @apply flex w-full my-2 lg:w-1/2 items-center
+.project,
+.search-block {
+    @apply flex w-full my-2 lg:w-1/2 items-center;
 }
 
-.project label, .search-block label {
-    @apply w-3/12 md:w-1/6
+.project label,
+.search-block label {
+    @apply w-3/12 md:w-1/6;
 }
 
-.project select, .search-block input {
-    @apply w-9/12 md:w-5/6
+.project select,
+.search-block input {
+    @apply w-9/12 md:w-5/6;
 }
 
 .search-block input {
-    @apply lg:!max-w-[100%]
+    @apply lg:!max-w-[100%];
 }
 
 select {
-    @apply select w-full max-w-xs
+    @apply select w-full max-w-xs;
 }
 
-input[type=text], input[type=search] {
-    @apply input w-full max-w-xs
+input[type='text'],
+input[type='search'] {
+    @apply input w-full max-w-xs;
 }
 
 .legend {
@@ -59,7 +63,7 @@ input[type=text], input[type=search] {
     width: 100%;
     padding: 2px 4px;
     z-index: 1000;
-    background: white
+    background: white;
 }
 
 .colour-node {
@@ -78,6 +82,10 @@ input[type=text], input[type=search] {
 
 .leaf-colour {
     background-color: gray;
+}
+
+.entity-colour {
+    background-color: #11aadd;
 }
 
 .legend-text {

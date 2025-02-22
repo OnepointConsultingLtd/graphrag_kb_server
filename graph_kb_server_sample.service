@@ -1,0 +1,11 @@
+[Unit]
+Description=GraphRAG Knowledge Server
+After=multi-user.target
+
+[Service]
+User=ubuntu
+Type=simple
+Restart=always
+ExecStart=/bin/bash /home/ubuntu/projects/graphrag_kb_server/run.sh
+[Install]
+WantedBy=multi-user.target

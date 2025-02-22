@@ -1,82 +1,117 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Knowledge Graph Viewer</title>
+        <link
+            rel="stylesheet"
+            href="./styles/index.css"
+            type="text/css"
+            as="style"
+        />
+    </head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sigma.js Graph</title>
-    <link rel="stylesheet" href="./styles/index.css" type="text/css" as="style"/>
-</head>
-
-<body x-data="{ token: '', selectedProject: '', query: '' }" x-ref="main">
-
-    <template x-if="token">
-        <div class="buttons">
-            <div class="row">
-                <div x-data="{projects: []}"
-                x-init="window.listProjects(token).then(data => projects = data)" x-model="selectedProject"
-                @change="if (selectedProject !== '') window.loadGraph(selectedProject, token)"
-                class="project">
-                    <label for="projectSelect">Knowledge graph:</label>
-                    <select id="projectSelect">
-                        <option value="" disabled selected>Select a project</option>
-                        <template x-for="project in projects" :key="project">
-                            <option x-text="project"></option>
+    <body x-data="{ token: '', query: '' }" x-ref="main" x-init="Alpine.store('app', { selectedProject: '' })">
+        <template x-if="token">
+            <div class="buttons">
+                <div class="row">
+                    <div
+                        x-data="{projects: []}"
+                        x-init="window.listProjects(token).then(data => projects = data)"
+                        @change="if ($store.app.selectedProject !== '') window.loadGraph($store.app.selectedProject, token)"
+                        class="project"
+                    >
+                        <label for="projectSelect">Knowledge graph:</label>
+                        <select id="projectSelect" x-model="$store.app.selectedProject">
+                            <option value="" disabled>Select a project</option>
+                            <template x-for="project in projects" :key="project">
+                              <!-- Bind the value AND set the visible text. -->
+                              <option :value="project" x-text="project"></option>
+                            </template>
+                          </select>
+                        <template x-if="$store.app.selectedProject">
+                            <button
+                                type="submit"
+                                @click="window.loadGraph($store.app.selectedProject, token)"
+                                class="btn ml-1"
+                            >
+                                Reload
+                            </button>
                         </template>
-                    </select>
-                    <template x-if="selectedProject">
-                        <button type="submit" @click="window.loadGraph(selectedProject, token)" class="btn ml-1">Reload</button>
+                    </div>
+                    <template x-if="$store.app.selectedProject">
+                        <div class="search-block">
+                            <label for="search">Search:</label>
+                            <input
+                                id="search"
+                                type="search"
+                                placeholder="Enter search and then press enter"
+                                x-model="query"
+                                @keyup.enter="searchGraph"
+                            />
+                        </div>
                     </template>
                 </div>
-                <template x-if="selectedProject">
-                    <div class="search-block">
-                        <label for="search">Search:</label>
-                        <input id="search" type="search" placeholder="Enter search and then press enter" x-model="query" @keyup.enter="searchGraph"/>
-                    </div>
-                </template>
             </div>
-        </div>
-    </template>
-    <template x-if="token">
-        <div id="network-container"></div>
-    </template>
-    <template x-if="!token">
-        <div class="buttons">
-            <form @submit.prevent="token = $refs.tokenInput.value">
-                <label for="token">Please enter your token:</label>
-                <input id="token" type="text" name="token" x-ref="tokenInput"/>
-                <button type="submit" class="btn">Submit</button>
-            </form>
-        </div>
-    </template>
-
-    <template x-if="selectedProject != ''">
-        <div class="legend">
-            <div class="row">
-                <div class="colour-node main-colour" ></div>
-                <div class="legend-text">Main node</div>
+        </template>
+        <template x-if="token">
+            <div id="network-container"></div>
+        </template>
+        <template x-if="!token">
+            <div class="buttons">
+                <form @submit.prevent="token = $refs.tokenInput.value">
+                    <label for="token">Please enter your token:</label>
+                    <input
+                        id="token"
+                        type="text"
+                        name="token"
+                        x-ref="tokenInput"
+                    />
+                    <button type="submit" class="btn">Submit</button>
+                </form>
             </div>
-            <div class="row">
-                <div class="colour-node intermediate-colour" ></div>
-                <div class="legend-text">Intermediate node</div>
+        </template>
+
+        <template x-if="$store.app.selectedProject != ''">
+            <div class="legend">
+                <div class="row">
+                    <div class="colour-node main-colour"></div>
+                    <div class="legend-text">Main node</div>
+                </div>
+                <div class="row">
+                    <div class="colour-node intermediate-colour"></div>
+                    <div class="legend-text">Intermediate node</div>
+                </div>
+                <div class="row">
+                    <div class="colour-node leaf-colour"></div>
+                    <div class="legend-text">Leaf node</div>
+                </div>
+                <div class="row">
+                    <div class="colour-node entity-colour"></div>
+                    <div class="legend-text">Entity node</div>
+                </div>
             </div>
-            <div class="row">
-                <div class="colour-node leaf-colour" ></div>
-                <div class="legend-text">Leaf node</div>
+        </template>
+
+        <template x-if="$store.app.selectedProject != ''">
+            <div class="node-details-container hidden">
+                <div class="node-details relative" id="node-details"></div>
             </div>
+        </template>
+
+        <div
+            id="contextMenu"
+            class="absolute hidden bg-white border border-gray-300 rounded-lg shadow-lg"
+        >
+            <button
+                class="entities block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+            >
+                Show entities
+            </button>
         </div>
 
-    </template>
-
-    <template x-if="selectedProject != ''">
-        <div class="node-details-container hidden">
-            <div class="node-details" id="node-details"></div>
-        </div>
-    </template>
-
-    <!-- Load the bundled JavaScript file -->
-    <script type="module" src="./index.js"></script>
-
-</body>
-
+        <!-- Load the bundled JavaScript file -->
+        <script type="module" src="./index.js"></script>
+    </body>
 </html>

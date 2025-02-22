@@ -1,8 +1,7 @@
-import base64
 import zipfile
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable, Awaitable
 
 import socketio
 from aiohttp import web
@@ -37,7 +36,8 @@ from graphrag_kb_server.service.index_support import unzip_file
 from graphrag_kb_server.service.community_service import (
     prepare_community_extraction,
     generate_gexf_file,
-    find_community
+    find_community,
+    generate_entities_digraph_gexf_file,
 )
 from graphrag_kb_server.utils.file_support import write_uploaded_file
 
@@ -146,6 +146,32 @@ def match_process_dir(request: web.Request) -> Response | Path:
                     return error_response
                 case Path() as project_dir:
                     return project_dir
+
+
+async def process_community_query(
+    request: web.Request,
+    process_community: Callable[[Path, str], Awaitable[web.Response]],
+) -> Response:
+    match match_process_dir(request):
+        case Response() as error_response:
+            return error_response
+        case Path() as project_dir:
+            community_id = request.match_info.get("id", None)
+            if community_id is None:
+                return invalid_response(
+                    "No community id", "Please specify the community id."
+                )
+            return await process_community(project_dir, community_id)
+
+
+def send_gexf_file(project_dir: Path, graph_file: Path) -> Path:
+    return web.FileResponse(
+        graph_file,
+        headers={
+            "CONTENT-DISPOSITION": f'attachment; filename="{project_dir.name}.gexf"',
+            **CORS_HEADERS,
+        },
+    )
 
 
 @routes.get("/protected/project/about")
@@ -751,13 +777,7 @@ async def topics_network(request: web.Request) -> web.Response:
                 return error_response
             case Path() as project_dir:
                 graph_file = generate_gexf_file(project_dir)
-                return web.FileResponse(
-                    graph_file,
-                    headers={
-                        "CONTENT-DISPOSITION": f'attachment; filename="{project_dir.name}.gexf"',
-                        **CORS_HEADERS
-                    },
-                )
+                return send_gexf_file(project_dir, graph_file)
 
     return await handle_error(handle_request, request=request)
 
@@ -765,7 +785,6 @@ async def topics_network(request: web.Request) -> web.Response:
 @routes.options("/protected/project/topics_network/community/{id}")
 async def topics_network_community_options(_: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
-
 
 
 @routes.get("/protected/project/topics_network/community/{id}")
@@ -814,25 +833,84 @@ async def topics_network_community(request: web.Request) -> web.Response:
               error_name: "No tennant information"
               error_description: "No tennant information available in request"
     """
+
     async def handle_request(request: web.Request) -> web.Response:
-        match match_process_dir(request):
-            case Response() as error_response:
-                return error_response
-            case Path() as project_dir:
-                community_id = request.match_info.get("id", None)
-                if community_id is None:
-                    return invalid_response(
-                        "No community id", "Please specify the community id."
-                    )
-                community_report = find_community(project_dir, community_id)
-                if community_report:
-                    return web.json_response(community_report.model_dump(), headers=CORS_HEADERS)
-                else:
-                    return invalid_response(
-                        "Cannot find community report", "Please specify another community id.", status=404
-                    )
+        async def process_community(project_dir: Path, community_id: str):
+            community_report = find_community(project_dir, community_id)
+            if community_report:
+                return web.json_response(
+                    community_report.model_dump(), headers=CORS_HEADERS
+                )
+            else:
+                return invalid_response(
+                    "Cannot find community report",
+                    "Please specify another community id.",
+                    status=404,
+                )
+
+        return await process_community_query(request, process_community)
+
     return await handle_error(handle_request, request=request)
 
+
+@routes.options("/protected/project/topics_network/community_entities/{id}")
+async def topics_network_community_entities_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.get("/protected/project/topics_network/community_entities/{id}")
+async def topics_network_community_entities(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns the entities of a single community
+    tags:
+      - graph
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        description: The community id
+        schema:
+          type: string
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: A file representing the graph with the entities of a community.
+      '404':
+        description: Bad Request - No community or project found.
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        async def process_community(project_dir: Path, community_id: str):
+            gex_file = generate_entities_digraph_gexf_file(
+                project_dir, int(community_id)
+            )
+            if gex_file:
+                return send_gexf_file(project_dir, gex_file)
+            else:
+                return invalid_response(
+                    "Cannot find community report",
+                    "Please specify another community id.",
+                    status=404,
+                )
+
+        return await process_community_query(request, process_community)
+
+    return await handle_error(handle_request, request=request)
 
 
 def create_context_parameters(url: URL, project_dir: Path) -> ContextParameters:

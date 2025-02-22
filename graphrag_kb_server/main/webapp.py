@@ -18,7 +18,9 @@ FILE_INDEX = "index.html"
 PATH_INDEX = (Path(__file__) / f"../../../front_end/dist/{FILE_INDEX}").resolve()
 INDEX_LINKS = ["/index.htm", "/index.html", "/index"]
 
-assert PATH_INDEX.exists(), "Cannot find the path of the user interface. Please build it first with 'yarn run build' in the front_end directory."
+assert (
+    PATH_INDEX.exists()
+), "Cannot find the path of the user interface. Please build it first with 'yarn run build' in the front_end directory."
 
 
 async def get_index(_: web.Request) -> web.Response:
@@ -69,9 +71,7 @@ def run_server():
 
     for url in INDEX_LINKS:
         app.router.add_get(url, get_index)
-    app.router.add_static(
-        "/", path=PATH_INDEX.parent, name="root"
-    )
+    app.router.add_static("/", path=PATH_INDEX.parent, name="root")
 
     web.run_app(
         app,
