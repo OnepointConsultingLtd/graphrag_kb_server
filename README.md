@@ -157,7 +157,7 @@ To start the front end in development mode:
 
 ```bash
 cd front_end
-yarn run start
+yarn run dev
 ```
 
 Make sure to start the server with the command below.
