@@ -12,16 +12,12 @@ The tennant API has three main methods:
 
 # Install
 
+In the project folder execute:
+
 ```bash
-# conda remove -n graphrag_kb_server --all
-conda create -n graphrag_kb_server python=3.12
-# conda remove -n graphrag_kb_server --all
-conda activate graphrag_kb_server
-pip install poetry
-poetry install
-pip install aiohttp_swagger3
-# Linux
-sudo apt-get install poppler-utils
+uv venv
+.venv\Scripts\activate
+uv sync
 ```
 
 # Configuration
@@ -86,7 +82,7 @@ This will produce a file admin_token.md with the token.
 # Running the server
 
 ```bash
-poetry run python ./graphrag_kb_server/main/webapp.py
+python ./graphrag_kb_server/main/webapp.py
 ```
 
 Alternatively:

@@ -1,35 +1,38 @@
-[tool.poetry]
+[project]
 name = "graphrag-kb-server"
 version = "0.1.0"
 description = "Project with indexing scripts to create the knowledge graph and the embeddings that can be used in AI Agents."
-authors = ["Gil Fernandes <gil.fernandes@onepointltd.com>"]
-license = "MIT"
+authors = [{ name = "Gil Fernandes", email = "gil.fernandes@onepointltd.com" }]
+requires-python = ">=3.12.7,<3.13"
 readme = "README.md"
+license = "MIT"
+dependencies = [
+    "graphrag>=1.2.0,<2",
+    "python-dotenv>=1.0.1,<2",
+    "numba==0.59.1",
+    "markdown~=3.7",
+    "aiohttp>=3.10.11,<4",
+    "python-socketio>=5.11.4,<6",
+    "aiohttp-test-utils>=0.5.0,<0.6",
+    "pytest-aiohttp>=1.0.5,<2",
+    "pdf-to-markdown-llm==0.1.6",
+    "aiohttp-swagger3>=0.10.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.12.7,<3.13"
-graphrag = "^1.2.0"
-python-dotenv = "^1.0.1"
-numba = "0.59.1"
-markdown = "^3.7"
-aiohttp = "^3.10.11"
-python-socketio = "^5.11.4"
-aiohttp-test-utils = "^0.5.0"
-pytest-aiohttp = "^1.0.5"
-pdf-to-markdown-llm = "0.1.6"
-
-[tool.poetry.scripts]
+[project.scripts]
 build_web = "graphrag_kb_server.cli.build_web:run"
 webapp = "graphrag_kb_server.main.webapp:run_server"
 
-[tool.poetry.group.dev.dependencies]
-black = "^24.10.0"
-pytest = "^8.3.3"
-ruff = "^0.7.4"
+[dependency-groups]
+dev = [
+    "black>=24.10.0,<25",
+    "pytest>=8.3.3,<9",
+    "ruff>=0.7.4,<0.8",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 120
