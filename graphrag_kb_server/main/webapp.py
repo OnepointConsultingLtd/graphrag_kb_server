@@ -11,8 +11,8 @@ from graphrag_kb_server.config import cfg, websocket_cfg
 from graphrag_kb_server.main import all_routes
 
 from graphrag_kb_server.main.multi_tennant_server import auth_middleware
-from graphrag_kb_server.main.project_server import sio
 
+# from graphrag_kb_server.main.websocket import sio
 
 FILE_INDEX = "index.html"
 PATH_INDEX = (Path(__file__) / f"../../../front_end/dist/{FILE_INDEX}").resolve()
@@ -47,7 +47,7 @@ def run_server():
 
     app = web.Application()
     app.middlewares.append(auth_middleware)
-    sio.attach(app)
+    # sio.attach(app)
 
     loop = asyncio.new_event_loop()
 

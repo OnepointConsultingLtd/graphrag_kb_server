@@ -3,11 +3,7 @@ from pathlib import Path
 import pandas as pd
 import networkx as nx
 
-from graphrag_kb_server.service.query import (
-    COMMUNITY_REPORT_TABLE,
-    COMMUNITY_TABLE,
-    ENTITY_EMBEDDING_TABLE,
-)
+from graphrag_kb_server.service.query import COMMUNITY_REPORT_TABLE, COMMUNITY_TABLE
 from graphrag_kb_server.model.graph import CommunityReport
 
 
@@ -79,13 +75,15 @@ def generate_entities_graph(project_dir: Path, community: int) -> nx.DiGraph:
     labels = {}
     title_limit = 50
     for id, title, type in zip(
-        df_community_entities["human_readable_id"], 
-        df_community_entities["title"], 
-        df_community_entities["type"]
+        df_community_entities["human_readable_id"],
+        df_community_entities["title"],
+        df_community_entities["type"],
     ):
         nodes.append(id)
         edges.append((id, community))
-        labels[id] = f"{title[:title_limit]} ({type})" if type else title[:title_limit + 5]
+        labels[id] = (
+            f"{title[:title_limit]} ({type})" if type else title[: title_limit + 5]
+        )
     return build_digraph(nodes, edges, labels)
 
 

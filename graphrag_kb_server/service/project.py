@@ -9,7 +9,7 @@ from enum import StrEnum
 from typing import Union
 
 from collections.abc import AsyncIterable
-from graphrag.index.typing import PipelineRunResult
+from graphrag.index.typing.pipeline_run_result import PipelineRunResult
 
 from graphrag.cli.index import index_cli
 from graphrag.cli.initialize import initialize_project_at
@@ -107,7 +107,8 @@ def activate_claims(project_dir: Path, enabled: bool):
 def _prepare_graph_rag(kb_path: Union[Path, None]) -> Path:
     project_dir = kb_path
     input_dir = kb_path / "input"
-    initialize_project_at(project_dir)
+    # TODO Consider exposing this parameter to the user.
+    initialize_project_at(project_dir, force=True)
     override_env(input_dir)
     override_settings(project_dir)
     activate_claims(project_dir, cfg.claims_enabled)
@@ -125,7 +126,7 @@ def prepare_index_args(root_dir: Path):
         "config_filepath": None,
         "dry_run": False,
         "skip_validation": False,
-        "output_dir": None,
+        "output_dir": root_dir / "output",
     }
 
 

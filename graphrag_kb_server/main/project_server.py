@@ -3,9 +3,7 @@ import re
 from pathlib import Path
 from typing import Optional, Callable, Awaitable
 
-import socketio
 from aiohttp import web
-from enum import StrEnum
 
 from yarl import URL
 from markdown import markdown
@@ -14,7 +12,6 @@ from aiohttp.web import Response
 from graphrag_kb_server.model.rag_parameters import ContextParameters
 from graphrag_kb_server.model.context import Search
 
-from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.service.query import rag_local, rag_global, rag_drift
@@ -41,71 +38,7 @@ from graphrag_kb_server.service.community_service import (
 )
 from graphrag_kb_server.utils.file_support import write_uploaded_file
 
-sio = socketio.AsyncServer(async_mode="aiohttp")
-
 routes = web.RouteTableDef()
-
-
-class Command(StrEnum):
-    START_SESSION = "start_session"
-    RESPONSE = "response"
-    BUILD_CONTEXT = "build_context"
-    ERROR = "error"
-
-
-@sio.event
-async def connect(sid: str, environ):
-    logger.info(f"Client connected: {sio}")
-    await sio.emit(
-        Command.START_SESSION,
-        {"data": "Welcome to graphrag knowledge base server."},
-        to=sid,
-    )
-
-
-@sio.event
-async def query_websocket(sid: str, question: str):
-    logger.info(f"Query from {sio}: {question}")
-    response = await rag_local(
-        ContextParameters(
-            query=question,
-            project_dir=cfg.graphrag_root_dir_path,
-            context_size=cfg.local_context_max_tokens,
-        )
-    )
-    await sio.emit(Command.RESPONSE, {"data": response}, to=sid)
-
-
-@sio.event
-async def build_context(sid: str, question: str):
-    logger.info(f"Building context for {sio}: {question}")
-    context_text, context_records = rag_local_build_context(
-        ContextParameters(
-            query=question,
-            project_dir=cfg.graphrag_root_dir_path,
-            context_size=cfg.local_context_max_tokens,
-        )
-    )
-    await sio.emit(
-        Command.BUILD_CONTEXT,
-        {
-            "data": {
-                "context_text": context_text,
-                "context_records": context_records,
-            }
-        },
-        to=sid,
-    )
-
-
-@sio.event
-async def disconnect(sid):
-    logger.info(f"Client disconnected: {sio}")
-
-
-@routes.get("/")
-async def index(request: web.Request) -> web.Response:
-    return web.json_response({"status": "OK"})
 
 
 HTML_CONTENT = "<html><body style='font-family: sans-serif'><h1>{question}</h1><section>{response}</section></body></html>"
@@ -174,6 +107,15 @@ def send_gexf_file(project_dir: Path, graph_file: Path) -> Path:
     )
 
 
+def get_search(request: web.Request) -> str:
+    return request.rel_url.query.get("search", Search.LOCAL.value)
+
+
+@routes.get("/")
+async def index(request: web.Request) -> web.Response:
+    return web.json_response({"status": "OK"})
+
+
 @routes.get("/protected/project/about")
 async def about(request: web.Request) -> web.Response:
     """
@@ -191,6 +133,13 @@ async def about(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
+      - name: search
+        in: query
+        required: false
+        description: The type of the search (local, global)
+        schema:
+          type: string
+          enum: [local, global]
     responses:
       '200':
         description: Expected response to a valid request
@@ -213,13 +162,16 @@ async def about(request: web.Request) -> web.Response:
                         return error_response
                     case Path() as project_dir:
                         question = "What are the main topics?"
-                        response = await rag_local(
-                            ContextParameters(
-                                query=question,
-                                project_dir=project_dir,
-                                context_size=cfg.local_context_max_tokens,
-                            )
+                        search = get_search(request)
+                        search_params = ContextParameters(
+                            query=question,
+                            project_dir=project_dir,
+                            context_size=cfg.local_context_max_tokens,
                         )
+                        promise = (
+                            rag_local if search == Search.LOCAL.value else rag_global
+                        )
+                        response = await promise(search_params)
                         return web.Response(
                             text=HTML_CONTENT.format(
                                 question=question, response=markdown(response)
@@ -389,7 +341,7 @@ async def query(request: web.Request) -> web.Response:
                         return error_response
                     case Path() as project_dir:
                         format = request.rel_url.query.get("format", Format.JSON.value)
-                        search = request.rel_url.query.get("search", Search.LOCAL.value)
+                        search = get_search(request)
                         context_params = create_context_parameters(
                             request.rel_url, project_dir
                         )

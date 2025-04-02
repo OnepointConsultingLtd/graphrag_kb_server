@@ -11,12 +11,12 @@ from pathlib import Path
 from graphrag.config.enums import CacheType
 from graphrag.config.logging import enable_logging_with_config
 from graphrag.config.load_config import load_config
-from graphrag.config.resolve_path import resolve_paths
 
 from graphrag.logger.base import ProgressLogger
 from graphrag.logger.factory import LoggerFactory, LoggerType
 from graphrag.index.validate_config import validate_config_names
 from graphrag.utils.cli import redact
+import graphrag.config.defaults as defs
 
 log = logging.getLogger(__name__)
 
@@ -101,11 +101,11 @@ async def _run_index(
     info, error, success = _logger(progress_logger)
     run_id = resume or time.strftime("%Y%m%d-%H%M%S")
 
-    config.storage.base_dir = str(output_dir) if output_dir else config.storage.base_dir
+    config.output.type = defs.OutputType.file
+    config.output.base_dir = str(output_dir) if output_dir else config.output.base_dir
     config.reporting.base_dir = (
         str(output_dir) if output_dir else config.reporting.base_dir
     )
-    resolve_paths(config, run_id)
 
     if not cache:
         config.cache.type = CacheType.none
@@ -136,8 +136,7 @@ async def _run_index(
 
     outputs = await api.build_index(
         config=config,
-        run_id=run_id,
-        is_resume_run=bool(resume),
+        is_update_run=bool(resume),
         memory_profile=memprofile,
         progress_logger=progress_logger,
     )
@@ -161,3 +160,11 @@ def unzip_file(upload_folder: Path, zip_file: Path):
         input_folder.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_file, "r") as zip_ref:
         zip_ref.extractall(input_folder)
+    convert_to_text(input_folder)
+
+
+def convert_to_text(input_folder: Path):
+    """Convert all markdown files to text files."""
+    for file in input_folder.glob("**/*.md"):
+        text = file.read_text(encoding="utf-8")
+        file.with_suffix(".txt").write_text(text, encoding="utf-8")

@@ -1,12 +1,13 @@
 from pathlib import Path
 from typing import Tuple, Union
 import tiktoken
+import json
 
 import pandas as pd
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
 
-from graphrag.model.entity import Entity
+from graphrag.data_model.entity import Entity
 from graphrag.index.operations.summarize_communities.typing import CommunityReport
 from graphrag.query.indexer_adapters import (
     read_indexer_entities,
@@ -15,9 +16,10 @@ from graphrag.query.indexer_adapters import (
     read_indexer_covariates,
     read_indexer_text_units,
     read_indexer_communities,
+    read_indexer_report_embeddings,
 )
 
-from graphrag.query.llm.oai.embedding import OpenAIEmbedding
+from graphrag.language_model.providers.fnllm.models import OpenAIEmbeddingFNLLM
 from graphrag.query.context_builder.entity_extraction import EntityVectorStoreKey
 from graphrag.vector_stores.lancedb import LanceDBVectorStore
 from graphrag.query.structured_search.local_search.mixed_context import (
@@ -26,15 +28,13 @@ from graphrag.query.structured_search.local_search.mixed_context import (
 from graphrag.query.structured_search.global_search.community_context import (
     GlobalCommunityContext,
 )
-from graphrag.query.llm.oai.typing import OpenaiApiType
 from graphrag.query.structured_search.base import SearchResult
 from graphrag.query.structured_search.local_search.search import LocalSearch
 from graphrag.query.structured_search.global_search.search import GlobalSearch
 from graphrag.query.structured_search.drift_search.search import DRIFTSearch
 from graphrag.vector_stores.base import BaseVectorStore, VectorStoreDocument
 from graphrag.query.context_builder.builders import ContextBuilderResult
-from graphrag.model.community import Community
-from graphrag.query.indexer_adapters import embed_community_reports
+from graphrag.data_model.community import Community
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.context import (
@@ -48,13 +48,13 @@ from graphrag.query.structured_search.drift_search.drift_context import (
     DRIFTSearchContextBuilder,
 )
 
-ENTITY_TABLE = "create_final_nodes"
-ENTITY_EMBEDDING_TABLE = "create_final_entities"
-COMMUNITY_REPORT_TABLE = "create_final_community_reports"
-COMMUNITY_TABLE = "create_final_communities"
-RELATIONSHIP_TABLE = "create_final_relationships"
-TEXT_UNIT_TABLE = "create_final_text_units"
+COMMUNITY_REPORT_TABLE = "community_reports"
+ENTITY_TABLE = "entities"
+COMMUNITY_TABLE = "communities"
+RELATIONSHIP_TABLE = "relationships"
+COVARIATE_TABLE = "covariates"
 COVARIATE_TABLE = "create_final_covariates"
+TEXT_UNIT_TABLE = "text_units"
 
 # community level in the Leiden community hierarchy from which we will load the community reports
 # higher value means we use reports from more fine-grained communities (at the cost of higher computation cost)
@@ -65,81 +65,49 @@ token_encoder = tiktoken.get_encoding("cl100k_base")
 cache = {}
 
 
-def load_project_data(
-    project_dir: Path, default_entity_description_table_df: pd.DataFrame
-) -> Tuple[list[CommunityReport], list[Entity], list[Community], OpenAIEmbedding]:
+def init_project_cache(cache_key: str) -> dict:
     global cache
-    output = f"{project_dir}/output"
-
-    cache_key = project_dir.as_posix()
     project_cache = cache.get(cache_key)
     if not project_cache:
         cache[cache_key] = {}
         project_cache = cache[cache_key]
+    return project_cache
 
-    if project_cache.get("entity_df") is None:
-        project_cache["entity_df"] = entity_df = pd.read_parquet(
-            f"{output}/{ENTITY_TABLE}.parquet"
-        )
-    else:
-        entity_df = project_cache["entity_df"]
 
-    if project_cache.get("entity_embedding_df") is None:
-        project_cache["entity_embedding_df"] = entity_embedding_df = pd.read_parquet(
-            f"{output}/{ENTITY_EMBEDDING_TABLE}.parquet"
-        )
-    else:
-        entity_embedding_df = project_cache["entity_embedding_df"]
+def get_lancedb_connection(project_dir: Path) -> str:
+    return project_dir / cfg.vector_db_dir
+
+
+def load_project_data(
+    project_dir: Path, search: Search
+) -> Tuple[list[CommunityReport], list[Entity], list[Community], OpenAIEmbeddingFNLLM]:
+    global cache
+    output = project_dir / "output"
+
+    entity_df = pd.read_parquet(output / f"{ENTITY_TABLE}.parquet")
+    community_df = pd.read_parquet(output / f"{COMMUNITY_TABLE}.parquet")
+    entities = read_indexer_entities(entity_df, community_df, COMMUNITY_LEVEL)
+
+    community_df = pd.read_parquet(output / f"{COMMUNITY_TABLE}.parquet")
+    report_df = pd.read_parquet(output / f"{COMMUNITY_REPORT_TABLE}.parquet")
+    communities = read_indexer_communities(community_df, report_df)
 
     text_embedder = create_text_embedder()
 
-    if project_cache.get("report_df") is None:
-        report_embeddings_df_path = Path(
-            f"{output}/{COMMUNITY_REPORT_TABLE}_embeddings.parquet"
+    if search == Search.DRIFT:
+        full_content_embedding_store = LanceDBVectorStore(
+            collection_name="default-community-full_content",
         )
-        if report_embeddings_df_path.exists():
-            project_cache["report_df"] = report_df = pd.read_parquet(report_embeddings_df_path)
-        else:
-            report_df = pd.read_parquet(f"{output}/{COMMUNITY_REPORT_TABLE}.parquet")
-            embed_community_reports(
-                report_df, text_embedder, embedding_col="full_content_embedding"
-            )
-            report_df.to_parquet(report_embeddings_df_path)
-            project_cache["report_df"] = report_df
-    else:
-        report_df = project_cache["report_df"]
-
-    entity_embedding_df["description_embedding"] = default_entity_description_table_df[
-        "vector"
-    ].copy()
-
-    if project_cache.get("reports") is None:
-        project_cache["reports"] = reports = read_indexer_reports(
-            report_df, entity_df, COMMUNITY_LEVEL
+        full_content_embedding_store.connect(db_uri=get_lancedb_connection(project_dir))
+        reports = read_indexer_reports(
+            report_df,
+            community_df,
+            COMMUNITY_LEVEL,
+            content_embedding_col="full_content_embeddings",
         )
+        read_indexer_report_embeddings(reports, full_content_embedding_store)
     else:
-        reports = project_cache["reports"]
-
-    if project_cache.get("entities") is None:
-        project_cache["entities"] = entities = read_indexer_entities(
-            entity_df, entity_embedding_df, COMMUNITY_LEVEL
-        )
-    else:
-        entities = project_cache["entities"]
-
-    if project_cache.get("community_df") is None:
-        project_cache["community_df"] = community_df = pd.read_parquet(
-            f"{output}/{COMMUNITY_TABLE}.parquet"
-        )
-    else:
-        community_df = project_cache["community_df"]
-
-    if project_cache.get("communities") is None:
-        project_cache["communities"] = communities = read_indexer_communities(
-            community_df, entity_df, report_df
-        )
-    else:
-        communities = project_cache["communities"]
+        reports = read_indexer_reports(report_df, community_df, COMMUNITY_LEVEL)
 
     return reports, entities, communities, text_embedder
 
@@ -184,7 +152,7 @@ def prepare_vector_store(project_dir: Path) -> Tuple[LanceDBVectorStore, pd.Data
     description_embedding_store = LanceDBVectorStore(
         collection_name=entity_description_table,
     )
-    description_embedding_store.connect(db_uri=project_dir / cfg.vector_db_dir)
+    description_embedding_store.connect(db_uri=get_lancedb_connection(project_dir))
     default_entity_description_table = description_embedding_store.db_connection[
         entity_description_table
     ]
@@ -214,24 +182,17 @@ def store_entity_semantic_embeddings(
     return vectorstore
 
 
-def create_text_embedder() -> OpenAIEmbedding:
-    return OpenAIEmbedding(
-        api_key=cfg.openai_api_key,
-        api_base=None,
-        api_type=OpenaiApiType.OpenAI,
-        model=cfg.openai_api_model_embedding,
-        deployment_name=cfg.openai_api_model_embedding,
-        max_retries=20,
-    )
+def create_text_embedder() -> OpenAIEmbeddingFNLLM:
+    return cfg.embedding_llm
 
 
-def create_context_builder_data(project_dir: Path) -> ContextBuilderData:
-    description_embedding_store, default_entity_description_table_df = (
-        prepare_vector_store(project_dir)
-    )
+def create_context_builder_data(
+    project_dir: Path, search: Search
+) -> ContextBuilderData:
+    description_embedding_store, _ = prepare_vector_store(project_dir)
 
     reports, entities, _communities, text_embedder = load_project_data(
-        project_dir, default_entity_description_table_df
+        project_dir, search
     )
     relationship_df = pd.read_parquet(
         f"{project_dir}/output/{RELATIONSHIP_TABLE}.parquet"
@@ -254,7 +215,7 @@ def create_context_builder_data(project_dir: Path) -> ContextBuilderData:
 
 def build_local_context_builder(project_dir: Path) -> LocalSearchMixedContext:
 
-    context_builder_data = create_context_builder_data(project_dir)
+    context_builder_data = create_context_builder_data(project_dir, Search.LOCAL)
 
     return LocalSearchMixedContext(
         community_reports=context_builder_data.reports,
@@ -275,7 +236,7 @@ def build_global_context_builder(project_dir: Path) -> GlobalCommunityContext:
     _, default_entity_description_table_df = prepare_vector_store(project_dir)
 
     reports, entities, communities, _text_embedder = load_project_data(
-        project_dir, default_entity_description_table_df
+        project_dir, Search.GLOBAL
     )
 
     return GlobalCommunityContext(
@@ -288,9 +249,9 @@ def build_global_context_builder(project_dir: Path) -> GlobalCommunityContext:
 
 def build_local_drift_context_builder(project_dir: Path) -> DRIFTSearchContextBuilder:
 
-    context_builder_data = create_context_builder_data(project_dir)
+    context_builder_data = create_context_builder_data(project_dir, Search.DRIFT)
     context_builder = DRIFTSearchContextBuilder(
-        chat_llm=cfg.llm,
+        model=cfg.llm,
         text_embedder=context_builder_data.text_embedder,
         entities=context_builder_data.entities,
         relationships=context_builder_data.relationships,
@@ -307,10 +268,10 @@ def prepare_local_search(context_parameters: ContextParameters) -> LocalSearch:
     local_context_params, llm_params = init_local_params(context_parameters)
 
     return LocalSearch(
-        llm=cfg.llm,
+        model=cfg.llm,
         context_builder=context_builder,
         token_encoder=token_encoder,
-        llm_params=llm_params,
+        model_params=llm_params,
         context_builder_params=local_context_params,
         response_type="multiple paragraphs",  # free form text describing the response type and format, can be anything, e.g. prioritized list, single paragraph, multiple paragraphs, multiple-page report
     )
@@ -319,9 +280,9 @@ def prepare_local_search(context_parameters: ContextParameters) -> LocalSearch:
 async def prepare_rag_drift(context_parameters: ContextParameters) -> SearchResult:
     context_builder = build_local_drift_context_builder(context_parameters.project_dir)
     search = DRIFTSearch(
-        llm=cfg.llm, context_builder=context_builder, token_encoder=token_encoder
+        model=cfg.llm, context_builder=context_builder, token_encoder=token_encoder
     )
-    result = await search.asearch(context_parameters.query)
+    result = await search.search(context_parameters.query)
     return result
 
 
@@ -366,7 +327,7 @@ def prepare_global_search(context_parameters: ContextParameters) -> GlobalSearch
     }
 
     return GlobalSearch(
-        llm=cfg.llm,
+        model=cfg.llm,
         context_builder=context_builder,
         token_encoder=token_encoder,
         max_data_tokens=12_000,  # change this based on the token limit you have on your model (if you are using a model with 8k limit, a good setting could be 5000)
@@ -383,24 +344,22 @@ def prepare_global_search(context_parameters: ContextParameters) -> GlobalSearch
 async def rag_drift(context_parameters: ContextParameters) -> str:
     result = await prepare_rag_drift(context_parameters)
     response = result.response
-    if (
-        "nodes" in response
-        and len(response["nodes"]) > 0
-        and "answer" in response["nodes"][0]
-    ):
-        return response["nodes"][0]["answer"]
+    if(isinstance(response, str)):
+        return response
+    if(isinstance(response, dict)):
+        return json.dumps(response)
     return "Could not fetch content"
 
 
 async def rag_local(context_parameters: ContextParameters) -> str:
     search_engine = prepare_local_search(context_parameters)
-    result = await search_engine.asearch(context_parameters.query)
+    result = await search_engine.search(context_parameters.query)
     return result.response
 
 
 async def rag_global(context_parameters: ContextParameters) -> str:
     search_engine = prepare_global_search(context_parameters)
-    result = await search_engine.asearch(context_parameters.query)
+    result = await search_engine.search(context_parameters.query)
     return result.response
 
 
