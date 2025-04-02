@@ -3,7 +3,11 @@ from pathlib import Path
 import pandas as pd
 import networkx as nx
 
-from graphrag_kb_server.service.query import COMMUNITY_REPORT_TABLE, COMMUNITY_TABLE
+from graphrag_kb_server.service.query import (
+    COMMUNITY_REPORT_TABLE,
+    COMMUNITY_TABLE,
+    ENTITY_TABLE,
+)
 from graphrag_kb_server.model.graph import CommunityReport
 
 
@@ -28,7 +32,7 @@ def prepare_community_extraction(
 
 def find_entities(project_dir: Path, community: int) -> pd.DataFrame:
     output = f"{project_dir}/output"
-    df_final_entities = pd.read_parquet(f"{output}/{ENTITY_EMBEDDING_TABLE}.parquet")
+    df_final_entities = pd.read_parquet(f"{output}/{ENTITY_TABLE}.parquet")
     df_communities = pd.read_parquet(f"{output}/{COMMUNITY_TABLE}.parquet")
     community_entities = df_final_entities[
         df_final_entities["id"].isin(

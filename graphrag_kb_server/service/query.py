@@ -344,9 +344,9 @@ def prepare_global_search(context_parameters: ContextParameters) -> GlobalSearch
 async def rag_drift(context_parameters: ContextParameters) -> str:
     result = await prepare_rag_drift(context_parameters)
     response = result.response
-    if(isinstance(response, str)):
+    if isinstance(response, str):
         return response
-    if(isinstance(response, dict)):
+    if isinstance(response, dict):
         return json.dumps(response)
     return "Could not fetch content"
 
