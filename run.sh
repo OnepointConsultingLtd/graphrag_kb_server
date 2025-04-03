@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd /home/ubuntu/projects/graphrag_kb_server_multi_tennant
-poetry run python ./graphrag_kb_server/main/webapp.py
+cd "$(dirname "$0")"
+uv run ./graphrag_kb_server/main/webapp.py
