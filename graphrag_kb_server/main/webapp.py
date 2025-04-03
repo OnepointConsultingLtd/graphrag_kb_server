@@ -20,7 +20,7 @@ INDEX_LINKS = ["/index.htm", "/index.html", "/index"]
 
 assert (
     PATH_INDEX.exists()
-), "Cannot find the path of the user interface. Please build it first with 'yarn run build' in the front_end directory."
+), f"Cannot find the path of the user interface ({PATH_INDEX}). Please build it first with 'yarn run build' in the front_end directory."
 
 
 async def get_index(_: web.Request) -> web.Response:

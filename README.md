@@ -16,7 +16,9 @@ In the project folder execute:
 
 ```bash
 uv venv
-.venv\Scripts\activate
+# Under Windows
+# .venv\Scripts\activate
+source .venv/bin/activate
 uv sync
 ```
 
@@ -70,25 +72,27 @@ An example of this file can be found here:
 
 In order to create tennants via the API you will need to create an administration token first. The administrator is the one who can create tennants and therefore needs a token.
 
+Before running this command make sure that the .env is available and the CONFIG_DIR environment variable points to the config folder.
+
 This is the command that allows to generate the administration token:
 
 ```bash
-.venv\Scripts\activate
+# Under Windows
+# .venv\Scripts\activate
+source .venv/bin/activate
 python ./graphrag_kb_server/cli/jwt_main.py "<name>" "<email>"
 ```
 
 This will produce a file admin_token.md with the token.
 
+The administration token should be also inserted into the .env file (ADMIN_JWT variable)
+
 # Running the server
+
+Before running the server, build the front end first. See the instructions below.
 
 ```bash
 python ./graphrag_kb_server/main/webapp.py
-```
-
-Alternatively:
-
-```bash
-poetry run webapp
 ```
 
 ## Swagger UI
@@ -121,7 +125,10 @@ You will need node version 18 or later for this.
 You can build the front-end using this command:
 
 ```bash
-poetry run build_web
+# Under Windows
+# .venv\Scripts\activate
+source .venv/bin/activate
+uv run ./graphrag_kb_server/cli/build_web.py
 ```
 
 Alternatively you can build the UI by running these commands:

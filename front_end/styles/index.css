@@ -66,6 +66,10 @@ input[type='search'] {
     background: white;
 }
 
+.legend, .node-details {
+    color: black;
+}
+
 .colour-node {
     width: 20px;
     height: 20px;
