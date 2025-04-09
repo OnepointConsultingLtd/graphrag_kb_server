@@ -1,3 +1,4 @@
+import json
 from typing import Tuple
 from pathlib import Path
 import shutil
@@ -48,11 +49,16 @@ def list_tennants() -> list[Tennant]:
     tennants = []
     for d in cfg.graphrag_root_dir_path.glob("*"):
         if d.is_dir():
-            if len(list(d.glob(TENNANT_JSON))) > 0:
+            tennant_jsons = list(d.glob(TENNANT_JSON))
+            if len(tennant_jsons) > 0:
+                tennant_json: Path = tennant_jsons[0]
+                tennant_json_content = tennant_json.read_text(encoding="utf-8")
+                tennant_json_dict = json.loads(tennant_json_content)
                 tennants.append(
                     Tennant(
                         folder_name=d.name,
                         creation_timestamp=get_creation_time(d),
+                        token=tennant_json_dict["token"],
                     )
-                )  #
+                )
     return tennants

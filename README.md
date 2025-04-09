@@ -170,7 +170,7 @@ You can access it via: http://localhost:1234/index
 To start the front end in production mode in the root folder of the project:
 
 ```bash
-poetry run webapp
+uv run ./graphrag_kb_server/main/webapp.py
 ```
 
 You can access it via: http://localhost:9999/index
