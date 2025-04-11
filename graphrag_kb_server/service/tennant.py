@@ -3,7 +3,7 @@ from typing import Tuple
 from pathlib import Path
 import shutil
 
-from graphrag_kb_server.config import cfg
+from graphrag_kb_server.config import cfg, websocket_cfg
 from graphrag_kb_server.model.jwt_token import JWTToken
 from graphrag_kb_server.model.error import Error, ErrorCode
 from graphrag_kb_server.model.tennant import Tennant
@@ -54,11 +54,13 @@ def list_tennants() -> list[Tennant]:
                 tennant_json: Path = tennant_jsons[0]
                 tennant_json_content = tennant_json.read_text(encoding="utf-8")
                 tennant_json_dict = json.loads(tennant_json_content)
+                token = tennant_json_dict["token"]
                 tennants.append(
                     Tennant(
                         folder_name=d.name,
                         creation_timestamp=get_creation_time(d),
-                        token=tennant_json_dict["token"],
+                        token=token,
+                        visualization_url=f"//{websocket_cfg.websocket_server}:{websocket_cfg.websocket_port}/index.html?token={token}",
                     )
                 )
     return tennants

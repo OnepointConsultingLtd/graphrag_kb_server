@@ -12,10 +12,14 @@ class Tennant(BaseModel):
     token: str = Field(
         default="", description="The token of the tennant"
     )
+    visualization_url: str = Field(
+        default="", description="The url of the visualization for this tennant"
+    )
 
     def as_dict(self):
         return {
             "folder_name": self.folder_name,
             "creation_timestamp": self.creation_timestamp.isoformat(),
             "token": self.token,
+            "visualization_url": self.visualization_url,
         }

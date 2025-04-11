@@ -4,6 +4,7 @@ import { parse } from 'graphology-gexf';
 import { getCommunityDetails, getCommunityEntities } from './api.js';
 import getToken from './token.js';
 import { changeVisibilityNodeDetails } from './index.js';
+import getSelectedProject from './project.js';
 
 const LIMIT = 1000;
 const MIN_QUERY_SIZE = 3;
@@ -27,7 +28,7 @@ function handleNodeDetailsClick() {
         .classList.toggle('hidden');
 }
 
-export function createGraph(nodes, edges) {
+export function createGraph(nodes, edges, incomingDegrees, outGoingDegrees) {
     changeVisibilityNodeDetails(false);
     const data = createData(nodes, edges);
 
@@ -36,10 +37,16 @@ export function createGraph(nodes, edges) {
         nodes: { shape: 'box' },
         physics: {
             enabled: false,
-        },
+        }
     };
     const container = document.getElementById('network-container');
     const network = new Network(container, data, options);
+
+    // Extra data for the network
+    network.incomingDegrees = incomingDegrees;
+    network.outGoingDegrees = outGoingDegrees;
+    network.edges = edges;
+
     setTimeout(() => {
         network.moveTo({
             scale: 1.0, // Set the initial zoom factor to 0.5 (50% zoom)
@@ -280,4 +287,25 @@ export function searchGraph(event) {
     }
 }
 
+export function toggleMainNodes() {
+    const { graph, network } = window;
+    const nodes = graph.nodes();
+    if (network.edges?.length === 0 || !network.outGoingDegrees) {
+        loadGraph(getSelectedProject(), getToken());
+    } else {
+        const newNodes = nodes.filter(node => {
+            const outgoingDegree = network.outGoingDegrees[node] ?? 0;
+            const incomingDegree = network.incomingDegrees[node] ?? 0;
+            return outgoingDegree === 0 && incomingDegree > 0;
+        }).map(node => ({
+            id: node,
+            label: graph.getNodeAttributes(node)['label'],
+            color: COLOURS.PARENT,
+            font: { color: DEFAULT_TEXT_COLOUR },
+        }));
+        createGraph(newNodes, [], {}, {});
+    }
+}
+
+window.toggleMainNodes = toggleMainNodes;
 window.searchGraph = searchGraph;

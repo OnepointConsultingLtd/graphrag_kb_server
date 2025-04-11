@@ -38,7 +38,7 @@ function loadGraph(project, token) {
                 outGoingDegrees,
             );
 
-            createGraph(nodes, edges);
+            createGraph(nodes, edges, incomingDegrees, outGoingDegrees);
 
             window.project = project;
         })

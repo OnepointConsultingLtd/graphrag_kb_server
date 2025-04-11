@@ -92,6 +92,11 @@ def override_settings(root_dir: Path):
         r"\1" + cfg.openai_api_model_embedding,
         settings_text,
     )
+    settings_text = re.sub(
+        r"(model: )gpt-4-turbo-preview",
+        r"\1" + cfg.openai_api_model,
+        settings_text,
+    )
     settings.write_text(settings_text)
 
 

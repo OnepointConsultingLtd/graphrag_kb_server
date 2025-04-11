@@ -92,6 +92,13 @@
                     <div class="legend-text">Entity node</div>
                 </div>
             </div>
+
+        </template>
+
+        <template x-if="$store.app.selectedProject != ''">
+            <div class="toogle-buttons">
+                <button class="btn btn-info" @click="window.toggleMainNodes()">Toggle main nodes</button>
+            </div>
         </template>
 
         <template x-if="$store.app.selectedProject != ''">

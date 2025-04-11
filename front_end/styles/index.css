@@ -57,13 +57,17 @@ input[type='search'] {
 }
 
 .legend {
-    @apply absolute top-32 ml-4;
+    @apply absolute top-32 right-3;
     border: 1px solid gray;
     max-width: 200px;
     width: 100%;
     padding: 2px 4px;
     z-index: 1000;
     background: white;
+}
+
+.toogle-buttons {
+    @apply absolute top-[270px] right-3;
 }
 
 .legend, .node-details {
