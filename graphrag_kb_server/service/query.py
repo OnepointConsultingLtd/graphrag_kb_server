@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Tuple, Union
 import tiktoken
 import json
-
+import time
 import pandas as pd
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
@@ -47,6 +47,7 @@ from graphrag_kb_server.model.context_builder_data import ContextBuilderData
 from graphrag.query.structured_search.drift_search.drift_context import (
     DRIFTSearchContextBuilder,
 )
+from graphrag_kb_server.utils.cache import local_search_mixed_context_cache
 
 COMMUNITY_REPORT_TABLE = "community_reports"
 ENTITY_TABLE = "entities"
@@ -55,6 +56,7 @@ RELATIONSHIP_TABLE = "relationships"
 COVARIATE_TABLE = "covariates"
 COVARIATE_TABLE = "create_final_covariates"
 TEXT_UNIT_TABLE = "text_units"
+DOCUMENTS_TABLE = "documents"
 
 # community level in the Leiden community hierarchy from which we will load the community reports
 # higher value means we use reports from more fine-grained communities (at the cost of higher computation cost)
@@ -88,7 +90,6 @@ def load_project_data(
     community_df = pd.read_parquet(output / f"{COMMUNITY_TABLE}.parquet")
     entities = read_indexer_entities(entity_df, community_df, COMMUNITY_LEVEL)
 
-    community_df = pd.read_parquet(output / f"{COMMUNITY_TABLE}.parquet")
     report_df = pd.read_parquet(output / f"{COMMUNITY_REPORT_TABLE}.parquet")
     communities = read_indexer_communities(community_df, report_df)
 
@@ -200,7 +201,15 @@ def create_context_builder_data(
     relationships = read_indexer_relationships(relationship_df)
     text_unit_df = pd.read_parquet(f"{project_dir}/output/{TEXT_UNIT_TABLE}.parquet")
     text_units = read_indexer_text_units(text_unit_df)
+    document_df = pd.read_parquet(f"{project_dir}/output/{DOCUMENTS_TABLE}.parquet")
     covariates = get_claims(project_dir)
+
+    for tu in text_units:
+        document_ids = tu.document_ids
+        for doc in document_df[document_df["id"].isin(document_ids)].to_dict(orient="records"):
+            if not tu.attributes:
+                tu.attributes = {}
+            tu.attributes["document_title"] = doc["title"]
 
     return ContextBuilderData(
         text_embedder=text_embedder,
@@ -290,7 +299,11 @@ def rag_local_build_context(
     context_parameters: ContextParameters,
 ) -> ContextResult:
 
-    search_engine = prepare_local_search(context_parameters)
+    project_dir = context_parameters.project_dir
+    search_engine = local_search_mixed_context_cache.get(project_dir)
+    if not search_engine:
+        search_engine = prepare_local_search(context_parameters)
+        local_search_mixed_context_cache.set(project_dir, search_engine)
     context_builder_result = search_engine.context_builder.build_context(
         query=context_parameters.query,
         conversation_history=None,

@@ -445,7 +445,7 @@ async def context(request: web.Request) -> web.Response:
                     request.rel_url.query.get("use_context_records", "false") == "true"
                 )
                 context_params = create_context_parameters(request.rel_url, project_dir)
-
+                sources = []
                 def process_records(records: Optional[dict]):
                     if not records:
                         return {}
@@ -468,9 +468,12 @@ async def context(request: web.Request) -> web.Response:
                         context_builder_result = await rag_drift_context(context_params)
                     case _:
                         context_builder_result = rag_local_build_context(context_params)
+                        if context_builder_result.local_context_records["sources"] is not None:
+                            sources = list(set(context_builder_result.local_context_records["sources"]['document_title'].tolist()))
                 return web.json_response(
                     {
                         "context_text": context_builder_result.context_text,
+                        "sources": sources,
                         "local_context_records": process_records(
                             context_builder_result.local_context_records
                         ),
