@@ -615,6 +615,78 @@ async def download_input(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
+@routes.get("/protected/project/download/single_file")
+async def download_single_file(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns a file with the content of the input folder
+    tags:
+      - project
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: file
+        in: query
+        required: true
+        description: The file name
+        schema:
+          type: string
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: A file as an attachment
+      '404':
+        description: Bad Request - No file found.
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No file found"
+              error_description: "The file does not exist"
+    """
+    async def handle_request(request: web.Request) -> web.Response:
+        
+        def create_file_nout_found_error(file_name: str, input_dir: Path):
+            possible_files = [file.name for file in list(input_dir.glob(f"**/*")) if file.is_file()]
+            return invalid_response(
+                "No files found",
+                f"The file' {file_name}' does not exist. Possible files: {possible_files[:10]}",
+            )
+        
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                file_name = request.rel_url.query.get("file", None)
+                match file_name:
+                    case None:
+                        return invalid_response(
+                            "No file available",
+                            "Please specify a file name",
+                        )
+                    case _:
+                        input_dir = project_dir / "input"
+                        file_paths = [file for file in list(input_dir.glob(f"**/*")) if file.name.lower() == file_name.lower() and file.is_file()]
+                        if len(file_paths) == 0:
+                            return create_file_nout_found_error(file_name, input_dir)
+                        file_path = file_paths[0]
+                        if not file_path.exists():
+                            return create_file_nout_found_error(file_name, input_dir)
+                        return web.FileResponse(
+                            file_path,
+                            headers={
+                                "CONTENT-DISPOSITION": f'attachment; filename="{file_path.name}"'
+                            },
+                        )
+
+    return await handle_error(handle_request, request=request)
+
 @routes.get("/protected/project/topics")
 async def topics(request: web.Request) -> web.Response:
     """
