@@ -1,4 +1,5 @@
 import zipfile
+import io
 import re
 from pathlib import Path
 from typing import Optional, Callable, Awaitable
@@ -673,17 +674,35 @@ async def download_single_file(request: web.Request) -> web.Response:
                     case _:
                         input_dir = project_dir / "input"
                         file_paths = [file for file in list(input_dir.glob(f"**/*")) if file.name.lower() == file_name.lower() and file.is_file()]
-                        if len(file_paths) == 0:
+                        length = len(file_paths)
+                        if length == 0:
                             return create_file_nout_found_error(file_name, input_dir)
-                        file_path = file_paths[0]
-                        if not file_path.exists():
-                            return create_file_nout_found_error(file_name, input_dir)
-                        return web.FileResponse(
-                            file_path,
-                            headers={
-                                "CONTENT-DISPOSITION": f'attachment; filename="{file_path.name}"'
-                            },
-                        )
+                        elif length == 1:
+                            file_path = file_paths[0]
+                            return web.FileResponse(
+                                file_path,
+                                headers={
+                                    "CONTENT-DISPOSITION": f'attachment; filename="{file_path.name}"'
+                                },
+                            )
+                        else:
+                            # Create zip file in memory
+                            zip_buffer = io.BytesIO()
+                            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                                for i, file_path in enumerate(file_paths):
+                                    zip_file.write(file_path, arcname=f"{file_path.stem}_{i + 1}.{file_path.suffix}")
+                            
+                            # Seek to start of buffer
+                            zip_buffer.seek(0)
+                            
+                            return web.Response(
+                                body=zip_buffer.getvalue(),
+                                headers={
+                                    'CONTENT-TYPE': 'application/zip',
+                                    'CONTENT-DISPOSITION': f'attachment; filename="{file_name}.zip"'
+                                }
+                            )
+                        
 
     return await handle_error(handle_request, request=request)
 
