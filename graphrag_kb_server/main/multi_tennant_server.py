@@ -277,3 +277,6 @@ async def list_tennants(request: web.Request) -> web.Response:
         return web.json_response([t.as_dict() for t in tennants])
 
     return await handle_error(handle_request, request=request)
+
+
+logger.info("multi_tennant_server.py loaded")

@@ -9,9 +9,7 @@ class Tennant(BaseModel):
     creation_timestamp: datetime = Field(
         ..., description="When the tennant was created"
     )
-    token: str = Field(
-        default="", description="The token of the tennant"
-    )
+    token: str = Field(default="", description="The token of the tennant")
     visualization_url: str = Field(
         default="", description="The url of the visualization for this tennant"
     )

@@ -26,7 +26,7 @@ def project_directory():
     project_dir = None
 
 
-def test_load_data_remote(project_directory: Path, search: Search):
+def test_load_data_remote(project_directory: Path):
     _, default_entity_description_table_df = prepare_vector_store(project_directory)
     reports, entities, communities, _ = load_project_data(
         project_directory, Search.LOCAL
@@ -38,7 +38,7 @@ def test_load_data_remote(project_directory: Path, search: Search):
 
 
 def test_load_data_local(project_directory: Path):
-    test_load_data_remote(project_directory, Search.LOCAL)
+    test_load_data_remote(project_directory)
 
 
 def test_load_data_drift(project_directory: Path):

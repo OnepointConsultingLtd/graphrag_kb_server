@@ -35,6 +35,7 @@ from graphrag.query.structured_search.drift_search.search import DRIFTSearch
 from graphrag.vector_stores.base import BaseVectorStore, VectorStoreDocument
 from graphrag.query.context_builder.builders import ContextBuilderResult
 from graphrag.data_model.community import Community
+from graphrag.prompts.query.global_search_reduce_system_prompt import REDUCE_SYSTEM_PROMPT
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.context import (
@@ -48,6 +49,7 @@ from graphrag.query.structured_search.drift_search.drift_context import (
     DRIFTSearchContextBuilder,
 )
 from graphrag_kb_server.utils.cache import local_search_mixed_context_cache
+
 
 COMMUNITY_REPORT_TABLE = "community_reports"
 ENTITY_TABLE = "entities"
@@ -206,7 +208,9 @@ def create_context_builder_data(
 
     for tu in text_units:
         document_ids = tu.document_ids
-        for doc in document_df[document_df["id"].isin(document_ids)].to_dict(orient="records"):
+        for doc in document_df[document_df["id"].isin(document_ids)].to_dict(
+            orient="records"
+        ):
             if not tu.attributes:
                 tu.attributes = {}
             tu.attributes["document_title"] = doc["title"]
@@ -244,7 +248,7 @@ def build_global_context_builder(project_dir: Path) -> GlobalCommunityContext:
 
     _, default_entity_description_table_df = prepare_vector_store(project_dir)
 
-    reports, entities, communities, _text_embedder = load_project_data(
+    reports, entities, communities, _ = load_project_data(
         project_dir, Search.GLOBAL
     )
 
@@ -342,6 +346,7 @@ def prepare_global_search(context_parameters: ContextParameters) -> GlobalSearch
     return GlobalSearch(
         model=cfg.llm,
         context_builder=context_builder,
+        reduce_system_prompt=REDUCE_SYSTEM_PROMPT.replace("{max_length}", "250"),
         token_encoder=token_encoder,
         max_data_tokens=12_000,  # change this based on the token limit you have on your model (if you are using a model with 8k limit, a good setting could be 5000)
         map_llm_params=map_llm_params,

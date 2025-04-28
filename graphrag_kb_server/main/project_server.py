@@ -14,6 +14,7 @@ from graphrag_kb_server.model.rag_parameters import ContextParameters
 from graphrag_kb_server.model.context import Search
 
 from graphrag_kb_server.config import cfg
+from graphrag_kb_server.logger import logger
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.service.query import rag_local, rag_global, rag_drift
 from graphrag_kb_server.service.query import (
@@ -447,6 +448,7 @@ async def context(request: web.Request) -> web.Response:
                 )
                 context_params = create_context_parameters(request.rel_url, project_dir)
                 sources = []
+
                 def process_records(records: Optional[dict]):
                     if not records:
                         return {}
@@ -469,8 +471,17 @@ async def context(request: web.Request) -> web.Response:
                         context_builder_result = await rag_drift_context(context_params)
                     case _:
                         context_builder_result = rag_local_build_context(context_params)
-                        if context_builder_result.local_context_records["sources"] is not None:
-                            sources = list(set(context_builder_result.local_context_records["sources"]['document_title'].tolist()))
+                        if (
+                            context_builder_result.local_context_records["sources"]
+                            is not None
+                        ):
+                            sources = list(
+                                set(
+                                    context_builder_result.local_context_records[
+                                        "sources"
+                                    ]["document_title"].tolist()
+                                )
+                            )
                 return web.json_response(
                     {
                         "context_text": context_builder_result.context_text,
@@ -651,15 +662,18 @@ async def download_single_file(request: web.Request) -> web.Response:
               error_name: "No file found"
               error_description: "The file does not exist"
     """
+
     async def handle_request(request: web.Request) -> web.Response:
-        
+
         def create_file_nout_found_error(file_name: str, input_dir: Path):
-            possible_files = [file.name for file in list(input_dir.glob(f"**/*")) if file.is_file()]
+            possible_files = [
+                file.name for file in list(input_dir.glob(f"**/*")) if file.is_file()
+            ]
             return invalid_response(
                 "No files found",
                 f"The file' {file_name}' does not exist. Possible files: {possible_files[:10]}",
             )
-        
+
         match match_process_dir(request):
             case Response() as error_response:
                 return error_response
@@ -673,7 +687,11 @@ async def download_single_file(request: web.Request) -> web.Response:
                         )
                     case _:
                         input_dir = project_dir / "input"
-                        file_paths = [file for file in list(input_dir.glob(f"**/*")) if file.name.lower() == file_name.lower() and file.is_file()]
+                        file_paths = [
+                            file
+                            for file in list(input_dir.glob(f"**/*"))
+                            if file.name.lower() == file_name.lower() and file.is_file()
+                        ]
                         length = len(file_paths)
                         if length == 0:
                             return create_file_nout_found_error(file_name, input_dir)
@@ -688,23 +706,28 @@ async def download_single_file(request: web.Request) -> web.Response:
                         else:
                             # Create zip file in memory
                             zip_buffer = io.BytesIO()
-                            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                            with zipfile.ZipFile(
+                                zip_buffer, "w", zipfile.ZIP_DEFLATED
+                            ) as zip_file:
                                 for i, file_path in enumerate(file_paths):
-                                    zip_file.write(file_path, arcname=f"{file_path.stem}_{i + 1}.{file_path.suffix}")
-                            
+                                    zip_file.write(
+                                        file_path,
+                                        arcname=f"{file_path.stem}_{i + 1}.{file_path.suffix}",
+                                    )
+
                             # Seek to start of buffer
                             zip_buffer.seek(0)
-                            
+
                             return web.Response(
                                 body=zip_buffer.getvalue(),
                                 headers={
-                                    'CONTENT-TYPE': 'application/zip',
-                                    'CONTENT-DISPOSITION': f'attachment; filename="{file_name}.zip"'
-                                }
+                                    "CONTENT-TYPE": "application/zip",
+                                    "CONTENT-DISPOSITION": f'attachment; filename="{file_name}.zip"',
+                                },
                             )
-                        
 
     return await handle_error(handle_request, request=request)
+
 
 @routes.get("/protected/project/topics")
 async def topics(request: web.Request) -> web.Response:
@@ -967,3 +990,6 @@ def create_context_parameters(url: URL, project_dir: Path) -> ContextParameters:
         project_dir=project_dir,
         context_size=context_size,
     )
+
+
+logger.info("project_server.py loaded")

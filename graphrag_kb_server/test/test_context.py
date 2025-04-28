@@ -3,6 +3,7 @@ from graphrag_kb_server.model.context import (
     create_context_result,
     create_global_context_result,
     Search,
+    ContextResult,
 )
 
 
@@ -24,11 +25,15 @@ def test_create_context_result():
 
 
 def test_create_global_context_result():
-    local_result = ContextBuilderResult(
-        context_chunks="local", context_records={"test": "local"}
+    local_result = ContextResult(
+        context_text="Some local context",
+        local_context_records={"test": "local"},
+        global_context_records={},
     )
-    global_result = ContextBuilderResult(
-        context_chunks="global", context_records={"test": "global"}
+    global_result = ContextResult(
+        context_text="Some global context",
+        local_context_records={},
+        global_context_records={"test": "global"},
     )
     context_result = create_global_context_result(local_result, global_result)
     assert context_result is not None, "There is not context result"

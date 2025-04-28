@@ -2,10 +2,15 @@ from pathlib import Path
 from aiohttp import web
 import uuid
 
-from pdf_to_markdown_llm.service.pdf_to_text import convert_single_file, compact_files
+from pdf_to_markdown_llm.service.openai_pdf_to_text import (
+    convert_single_file,
+    compact_files,
+)
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.utils.file_support import write_uploaded_file
 from graphrag_kb_server.main.error_handler import handle_error
+
+from graphrag_kb_server.logger import logger
 
 routes = web.RouteTableDef()
 
@@ -74,3 +79,6 @@ async def convert_single_pdf(request: web.Request) -> web.Response:
             return web.json_response({"error": "No file generated"}, status=404)
 
     return await handle_error(handle_request, request=request)
+
+
+logger.info("pdf_server.py loaded")

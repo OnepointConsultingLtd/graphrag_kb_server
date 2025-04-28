@@ -3,7 +3,8 @@ import time
 
 from graphrag.query.structured_search.local_search.search import LocalSearch
 
-class LocalSearchMixedContextCache():
+
+class LocalSearchMixedContextCache:
 
     def __init__(self, timeout: int = 3600):
         self.cache = {}
@@ -18,9 +19,12 @@ class LocalSearchMixedContextCache():
             else:
                 del self.cache[posix_path]
         return None
-    
+
     def set(self, project_dir: Path, local_search: LocalSearch):
-        self.cache[project_dir.as_posix()] = {"local_search": local_search, "timestamp": time.time()}
+        self.cache[project_dir.as_posix()] = {
+            "local_search": local_search,
+            "timestamp": time.time(),
+        }
 
 
 local_search_mixed_context_cache = LocalSearchMixedContextCache()

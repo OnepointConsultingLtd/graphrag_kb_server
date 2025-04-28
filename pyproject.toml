@@ -7,7 +7,7 @@ requires-python = ">=3.12.7,<3.13"
 readme = "README.md"
 license = "MIT"
 dependencies = [
-    "graphrag>=2.1.0,<3",
+    "graphrag>=2.2.0,<3",
     "python-dotenv>=1.0.1,<2",
     "numba==0.59.1",
     "markdown~=3.7",
@@ -16,7 +16,7 @@ dependencies = [
     "aiohttp-test-utils>=0.5.0,<0.6",
     "pytest-aiohttp>=1.0.5,<2",
     "aiohttp-swagger3>=0.10.0",
-    "pdf-to-markdown-llm>=0.1.7",
+    "pdf-to-markdown-llm>=0.1.12",
 ]
 
 [project.scripts]

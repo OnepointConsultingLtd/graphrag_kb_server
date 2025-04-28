@@ -6,11 +6,13 @@ import base64
 from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
 from aiohttp import web
 
-from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg, websocket_cfg
 from graphrag_kb_server.main import all_routes
 
 from graphrag_kb_server.main.multi_tennant_server import auth_middleware
+from graphrag_kb_server.logger import logger, init_logger
+
+init_logger()
 
 # from graphrag_kb_server.main.websocket import sio
 
@@ -21,6 +23,8 @@ INDEX_LINKS = ["/index.htm", "/index.html", "/index"]
 assert (
     PATH_INDEX.exists()
 ), f"Cannot find the path of the user interface ({PATH_INDEX}). Please build it first with 'yarn run build' in the front_end directory."
+
+logger.info(f"PATH_INDEX: {PATH_INDEX}")
 
 
 async def get_index(_: web.Request) -> web.Response:
