@@ -11,6 +11,7 @@ from graphrag_kb_server.utils.cache import GenericSimpleCache
 
 lightrag_cache = GenericSimpleCache[LightRAG]()
 
+
 async def initialize_rag(project_folder: Path) -> LightRAG:
     lightrag = lightrag_cache.get(project_folder)
     if lightrag:

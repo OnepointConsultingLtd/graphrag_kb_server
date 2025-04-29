@@ -185,11 +185,15 @@ async def about(request: web.Request) -> web.Response:
                                     context_size=cfg.local_context_max_tokens,
                                 )
                                 promise = (
-                                    rag_local if search == Search.LOCAL.value else rag_global
+                                    rag_local
+                                    if search == Search.LOCAL.value
+                                    else rag_global
                                 )
                                 response = await promise(search_params)
                             case Engine.LIGHTRAG:
-                                response = await lightrag_search(project_dir, question, search)
+                                response = await lightrag_search(
+                                    project_dir, question, search
+                                )
                         return web.Response(
                             text=HTML_CONTENT.format(
                                 question=question, response=markdown(response)
@@ -395,7 +399,9 @@ async def query(request: web.Request) -> web.Response:
                             case Engine.LIGHTRAG:
                                 match search:
                                     case Search.GLOBAL | Search.LOCAL:
-                                        response = await lightrag_search(project_dir, context_params.query, search)
+                                        response = await lightrag_search(
+                                            project_dir, context_params.query, search
+                                        )
                                     case _:
                                         raise web.HTTPBadRequest(
                                             text="LightRAG does not support local search"
@@ -445,6 +451,13 @@ async def context(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag]
       - name: question
         in: query
         required: true
@@ -493,6 +506,7 @@ async def context(request: web.Request) -> web.Response:
                     request.rel_url.query.get("use_context_records", "false") == "true"
                 )
                 context_params = create_context_parameters(request.rel_url, project_dir)
+                engine = find_engine_from_query(request)
                 sources = []
 
                 def process_records(records: Optional[dict]):
@@ -504,42 +518,67 @@ async def context(request: web.Request) -> web.Response:
                         else None
                     )
 
-                match search:
-                    case Search.GLOBAL:
-                        context_builder_result = await rag_global_build_context(
-                            context_params
-                        )
-                    case Search.ALL:
-                        context_builder_result = await rag_combined_context(
-                            context_params
-                        )
-                    case Search.DRIFT:
-                        context_builder_result = await rag_drift_context(context_params)
-                    case _:
-                        context_builder_result = rag_local_build_context(context_params)
-                        if (
-                            context_builder_result.local_context_records["sources"]
-                            is not None
-                        ):
-                            sources = list(
-                                set(
+                match engine:
+                    case Engine.GRAPHRAG:
+                        match search:
+                            case Search.GLOBAL:
+                                context_builder_result = await rag_global_build_context(
+                                    context_params
+                                )
+                            case Search.ALL:
+                                context_builder_result = await rag_combined_context(
+                                    context_params
+                                )
+                            case Search.DRIFT:
+                                context_builder_result = await rag_drift_context(
+                                    context_params
+                                )
+                            case _:
+                                context_builder_result = rag_local_build_context(
+                                    context_params
+                                )
+                                if (
                                     context_builder_result.local_context_records[
                                         "sources"
-                                    ]["document_title"].tolist()
+                                    ]
+                                    is not None
+                                ):
+                                    sources = list(
+                                        set(
+                                            context_builder_result.local_context_records[
+                                                "sources"
+                                            ][
+                                                "document_title"
+                                            ].tolist()
+                                        )
+                                    )
+                        return web.json_response(
+                            {
+                                "context_text": context_builder_result.context_text,
+                                "sources": sources,
+                                "local_context_records": process_records(
+                                    context_builder_result.local_context_records
+                                ),
+                                "global_context_records": process_records(
+                                    context_builder_result.global_context_records
+                                ),
+                            }
+                        )
+                    case Engine.LIGHTRAG:
+                        match search:
+                            case Search.GLOBAL | Search.LOCAL:
+                                context_builder_result = await lightrag_search(
+                                    project_dir, context_params.query, search, True
                                 )
-                            )
-                return web.json_response(
-                    {
-                        "context_text": context_builder_result.context_text,
-                        "sources": sources,
-                        "local_context_records": process_records(
-                            context_builder_result.local_context_records
-                        ),
-                        "global_context_records": process_records(
-                            context_builder_result.global_context_records
-                        ),
-                    }
-                )
+                                return web.json_response(
+                                    {
+                                        "context_text": context_builder_result,
+                                    }
+                                )
+                            case _:
+                                raise web.HTTPBadRequest(
+                                    text="LightRAG does not support local search"
+                                )
 
     return await handle_error(handle_request, request=request)
 

@@ -11,7 +11,7 @@ async def lightrag_search(
     mode: Literal["local", "global", "hybrid", "naive", "mix", "bypass"],
     only_need_context: bool = False,
 ) -> str:
-    rag: LightRAG = await initialize_rag(
-        project_folder
+    rag: LightRAG = await initialize_rag(project_folder)
+    return await rag.aquery(
+        query, QueryParam(mode=mode, only_need_context=only_need_context)
     )
-    return await rag.aquery(query, QueryParam(mode=mode, only_need_context=only_need_context))

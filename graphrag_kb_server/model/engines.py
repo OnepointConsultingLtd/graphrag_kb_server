@@ -15,7 +15,7 @@ def find_engine(engine: str) -> Engine:
         return Engine.LIGHTRAG
     else:
         raise ValueError(f"Invalid engine: {engine}")
-    
+
 
 def find_engine_from_query(request: Request) -> Engine:
     engine_str = request.rel_url.query.get("engine", Format.JSON.value)
