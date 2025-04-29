@@ -39,7 +39,7 @@ from graphrag_kb_server.service.community_service import (
     generate_entities_digraph_gexf_file,
 )
 from graphrag_kb_server.utils.file_support import write_uploaded_file
-from graphrag_kb_server.model.engines import find_engine, Engine
+from graphrag_kb_server.model.engines import find_engine_from_query, find_engine, Engine
 from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.service.lightrag.lightrag_index_support import acreate_lightrag
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
@@ -64,8 +64,7 @@ def extract_tennant_folder(request: web.Request) -> Path | Response:
 def handle_project_folder(
     request: web.Request, tennant_folder: Path
 ) -> Path | Response:
-    engine_str = request.rel_url.query.get("engine", Format.JSON.value)
-    engine = find_engine(engine_str)
+    engine = find_engine_from_query(request)
     project = request.rel_url.query.get("project", Format.JSON.value)
     project_dir: Path = find_project_folder(tennant_folder, engine, project)
     if not project_dir.exists():
@@ -177,8 +176,7 @@ async def about(request: web.Request) -> web.Response:
                     case Path() as project_dir:
                         question = "What are the main topics?"
                         search = get_search(request)
-                        engine_str = request.rel_url.query.get("engine", Format.JSON.value)
-                        engine = find_engine(engine_str)
+                        engine = find_engine_from_query(request)
                         match engine:
                             case Engine.GRAPHRAG:
                                 search_params = ContextParameters(
@@ -324,6 +322,13 @@ async def query(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag]
       - name: question
         in: query
         required: true
@@ -340,7 +345,7 @@ async def query(request: web.Request) -> web.Response:
       - name: search
         in: query
         required: false
-        description: The type of the search (local, global, drift)
+        description: The type of the search (local, global, drift). Drift only works with graphrag.
         schema:
           type: string
           enum: [local, global, drift]
@@ -377,13 +382,24 @@ async def query(request: web.Request) -> web.Response:
                         context_params = create_context_parameters(
                             request.rel_url, project_dir
                         )
-                        match search:
-                            case Search.GLOBAL:
-                                response = await rag_global(context_params)
-                            case Search.DRIFT:
-                                response = await rag_drift(context_params)
-                            case _:
-                                response = await rag_local(context_params)
+                        engine = find_engine_from_query(request)
+                        match engine:
+                            case Engine.GRAPHRAG:
+                                match search:
+                                    case Search.GLOBAL:
+                                        response = await rag_global(context_params)
+                                    case Search.DRIFT:
+                                        response = await rag_drift(context_params)
+                                    case _:
+                                        response = await rag_local(context_params)
+                            case Engine.LIGHTRAG:
+                                match search:
+                                    case Search.GLOBAL | Search.LOCAL:
+                                        response = await lightrag_search(project_dir, context_params.query, search)
+                                    case _:
+                                        raise web.HTTPBadRequest(
+                                            text="LightRAG does not support local search"
+                                        )
                         match format:
                             case Format.HTML:
                                 return web.Response(
