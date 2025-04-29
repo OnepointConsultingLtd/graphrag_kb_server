@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Tuple, Union
 import tiktoken
 import json
-import time
 import pandas as pd
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
@@ -35,7 +34,9 @@ from graphrag.query.structured_search.drift_search.search import DRIFTSearch
 from graphrag.vector_stores.base import BaseVectorStore, VectorStoreDocument
 from graphrag.query.context_builder.builders import ContextBuilderResult
 from graphrag.data_model.community import Community
-from graphrag.prompts.query.global_search_reduce_system_prompt import REDUCE_SYSTEM_PROMPT
+from graphrag.prompts.query.global_search_reduce_system_prompt import (
+    REDUCE_SYSTEM_PROMPT,
+)
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.context import (
@@ -248,9 +249,7 @@ def build_global_context_builder(project_dir: Path) -> GlobalCommunityContext:
 
     _, default_entity_description_table_df = prepare_vector_store(project_dir)
 
-    reports, entities, communities, _ = load_project_data(
-        project_dir, Search.GLOBAL
-    )
+    reports, entities, communities, _ = load_project_data(project_dir, Search.GLOBAL)
 
     return GlobalCommunityContext(
         community_reports=reports,

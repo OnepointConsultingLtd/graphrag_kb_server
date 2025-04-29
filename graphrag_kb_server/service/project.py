@@ -5,7 +5,6 @@ import yaml
 
 from pathlib import Path
 from datetime import datetime
-from enum import StrEnum
 from typing import Union
 
 from collections.abc import AsyncIterable
@@ -18,7 +17,12 @@ from graphrag.logger.factory import LoggerType
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.index_support import index
-from graphrag_kb_server.model.project import Project, ProjectListing, EngineProjectListing, GenerationStatus
+from graphrag_kb_server.model.project import (
+    Project,
+    ProjectListing,
+    EngineProjectListing,
+    GenerationStatus,
+)
 from graphrag_kb_server.model.engines import Engine
 
 
@@ -47,7 +51,9 @@ def list_projects(tennants_dir: Path) -> EngineProjectListing:
         return []
     graphrag_projects = _extract_graphrag_projects(tennants_dir)
     lightrag_projects = _extract_lightrag_projects(tennants_dir)
-    return EngineProjectListing(graphrag_projects=graphrag_projects, lightrag_projects=lightrag_projects)
+    return EngineProjectListing(
+        graphrag_projects=graphrag_projects, lightrag_projects=lightrag_projects
+    )
 
 
 def _extract_lightrag_projects(tennants_dir: Path) -> ProjectListing:
@@ -71,7 +77,7 @@ def _extract_graphrag_projects(tennants_dir: Path) -> ProjectListing:
     return ProjectListing(projects=projects)
 
 
-def add_input_files(f: Path,input_files_dir: Path, projects: list[Project]):
+def add_input_files(f: Path, input_files_dir: Path, projects: list[Project]):
     input_files = list([p.name for p in input_files_dir.glob("*")])
     name = f.name
     updated_timestamp = datetime.fromtimestamp(f.stat().st_mtime)

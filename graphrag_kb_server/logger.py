@@ -26,6 +26,7 @@ def init_logger():
         }
     )
 
+
 init_logger()
 logger = logging.getLogger(__name__)
 logger.info("Logger initialized")

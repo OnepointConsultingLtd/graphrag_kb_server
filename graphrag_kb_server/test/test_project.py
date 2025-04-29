@@ -1,15 +1,12 @@
-import asyncio
 import shutil
 import tempfile
 
 from pathlib import Path
 from graphrag_kb_server.service.project import (
     override_settings,
-    acreate_graph_rag,
     list_projects,
 )
 from graphrag_kb_server.config import cfg
-from graphrag_kb_server.service.project import clear_rag
 
 
 def test_override_settings():
@@ -28,6 +25,10 @@ def test_list_projects():
     assert projects_dir.exists(), "The projects directory does not exist."
     engine_project_listing = list_projects(projects_dir)
     assert engine_project_listing is not None, "There is not project listing."
-    assert len(engine_project_listing.graphrga_projects) >= 0, "There should be at least one project"
+    assert (
+        len(engine_project_listing.graphrga_projects) >= 0
+    ), "There should be at least one project"
     for p in engine_project_listing.graphrga_projects.projects:
-        assert len(p.input_files) >= 0, "The test project should have at least one file."
+        assert (
+            len(p.input_files) >= 0
+        ), "The test project should have at least one file."

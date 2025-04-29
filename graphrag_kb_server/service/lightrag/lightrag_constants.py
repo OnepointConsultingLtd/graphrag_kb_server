@@ -1,2 +1,1 @@
-
-LIGHTRAG_FOLDER="lightrag"
+LIGHTRAG_FOLDER = "lightrag"

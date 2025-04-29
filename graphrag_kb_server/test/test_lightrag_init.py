@@ -14,4 +14,3 @@ async def test_initialize_rag():
     assert rag is not None
     assert rag.working_dir == project_folder / LIGHTRAG_FOLDER
     shutil.rmtree(project_folder)
-

@@ -103,7 +103,9 @@ class JWTConfig:
     admin_jwt = os.getenv("ADMIN_JWT")
     assert admin_jwt is not None, "Administration JWT is none."
 
+
 cfg = Config()
+
 
 class AdminConfig:
     admins = cfg.config_dir / "administration.yaml"
@@ -117,6 +119,7 @@ class AdminConfig:
 class LightRAGConfig:
     lightrag_model = os.getenv("LIGHTRAG_MODEL")
     assert lightrag_model is not None, "Please specify the LightRAG model"
+
 
 websocket_cfg = WebsocketConfig()
 

@@ -42,6 +42,7 @@ from graphrag_kb_server.utils.file_support import write_uploaded_file
 from graphrag_kb_server.model.engines import find_engine, Engine
 from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.service.lightrag.lightrag_index_support import acreate_lightrag
+from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 
 routes = web.RouteTableDef()
 
@@ -63,8 +64,10 @@ def extract_tennant_folder(request: web.Request) -> Path | Response:
 def handle_project_folder(
     request: web.Request, tennant_folder: Path
 ) -> Path | Response:
+    engine_str = request.rel_url.query.get("engine", Format.JSON.value)
+    engine = find_engine(engine_str)
     project = request.rel_url.query.get("project", Format.JSON.value)
-    project_dir = tennant_folder / project
+    project_dir: Path = find_project_folder(tennant_folder, engine, project)
     if not project_dir.exists():
         return invalid_response(
             "No project folder found",
@@ -144,6 +147,13 @@ async def about(request: web.Request) -> web.Response:
         schema:
           type: string
           enum: [local, global]
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag]
     responses:
       '200':
         description: Expected response to a valid request
@@ -167,15 +177,21 @@ async def about(request: web.Request) -> web.Response:
                     case Path() as project_dir:
                         question = "What are the main topics?"
                         search = get_search(request)
-                        search_params = ContextParameters(
-                            query=question,
-                            project_dir=project_dir,
-                            context_size=cfg.local_context_max_tokens,
-                        )
-                        promise = (
-                            rag_local if search == Search.LOCAL.value else rag_global
-                        )
-                        response = await promise(search_params)
+                        engine_str = request.rel_url.query.get("engine", Format.JSON.value)
+                        engine = find_engine(engine_str)
+                        match engine:
+                            case Engine.GRAPHRAG:
+                                search_params = ContextParameters(
+                                    query=question,
+                                    project_dir=project_dir,
+                                    context_size=cfg.local_context_max_tokens,
+                                )
+                                promise = (
+                                    rag_local if search == Search.LOCAL.value else rag_global
+                                )
+                                response = await promise(search_params)
+                            case Engine.LIGHTRAG:
+                                response = await lightrag_search(project_dir, question, search)
                         return web.Response(
                             text=HTML_CONTENT.format(
                                 question=question, response=markdown(response)
@@ -256,7 +272,9 @@ async def upload_index(request: web.Request) -> web.Response:
                     )
                 # Extract the zip file
                 engine = find_engine(engine_str)
-                project_folder: Path = find_project_folder(tennant_folder, engine, project)
+                project_folder: Path = find_project_folder(
+                    tennant_folder, engine, project
+                )
                 clear_rag(project_folder)
                 try:
                     unzip_file(project_folder, saved_files[0])
@@ -679,7 +697,7 @@ async def download_single_file(request: web.Request) -> web.Response:
 
         def create_file_nout_found_error(file_name: str, input_dir: Path):
             possible_files = [
-                file.name for file in list(input_dir.glob(f"**/*")) if file.is_file()
+                file.name for file in list(input_dir.glob("**/*")) if file.is_file()
             ]
             return invalid_response(
                 "No files found",
@@ -701,7 +719,7 @@ async def download_single_file(request: web.Request) -> web.Response:
                         input_dir = project_dir / "input"
                         file_paths = [
                             file
-                            for file in list(input_dir.glob(f"**/*"))
+                            for file in list(input_dir.glob("**/*"))
                             if file.name.lower() == file_name.lower() and file.is_file()
                         ]
                         length = len(file_paths)

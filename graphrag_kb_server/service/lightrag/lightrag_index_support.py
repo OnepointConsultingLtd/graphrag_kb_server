@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from lightrag import LightRAG
 
@@ -21,7 +20,7 @@ async def acreate_lightrag(
 
 
 async def lightrag_index(rag: LightRAG):
-    input_folder = rag.working_dir.parent/INPUT_FOLDER
+    input_folder = rag.working_dir.parent / INPUT_FOLDER
     assert input_folder.exists(), f"Input folder does not exist: {input_folder}"
     all_files = list(input_folder.rglob("**/*.txt"))
     count = len(all_files)
