@@ -18,7 +18,8 @@ from graphrag.logger.factory import LoggerType
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.index_support import index
-from graphrag_kb_server.model.project import Project, ProjectListing
+from graphrag_kb_server.model.project import Project, ProjectListing, EngineProjectListing, GenerationStatus
+from graphrag_kb_server.model.engines import Engine
 
 
 ROOT_DIR = Path(cfg.graphrag_root_dir)
@@ -26,11 +27,6 @@ DIR_VECTOR_DB = ROOT_DIR / cfg.vector_db_dir
 INPUT_DIR = ROOT_DIR / "input"
 
 create_folder_props = {"parents": True, "exist_ok": True}
-
-
-class GenerationStatus(StrEnum):
-    EXISTS = "exists"
-    CREATED = "created"
 
 
 async def run_pipeline(pipelines: AsyncIterable[PipelineRunResult]):
@@ -46,27 +42,46 @@ def clear_rag(rag_folder: Path) -> bool:
     return deleted
 
 
-def list_projects(projects_dir: Path) -> ProjectListing:
-    if not projects_dir.exists():
+def list_projects(tennants_dir: Path) -> EngineProjectListing:
+    if not tennants_dir.exists():
         return []
+    graphrag_projects = _extract_graphrag_projects(tennants_dir)
+    lightrag_projects = _extract_lightrag_projects(tennants_dir)
+    return EngineProjectListing(graphrag_projects=graphrag_projects, lightrag_projects=lightrag_projects)
+
+
+def _extract_lightrag_projects(tennants_dir: Path) -> ProjectListing:
     projects = []
+    projects_dir = tennants_dir / Engine.LIGHTRAG.value
     for f in projects_dir.glob("*"):
+        if f.is_dir() and (input_files_dir := f / "input").exists():
+            add_input_files(f, input_files_dir, projects)
+    return ProjectListing(projects=projects)
+
+
+def _extract_graphrag_projects(tennants_dir: Path) -> ProjectListing:
+    projects = []
+    for f in (tennants_dir / Engine.GRAPHRAG.value).glob("*"):
         if (
             f.is_dir()
             and len(list(f.glob("settings.yaml"))) > 0
             and (input_files_dir := f / "input").exists()
         ):
-            input_files = list([p.name for p in input_files_dir.glob("*")])
-            name = f.name
-            updated_timestamp = datetime.fromtimestamp(f.stat().st_mtime)
-            projects.append(
-                Project(
-                    name=name,
-                    updated_timestamp=updated_timestamp,
-                    input_files=input_files,
-                )
-            )
+            add_input_files(f, input_files_dir, projects)
     return ProjectListing(projects=projects)
+
+
+def add_input_files(f: Path,input_files_dir: Path, projects: list[Project]):
+    input_files = list([p.name for p in input_files_dir.glob("*")])
+    name = f.name
+    updated_timestamp = datetime.fromtimestamp(f.stat().st_mtime)
+    projects.append(
+        Project(
+            name=name,
+            updated_timestamp=updated_timestamp,
+            input_files=input_files,
+        )
+    )
 
 
 def override_env(input_dir: Path):

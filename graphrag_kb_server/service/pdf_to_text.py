@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from pdf_to_markdown_llm.service.pdf_to_text import (
+from pdf_to_markdown_llm.service.openai_pdf_to_text import (
     convert_all_pdfs,
     compact_files,
     zip_md_files,

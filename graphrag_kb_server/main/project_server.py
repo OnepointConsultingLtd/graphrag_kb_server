@@ -39,9 +39,11 @@ from graphrag_kb_server.service.community_service import (
     generate_entities_digraph_gexf_file,
 )
 from graphrag_kb_server.utils.file_support import write_uploaded_file
+from graphrag_kb_server.model.engines import find_engine, Engine
+from graphrag_kb_server.service.tennant import find_project_folder
+from graphrag_kb_server.service.lightrag.lightrag_index_support import acreate_lightrag
 
 routes = web.RouteTableDef()
-
 
 HTML_CONTENT = "<html><body style='font-family: sans-serif'><h1>{question}</h1><section>{response}</section></body></html>"
 
@@ -211,6 +213,10 @@ async def upload_index(request: web.Request) -> web.Response:
               project:
                 type: string
                 description: The name of the project
+              engine:
+                type: string
+                description: The type of engine used to run the RAG system
+                enum: [graphrag, lightrag]
     responses:
       "200":
         description: Successful upload
@@ -234,6 +240,7 @@ async def upload_index(request: web.Request) -> web.Response:
         file = body["file"]
         file_name = body["file_name"]
         project = body["project"]
+        engine_str = body["engine"]
         project = re.sub(r"[^a-z0-9_-]", "_", project.lower())
         match extract_tennant_folder(request):
             case Response() as error_response:
@@ -248,10 +255,11 @@ async def upload_index(request: web.Request) -> web.Response:
                         {"error": "No file was uploaded"}, status=400
                     )
                 # Extract the zip file
-                upload_folder: Path = tennant_folder / project
-                clear_rag(upload_folder)
+                engine = find_engine(engine_str)
+                project_folder: Path = find_project_folder(tennant_folder, engine, project)
+                clear_rag(project_folder)
                 try:
-                    unzip_file(upload_folder, saved_files[0])
+                    unzip_file(project_folder, saved_files[0])
                 except zipfile.BadZipFile:
                     return web.json_response(
                         {"error": "Uploaded file is not a valid zip file"}, status=400
@@ -260,10 +268,14 @@ async def upload_index(request: web.Request) -> web.Response:
                     return web.json_response(
                         {"error": f"Failed to process uploaded file: {e}"}, status=500
                     )
-                await acreate_graph_rag(True, upload_folder)
+                match engine:
+                    case Engine.GRAPHRAG:
+                        await acreate_graph_rag(True, project_folder)
+                    case Engine.LIGHTRAG:
+                        await acreate_lightrag(True, project_folder)
                 return web.json_response(
                     {
-                        "message": f"{file_length} file{"" if len(saved_files) == 0 else ""} uploaded, extracted and indexed from {upload_folder}."
+                        "message": f"{file_length} file{"" if len(saved_files) == 0 else ""} uploaded, extracted and indexed from {project_folder}."
                     },
                     status=200,
                 )
@@ -530,8 +542,8 @@ async def list_projects(request: web.Request) -> web.Response:
         match extract_tennant_folder(request):
             case Response() as error_response:
                 return error_response
-            case Path() as project_dir:
-                projects = project_listing(project_dir)
+            case Path() as tennant_dir:
+                projects = project_listing(tennant_dir)
                 return web.json_response(projects.model_dump(), headers=CORS_HEADERS)
 
     return await handle_error(handle_request, request=request)

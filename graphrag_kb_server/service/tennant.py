@@ -8,6 +8,7 @@ from graphrag_kb_server.model.jwt_token import JWTToken
 from graphrag_kb_server.model.error import Error, ErrorCode
 from graphrag_kb_server.model.tennant import Tennant
 from graphrag_kb_server.utils.file_support import get_creation_time
+from graphrag_kb_server.model.engines import Engine
 
 TENNANT_JSON = "tennant.json"
 
@@ -64,3 +65,10 @@ def list_tennants() -> list[Tennant]:
                     )
                 )
     return tennants
+
+
+def find_project_folder(tennant_folder: Path, engine: Engine, project: str) -> Path:
+    folder = tennant_folder / engine.value / project
+    if not folder.exists():
+        folder.mkdir(parents=True, exist_ok=True)
+    return folder

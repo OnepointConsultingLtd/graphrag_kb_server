@@ -1,0 +1,24 @@
+Categories: Analyse, Consume, Infrastructure
+Topic: Data Science Platform
+
+Types of Data Science Platforms
+The data science platform landscape can be overwhelming. There are dozens of products describing themselves using similar language despite addressing different problems for different types of users. 
+We can divide the types of Data Science Platforms into 3 categories. They are: 
+1. Automation Tools
+These tools provide MLOps to help engineers to automate repetitive tasks in data science, including training models, selecting algorithms, and more. These solutions are targeted primarily at non-expert coders or data scientists interested in shortcutting tedious steps and repetitive steps. They help spread data science work by getting non-expert data scientists into the model-building process, offering drag-and-drop interfaces. 
+2. Data Science Platforms
+Proprietary tools such as Domo, Dataiku support a lot of use cases, including data science and model building using drag and drop UI or low code/no -code. They provide both drag-and-drop and code interfaces and have a stronghold in big companies and may even offer unique capabilities or algorithms. While these solutions offer a great breadth of functionality, the licensing cost could be prohibitive for small organization.  Most of the data science platforms have MLOps integrated in the AI/ML pipelines. There are open source alternatives such as KNIME.
+3. Code-first Data Science Platforms
+Code-first Data Science Platforms target data scientists and coders who use statistical programming languages and spend their days in IDEs like Jupyter and Colab, leveraging a mix of open-source and Machine Learning packages and tools to develop sophisticated models. These data scientists require the flexibility to use a constantly evolving software and hardware stack to optimize each step of their model lifecycle. These code-first data science platforms orchestrate the necessary infrastructure to accelerate power users' workflows and create a system of record for organizations with hundreds or thousands of models.
+
+Need for a Data Science Platform
+1. To Enable Better Teamwork with Data Scientists
+If the data scientists are solving the same problem in several ways and working separately, productivity will decrease as it will not deliver effective value to the organization. 
+If the whole team of data scientists works on a unified and single platform, where they are provided with the required tools, it ensures that all the contributions of the data scientists, i.e., data models, data visualizations, and code libraries, exist in a single shared reachable location. This helps data scientists to reuse the code, facilitate better discussion around research projects,  
+2. Help Minimalize Engineering Effort
+With data science platforms, data scientists get help in moving analytical models into production. A data science platform makes sure that the data models are accessible behind an API so that the data scientists do not have to depend much on engineering efforts. 
+It will decrease the additional engineering effort or DevOps. For instance, if a company wants to build a product recommendation engine, then the data scientist will require the efforts of a software engineer for testing, refining, and integrating the data model before the users start seeing the product recommendations on the basis of their behavior 
+3. Help to Offload a Number of Low Value Tasks
+Data scientists can cut off the burden of menial tasks such as reproducing past results and configuring new environments for non-technical users for every project, as these tasks can be efficiently handled with data science platforms. 
+4. Facilitate Faster Research and Experimentation by Collaboration
+Whenever there is a new person in the data science team, the employee can start working exactly from the point where the old employee left, as it is easier to restore the work through the unified platform. Data scientists do not have to deal with extra data management tasks, as data science platforms allow people to see what and how others are working on. 

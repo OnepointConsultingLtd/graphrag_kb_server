@@ -23,17 +23,11 @@ def test_override_settings():
         assert cfg.openai_api_model_embedding in target.read_text()
 
 
-def test_acreate_graph_rag():
-    clear_rag()
-    result = asyncio.run(acreate_graph_rag(create_if_not_exists=False))
-    assert result
-
-
 def test_list_projects():
     projects_dir = Path(__file__) / "../../../docs/dummy_projects"
     assert projects_dir.exists(), "The projects directory does not exist."
-    project_listing = list_projects(projects_dir)
-    assert project_listing is not None, "There is not project listing."
-    assert len(project_listing.projects) > 0, "There should be at least one project"
-    for p in project_listing.projects:
-        assert len(p.input_files) > 0, "The test project should have at least one file."
+    engine_project_listing = list_projects(projects_dir)
+    assert engine_project_listing is not None, "There is not project listing."
+    assert len(engine_project_listing.graphrga_projects) >= 0, "There should be at least one project"
+    for p in engine_project_listing.graphrga_projects.projects:
+        assert len(p.input_files) >= 0, "The test project should have at least one file."

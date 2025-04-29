@@ -1,0 +1,2 @@
+
+LIGHTRAG_FOLDER="lightrag"

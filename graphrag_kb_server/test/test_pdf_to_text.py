@@ -1,5 +1,5 @@
 from pathlib import Path
-from pdf_to_markdown_llm.service.pdf_to_text import remove_markdown_tags
+from pdf_to_markdown_llm.service.openai_pdf_to_text import remove_markdown_tags
 
 
 def test_remove_markdown_tags():
