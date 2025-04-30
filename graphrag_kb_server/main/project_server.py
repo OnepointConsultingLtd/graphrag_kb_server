@@ -473,7 +473,7 @@ async def context(request: web.Request) -> web.Response:
       - name: search
         in: query
         required: false
-        description: The type of the search (local, global)
+        description: The type of the search (local, global). Drift only works with graphrag.
         schema:
           type: string
           enum: [local, global, drift, all]  # Enumeration for the dropdown
@@ -566,9 +566,10 @@ async def context(request: web.Request) -> web.Response:
                         )
                     case Engine.LIGHTRAG:
                         match search:
-                            case Search.GLOBAL | Search.LOCAL:
+                            case Search.GLOBAL | Search.LOCAL | Search.ALL:
+                                actual_search = search if search is not Search.ALL else "hybrid"
                                 context_builder_result = await lightrag_search(
-                                    project_dir, context_params.query, search, True
+                                    project_dir, context_params.query, actual_search, True
                                 )
                                 return web.json_response(
                                     {
@@ -637,6 +638,13 @@ async def delete_index(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag]
     security:
       - bearerAuth: []
     responses:
