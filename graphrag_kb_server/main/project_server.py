@@ -743,6 +743,13 @@ async def download_single_file(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag]
       - name: file
         in: query
         required: true
@@ -766,7 +773,7 @@ async def download_single_file(request: web.Request) -> web.Response:
 
     async def handle_request(request: web.Request) -> web.Response:
 
-        def create_file_nout_found_error(file_name: str, input_dir: Path):
+        def create_file_not_found_error(file_name: str, input_dir: Path):
             possible_files = [
                 file.name for file in list(input_dir.glob("**/*")) if file.is_file()
             ]
@@ -787,7 +794,7 @@ async def download_single_file(request: web.Request) -> web.Response:
                             "Please specify a file name",
                         )
                     case _:
-                        input_dir = project_dir / "input"
+                        input_dir = project_dir / INPUT_FOLDER
                         file_paths = [
                             file
                             for file in list(input_dir.glob("**/*"))
@@ -795,7 +802,7 @@ async def download_single_file(request: web.Request) -> web.Response:
                         ]
                         length = len(file_paths)
                         if length == 0:
-                            return create_file_nout_found_error(file_name, input_dir)
+                            return create_file_not_found_error(file_name, input_dir)
                         elif length == 1:
                             file_path = file_paths[0]
                             return web.FileResponse(
