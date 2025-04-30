@@ -14,7 +14,8 @@ def find_engine(engine: str) -> Engine:
     elif engine == Engine.LIGHTRAG:
         return Engine.LIGHTRAG
     else:
-        raise ValueError(f"Invalid engine: {engine}")
+        # Return GraphRAG as default
+        return Engine.GRAPHRAG
 
 
 def find_engine_from_query(request: Request) -> Engine:

@@ -844,7 +844,7 @@ async def topics(request: web.Request) -> web.Response:
     ---
     summary: returns a list of topics based on the level
     tags:
-      - project
+      - graphrag-graph
     parameters:
       - name: project
         in: query
@@ -933,7 +933,7 @@ async def topics_network(request: web.Request) -> web.Response:
     ---
     summary: returns a file with the community graph structure in nexf format.
     tags:
-      - graph
+      - graphrag-graph
     parameters:
       - name: project
         in: query
@@ -971,7 +971,7 @@ async def topics_network_community(request: web.Request) -> web.Response:
     ---
     summary: returns the details of a single community
     tags:
-      - graph
+      - graphrag-graph
     parameters:
       - name: project
         in: query
@@ -1042,7 +1042,7 @@ async def topics_network_community_entities(request: web.Request) -> web.Respons
     ---
     summary: returns the entities of a single community
     tags:
-      - graph
+      - graphrag-graph
     parameters:
       - name: project
         in: query
