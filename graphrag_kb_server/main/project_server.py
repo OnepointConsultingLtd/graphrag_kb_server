@@ -43,6 +43,7 @@ from graphrag_kb_server.model.engines import find_engine_from_query, find_engine
 from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.service.lightrag.lightrag_index_support import acreate_lightrag
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
+from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
 
 routes = web.RouteTableDef()
 
@@ -690,6 +691,13 @@ async def download_input(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag]
     security:
       - bearerAuth: []
     responses:
@@ -702,7 +710,7 @@ async def download_input(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                input_path = project_dir / "input"
+                input_path = project_dir / INPUT_FOLDER
                 if not input_path.exists():
                     return invalid_response(
                         "No tennant information",

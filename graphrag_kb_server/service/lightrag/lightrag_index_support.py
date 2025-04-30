@@ -4,8 +4,7 @@ from lightrag import LightRAG
 from graphrag_kb_server.model.project import GenerationStatus
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
-
-INPUT_FOLDER = "input"
+from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
 
 
 async def acreate_lightrag(
