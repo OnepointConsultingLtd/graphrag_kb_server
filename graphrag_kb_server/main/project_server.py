@@ -299,7 +299,9 @@ async def upload_index(request: web.Request) -> web.Response:
                     case Engine.GRAPHRAG:
                         await acreate_graph_rag(True, project_folder)
                     case Engine.LIGHTRAG:
-                        await acreate_lightrag(True, project_folder, incremental, saved_files[0])
+                        await acreate_lightrag(
+                            True, project_folder, incremental, saved_files[0]
+                        )
                 return web.json_response(
                     {
                         "message": f"{file_length} file{"" if len(saved_files) == 0 else ""} uploaded, extracted and indexed from {project_folder}."
@@ -574,9 +576,14 @@ async def context(request: web.Request) -> web.Response:
                     case Engine.LIGHTRAG:
                         match search:
                             case Search.GLOBAL | Search.LOCAL | Search.ALL:
-                                actual_search = search if search is not Search.ALL else "hybrid"
+                                actual_search = (
+                                    search if search is not Search.ALL else "hybrid"
+                                )
                                 context_builder_result = await lightrag_search(
-                                    project_dir, context_params.query, actual_search, True
+                                    project_dir,
+                                    context_params.query,
+                                    actual_search,
+                                    True,
                                 )
                                 return web.json_response(
                                     {

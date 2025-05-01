@@ -9,7 +9,10 @@ from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
 
 
 async def acreate_lightrag(
-    create_if_not_exists: bool = True, project_folder: Path | None = None, incremental: bool = False, zip_file: Path | None = None
+    create_if_not_exists: bool = True,
+    project_folder: Path | None = None,
+    incremental: bool = False,
+    zip_file: Path | None = None,
 ) -> GenerationStatus:
     if not create_if_not_exists:
         if project_folder.exists():
@@ -22,18 +25,18 @@ async def acreate_lightrag(
         # open the zip file and list the files
         files_to_index = []
         zip_files = []
-        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+        with zipfile.ZipFile(zip_file, "r") as zip_ref:
             for file in zip_ref.namelist():
-                if file.endswith('.txt'):
+                if file.endswith(".txt"):
                     zip_files.append(file)
         for file in all_files:
             for f in zip_files:
-                if f.split('/')[-1] in file.name:
+                if f.split("/")[-1] in file.name:
                     files_to_index.append(file)
                     break
         await lightrag_index(rag, files_to_index)
     else:
-        
+
         await lightrag_index(rag, all_files)
     return GenerationStatus.CREATED
 
