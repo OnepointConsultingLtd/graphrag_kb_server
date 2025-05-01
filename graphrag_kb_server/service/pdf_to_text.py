@@ -1,9 +1,8 @@
 import sys
 import asyncio
 from dotenv import load_dotenv
-# ruff: noqa: E402
-import pdf_to_markdown_llm
 
+# ruff: noqa: E402
 load_dotenv()
 
 from pdf_to_markdown_llm.service.openai_pdf_to_text import (
