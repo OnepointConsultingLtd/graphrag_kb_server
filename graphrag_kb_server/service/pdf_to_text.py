@@ -1,6 +1,8 @@
 import sys
 import asyncio
 from dotenv import load_dotenv
+# ruff: noqa: E402
+import pdf_to_markdown_llm
 
 load_dotenv()
 
