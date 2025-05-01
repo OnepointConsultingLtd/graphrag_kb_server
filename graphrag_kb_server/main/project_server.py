@@ -236,6 +236,10 @@ async def upload_index(request: web.Request) -> web.Response:
                 type: string
                 description: The type of engine used to run the RAG system
                 enum: [graphrag, lightrag]
+              incremental:
+                type: boolean
+                default: false
+                description: Whether to update the existing index or create a new one. Works only for LightRAG and has no effect on GraphRAG.
     responses:
       "200":
         description: Successful upload
@@ -260,6 +264,7 @@ async def upload_index(request: web.Request) -> web.Response:
         file_name = body["file_name"]
         project = body["project"]
         engine_str = body["engine"]
+        incremental = body["incremental"]
         project = re.sub(r"[^a-z0-9_-]", "_", project.lower())
         match extract_tennant_folder(request):
             case Response() as error_response:
@@ -278,7 +283,8 @@ async def upload_index(request: web.Request) -> web.Response:
                 project_folder: Path = find_project_folder(
                     tennant_folder, engine, project
                 )
-                clear_rag(project_folder)
+                if engine == Engine.GRAPHRAG or not incremental:
+                    clear_rag(project_folder)
                 try:
                     unzip_file(project_folder, saved_files[0])
                 except zipfile.BadZipFile:
@@ -293,7 +299,7 @@ async def upload_index(request: web.Request) -> web.Response:
                     case Engine.GRAPHRAG:
                         await acreate_graph_rag(True, project_folder)
                     case Engine.LIGHTRAG:
-                        await acreate_lightrag(True, project_folder)
+                        await acreate_lightrag(True, project_folder, incremental, saved_files[0])
                 return web.json_response(
                     {
                         "message": f"{file_length} file{"" if len(saved_files) == 0 else ""} uploaded, extracted and indexed from {project_folder}."
