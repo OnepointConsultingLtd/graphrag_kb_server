@@ -731,7 +731,7 @@ async def download_project(request: web.Request) -> web.Response:
                 return error_response
             case Path() as project_dir:
                 input_only = request.rel_url.query.get("input_only", "true") == "true"
-                input_path = project_dir / INPUT_FOLDER if input_only else project_dir 
+                input_path = project_dir / INPUT_FOLDER if input_only else project_dir
                 if not input_path.exists():
                     return invalid_response(
                         "No tennant information",

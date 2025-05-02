@@ -20,7 +20,9 @@ async def gemini_model_func(
     prompt, system_prompt=None, history_messages=[], **kwargs
 ) -> str:
     # 1. Initialize the GenAI Client with your Gemini API Key
-    assert cfg.gemini_api_key is not None, "Please specify the GEMINI_API_KEY environment variable."
+    assert (
+        cfg.gemini_api_key is not None
+    ), "Please specify the GEMINI_API_KEY environment variable."
     client = genai.Client(api_key=cfg.gemini_api_key)
 
     # 2. Combine prompts: system prompt, history, and user prompt
