@@ -14,10 +14,16 @@ The tennant API has three main methods:
 
 In the project folder execute:
 
-```bash
+```ps1
 uv venv
 # Under Windows
-# .venv\Scripts\activate
+.venv\Scripts\activate
+uv sync
+```
+
+```bash
+uv venv
+# Under Linux
 source .venv/bin/activate
 uv sync
 ```
@@ -41,6 +47,10 @@ DOCS_DIR
 
 # The directory where the whole GraphRAG files are stored after generation
 GRAPHRAG_ROOT_DIR
+
+# The LightRAG Model
+# Supported models gpt-4o-mini, gpt-4o
+LIGHTRAG_MODEL=gpt-4o-mini
 
 # The director where the vectors are stored
 STORAGE_BASE_DIR
@@ -124,9 +134,14 @@ You will need node version 18 or later for this.
 
 You can build the front-end using this command:
 
-```bash
+```ps1
 # Under Windows
-# .venv\Scripts\activate
+.venv\Scripts\activate
+uv run ./graphrag_kb_server/cli/build_web.py
+```
+
+```bash
+# Under Linux
 source .venv/bin/activate
 uv run ./graphrag_kb_server/cli/build_web.py
 ```

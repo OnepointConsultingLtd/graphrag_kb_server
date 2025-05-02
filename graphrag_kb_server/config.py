@@ -29,6 +29,9 @@ class Config:
         openai_api_model_embedding is not None
     ), "Please specify the OPENAI_API_MODEL_EMBEDDING environment variable."
 
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    # This is optional, only used by LightRAG
+
     config_dir_str = os.getenv("CONFIG_DIR")
     assert config_dir_str is not None, "The configuration directory with Swagger files"
     config_dir = Path(config_dir_str)

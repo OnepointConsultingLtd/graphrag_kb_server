@@ -689,8 +689,8 @@ async def delete_index(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
-@routes.get("/protected/project/download/input")
-async def download_input(request: web.Request) -> web.Response:
+@routes.get("/protected/project/download/project")
+async def download_project(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
@@ -711,6 +711,13 @@ async def download_input(request: web.Request) -> web.Response:
         schema:
           type: string
           enum: [graphrag, lightrag]
+      - name: input_only
+        in: query
+        required: true
+        description: Whether only the input is to be downloaded or the whole folder
+        schema:
+          type: boolean
+          default: true
     security:
       - bearerAuth: []
     responses:
@@ -723,7 +730,8 @@ async def download_input(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                input_path = project_dir / INPUT_FOLDER
+                input_only = request.rel_url.query.get("input_only", "true") == "true"
+                input_path = project_dir / INPUT_FOLDER if input_only else project_dir 
                 if not input_path.exists():
                     return invalid_response(
                         "No tennant information",

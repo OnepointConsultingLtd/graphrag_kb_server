@@ -16,7 +16,7 @@ init_logger()
 
 # from graphrag_kb_server.main.websocket import sio
 
-FILE_INDEX = "index.html"
+FILE_INDEX = "graphrag_visualization.html"
 PATH_INDEX = (Path(__file__) / f"../../../front_end/dist/{FILE_INDEX}").resolve()
 INDEX_LINKS = ["/index.htm", "/index.html", "/index"]
 

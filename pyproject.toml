@@ -19,6 +19,7 @@ dependencies = [
     "pdf-to-markdown-llm>=0.1.12",
     "lightrag-hku[api]>=1.3.5",
     "nano-vectordb>=0.0.4.3",
+    "google-genai>=1.13.0",
 ]
 
 [project.scripts]
