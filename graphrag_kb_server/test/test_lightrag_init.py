@@ -7,6 +7,7 @@ import pytest
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
 
+
 @pytest.mark.asyncio
 async def test_initialize_rag_openai():
     os.environ["LIGHTRAG_MODEL"] = "gpt-4o-mini"

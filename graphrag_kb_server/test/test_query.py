@@ -28,9 +28,7 @@ def project_directory():
 
 def test_load_data_remote(project_directory: Path, search: Search = Search.LOCAL):
     _, default_entity_description_table_df = prepare_vector_store(project_directory)
-    reports, entities, communities, _ = load_project_data(
-        project_directory, search
-    )
+    reports, entities, communities, _ = load_project_data(project_directory, search)
     assert reports is not None, "Reports are None"
     assert entities is not None, "Entities are None"
     assert len(reports) > 0, "There are no reports"
