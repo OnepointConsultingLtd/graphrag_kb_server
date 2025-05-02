@@ -22,7 +22,7 @@ export default async function listProjects(token) {
         );
         throwError(response);
         const json = await response.json();
-        return json['projects'].map(project => project.name);
+        return json['graphrag_projects']['projects'].map(project => project.name);
     } catch (error) {
         console.error('Error fetching projects:', error);
         return []; // Return an empty array if there's an error

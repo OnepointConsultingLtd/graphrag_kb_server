@@ -7,6 +7,7 @@ from lightrag.kg.shared_storage import initialize_pipeline_status
 from lightrag.utils import TokenTracker
 
 from google import genai
+from google.genai import types
 
 from graphrag_kb_server.config import cfg, lightrag_cfg
 from graphrag_kb_server.utils.cache import GenericSimpleCache

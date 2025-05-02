@@ -26,9 +26,9 @@ def test_list_projects():
     engine_project_listing = list_projects(projects_dir)
     assert engine_project_listing is not None, "There is not project listing."
     assert (
-        len(engine_project_listing.graphrga_projects) >= 0
+        len(engine_project_listing.graphrag_projects) >= 0
     ), "There should be at least one project"
-    for p in engine_project_listing.graphrga_projects.projects:
+    for p in engine_project_listing.graphrag_projects.projects:
         assert (
             len(p.input_files) >= 0
         ), "The test project should have at least one file."

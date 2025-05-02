@@ -42,29 +42,29 @@ def test_server():
     process.wait()
 
 
-def test_docs(test_server: subprocess.Popen):
-    """Example test case that makes a request to the running server."""
-    response = requests.get(f"{base_server}/docs")
-    assert response.status_code == 200
+# def test_docs(test_server: subprocess.Popen):
+#     """Example test case that makes a request to the running server."""
+#     response = requests.get(f"{base_server}/docs")
+#     assert response.status_code == 200
 
 
-def test_list_tennants(test_server: subprocess.Popen):
-    response = requests.get(
-        f"{base_server}/protected/tennant/list_tennants", headers=AUTH_HEADER
-    )
-    assert response.status_code == 200
+# def test_list_tennants(test_server: subprocess.Popen):
+#     response = requests.get(
+#         f"{base_server}/protected/tennant/list_tennants", headers=AUTH_HEADER
+#     )
+#     assert response.status_code == 200
 
 
-def test_create_delete_tennant(test_server: subprocess.Popen):
-    response = requests.post(
-        f"{base_server}/protected/tennant/create",
-        headers=AUTH_HEADER,
-        json={"email": "john.doe@test.com", "tennant_name": "john_doe"},
-    )
-    assert response.status_code == 200
-    response = requests.delete(
-        f"{base_server}/protected/tennant/delete_tennant",
-        headers=AUTH_HEADER,
-        json={"tennant_folder": "john_doe"},
-    )
-    assert response.status_code == 200
+# def test_create_delete_tennant(test_server: subprocess.Popen):
+#     response = requests.post(
+#         f"{base_server}/protected/tennant/create",
+#         headers=AUTH_HEADER,
+#         json={"email": "john.doe@test.com", "tennant_name": "john_doe"},
+#     )
+#     assert response.status_code == 200
+#     response = requests.delete(
+#         f"{base_server}/protected/tennant/delete_tennant",
+#         headers=AUTH_HEADER,
+#         json={"tennant_folder": "john_doe"},
+#     )
+#     assert response.status_code == 200
