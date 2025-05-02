@@ -4,7 +4,6 @@ from pathlib import Path
 from graphrag_kb_server.service.project import (
     clear_rag,
     create_graph_rag,
-    create_graph_rag_cmd,
 )
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.index_support import unzip_file
