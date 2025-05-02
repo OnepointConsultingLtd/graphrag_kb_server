@@ -1,5 +1,4 @@
 import shutil
-import subprocess
 import re
 import yaml
 
