@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag, gemini_model_func
+from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
 
 @pytest.mark.asyncio
