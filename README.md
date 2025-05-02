@@ -39,24 +39,62 @@ And example with all variables can be found here:
 The most important variables are:
 
 ```
-# The Open API key
-OPENAI_API_KEY
+# The Open API Key. See https://platform.openai.com/
+OPENAI_API_KEY=<key>
 
-# The directory with the text files with the knowledge base.
-DOCS_DIR
+# The model for GraphRAG. For now only OpenAI models
+OPENAI_API_MODEL=gpt-4o-mini
+OPENAI_API_MODEL_EMBEDDING=text-embedding-3-small
 
-# The directory where the whole GraphRAG files are stored after generation
-GRAPHRAG_ROOT_DIR
+# The key for Gemini. This works with LightRAG
+GEMINI_API_KEY=<key>
 
 # The LightRAG Model
-# Supported models gpt-4o-mini, gpt-4o
+# Supported models gpt-4o-mini, gpt-4o, gemini-2.0-flash
 LIGHTRAG_MODEL=gpt-4o-mini
+# LIGHTRAG_MODEL=gpt-4o-mini
 
-# The director where the vectors are stored
-STORAGE_BASE_DIR
+# The configuration directory. Here you can find the administration.yaml file which has the administrators JWT email addresses.
+CONFIG_DIR=/development/onepoint/thinqwin/graphrag_kb_server/config
 
-# Whether claims are turned on or not
+# The directory for uploaded files.
+UPLOAD_DIR=/mnt/graphrag/upload
+
+# The directory for the tenant data.
+GRAPHRAG_ROOT_DIR=/mnt/graphrag/tennants/
+
+# For GraphRAG the dtabase directory
+VECTOR_DB_DIR=output/lancedb
+
+# For GraphRAG the verbose mode
+INDEX_VERBOSE=false
+
+# The maximum number of tokens for the local context (GraphRAG)
+LOCAL_CONTEXT_MAX_TOKENS = 20000
+
+# The maximum number of tokens for the global context (GraphRAG)
+GLOBAL_CONTEXT_MAX_TOKENS = 20000
+
+# Whether claims are enabled (GraphRAG)
 CLAIMS_ENABLED=false
+
+# The websocket server (GraphRAG)
+SERVER=0.0.0.0
+
+# The websocket port (GraphRAG)
+PORT=9999
+
+# The JWT secret algorithm
+JWT_ALGORITHM=HS512
+
+# The JWT time delta in minutes
+JWT_TIME_DELTA_MINUTES=120
+
+# The JWT generation folder
+JWT_GEN_FOLDER=/tmp/data_wellness/jwt_gen
+
+# This needs to be generated. See README for instructions.
+ADMIN_JWT=<jwt>
 ```
 
 # How the system works

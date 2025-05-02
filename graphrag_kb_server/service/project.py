@@ -176,16 +176,3 @@ async def acreate_graph_rag(
     input_dir = _prepare_graph_rag(kb_path)
     await index(**prepare_index_args(input_dir.parent))
     return GenerationStatus.CREATED
-
-
-def create_graph_rag_cmd(input_dir: Path) -> GenerationStatus:
-    executable = cfg.graphrag_exe
-    subprocess.call(
-        ["python", executable, "init", "--root", input_dir.parent.as_posix()]
-    )
-
-    override_env(input_dir)
-    subprocess.call(
-        ["python", executable, "index", "--root", input_dir.parent.as_posix()]
-    )
-    return GenerationStatus.CREATED

@@ -42,9 +42,6 @@ class Config:
     if not Path(graphrag_root_dir_path).exists():
         graphrag_root_dir_path.mkdir(parents=True)
 
-    storage_base_dir = os.getenv("STORAGE_BASE_DIR")
-    assert storage_base_dir is not None, "Please specify the storage base directory."
-
     vector_db_dir = os.getenv("VECTOR_DB_DIR")
     assert vector_db_dir is not None, "Please specify the vector database directory."
 
@@ -68,8 +65,6 @@ class Config:
         model_type=ModelType.OpenAIEmbedding,
         config=embedding_llm_config,
     )
-
-    graphrag_exe = os.getenv("GRAPHRAG_EXE")
     index_verbose = os.getenv("INDEX_VERBOSE") == "true"
 
     claims_enabled = os.getenv("CLAIMS_ENABLED") == "true"
