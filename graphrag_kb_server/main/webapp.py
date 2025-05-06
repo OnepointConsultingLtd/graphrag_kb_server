@@ -51,9 +51,11 @@ def run_server():
 
     app = web.Application()
     app.middlewares.append(auth_middleware)
+    logger.info("Set up application ...")
     # sio.attach(app)
 
     loop = asyncio.new_event_loop()
+    logger.info("Event loop created ...")
 
     # Define Swagger schema
     swagger_info = SwaggerInfo(
@@ -70,20 +72,20 @@ def run_server():
     swagger.register_media_type_handler(
         media_type="multipart/form-data", handler=multipart_form
     )
+    logger.info("Swagger registered ...")
     for routes in all_routes:
         swagger.add_routes(routes)
-
+    logger.info("Routes added ...")
     for url in INDEX_LINKS:
         app.router.add_get(url, get_index)
     app.router.add_static("/", path=PATH_INDEX.parent, name="root")
-
+    logger.info("Static files added ...")
     web.run_app(
         app,
         host=websocket_cfg.websocket_server,
         port=websocket_cfg.websocket_port,
         loop=loop,
     )
-
 
 if __name__ == "__main__":
     logger.info("Starting server ...")

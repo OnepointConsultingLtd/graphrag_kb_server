@@ -19,6 +19,24 @@
             "program": "${workspaceFolder}/graphrag_kb_server/main/webapp.py",
             "console": "integratedTerminal",
             "justMyCode": false
+        },
+        {
+            "name": "Python Debugger: CLI JWT",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/graphrag_kb_server/cli/jwt_main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["generate-admin-token", "--name", "Gil Fernandes", "--email", "gil.fernandes@onepointltd.com", "--token_file", "admin_token.md"]
+        },
+        {
+            "name": "Python Debugger: CLI JWT Docker",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/graphrag_kb_server/cli/jwt_main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["generate-admin-token", "--name", "Gil Fernandes", "--email", "gil.fernandes@onepointltd.com", "--token_file", "admin_token.md", "--docker"]
         }
     ]
 }

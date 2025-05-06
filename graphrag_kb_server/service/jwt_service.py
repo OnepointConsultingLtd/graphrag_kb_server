@@ -10,7 +10,7 @@ from graphrag_kb_server.service.tennant import create_tennant_folder
 
 
 def rename_to_folder(name: str) -> str:
-    return re.sub(r"[^a-z0-9_]", "_", name.strip())
+    return re.sub(r"[^a-z0-9_]", "_", name.lower().strip())
 
 
 async def generate_token(

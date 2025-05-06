@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  graphrag-kb-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-9999}:${PORT:-9999}"
+    volumes:
+      - graphrag_data:/var/graphrag
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    env_file:
+      - .env
+      - .env_docker
+
+volumes:
+  graphrag_data:
+    name: graphrag_data 
