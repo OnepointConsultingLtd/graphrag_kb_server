@@ -14,7 +14,7 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     env_file:
       - .env
-      - .env_docker
+      - .env_docker_changed
 
 volumes:
   graphrag_data:

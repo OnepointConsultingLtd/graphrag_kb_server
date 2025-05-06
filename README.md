@@ -228,6 +228,14 @@ uv run ./graphrag_kb_server/main/webapp.py
 
 You can access it via: http://localhost:9999/index
 
+# Docker
+
+If you want to build the docker image with the server you can do so. You will need first to have an .env file with all of the variables described above, uv as well as Docker installed.
+
+Then you have to execute the `build_docker.ps1` script on Windows or the `build_docker.sh` on Linux.
+
+The administration token to access the system will be in a file called `.env_docker_changed` (env variable ADMIN_JWT).
+
 
 
 

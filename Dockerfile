@@ -44,7 +44,7 @@ COPY README.md .
 RUN dos2unix run.sh && chmod +x run.sh
 
 # Copy and rename configuration files
-COPY .env_docker .env
+COPY .env_docker_changed .env
 COPY config/administration_docker.yaml config/administration.yaml
 COPY config/security.yaml config/security.yaml
 

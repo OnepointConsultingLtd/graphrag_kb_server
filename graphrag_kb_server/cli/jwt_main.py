@@ -1,6 +1,7 @@
 import click
 import asyncio
-import argparse
+import shutil
+
 from pathlib import Path
 from graphrag_kb_server.model.jwt_token import JWTTokenData, JWTToken
 from graphrag_kb_server.service.jwt_service import generate_token
@@ -30,11 +31,17 @@ administrators:
         print(f"\nYour config/administration.yaml is going to be written with this email address: {email}")
         with open(admin_yaml_file, "wt") as f:
             f.write(admin_yaml)
-            
+
         if docker:
-            env_docker = Path(".env_docker")
+            docker_env = ".env_docker_changed"
+            cwd = Path(__file__).parent.parent.parent
+            source_file = cwd / ".env_docker"
+            target_file = cwd / docker_env
+            shutil.copy(source_file, target_file)
+            
+            env_docker = Path(docker_env)
             if not env_docker.exists():
-                print("\nCannot find .env_docker file.")
+                print(f"\nCannot find {docker_env} file.")
             else:
                 with open(env_docker, "rt") as f:
                     lines = f.readlines()
