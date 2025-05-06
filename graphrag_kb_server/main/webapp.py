@@ -87,6 +87,7 @@ def run_server():
         loop=loop,
     )
 
+
 if __name__ == "__main__":
     logger.info("Starting server ...")
     run_server()
