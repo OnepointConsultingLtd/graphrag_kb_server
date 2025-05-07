@@ -23,7 +23,7 @@ RUN pip install uv
 
 # Create necessary directories
 # Read-only application directories
-RUN mkdir -p /opt/graphrag_kb_server/config \
+RUN mkdir -p /var/graphrag/config \
     /opt/graphrag_kb_server/output/lancedb
 
 # Writable data directories (will be mounted as volumes)
@@ -61,6 +61,10 @@ RUN npm run build
 RUN npm ci --production=true
 RUN rm -rf node_modules/.cache
 
+WORKDIR /var/graphrag
+COPY config/administration_docker.yaml config/administration.yaml
+COPY config/security.yaml config/security.yaml
+
 # Return to main working directory
 WORKDIR /opt/graphrag_kb_server
 
@@ -75,4 +79,4 @@ ENV GRAPHRAG_ROOT_DIR=/var/graphrag/tennants
 ENV VECTOR_DB_DIR=/opt/graphrag_kb_server/output/lancedb
 
 # Command to run the application using run.sh
-CMD ["./run.sh"] 
+CMD ["./run.sh"]

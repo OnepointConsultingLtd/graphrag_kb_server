@@ -10,10 +10,12 @@ from graphrag_kb_server.service.tennant import (
 )
 from graphrag_kb_server.service.validations import validate_email
 from graphrag_kb_server.logger import logger
-from graphrag_kb_server.config import admin_cfg
+from graphrag_kb_server.config import admin_cfg, jwt_cfg
 
 
 UNAUTHORIZED = 401
+
+ADMIN_TOKEN_PATH = "/tennant/admin_token"
 
 
 routes = web.RouteTableDef()
@@ -21,7 +23,7 @@ routes = web.RouteTableDef()
 
 async def authenticate_request(request) -> dict:
     auth_header = request.headers.get("Authorization", None)
-    if request.method == "OPTIONS":
+    if request.method == "OPTIONS" or request.path == ADMIN_TOKEN_PATH:
         # Options should be not authenticated.
         return {}
     if not auth_header or not auth_header.startswith("Bearer "):
@@ -40,7 +42,7 @@ async def auth_middleware(request: web.Request, handler):
 
     request_path = str(request.path)
     # Check if the request path is unprotected
-    if not request_path.startswith("/protected"):
+    if not request_path.startswith("/protected") or request_path == ADMIN_TOKEN_PATH:
         return await handler(request)
 
     # Authenticate for protected routes
@@ -62,6 +64,85 @@ async def auth_middleware(request: web.Request, handler):
 
     # If authenticated, proceed to the next handler
     return await handler(request)
+
+
+@routes.get(ADMIN_TOKEN_PATH)
+async def read_admin_token(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: reads the admin token from the environment variables if the requester knows the name and email used to generate it.
+    tags:
+      - tennant
+    security: []  # Empty security array indicates no authentication required
+    parameters:
+      - name: name
+        in: query
+        required: true
+        description: The name used to generate the admin token
+        schema:
+          type: string
+      - name: email
+        in: query
+        required: true
+        description: The email used to generate the admin token
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Returns the admin token if the name and email are correct.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: object
+                  description: The generated JWT token
+                  properties:
+                    email:
+                      type: string
+                      description: The email used to generate the admin token
+                    folder_name:
+                      type: string
+                      description: The name used to generate the admin token
+                    token:
+                      type: string
+                      description: The generated JWT token
+      '401':
+        description: Expected response when the user name and email do not match the ones used to generate the admin token.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - error_code
+                - error
+                - description
+              properties:
+                error_code:
+                  type: integer
+                  description: The error code
+                error:
+                  type: string
+                  description: The error name
+                description:
+                  type: string
+                  description: The description of the error
+    """
+    query = request.rel_url.query
+    name = query.get("name", "")
+    email = query.get("email", "")
+    if name == jwt_cfg.admin_token_name and email == jwt_cfg.admin_token_email:
+        return web.json_response({"token": jwt_cfg.admin_jwt.dict()})
+    else:
+        return invalid_response(
+            "Invalid name or email",
+            "Make sure you specify the email and name used to generate the token.",
+            status=401,
+        )
 
 
 @routes.post("/protected/tennant/create")

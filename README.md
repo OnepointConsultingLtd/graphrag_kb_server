@@ -230,11 +230,34 @@ You can access it via: http://localhost:9999/index
 
 # Docker
 
+## Compose
+
 If you want to build the docker image with the server you can do so. You will need first to have an .env file with all of the variables described above, uv as well as Docker installed.
 
-Then you have to execute the `build_docker.ps1` script on Windows or the `build_docker.sh` on Linux.
+Then you have to execute the `docker_compose.ps1.ps1` script on Windows or the `docker_compose.ps1.sh` on Linux. Make sure to change the email and name in those scripts as they will be injected into the ADMIN JWT token.
 
 The administration token to access the system will be in a file called `.env_docker_changed` (env variable ADMIN_JWT).
+
+## Build
+
+You can build the image with the scripts `docker_build.ps1` or `docker_build.sh`.
+
+However when you start the project you will need to define the environment variables:
+
+```
+ADMIN_TOKEN_NAME
+ADMIN_TOKEN_EMAIL
+OPENAI_API_KEY
+GEMINI_API_KEY
+```
+
+As well as the volume for this path:
+
+```
+/var/graphrag
+```
+
+
 
 
 

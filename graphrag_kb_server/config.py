@@ -14,9 +14,9 @@ load_dotenv()
 
 class Config:
     openai_api_key = os.getenv("OPENAI_API_KEY")
-    assert (
-        openai_api_key is not None
-    ), "Please specify the OPENAI_API_KEY environment variable."
+    if openai_api_key is None:
+        logger.warning("OPENAI_API_KEY is not set, using empty string.")
+        openai_api_key = ""
 
     openai_api_model = os.getenv("OPENAI_API_MODEL")
     assert (
@@ -98,8 +98,9 @@ class JWTConfig:
     timedelta_minutes = os.getenv("JWT_TIME_DELTA_MINUTES")
     assert timedelta_minutes is not None, "No time delta in minutes available"
     timedelta_minutes = int(timedelta_minutes)
-    admin_jwt = os.getenv("ADMIN_JWT")
-    assert admin_jwt is not None, "Administration JWT is none."
+    admin_jwt: str = ""
+    admin_token_name: str = ""
+    admin_token_email: str = ""
 
 
 cfg = Config()

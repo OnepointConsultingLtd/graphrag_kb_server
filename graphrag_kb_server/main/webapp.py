@@ -11,6 +11,7 @@ from graphrag_kb_server.main import all_routes
 
 from graphrag_kb_server.main.multi_tennant_server import auth_middleware
 from graphrag_kb_server.logger import logger, init_logger
+from graphrag_kb_server.service.jwt_service import generate_admin_token
 
 init_logger()
 
@@ -87,7 +88,9 @@ def run_server():
         loop=loop,
     )
 
+
 if __name__ == "__main__":
     logger.info("Starting server ...")
+    generate_admin_token()
     run_server()
     logger.info("Graph RAG Knowledge Base Server stopped.")
