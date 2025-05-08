@@ -4,7 +4,7 @@ import shutil
 
 from pathlib import Path
 from graphrag_kb_server.model.jwt_token import JWTTokenData, JWTToken
-from graphrag_kb_server.service.jwt_service import generate_token
+from graphrag_kb_server.service.jwt_service import generate_token, save_token_file
 from graphrag_kb_server.service.email_service import send_admin_token_email
 
 
@@ -16,16 +16,7 @@ def generate_token_main(name: str, email: str, token_file: str, docker: bool):
     )
     token = asyncio.run(generate_token(JWTTokenData(name=name, email=email), False))
     if isinstance(token, JWTToken):
-        print("Token:")
-        print(token.token)
-        with open(token_file, "wt") as f:
-            f.write("# Administration Token\n\n")
-            f.write("- Token: ")
-            f.write(token.token)
-            f.write("\n- Name: ")
-            f.write(name)
-            f.write("\n- Email: ")
-            f.write(email)
+        save_token_file(token, token_file, name, email)
         admin_yaml = f"""
 administrators:
   - {email}

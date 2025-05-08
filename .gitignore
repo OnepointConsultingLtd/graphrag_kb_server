@@ -67,3 +67,4 @@ tokens.txt
 node_modules
 .env_docker_changed
 ./admin_token_docker.md
+config/administration_token.txt

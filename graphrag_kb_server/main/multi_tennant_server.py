@@ -99,18 +99,8 @@ async def read_admin_token(request: web.Request) -> web.Response:
                 - token
               properties:
                 token:
-                  type: object
+                  type: string
                   description: The generated JWT token
-                  properties:
-                    email:
-                      type: string
-                      description: The email used to generate the admin token
-                    folder_name:
-                      type: string
-                      description: The name used to generate the admin token
-                    token:
-                      type: string
-                      description: The generated JWT token
       '401':
         description: Expected response when the user name and email do not match the ones used to generate the admin token.
         content:
@@ -136,7 +126,7 @@ async def read_admin_token(request: web.Request) -> web.Response:
     name = query.get("name", "")
     email = query.get("email", "")
     if name == jwt_cfg.admin_token_name and email == jwt_cfg.admin_token_email:
-        return web.json_response({"token": jwt_cfg.admin_jwt.dict()})
+        return web.json_response({"token": jwt_cfg.admin_jwt})
     else:
         return invalid_response(
             "Invalid name or email",

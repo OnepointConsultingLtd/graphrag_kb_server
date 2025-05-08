@@ -48,17 +48,41 @@ async def decode_token(token: str) -> dict:
     return jwt.decode(token, jwt_cfg.secret, jwt_cfg.algorithm)
 
 
+def save_token_file(token: JWTToken, token_file: str, name: str, email: str):
+    print("Token:")
+    print(token.token)
+    with open(cfg.config_dir / token_file, "wt", encoding="utf-8") as f:
+        f.write("# Administration Token\n\n")
+        f.write("- Token: ")
+        f.write(token.token)
+        f.write("\n- Name: ")
+        f.write(name)
+        f.write("\n- Email: ")
+        f.write(email)
+
+
+TOKEN_FILE = "administration_token.txt"
+
+
 def generate_admin_token():
     jwt_cfg.admin_jwt = os.getenv("ADMIN_JWT")
+    administration_token_file = cfg.config_dir / TOKEN_FILE
+    # Read the already saved token
+    if administration_token_file.exists():
+        with open(administration_token_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if "Token:" in line:
+                    jwt_cfg.admin_jwt = line.split(":")[1].strip()
+                    break
+        return
+    # Generate the token from the environment variables
     if jwt_cfg.admin_jwt is None or jwt_cfg.admin_jwt.strip() == "":
         logger.warning("ADMIN_JWT is not set, generating")
-        jwt_cfg.admin_token_name = os.getenv("ADMIN_TOKEN_NAME")
-        jwt_cfg.admin_token_email = os.getenv("ADMIN_TOKEN_EMAIL")
         if jwt_cfg.admin_token_name is None or jwt_cfg.admin_token_email is None:
             raise ValueError(
                 "ADMIN_TOKEN_NAME and ADMIN_TOKEN_EMAIL must be set if ADMIN_JWT is not set."
             )
-        jwt_cfg.admin_jwt = asyncio.run(
+        jwt_token = asyncio.run(
             generate_token(
                 JWTTokenData(
                     name=jwt_cfg.admin_token_name, email=jwt_cfg.admin_token_email
@@ -66,7 +90,9 @@ def generate_admin_token():
                 False,
             )
         )
+        jwt_cfg.admin_jwt = jwt_token.token
         administration_yaml = cfg.config_dir / "administration.yaml"
         with open(administration_yaml, "w") as f:
             f.write(f"administrators:\n  - {jwt_cfg.admin_token_email}\n")
         logger.warning(f"ADMIN_JWT is now set to {jwt_cfg.admin_jwt}")
+        save_token_file(jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email)

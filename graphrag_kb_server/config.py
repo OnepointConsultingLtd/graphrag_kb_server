@@ -11,6 +11,10 @@ from graphrag.config.enums import ModelType
 
 load_dotenv()
 
+def create_if_not_exists(path: Path):
+    if not Path(path).exists():
+        path.mkdir(parents=True)
+
 
 class Config:
     openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -35,12 +39,12 @@ class Config:
     config_dir_str = os.getenv("CONFIG_DIR")
     assert config_dir_str is not None, "The configuration directory with Swagger files"
     config_dir = Path(config_dir_str)
+    create_if_not_exists(config_dir)
 
     graphrag_root_dir = os.getenv("GRAPHRAG_ROOT_DIR")
     assert graphrag_root_dir is not None, "Please specify the Graphrag root directory."
     graphrag_root_dir_path = Path(graphrag_root_dir)
-    if not Path(graphrag_root_dir_path).exists():
-        graphrag_root_dir_path.mkdir(parents=True)
+    create_if_not_exists(graphrag_root_dir_path)
 
     vector_db_dir = os.getenv("VECTOR_DB_DIR")
     assert vector_db_dir is not None, "Please specify the vector database directory."
@@ -99,8 +103,8 @@ class JWTConfig:
     assert timedelta_minutes is not None, "No time delta in minutes available"
     timedelta_minutes = int(timedelta_minutes)
     admin_jwt: str = ""
-    admin_token_name: str = ""
-    admin_token_email: str = ""
+    admin_token_name = os.getenv("ADMIN_TOKEN_NAME")
+    admin_token_email = os.getenv("ADMIN_TOKEN_EMAIL")
 
 
 cfg = Config()

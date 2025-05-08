@@ -476,7 +476,7 @@ async def context(request: web.Request) -> web.Response:
       - name: use_context_records
         in: query
         required: false
-        description: Whether to output the context records or not.
+        description: Whether to output the context records or not. (Applies only to GraphRAG)
         schema:
           type: boolean
       - name: search

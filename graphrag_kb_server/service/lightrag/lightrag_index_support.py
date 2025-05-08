@@ -45,7 +45,7 @@ async def lightrag_index(rag: LightRAG, files_to_index: list[Path]):
     count = len(files_to_index)
     assert count > 0, "No files to index"
     for i, file in enumerate(files_to_index):
-        await rag.ainsert(file.read_text(encoding="utf-8"))
+        await rag.ainsert(file.read_text(encoding="utf-8"), file_paths=file.as_posix())
         logger.info("########################################################")
         logger.info(f"Indexed {i+1}/{count} files: {file}")
         logger.info("########################################################")
