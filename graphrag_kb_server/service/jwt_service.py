@@ -95,4 +95,6 @@ def generate_admin_token():
         with open(administration_yaml, "w") as f:
             f.write(f"administrators:\n  - {jwt_cfg.admin_token_email}\n")
         logger.warning(f"ADMIN_JWT is now set to {jwt_cfg.admin_jwt}")
-        save_token_file(jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email)
+        save_token_file(
+            jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email
+        )

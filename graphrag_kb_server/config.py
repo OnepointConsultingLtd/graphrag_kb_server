@@ -11,6 +11,7 @@ from graphrag.config.enums import ModelType
 
 load_dotenv()
 
+
 def create_if_not_exists(path: Path):
     if not Path(path).exists():
         path.mkdir(parents=True)
