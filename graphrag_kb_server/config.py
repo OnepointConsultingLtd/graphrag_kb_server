@@ -113,10 +113,14 @@ cfg = Config()
 class AdminConfig:
     admins = cfg.config_dir / "administration.yaml"
     if not admins.exists():
-        shutil.copyfile(cfg.config_dir / "administration_local.yaml", admins)
-    yaml_text = admins.read_text()
-    content = yaml.safe_load(yaml_text)
-    administrators = content["administrators"]
+        if (cfg.config_dir / "administration_local.yaml").exists():
+            shutil.copyfile(cfg.config_dir / "administration_local.yaml", admins)
+    if admins.exists():
+        yaml_text = admins.read_text()
+        content = yaml.safe_load(yaml_text)
+        administrators = content["administrators"]
+    else:
+        administrators = []
 
 
 class LightRAGConfig:

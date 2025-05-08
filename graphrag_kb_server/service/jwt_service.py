@@ -2,10 +2,12 @@ import time
 import re
 import os
 import asyncio
+import shutil
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from graphrag_kb_server.config import jwt_cfg, cfg
+from graphrag_kb_server.config import jwt_cfg, cfg, admin_cfg
 from graphrag_kb_server.model.jwt_token import JWTToken, JWTTokenData
 from graphrag_kb_server.model.error import Error
 from graphrag_kb_server.service.tennant import create_tennant_folder
@@ -74,7 +76,8 @@ def generate_admin_token():
                 if "Token:" in line:
                     jwt_cfg.admin_jwt = line.split(":")[1].strip()
                     break
-        return
+        return#
+    logger.warning(f"{administration_token_file.as_posix()} does not exist, generating new token")
     # Generate the token from the environment variables
     if jwt_cfg.admin_jwt is None or jwt_cfg.admin_jwt.strip() == "":
         logger.warning("ADMIN_JWT is not set, generating")
@@ -93,6 +96,19 @@ def generate_admin_token():
         jwt_cfg.admin_jwt = jwt_token.token
         administration_yaml = cfg.config_dir / "administration.yaml"
         with open(administration_yaml, "w") as f:
-            f.write(f"administrators:\n  - {jwt_cfg.admin_token_email}\n")
+            admin = jwt_cfg.admin_token_email
+            f.write(f"administrators:\n  - {admin}\n")
+            admin_cfg.administrators.append(admin)
         logger.warning(f"ADMIN_JWT is now set to {jwt_cfg.admin_jwt}")
         save_token_file(jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email)
+    else:
+        logger.warning(f"ADMIN_JWT is already set to {jwt_cfg.admin_jwt}")
+
+
+def save_security_yaml():
+    security_yaml = cfg.config_dir / "security.yaml"
+    if not security_yaml.exists():
+        original_security_yaml = Path(__file__).parent.parent.parent / "config" / "security.yaml"
+        if not original_security_yaml.exists():
+            raise FileNotFoundError(f"Security file {original_security_yaml.as_posix()} not found")
+        shutil.copyfile(original_security_yaml, security_yaml)

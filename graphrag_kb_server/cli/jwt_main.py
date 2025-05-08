@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 from graphrag_kb_server.model.jwt_token import JWTTokenData, JWTToken
 from graphrag_kb_server.service.jwt_service import generate_token, save_token_file
-from graphrag_kb_server.service.email_service import send_admin_token_email
 
 
 def generate_token_main(name: str, email: str, token_file: str, docker: bool):
@@ -49,13 +48,6 @@ administrators:
                         lines[i] = line
                 env_docker.write_text("".join(lines), encoding="utf-8")
 
-        # Send email with the token
-        if send_admin_token_email(email, name, token.token):
-            print(f"\nAdmin token has been sent to {email}")
-        else:
-            print(
-                "\nFailed to send admin token email. Please check the email configuration."
-            )
     else:
         print("Could not generate token.")
 

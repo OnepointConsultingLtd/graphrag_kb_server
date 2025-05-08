@@ -23,12 +23,11 @@ RUN pip install uv
 
 # Create necessary directories
 # Read-only application directories
-RUN mkdir -p /var/graphrag/config \
-    /opt/graphrag_kb_server/output/lancedb
 
 # Writable data directories (will be mounted as volumes)
 RUN mkdir -p /var/graphrag/upload \
     /var/graphrag/tennants \
+    /var/graphrag/config \
     /var/graphrag/jwt_gen
 
 # Copy project files
@@ -39,14 +38,13 @@ COPY prompts/ ./prompts/
 COPY front_end/ ./front_end/
 COPY run.sh .
 COPY README.md .
+COPY config/security.yaml config/security.yaml
 
 # Convert line endings and make run.sh executable
 RUN dos2unix run.sh && chmod +x run.sh
 
 # Copy and rename configuration files
-COPY .env_docker_changed .env
-COPY config/administration_docker.yaml config/administration.yaml
-COPY config/security.yaml config/security.yaml
+COPY .env_docker .env
 
 # Install Python dependencies using uv
 RUN uv pip install --system .
@@ -62,8 +60,7 @@ RUN npm ci --production=true
 RUN rm -rf node_modules/.cache
 
 WORKDIR /var/graphrag
-COPY config/administration_docker.yaml config/administration.yaml
-COPY config/security.yaml config/security.yaml
+COPY config/administration_local.yaml config/administration.yaml
 
 # Return to main working directory
 WORKDIR /opt/graphrag_kb_server
@@ -73,10 +70,8 @@ EXPOSE 9999
 
 # Set environment variables
 ENV PYTHONPATH=/opt/graphrag_kb_server
-ENV CONFIG_DIR=/opt/graphrag_kb_server/config
 ENV UPLOAD_DIR=/var/graphrag/upload
 ENV GRAPHRAG_ROOT_DIR=/var/graphrag/tennants
-ENV VECTOR_DB_DIR=/opt/graphrag_kb_server/output/lancedb
 
 # Command to run the application using run.sh
 CMD ["./run.sh"]

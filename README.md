@@ -1,7 +1,7 @@
 # GraphRag Knowledge Base Engine
 
-Project with support for multi tennant indexing and search functions to create the knowledge graphs and the embeddings that can be used for GraphRAG.
-It also provides a simple API to expose GraphRAG as an API.
+Project with support for multi tennant indexing and search functions to create the knowledge graphs and the embeddings that can be used for [GraphRAG](https://github.com/microsoft/graphrag) and [LightRAG](https://github.com/HKUDS/LightRAG).
+It also provides a simple API to expose [GraphRAG](https://github.com/microsoft/graphrag) and [LightRAG](https://github.com/HKUDS/LightRAG) as an API.
 
 The tennant API has three main methods:
 
@@ -230,14 +230,6 @@ You can access it via: http://localhost:9999/index
 
 # Docker
 
-## Compose
-
-If you want to build the docker image with the server you can do so. You will need first to have an .env file with all of the variables described above, uv as well as Docker installed.
-
-Then you have to execute the `docker_compose.ps1.ps1` script on Windows or the `docker_compose.ps1.sh` on Linux. Make sure to change the email and name in those scripts as they will be injected into the ADMIN JWT token.
-
-The administration token to access the system will be in a file called `.env_docker_changed` (env variable ADMIN_JWT).
-
 ## Build
 
 You can build the image with the scripts `docker_build.ps1` or `docker_build.sh`.
@@ -256,6 +248,8 @@ As well as the volume for this path:
 ```
 /var/graphrag
 ```
+
+We have published a Docker image on Docker Hub that you can use: gilf/graphrag_kb_server
 
 
 

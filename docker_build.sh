@@ -11,16 +11,5 @@ source .venv/bin/activate
 # Sync dependencies
 uv sync
 
-# Generate admin token
-# Change name according to your name
-uv run python graphrag_kb_server/cli/jwt_main.py generate-admin-token \
-    --name "Gil Fernandes" \
-    --email "gil.fernandes@onepointltd.com" \
-    --token_file "admin_token_docker.md" \
-    --docker
-
-# Create docker config
-uv run python graphrag_kb_server/cli/docker_config_main.py create-docker-config
-
 # Build and run docker container
 docker build -t graphrag_kb_server .
