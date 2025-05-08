@@ -100,6 +100,7 @@ def generate_admin_token():
             f.write(f"administrators:\n  - {admin}\n")
             admin_cfg.administrators.append(admin)
         logger.warning(f"ADMIN_JWT is now set to {jwt_cfg.admin_jwt}")
+<<<<<<< HEAD
         save_token_file(jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email)
     else:
         logger.warning(f"ADMIN_JWT is already set to {jwt_cfg.admin_jwt}")
@@ -112,3 +113,8 @@ def save_security_yaml():
         if not original_security_yaml.exists():
             raise FileNotFoundError(f"Security file {original_security_yaml.as_posix()} not found")
         shutil.copyfile(original_security_yaml, security_yaml)
+=======
+        save_token_file(
+            jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email
+        )
+>>>>>>> 4179f7de8fca823ddd6b63019ac13c2cd3cc3a01
