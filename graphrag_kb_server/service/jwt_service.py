@@ -76,8 +76,10 @@ def generate_admin_token():
                 if "Token:" in line:
                     jwt_cfg.admin_jwt = line.split(":")[1].strip()
                     break
-        return#
-    logger.warning(f"{administration_token_file.as_posix()} does not exist, generating new token")
+        return  #
+    logger.warning(
+        f"{administration_token_file.as_posix()} does not exist, generating new token"
+    )
     # Generate the token from the environment variables
     if jwt_cfg.admin_jwt is None or jwt_cfg.admin_jwt.strip() == "":
         logger.warning("ADMIN_JWT is not set, generating")
@@ -100,8 +102,9 @@ def generate_admin_token():
             f.write(f"administrators:\n  - {admin}\n")
             admin_cfg.administrators.append(admin)
         logger.warning(f"ADMIN_JWT is now set to {jwt_cfg.admin_jwt}")
-<<<<<<< HEAD
-        save_token_file(jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email)
+        save_token_file(
+            jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email
+        )
     else:
         logger.warning(f"ADMIN_JWT is already set to {jwt_cfg.admin_jwt}")
 
@@ -109,12 +112,11 @@ def generate_admin_token():
 def save_security_yaml():
     security_yaml = cfg.config_dir / "security.yaml"
     if not security_yaml.exists():
-        original_security_yaml = Path(__file__).parent.parent.parent / "config" / "security.yaml"
-        if not original_security_yaml.exists():
-            raise FileNotFoundError(f"Security file {original_security_yaml.as_posix()} not found")
-        shutil.copyfile(original_security_yaml, security_yaml)
-=======
-        save_token_file(
-            jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email
+        original_security_yaml = (
+            Path(__file__).parent.parent.parent / "config" / "security.yaml"
         )
->>>>>>> 4179f7de8fca823ddd6b63019ac13c2cd3cc3a01
+        if not original_security_yaml.exists():
+            raise FileNotFoundError(
+                f"Security file {original_security_yaml.as_posix()} not found"
+            )
+        shutil.copyfile(original_security_yaml, security_yaml)

@@ -1,5 +1,5 @@
 {
-    "name": "sigma",
+    "name": "graphrag-kb-visualization",
     "version": "1.0.0",
     "description": "Trying to visualize Gexf files",
     "scripts": {
