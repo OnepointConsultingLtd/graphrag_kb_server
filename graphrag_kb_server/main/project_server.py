@@ -44,7 +44,7 @@ from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.service.lightrag.lightrag_index_support import acreate_lightrag
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
-
+from graphrag_kb_server.service.lightrag.lightrag_visualization import generate_lightrag_graph_visualization
 routes = web.RouteTableDef()
 
 HTML_CONTENT = "<html><body style='font-family: sans-serif'><h1>{question}</h1><section>{response}</section></body></html>"
@@ -937,7 +937,6 @@ async def topics(request: web.Request) -> web.Response:
                         )
                     case _:
                         return web.json_response(community_list)
-                return web.json_response(community_list)
 
     return await handle_error(handle_request, request=request)
 
@@ -1121,4 +1120,54 @@ def create_context_parameters(url: URL, project_dir: Path) -> ContextParameters:
     )
 
 
-logger.info("project_server.py loaded")
+@routes.get("/protected/project/lightrag/graphvisualization")
+async def lightrag_graph_visualization(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns the graph visualization of the lightrag index
+    tags:
+      - lightrag-graph
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          default: lightrag
+          enum: [lightrag]
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: A file representing the graph of the lightrag index.
+      '404':
+        description: Bad Request - No community or project found.
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                graph_file = generate_lightrag_graph_visualization(project_dir)
+                return web.FileResponse(
+                    graph_file,
+                    headers={
+                        "CONTENT-DISPOSITION": f'attachment; filename="{graph_file.name}"'
+                    },
+                )
+    return await handle_error(handle_request, request=request)
