@@ -49,7 +49,10 @@ from graphrag_kb_server.service.lightrag.lightrag_visualization import (
 from graphrag_kb_server.service.lightrag.lightrag_centrality import (
     get_sorted_centrality_scores_as_pd,
 )
-from graphrag_kb_server.service.lightrag.lightrag_graph_support import extract_entity_types, create_network_from_project_dir
+from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
+    extract_entity_types,
+    create_network_from_project_dir,
+)
 
 
 routes = web.RouteTableDef()
@@ -1299,7 +1302,6 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
               error_name: "No tennant information"
               error_description: "No tennant information available in request"
     """
-
 
     async def handle_request(request: web.Request) -> web.Response:
         match match_process_dir(request):
