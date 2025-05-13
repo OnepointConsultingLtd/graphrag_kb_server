@@ -1300,6 +1300,7 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
               error_description: "No tennant information available in request"
     """
 
+
     async def handle_request(request: web.Request) -> web.Response:
         match match_process_dir(request):
             case Response() as error_response:
