@@ -1,4 +1,5 @@
 from pathlib import Path
+from collections import Counter
 
 import networkx as nx
 import rustworkx as rx
@@ -27,3 +28,19 @@ def networkx_to_rustworkx(nx_graph: nx.Graph) -> rx.PyGraph:
         rw_graph.add_edge(nx_to_rw_map[source], nx_to_rw_map[target], edge_data)
 
     return rw_graph
+
+
+def extract_entity_types(graph: nx.classes.graph.Graph) -> dict[str, int]:
+    entity_types = Counter()
+    for node in graph.nodes(data=True):
+        entity_types[node[1]["entity_type"]] += 1
+    return dict(entity_types)
+
+
+if __name__ == "__main__":
+
+    clustre1 = Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre1")
+    G = create_network_from_project_dir(clustre1)
+    entity_types = extract_entity_types(G)
+    for entity_type, count in entity_types.items():
+        print(f"{entity_type}: {count}")

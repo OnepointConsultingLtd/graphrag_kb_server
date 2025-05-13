@@ -45,20 +45,7 @@ def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
     return data
 
 
-
-
 if __name__ == "__main__":
-
-    project_dir = (
-        Path(__file__).parent.parent.parent.parent
-        / "docs/dummy_projects/lightrag/dwell1"
-    )
-    scores = get_sorted_centrality_scores(project_dir)
-
-    for score in scores[:20]:
-        print(score)
-
-    print("--------------------------------")
 
     clustre1 = Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre1")
     scores = get_sorted_centrality_scores_as_pd(clustre1)

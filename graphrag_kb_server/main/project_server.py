@@ -46,7 +46,11 @@ from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
 from graphrag_kb_server.service.lightrag.lightrag_visualization import (
     generate_lightrag_graph_visualization,
 )
-from graphrag_kb_server.service.lightrag.lightrag_centrality import get_sorted_centrality_scores_as_pd
+from graphrag_kb_server.service.lightrag.lightrag_centrality import (
+    get_sorted_centrality_scores_as_pd,
+)
+from graphrag_kb_server.service.lightrag.lightrag_graph_support import extract_entity_types, create_network_from_project_dir
+
 
 routes = web.RouteTableDef()
 
@@ -1186,6 +1190,63 @@ async def lightrag_graph_visualization(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
+@routes.get("/protected/project/lightrag/entity_types")
+async def lightrag_entity_types(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: Returns the entity types of the lightrag index for a specific project.
+    tags:
+      - lightrag-graph
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          default: lightrag
+          enum: [lightrag]
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: A JSON response with the entity types and their counts.
+        content:
+          application/json:
+            example:
+              entity_types:
+                - category: 10
+                  organization: 20
+                  geo: 30
+      '404':
+        description: Bad Request - No community or project found.
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                graph = create_network_from_project_dir(project_dir)
+                entity_types = extract_entity_types(graph)
+                return web.json_response(entity_types)
+
+    return await handle_error(handle_request, request=request)
+
+
 @routes.get("/protected/project/lightrag/centrality")
 async def lightrag_centrality(request: web.Request) -> web.Response:
     """
@@ -1216,6 +1277,14 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
         schema:
           type: integer
           default: 20
+      - name: category
+        in: query
+        required: false
+        description: Category for filtering. Optional. Possible values are "category", "organization", "geo", "person", "equipment", "technology"
+        schema:
+          type: string
+          default: category
+          enum: ["category", "organization", "geo", "person", "equipment", "technology", "event", "economic_policy", "UNKNOWN"]
     security:
       - bearerAuth: []
     responses:
@@ -1230,6 +1299,7 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
               error_name: "No tennant information"
               error_description: "No tennant information available in request"
     """
+
     async def handle_request(request: web.Request) -> web.Response:
         match match_process_dir(request):
             case Response() as error_response:
@@ -1237,6 +1307,9 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
             case Path() as project_dir:
                 df = get_sorted_centrality_scores_as_pd(project_dir)
                 limit = int(request.rel_url.query.get("limit", 20))
+                category = request.rel_url.query.get("category", None)
+                if category:
+                    df = df[df["entity_type"] == category]
                 return web.json_response(df.to_dict(orient="records")[:limit])
 
     return await handle_error(handle_request, request=request)
