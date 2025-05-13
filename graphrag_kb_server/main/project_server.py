@@ -14,7 +14,6 @@ from graphrag_kb_server.model.rag_parameters import ContextParameters
 from graphrag_kb_server.model.context import Search
 
 from graphrag_kb_server.config import cfg
-from graphrag_kb_server.logger import logger
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.service.query import rag_local, rag_global, rag_drift
 from graphrag_kb_server.service.query import (
@@ -44,7 +43,11 @@ from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.service.lightrag.lightrag_index_support import acreate_lightrag
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
-from graphrag_kb_server.service.lightrag.lightrag_visualization import generate_lightrag_graph_visualization
+from graphrag_kb_server.service.lightrag.lightrag_visualization import (
+    generate_lightrag_graph_visualization,
+)
+from graphrag_kb_server.service.lightrag.lightrag_centrality import get_sorted_centrality_scores_as_pd
+
 routes = web.RouteTableDef()
 
 HTML_CONTENT = "<html><body style='font-family: sans-serif'><h1>{question}</h1><section>{response}</section></body></html>"
@@ -1143,6 +1146,14 @@ async def lightrag_graph_visualization(request: web.Request) -> web.Response:
           type: string
           default: lightrag
           enum: [lightrag]
+      - name: disposition
+        in: query
+        required: true
+        description: How the file should be returned, either as attachment or inline
+        schema:
+          type: string
+          default: attachment
+          enum: [attachment, inline]
     security:
       - bearerAuth: []
     responses:
@@ -1164,10 +1175,68 @@ async def lightrag_graph_visualization(request: web.Request) -> web.Response:
                 return error_response
             case Path() as project_dir:
                 graph_file = generate_lightrag_graph_visualization(project_dir)
+                disposition = request.rel_url.query.get("disposition", "attachment")
                 return web.FileResponse(
                     graph_file,
                     headers={
-                        "CONTENT-DISPOSITION": f'attachment; filename="{graph_file.name}"'
+                        "CONTENT-DISPOSITION": f'{disposition}; filename="{graph_file.name}"'
                     },
                 )
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.get("/protected/project/lightrag/centrality")
+async def lightrag_centrality(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: Returns the centrality scores of the lightrag index for a specific project.
+    tags:
+      - lightrag-graph
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          default: lightrag
+          enum: [lightrag]
+      - name: limit
+        in: query
+        required: false
+        description: The type of engine used to run the RAG system
+        schema:
+          type: integer
+          default: 20
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: A JSON response with the sorted centrality scores and corresponding node information.
+      '404':
+        description: Bad Request - No community or project found.
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
+    """
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                df = get_sorted_centrality_scores_as_pd(project_dir)
+                limit = int(request.rel_url.query.get("limit", 20))
+                return web.json_response(df.to_dict(orient="records")[:limit])
+
     return await handle_error(handle_request, request=request)

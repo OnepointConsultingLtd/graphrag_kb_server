@@ -21,6 +21,7 @@ dependencies = [
     "nano-vectordb>=0.0.4.3",
     "google-genai>=1.13.0",
     "pyvis>=0.3.2",
+    "rustworkx>=0.16.0",
 ]
 
 [project.scripts]

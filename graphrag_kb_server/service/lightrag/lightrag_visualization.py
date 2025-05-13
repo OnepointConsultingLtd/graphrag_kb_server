@@ -4,6 +4,10 @@ from pyvis.network import Network
 import random
 import networkx as nx
 
+from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
+    create_network_from_project_dir,
+)
+
 
 def _create_styled_network(G: nx.Graph) -> Network:
     net = Network(height="100vh", notebook=False)
@@ -18,15 +22,8 @@ def _create_styled_network(G: nx.Graph) -> Network:
     for edge in net.edges:
         if "description" in edge:
             edge["title"] = edge["description"]
-    
+
     return net
-
-
-def _create_network_from_project_dir(project_dir: Path) -> nx.classes.graph.Graph:
-    graph_file = project_dir / "lightrag" / "graph_chunk_entity_relation.graphml"
-    assert graph_file.exists(), f"Graph file {graph_file} does not exist"
-    G = nx.read_graphml(graph_file)
-    return G
 
 
 def get_output_path(project_dir: Path) -> Path:
@@ -37,18 +34,18 @@ def generate_lightrag_graph_visualization(project_dir: Path) -> Path:
     output_path = get_output_path(project_dir)
     if output_path.exists():
         return output_path
-    
-    G = _create_network_from_project_dir(project_dir)
-    
+
+    G = create_network_from_project_dir(project_dir)
+
     net = _create_styled_network(G)
-    
+
     # Save the network to a file in the project directory
     net.save_graph(output_path.as_posix())
     return output_path
 
 
 if __name__ == "__main__":
-    report = generate_lightrag_graph_visualization(Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/dwell"))
+    report = generate_lightrag_graph_visualization(
+        Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/dwell")
+    )
     print(report.as_posix())
-
-
