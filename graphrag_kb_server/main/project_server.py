@@ -46,7 +46,9 @@ from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
 from graphrag_kb_server.service.lightrag.lightrag_visualization import (
     generate_lightrag_graph_visualization,
 )
-from graphrag_kb_server.service.lightrag.lightrag_centrality import get_sorted_centrality_scores_as_pd
+from graphrag_kb_server.service.lightrag.lightrag_centrality import (
+    get_sorted_centrality_scores_as_pd,
+)
 
 routes = web.RouteTableDef()
 
@@ -1230,6 +1232,7 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
               error_name: "No tennant information"
               error_description: "No tennant information available in request"
     """
+
     async def handle_request(request: web.Request) -> web.Response:
         match match_process_dir(request):
             case Response() as error_response:

@@ -45,8 +45,6 @@ def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
     return data
 
 
-
-
 if __name__ == "__main__":
 
     project_dir = (
