@@ -46,7 +46,10 @@ def generate_communities_dataframe(communities: Communities) -> pd.DataFrame:
 
 
 async def generate_communities_excel(project_dir: Path) -> Path:
-    communities_file = project_dir / f"communities_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
+    communities_file = (
+        project_dir
+        / f"communities_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
+    )
     communities = await cluster_graph_from_project_dir(project_dir)
     df = generate_communities_dataframe(communities)
     df.index = range(1, len(df) + 1)
