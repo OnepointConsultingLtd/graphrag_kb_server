@@ -136,5 +136,6 @@ jwt_cfg = JWTConfig()
 admin_cfg = AdminConfig()
 
 lightrag_cfg = LightRAGConfig()
+
 if __name__ == "__main__":
     print(cfg.llm)

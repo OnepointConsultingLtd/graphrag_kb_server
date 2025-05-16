@@ -49,7 +49,13 @@ from graphrag_kb_server.service.lightrag.lightrag_visualization import (
 from graphrag_kb_server.service.lightrag.lightrag_centrality import (
     get_sorted_centrality_scores_as_pd,
 )
-from graphrag_kb_server.service.lightrag.lightrag_graph_support import extract_entity_types, create_network_from_project_dir
+from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
+    extract_entity_types,
+    create_network_from_project_dir,
+)
+from graphrag_kb_server.service.lightrag.lightrag_clustering import (
+    generate_communities_excel,
+)
 
 
 routes = web.RouteTableDef()
@@ -972,7 +978,15 @@ async def topics_network(request: web.Request) -> web.Response:
       - bearerAuth: []
     responses:
       '200':
-        description: A file representing the graph of community nodes.
+        description: A gexf file representing the graph of community nodes.
+      '404':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
     """
 
     async def handle_request(request: web.Request) -> web.Response:
@@ -1300,7 +1314,6 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
               error_description: "No tennant information available in request"
     """
 
-
     async def handle_request(request: web.Request) -> web.Response:
         match match_process_dir(request):
             case Response() as error_response:
@@ -1312,5 +1325,59 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                 if category:
                     df = df[df["entity_type"] == category]
                 return web.json_response(df.to_dict(orient="records")[:limit])
+            
+    return await handle_error(handle_request, request=request)
+            
+
+@routes.get("/protected/project/lightrag/communities_report")
+async def lightrag_communities_report(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns a file with the community Excel file.
+    tags:
+      - lightrag-graph
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          default: lightrag
+          enum: [lightrag]
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: An Excel file with the communities.
+      '404':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
+    """
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                communities_file = await generate_communities_excel(project_dir)
+                return web.FileResponse(
+                    communities_file,
+                    headers={
+                        "CONTENT-DISPOSITION": f'attachment; filename="{project_dir}/{communities_file.name}"'
+                    },
+                )
 
     return await handle_error(handle_request, request=request)
+    

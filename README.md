@@ -249,6 +249,8 @@ As well as the volume for this path:
 /var/graphrag
 ```
 
+You will need to map a port to 9999.
+
 We have published a Docker image on Docker Hub that you can use: gilf/graphrag_kb_server
 
 

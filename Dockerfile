@@ -1,5 +1,5 @@
 # Use Python 3.12.10 as the base image
-FROM python:3.12.10-slim
+FROM python:3.12.10
 
 # Set working directory for application code
 WORKDIR /opt/graphrag_kb_server
