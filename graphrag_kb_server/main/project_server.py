@@ -1352,6 +1352,13 @@ async def lightrag_communities_report(request: web.Request) -> web.Response:
           type: string
           default: lightrag
           enum: [lightrag]
+      - name: max_cluster_size
+        in: query
+        required: true
+        description: The maximum number of nodes in a community
+        schema:
+          type: integer
+          default: 10
     security:
       - bearerAuth: []
     responses:
@@ -1371,7 +1378,8 @@ async def lightrag_communities_report(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                communities_file = await generate_communities_excel(project_dir)
+                max_cluster_size = request.rel_url.query.get("max_cluster_size", "10")
+                communities_file = await generate_communities_excel(project_dir, int(max_cluster_size))
                 return web.FileResponse(
                     communities_file,
                     headers={
