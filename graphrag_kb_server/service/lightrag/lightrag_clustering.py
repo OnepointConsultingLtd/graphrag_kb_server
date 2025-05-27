@@ -21,12 +21,16 @@ NodeIdToCommunityMap = dict[int, dict[str, int]]
 ParentMapping = dict[int, int]
 
 
-async def cluster_graph_from_project_dir(project_dir: Path, lightrag_max_cluster_size: int = 10) -> Communities:
+async def cluster_graph_from_project_dir(
+    project_dir: Path, lightrag_max_cluster_size: int = 10
+) -> Communities:
     graph = create_network_from_project_dir(project_dir)
     communities = _cluster_graph(graph, lightrag_max_cluster_size, True, 42)
     client = genai.Client(api_key=cfg.gemini_api_key)
     for index, community in enumerate(communities):
-        logger.info(f"Generating community report for community {index + 1} of {len(communities)}")
+        logger.info(
+            f"Generating community report for community {index + 1} of {len(communities)}"
+        )
         community_descriptors: CommunityDescriptors = await _generate_community_report(
             graph, community, client
         )
@@ -46,9 +50,16 @@ def generate_communities_dataframe(communities: Communities) -> pd.DataFrame:
     )
 
 
-async def generate_communities_excel(project_dir: Path, lightrag_max_cluster_size: int = 10) -> Path:
-    communities_file = project_dir / f"communities_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
-    communities = await cluster_graph_from_project_dir(project_dir, lightrag_max_cluster_size)
+async def generate_communities_excel(
+    project_dir: Path, lightrag_max_cluster_size: int = 10
+) -> Path:
+    communities_file = (
+        project_dir
+        / f"communities_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
+    )
+    communities = await cluster_graph_from_project_dir(
+        project_dir, lightrag_max_cluster_size
+    )
     df = generate_communities_dataframe(communities)
     df.index = range(1, len(df) + 1)
     df.to_excel(communities_file, index=True)
