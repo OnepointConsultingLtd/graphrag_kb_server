@@ -1325,9 +1325,9 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                 if category:
                     df = df[df["entity_type"] == category]
                 return web.json_response(df.to_dict(orient="records")[:limit])
-            
+
     return await handle_error(handle_request, request=request)
-            
+
 
 @routes.get("/protected/project/lightrag/communities_report")
 async def lightrag_communities_report(request: web.Request) -> web.Response:
@@ -1373,6 +1373,7 @@ async def lightrag_communities_report(request: web.Request) -> web.Response:
               error_name: "No tennant information"
               error_description: "No tennant information available in request"
     """
+
     async def handle_request(request: web.Request) -> web.Response:
         match match_process_dir(request):
             case Response() as error_response:
@@ -1388,4 +1389,3 @@ async def lightrag_communities_report(request: web.Request) -> web.Response:
                 )
 
     return await handle_error(handle_request, request=request)
-    
