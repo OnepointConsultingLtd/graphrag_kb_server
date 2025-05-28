@@ -22,7 +22,7 @@ init_logger()
 
 FILE_INDEX = "index.html"
 PATH_INDEX = (Path(__file__) / f"../../../front_end/dist/{FILE_INDEX}").resolve()
-INDEX_LINKS = ["/index.htm", "/index.html", "/index"]
+INDEX_LINKS = ["/graphrag.htm", "/graphrag.html", "/graphrag"]
 
 assert (
     PATH_INDEX.exists()
@@ -31,7 +31,7 @@ assert (
 logger.info(f"PATH_INDEX: {PATH_INDEX}")
 
 
-async def get_index(_: web.Request) -> web.Response:
+async def get_visualization_graphrag(_: web.Request) -> web.Response:
     return web.FileResponse(PATH_INDEX)
 
 
@@ -81,7 +81,7 @@ def run_server():
         swagger.add_routes(routes)
     logger.info("Routes added ...")
     for url in INDEX_LINKS:
-        app.router.add_get(url, get_index)
+        app.router.add_get(url, get_visualization_graphrag)
     app.router.add_static("/", path=PATH_INDEX.parent, name="root")
     logger.info("Static files added ...")
     web.run_app(

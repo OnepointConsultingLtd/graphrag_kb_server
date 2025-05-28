@@ -1380,7 +1380,9 @@ async def lightrag_communities_report(request: web.Request) -> web.Response:
                 return error_response
             case Path() as project_dir:
                 max_cluster_size = request.rel_url.query.get("max_cluster_size", "10")
-                communities_file = await generate_communities_excel(project_dir, int(max_cluster_size))
+                communities_file = await generate_communities_excel(
+                    project_dir, int(max_cluster_size)
+                )
                 return web.FileResponse(
                     communities_file,
                     headers={

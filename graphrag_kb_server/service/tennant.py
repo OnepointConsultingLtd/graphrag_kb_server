@@ -61,7 +61,7 @@ def list_tennants() -> list[Tennant]:
                         folder_name=d.name,
                         creation_timestamp=get_creation_time(d),
                         token=token,
-                        visualization_url=f"//{websocket_cfg.websocket_server}:{websocket_cfg.websocket_port}/index.html?token={token}",
+                        visualization_url=f"//{websocket_cfg.websocket_server}:{websocket_cfg.websocket_port}/graphrag.html?token={token}",
                     )
                 )
     return tennants

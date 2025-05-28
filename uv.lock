@@ -982,7 +982,7 @@ requires-dist = [
     { name = "aiohttp-test-utils", specifier = ">=0.5.0,<0.6" },
     { name = "google-genai", specifier = ">=1.13.0" },
     { name = "graphrag", specifier = ">=2.2.0,<3" },
-    { name = "lightrag-hku", extras = ["api"], specifier = ">=1.3.6" },
+    { name = "lightrag-hku", extras = ["api"], specifier = ">=1.3.7" },
     { name = "markdown", specifier = "~=3.7" },
     { name = "nano-vectordb", specifier = ">=0.0.4.3" },
     { name = "numba", specifier = "==0.59.1" },
@@ -1335,7 +1335,7 @@ wheels = [
 
 [[package]]
 name = "lightrag-hku"
-version = "1.3.6"
+version = "1.3.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1351,9 +1351,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "xlsxwriter" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/7e/54b10f7d6cfe8718278168af3c09af088cc696053606ce94beb1890c0644/lightrag_hku-1.3.6.tar.gz", hash = "sha256:322e77af2263205e356328272874129051e5b3da25659c3abf8997d86352cbfb", size = 1795240 }
+sdist = { url = "https://files.pythonhosted.org/packages/81/42/e975f835bda8d0cc67f8c59345f6b468e28524ae56d2418464b348c2d0c3/lightrag_hku-1.3.7.tar.gz", hash = "sha256:8f6f7c22236b417ca77b6f6d1b7d6108c994ead0b9b5761789645e013d06821d", size = 1660968 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/aa/99/ba514db79f8d2bd9038a3f54f349199933c772d4e2794696787bb4760d35/lightrag_hku-1.3.6-py3-none-any.whl", hash = "sha256:eeab3b4cf21630e3897ae2e3d301f62b93bdea3d5903107507213e6cc8a349eb", size = 1800448 },
+    { url = "https://files.pythonhosted.org/packages/9b/1f/faa5f97939c8cdd7d94492d540c22455287045251aef7e76e648112d2dec/lightrag_hku-1.3.7-py3-none-any.whl", hash = "sha256:0eca62e9e9bf9aac09c55e296db06bd7eaa08bdf05cfbb0b6e0bf379b11a720b", size = 1666812 },
 ]
 
 [package.optional-dependencies]
