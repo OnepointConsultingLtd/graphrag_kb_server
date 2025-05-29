@@ -34,27 +34,34 @@ for link in [GRAPHRAG_INDEX, CHAT_INDEX]:
 
 logger.info(f"PATH_INDEX: {GRAPHRAG_INDEX}")
 
+
 @web.middleware
 async def static_routing_middleware(request: web.Request, handler):
     if request.method == "GET":
-        referer = request.headers.get('Referer', '')
+        referer = request.headers.get("Referer", "")
         path = request.path
-        
+
         # Skip routing for API endpoints and specific routes
-        if path.startswith('/protected/') or path.startswith('/tennant/')  or path in GRAPHRAG_LINKS or path in CHAT_LINKS:
+        if (
+            path.startswith("/protected/")
+            or path.startswith("/tennant/")
+            or path in GRAPHRAG_LINKS
+            or path in CHAT_LINKS
+        ):
             return await handler(request)
-            
+
         # Route static files based on referer
         file_path = None
         if any(referer.endswith(link) for link in GRAPHRAG_LINKS):
-            file_path = GRAPHRAG_INDEX.parent / path.lstrip('/')
+            file_path = GRAPHRAG_INDEX.parent / path.lstrip("/")
         elif any(referer.endswith(link) for link in CHAT_LINKS):
-            file_path = CHAT_INDEX.parent / path.lstrip('/')
+            file_path = CHAT_INDEX.parent / path.lstrip("/")
 
         if file_path and file_path.exists() and file_path.is_file():
             return web.FileResponse(path=file_path)
-            
+
     return await handler(request)
+
 
 async def get_visualization_graphrag(_: web.Request) -> web.Response:
     return web.FileResponse(GRAPHRAG_INDEX)

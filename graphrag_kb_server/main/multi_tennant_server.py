@@ -28,7 +28,9 @@ async def authenticate_request(request) -> dict:
         # Options should be not authenticated.
         return {}
     if not auth_header or not auth_header.startswith("Bearer "):
-        raise web.HTTPUnauthorized(reason="Missing or invalid Authorization header", headers=CORS_HEADERS)
+        raise web.HTTPUnauthorized(
+            reason="Missing or invalid Authorization header", headers=CORS_HEADERS
+        )
     token = auth_header[len("Bearer ") :]
     try:
         token_dict = await decode_token(token)
@@ -62,7 +64,9 @@ async def auth_middleware(request: web.Request, handler):
                 )
     except web.HTTPUnauthorized as e:
         logger.error(f"Unauthorized access attempt: {e.reason}")
-        return web.json_response({"error": e.reason}, status=UNAUTHORIZED, headers=CORS_HEADERS)
+        return web.json_response(
+            {"error": e.reason}, status=UNAUTHORIZED, headers=CORS_HEADERS
+        )
 
     # If authenticated, proceed to the next handler
     return await handler(request)
