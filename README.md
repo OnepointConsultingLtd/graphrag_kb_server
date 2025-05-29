@@ -168,7 +168,7 @@ sudo systemctl status graphrag_kb_server.service
 
 ## Building the front end
 
-You will need node version 18 or later for this.
+You will need node version 20 or later for this.
 
 You can build the front-end using this command:
 
@@ -188,6 +188,12 @@ Alternatively you can build the UI by running these commands:
 
 ```bash
 cd front_end
+yarn
+yarn run build
+
+cd ..
+cd front_end_chat
+yarn
 yarn run build
 ```
 

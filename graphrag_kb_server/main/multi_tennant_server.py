@@ -11,6 +11,7 @@ from graphrag_kb_server.service.tennant import (
 from graphrag_kb_server.service.validations import validate_email
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import admin_cfg, jwt_cfg
+from graphrag_kb_server.main.cors import CORS_HEADERS
 
 
 UNAUTHORIZED = 401
@@ -27,14 +28,14 @@ async def authenticate_request(request) -> dict:
         # Options should be not authenticated.
         return {}
     if not auth_header or not auth_header.startswith("Bearer "):
-        raise web.HTTPUnauthorized(reason="Missing or invalid Authorization header")
+        raise web.HTTPUnauthorized(reason="Missing or invalid Authorization header", headers=CORS_HEADERS)
     token = auth_header[len("Bearer ") :]
     try:
         token_dict = await decode_token(token)
         return token_dict
     except Exception:
         logger.error("Cannot decode token")
-        raise web.HTTPUnauthorized(reason="Invalid JWT token")
+        raise web.HTTPUnauthorized(reason="Invalid JWT token", headers=CORS_HEADERS)
 
 
 @web.middleware
@@ -57,10 +58,11 @@ async def auth_middleware(request: web.Request, handler):
                 return web.json_response(
                     {"error": "Only administrators can create or delete tennants."},
                     status=UNAUTHORIZED,
+                    headers=CORS_HEADERS,
                 )
     except web.HTTPUnauthorized as e:
         logger.error(f"Unauthorized access attempt: {e.reason}")
-        return web.json_response({"error": e.reason}, status=UNAUTHORIZED)
+        return web.json_response({"error": e.reason}, status=UNAUTHORIZED, headers=CORS_HEADERS)
 
     # If authenticated, proceed to the next handler
     return await handler(request)
@@ -126,7 +128,7 @@ async def read_admin_token(request: web.Request) -> web.Response:
     name = query.get("name", "")
     email = query.get("email", "")
     if name == jwt_cfg.admin_token_name and email == jwt_cfg.admin_token_email:
-        return web.json_response({"token": jwt_cfg.admin_jwt})
+        return web.json_response({"token": jwt_cfg.admin_jwt}, headers=CORS_HEADERS)
     else:
         return invalid_response(
             "Invalid name or email",

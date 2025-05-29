@@ -21,18 +21,47 @@ init_logger()
 # from graphrag_kb_server.main.websocket import sio
 
 FILE_INDEX = "index.html"
-PATH_INDEX = (Path(__file__) / f"../../../front_end/dist/{FILE_INDEX}").resolve()
-INDEX_LINKS = ["/graphrag.htm", "/graphrag.html", "/graphrag"]
+GRAPHRAG_INDEX = (Path(__file__) / f"../../../front_end/dist/{FILE_INDEX}").resolve()
+GRAPHRAG_LINKS = ["/graphrag.htm", "/graphrag.html", "/graphrag"]
+CHAT_INDEX = (Path(__file__) / f"../../../front_end_chat/dist/{FILE_INDEX}").resolve()
+CHAT_LINKS = ["/chat.htm", "/chat.html", "/chat"]
 
-assert (
-    PATH_INDEX.exists()
-), f"Cannot find the path of the user interface ({PATH_INDEX}). Please build it first with 'yarn run build' in the front_end directory."
+for link in [GRAPHRAG_INDEX, CHAT_INDEX]:
+    assert (
+        link.exists()
+    ), f"Cannot find the path of the user interface ({link}). Please build it first with 'yarn run build' in the front_end directory."
 
-logger.info(f"PATH_INDEX: {PATH_INDEX}")
 
+logger.info(f"PATH_INDEX: {GRAPHRAG_INDEX}")
+
+@web.middleware
+async def static_routing_middleware(request: web.Request, handler):
+    if request.method == "GET":
+        referer = request.headers.get('Referer', '')
+        path = request.path
+        
+        # Skip routing for API endpoints and specific routes
+        if path.startswith('/protected/') or path.startswith('/tennant/')  or path in GRAPHRAG_LINKS or path in CHAT_LINKS:
+            return await handler(request)
+            
+        # Route static files based on referer
+        file_path = None
+        if any(referer.endswith(link) for link in GRAPHRAG_LINKS):
+            file_path = GRAPHRAG_INDEX.parent / path.lstrip('/')
+        elif any(referer.endswith(link) for link in CHAT_LINKS):
+            file_path = CHAT_INDEX.parent / path.lstrip('/')
+
+        if file_path and file_path.exists() and file_path.is_file():
+            return web.FileResponse(path=file_path)
+            
+    return await handler(request)
 
 async def get_visualization_graphrag(_: web.Request) -> web.Response:
-    return web.FileResponse(PATH_INDEX)
+    return web.FileResponse(GRAPHRAG_INDEX)
+
+
+async def get_chat_ui(_: web.Request) -> web.Response:
+    return web.FileResponse(CHAT_INDEX)
 
 
 async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
@@ -53,7 +82,7 @@ async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
 
 def run_server():
 
-    app = web.Application()
+    app = web.Application(middlewares=[static_routing_middleware, auth_middleware])
     app.middlewares.append(auth_middleware)
     logger.info("Set up application ...")
     # sio.attach(app)
@@ -80,9 +109,13 @@ def run_server():
     for routes in all_routes:
         swagger.add_routes(routes)
     logger.info("Routes added ...")
-    for url in INDEX_LINKS:
+    for url in GRAPHRAG_LINKS:
         app.router.add_get(url, get_visualization_graphrag)
-    app.router.add_static("/", path=PATH_INDEX.parent, name="root")
+    for url in CHAT_LINKS:
+        app.router.add_get(url, get_chat_ui)
+
+    # app.router.add_static('/', GRAPHRAG_INDEX.parent)
+
     logger.info("Static files added ...")
     web.run_app(
         app,
