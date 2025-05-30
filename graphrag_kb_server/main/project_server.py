@@ -48,6 +48,7 @@ from graphrag_kb_server.service.lightrag.lightrag_visualization import (
 )
 from graphrag_kb_server.service.lightrag.lightrag_centrality import (
     get_sorted_centrality_scores_as_pd,
+    get_sorted_centrality_scores_as_xls,
 )
 from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     extract_entity_types,
@@ -1284,10 +1285,18 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
           type: string
           default: lightrag
           enum: [lightrag]
+      - name: format
+        in: query
+        required: true
+        description: The format of the response
+        schema:
+          type: string
+          default: json
+          enum: [json, xls]
       - name: limit
         in: query
         required: false
-        description: The type of engine used to run the RAG system
+        description: The maximum number of nodes to return
         schema:
           type: integer
           default: 20
@@ -1303,7 +1312,7 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
       - bearerAuth: []
     responses:
       '200':
-        description: A JSON response with the sorted centrality scores and corresponding node information.
+        description: A JSON response with the sorted centrality scores and corresponding node information or an Excel file with the centrality scores for each node.
       '404':
         description: Bad Request - No community or project found.
         content:
@@ -1319,12 +1328,24 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                df = get_sorted_centrality_scores_as_pd(project_dir)
+                format = request.rel_url.query.get("format", "json")
                 limit = int(request.rel_url.query.get("limit", 20))
-                category = request.rel_url.query.get("category", None)
-                if category:
-                    df = df[df["entity_type"] == category]
-                return web.json_response(df.to_dict(orient="records")[:limit])
+                match format:
+                    case "json":
+                        df = get_sorted_centrality_scores_as_pd(project_dir)
+                        category = request.rel_url.query.get("category", None)
+                        if category:
+                            df = df[df["entity_type"] == category]
+                        return web.json_response(df.to_dict(orient="records")[:limit])
+                    case "xls":
+                        excel_bytes = get_sorted_centrality_scores_as_xls(project_dir, limit)
+                        return web.Response(
+                            body=excel_bytes,
+                            headers={
+                                "CONTENT-TYPE": "application/vnd.ms-excel",
+                                "CONTENT-DISPOSITION": f'attachment; filename="{project_dir.stem}_centrality.xlsx"',
+                            },
+                        )
 
     return await handle_error(handle_request, request=request)
 

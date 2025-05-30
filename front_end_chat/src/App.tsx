@@ -3,6 +3,7 @@ import useChatStore from './context/chatStore';
 import Login from './components/Login';
 import { useShallow } from 'zustand/react/shallow';
 import ProjectSelector from './components/ProjectSelector';
+import ChatContainer from './components/mainChat/ChatContainer';
 
 
 function App() {
@@ -21,7 +22,7 @@ function App() {
 
   return (
     <>
-      
+      <ChatContainer />
     </>
   )
 }

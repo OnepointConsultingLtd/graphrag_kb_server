@@ -1,4 +1,4 @@
-import type { Message } from "../model/message";
+import type { ServerMessage } from "../model/message";
 import { MessageType } from "../model/message";
 
 function getAlertClass(messageType: MessageType) {
@@ -18,7 +18,7 @@ function getAlertClass(messageType: MessageType) {
     }
 }
 
-export default function MessageAlert({ message }: { message: Message | null }) {
+export default function MessageAlert({ message }: { message: ServerMessage | null }) {
     if (!message) {
         return null;
     }

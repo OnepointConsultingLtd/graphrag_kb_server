@@ -1,3 +1,4 @@
+from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
@@ -45,8 +46,19 @@ def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
     return data
 
 
+def get_sorted_centrality_scores_as_xls(project_dir: Path, limit: int = -1) -> bytes:
+    data = get_sorted_centrality_scores_as_pd(project_dir)
+    if limit > 0:
+        data = data.head(limit)
+    # Create BytesIO buffer
+    buffer = BytesIO()
+    data.to_excel(buffer, index=True, header=True)
+    return buffer.getvalue()
+
+
 if __name__ == "__main__":
 
     clustre1 = Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre1")
+    assert clustre1.exists()
     scores = get_sorted_centrality_scores_as_pd(clustre1)
     scores.to_excel("clustre1_centrality.xlsx", index=True, header=True)

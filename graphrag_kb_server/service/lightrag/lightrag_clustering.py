@@ -31,13 +31,23 @@ async def cluster_graph_from_project_dir(
         logger.info(
             f"Generating community report for community {index + 1} of {len(communities)}"
         )
-        community_descriptors: CommunityDescriptors = await _generate_community_report(
-            graph, community, client
-        )
-        community.name = community_descriptors.name
-        community.community_description = community_descriptors.community_description
-        community.node_descriptions = community_descriptors.node_descriptions
-
+        retries = 3
+        community.name = "Unknown"
+        community.community_description = "Unknown"
+        community.node_descriptions = "Unknown"
+        while retries > 0:
+            try:
+                community_descriptors: CommunityDescriptors = await _generate_community_report(
+                    graph, community, client
+                )
+                community.name = community_descriptors.name
+                community.community_description = community_descriptors.community_description
+                community.node_descriptions = community_descriptors.node_descriptions
+                break
+            except Exception as e:
+                logger.error(f"Error generating community report for community {index + 1}: {e}")
+                retries -= 1
+        
     return communities
 
 

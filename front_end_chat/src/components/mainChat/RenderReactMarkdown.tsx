@@ -1,0 +1,56 @@
+import type { ChatMessage } from "../../model/message";
+import { ChatMessageType } from "../../model/message";
+import ReactMarkdown from "react-markdown";
+
+async function copyToClipboard(text: string) {
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            // Fallback for browsers that don't support clipboard API
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
+    } catch (error) {
+        console.error('Failed to copy text: ', error);
+    }
+}
+
+
+export default function RenderReactMarkdown({ message }: { message: ChatMessage }) {
+    return (
+        <>
+            <ReactMarkdown
+                components={{
+                    a: ({ ...props }) => (
+                        <a
+                            {...props}
+                            className={`underline ${message.type === ChatMessageType.USER
+                                    ? "text-purple-100 hover:text-white"
+                                    : "text-purple-500 hover:text-purple-600"
+                                } transition-colors duration-200`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        />
+                    ),
+                    ul: ({ ...props }) => (
+                        <ul {...props} className="my-4 ml-4 space-y-2 list-disc" />
+                    ),
+                    li: ({ ...props }) => (
+                        <li
+                            {...props}
+                            className={`${message.type === ChatMessageType.USER ? "text-white" : "text-slate-700"
+                                }`}
+                        />
+                    ),
+                }}
+            >
+                {message.text}
+            </ReactMarkdown>
+        </>
+    )
+}
