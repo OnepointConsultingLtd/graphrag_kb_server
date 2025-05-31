@@ -19,6 +19,7 @@ class Search(StrEnum):
     GLOBAL = "global"
     DRIFT = "drift"
     ALL = "all"
+    NAIVE = "naive"
 
 
 def convert_to_str(context_chunks: str | list[str]) -> str:

@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import useChatStore from "../../context/chatStore";
 import { useShallow } from "zustand/react/shallow";
-import { ChatMessageType } from "../../model/message";
+import { ChatMessageType, type QueryResponse } from "../../model/message";
 import { v4 as uuidv4 } from 'uuid';
+import { sendQuery } from "../../lib/apiClient";
+import { extractReferences, removeReferencesFromText } from "../../lib/referenceExtraction";
 
 export default function ChatInput() {
     const [inputText, setInputText] = useState("");
-    const [addChatMessage, isThinking, setIsThinking] = useChatStore(
+    const [addChatMessage, isThinking, setIsThinking, jwt, selectedProject] = useChatStore(
         useShallow((state) => [
             state.addChatMessage,
             state.isThinking,
-            state.setIsThinking
+            state.setIsThinking,
+            state.jwt,
+            state.selectedProject
         ])
     );
 
@@ -24,6 +28,33 @@ export default function ChatInput() {
             type: ChatMessageType.USER,
             timestamp: new Date()
         });
+        if (selectedProject) {
+            sendQuery(jwt, inputText, selectedProject)
+                .then((response: QueryResponse) => {
+                    console.info("response", response);
+                    const finalResponse = removeReferencesFromText(response.response)
+                    const references = extractReferences(response.response)
+                    addChatMessage({
+                        id: uuidv4(),
+                        text: finalResponse,
+                        type: ChatMessageType.AGENT,
+                        timestamp: new Date(),
+                        references: references
+                    });
+                })
+                .catch((error) => {
+                    console.error("error", error);
+                    addChatMessage({
+                        id: uuidv4(),
+                        text: `An error occurred while processing your request: ${error.message}. Please try again.`,
+                        type: ChatMessageType.AGENT_ERROR,
+                        timestamp: new Date()
+                    });
+                })
+                .finally(() => {
+                    setIsThinking(false);
+                });
+        }
     }
 
     useEffect(() => {
@@ -54,7 +85,9 @@ export default function ChatInput() {
                                 setInputText(e.target.value)
                             }
                             placeholder="Type your message here..."
-                            className="w-full p-4 pr-24 overflow-hidden transition-all duration-300 border-2 shadow-sm outline-none resize-none rounded-xl border-sky-100 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-gray-900 p-4 pr-24 overflow-hidden transition-all duration-300 border-2 
+                                shadow-sm outline-none resize-none rounded-xl border-sky-100 
+                                focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={isThinking}
                             style={textareaStyle}
                             onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {

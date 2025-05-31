@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { Project, ProjectCategories } from '../model/projectCategory';
 import type { ChatMessage } from '../model/message';
 import { fetchProjects } from '../lib/apiClient';
+import { MARKDOWN_DIALOGUE_ID } from '../components/MarkdownDialogue';
 
 type ChatStore = {
     jwt: string;
@@ -11,6 +12,10 @@ type ChatStore = {
     chatMessages: ChatMessage[];
     isFloating: boolean;
     isThinking: boolean;
+    isMarkdownDialogueOpen: boolean;
+    setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
+    markdownDialogueContent: string;
+    setMarkdownDialogueContent: (content: string) => void;
     logout: () => void;
     addChatMessage: (chatMessage: ChatMessage) => void;
     clearChatMessages: () => void;
@@ -38,6 +43,14 @@ function initJwt() {
     return "";
 }
 
+function openMarkdownDialogue(open: boolean) {
+    if (open) {
+        (document.getElementById(MARKDOWN_DIALOGUE_ID) as HTMLDialogElement)?.showModal();
+    } else {
+        (document.getElementById(MARKDOWN_DIALOGUE_ID) as HTMLDialogElement)?.close();
+    }
+}
+
 const useChatStore = create<ChatStore>()(
     persist(
         (set, get) => ({
@@ -47,6 +60,8 @@ const useChatStore = create<ChatStore>()(
             chatMessages: [],
             isFloating: false, // TODO: create initialisation function
             isThinking: false,
+            isMarkdownDialogueOpen: false,
+            markdownDialogueContent: "",
             setJwt: (jwt: string) => set({ jwt }),
             setProjects: (projects: ProjectCategories) => set({ projects }),
             setSelectedProject: (project: Project) => set({ selectedProject: project }),
@@ -64,7 +79,15 @@ const useChatStore = create<ChatStore>()(
                     set({ projects })
                 }
             },
-            setIsThinking: (isThinking: boolean) => set({ isThinking })
+            setIsThinking: (isThinking: boolean) => set({ isThinking }),
+            setIsMarkdownDialogueOpen: (isOpen: boolean) => set(() => {
+                openMarkdownDialogue(isOpen);
+                return { isMarkdownDialogueOpen: isOpen }
+            }),
+            setMarkdownDialogueContent: (content: string) => set(() => {
+                openMarkdownDialogue(true);
+                return { markdownDialogueContent: content }
+            })
         }),
         {
             name: "chat-store",
@@ -73,7 +96,18 @@ const useChatStore = create<ChatStore>()(
                 projects: state.projects,
                 selectedProject: state.selectedProject,
                 chatMessages: state.chatMessages
-            })
+            }),
+            onRehydrateStorage: () => (state, error) => {
+                if (error) {
+                    console.error("Error during hydration", error);
+                }
+
+                // If no jwt was found in storage, call initJwt() to set a default
+                if (!state?.jwt) {
+                    const defaultJwt = initJwt();
+                    state?.setJwt(defaultJwt);
+                }
+            },
         }
     )
 )

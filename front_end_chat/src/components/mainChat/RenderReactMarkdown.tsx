@@ -21,7 +21,7 @@ async function copyToClipboard(text: string) {
 }
 
 
-export default function RenderReactMarkdown({ message }: { message: ChatMessage }) {
+export default function RenderReactMarkdown({ message, listItemClassName = "text-slate-600" }: { message: ChatMessage, listItemClassName?: string }) {
     return (
         <>
             <ReactMarkdown
@@ -37,13 +37,16 @@ export default function RenderReactMarkdown({ message }: { message: ChatMessage 
                             rel="noopener noreferrer"
                         />
                     ),
+                    p: ({ ...props }) => (
+                        <p {...props} className={message.type === ChatMessageType.USER ? "" :`mb-4`} />
+                    ),
                     ul: ({ ...props }) => (
                         <ul {...props} className="my-4 ml-4 space-y-2 list-disc" />
                     ),
                     li: ({ ...props }) => (
                         <li
                             {...props}
-                            className={`${message.type === ChatMessageType.USER ? "text-white" : "text-slate-700"
+                            className={`break-all ${message.type === ChatMessageType.USER ? "text-white" : listItemClassName
                                 }`}
                         />
                     ),

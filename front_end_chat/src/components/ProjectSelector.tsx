@@ -1,19 +1,17 @@
 import CenteredLayout from "./CenteredLayout";
 import useChatStore from "../context/chatStore";
 import { useShallow } from "zustand/react/shallow";
-import { Platform } from "../model/projectCategory";
-import { useState } from "react";
+import { Platform, SearchType } from "../model/projectCategory";
+import useProjectSelectionStore from "../context/projectSelectionStore";
 
-function SelectPlatform({ selectionPlatform, setSelectionPlatform, setSelectionProject }: 
-    { selectionPlatform: string, 
-        setSelectionPlatform: (project: () => void) => void, 
-        setSelectionProject: (project: string) => void }) {
+function SelectPlatform() {
+    const { selectionPlatform, setSelectionPlatform } = useProjectSelectionStore(useShallow((state) => ({
+        selectionPlatform: state.selectionPlatform,
+        setSelectionPlatform: state.setSelectionPlatform,
+    })));
     return <select className="select select-primary w-full"
         value={selectionPlatform}
-        onChange={(e) => setSelectionPlatform(() => {
-            setSelectionProject("");
-            return e.target.value
-        })}>
+        onChange={(e) => setSelectionPlatform(e.target.value)}>
         <option disabled>Pick a platform</option>
         <option value="">--</option>
         {Object.values(Platform).map((platform, index) => (
@@ -22,9 +20,30 @@ function SelectPlatform({ selectionPlatform, setSelectionPlatform, setSelectionP
     </select>
 }
 
+function SelectSearchType() {
+    const [searchType, setSearchType, selectionPlatform] = useProjectSelectionStore(useShallow((state) => [state.searchType, state.setSearchType, state.selectionPlatform]));
+    return (
+        <>
+            <h3 className="text-lg py-2">Select search type</h3>
+            <select className="select select-primary w-full" value={searchType}
+                onChange={(e) => setSearchType(e.target.value as SearchType)}>
+                {Object.values(SearchType)
+                    .filter(value => !(selectionPlatform === Platform.LIGHTRAG && value === SearchType.DRIFT))
+                    .map((value, index) => (
+                        <option key={`${index}-${value}`} value={value}>{value}</option>
+                    ))}
+            </select>
+        </>
+    )
+}
+
 export default function ProjectSelector() {
-    const [selectionPlatform, setSelectionPlatform] = useState("");
-    const [selectionProject, setSelectionProject] = useState("");
+    const { selectionPlatform, selectionProject, setSelectionProject, searchType } = useProjectSelectionStore(useShallow((state) => ({
+        selectionPlatform: state.selectionPlatform,
+        selectionProject: state.selectionProject,
+        setSelectionProject: state.setSelectionProject,
+        searchType: state.searchType
+    })));
     const { projects, setSelectedProject } = useChatStore(useShallow((state) => ({
         projects: state.projects,
         setSelectedProject: state.setSelectedProject
@@ -40,10 +59,7 @@ export default function ProjectSelector() {
     return (
         <CenteredLayout title="Project Selector">
             <div className="w-full">
-                <SelectPlatform 
-                    selectionPlatform={selectionPlatform} 
-                    setSelectionPlatform={setSelectionPlatform} 
-                    setSelectionProject={setSelectionProject} />
+                <SelectPlatform />
                 {selectionPlatform && (
                     <div className="w-full">
                         <h3 className="text-lg py-2">Select a project</h3>
@@ -55,13 +71,16 @@ export default function ProjectSelector() {
                                 <option value={p.name}>{p.name}</option>
                             ))}
                         </select>
+                        <SelectSearchType />
                         <div className="w-full flex justify-end mt-6">
                             <button className="btn btn-primary w-[200px]" type="button"
                                 onClick={() => {
                                     setSelectedProject({
                                         name: selectionProject,
                                         updated_timestamp: new Date(),
-                                        input_files: []
+                                        input_files: [],
+                                        search_type: searchType,
+                                        platform: selectionPlatform as Platform
                                     })
                                 }}
                                 disabled={!selectionProject}>Start Chat</button>

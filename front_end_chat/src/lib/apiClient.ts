@@ -1,3 +1,5 @@
+import type { Project } from "../model/projectCategory";
+import type { Reference } from "../model/references";
 import { BASE_SERVER } from "./server";
 
 function createHeaders(jwt: string) {
@@ -30,3 +32,28 @@ export async function fetchProjects(jwt: string) {
     }
 }
 
+export async function sendQuery(jwt: string, question: string, project: Project) {
+    const params = new URLSearchParams();
+    params.set("project", project.name);
+    params.set("engine", project.platform);
+    params.set("search", project.search_type);
+    params.set("question", question);
+    params.set("format", "json");
+    const response = await fetch(`${BASE_SERVER}/protected/project/query?${params.toString()}`, createHeaders(jwt));
+    if (!response.ok) {
+        throw new Error(`Failed to fetch projects. Error code: ${response.status}. Error: ${response.statusText}`);
+    }
+    return await response.json();
+}
+
+export async function downloadFile(jwt: string, project: Project, reference: Reference) {
+    const params = new URLSearchParams();
+    params.set("project", project.name);
+    params.set("engine", project.platform);
+    params.set("file", reference.path);
+    const response = await fetch(`${BASE_SERVER}/protected/project/download/single_file?${params.toString()}`, createHeaders(jwt));
+    if (!response.ok) {
+        throw new Error(`Failed to download file. Error code: ${response.status}. Error: ${response.statusText}`);
+    }
+    return await response.text();
+}

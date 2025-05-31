@@ -331,6 +331,10 @@ async def upload_index(request: web.Request) -> web.Response:
         handle_request, request=request, response_format=Format.JSON.value
     )
 
+@routes.options("/protected/project/query")
+async def query_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
 
 @routes.get("/protected/project/query")
 async def query(request: web.Request) -> web.Response:
@@ -375,7 +379,7 @@ async def query(request: web.Request) -> web.Response:
         description: The type of the search (local, global, drift). Drift only works with graphrag.
         schema:
           type: string
-          enum: [local, global, drift]
+          enum: [local, global, all, drift, naive]
       - name: context_size
         in: query
         required: false
@@ -421,13 +425,14 @@ async def query(request: web.Request) -> web.Response:
                                         response = await rag_local(context_params)
                             case Engine.LIGHTRAG:
                                 match search:
-                                    case Search.GLOBAL | Search.LOCAL:
+                                    case Search.GLOBAL | Search.LOCAL | Search.ALL | Search.NAIVE:
                                         response = await lightrag_search(
-                                            project_dir, context_params.query, search
+                                            project_dir, context_params.query, search if search != Search.ALL else "hybrid"
                                         )
                                     case _:
                                         raise web.HTTPBadRequest(
-                                            text="LightRAG does not support local search"
+                                            text="LightRAG does not support local search",
+                                            headers=CORS_HEADERS
                                         )
                         match format:
                             case Format.HTML:
@@ -437,18 +442,21 @@ async def query(request: web.Request) -> web.Response:
                                         response=markdown(response),
                                     ),
                                     content_type="text/html",
+                                    headers=CORS_HEADERS
                                 )
                             case Format.MARKDOWN:
                                 return web.Response(
                                     text=response,
                                     content_type="text/plain",
+                                    headers=CORS_HEADERS
                                 )
                             case Format.JSON:
                                 return web.json_response(
                                     {
                                         "question": context_params.query,
                                         "response": response,
-                                    }
+                                    },
+                                    headers=CORS_HEADERS
                                 )
                         raise web.HTTPBadRequest(
                             text="Please make sure the format is specified."
@@ -762,6 +770,9 @@ async def download_project(request: web.Request) -> web.Response:
 
     return await handle_error(handle_request, request=request)
 
+@routes.options("/protected/project/download/single_file")
+async def download_single_file_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 @routes.get("/protected/project/download/single_file")
 async def download_single_file(request: web.Request) -> web.Response:
@@ -830,6 +841,14 @@ async def download_single_file(request: web.Request) -> web.Response:
                         )
                     case _:
                         input_dir = project_dir / INPUT_FOLDER
+                        if input_dir.resolve().as_posix() in Path(file_name).resolve().as_posix():
+                            return web.FileResponse(
+                                file_name,
+                                headers={
+                                    "CONTENT-DISPOSITION": f'attachment; filename="{Path(file_name).name}"',
+                                    **CORS_HEADERS
+                                }
+                            )
                         file_paths = [
                             file
                             for file in list(input_dir.glob("**/*"))
@@ -843,7 +862,8 @@ async def download_single_file(request: web.Request) -> web.Response:
                             return web.FileResponse(
                                 file_path,
                                 headers={
-                                    "CONTENT-DISPOSITION": f'attachment; filename="{file_path.name}"'
+                                    "CONTENT-DISPOSITION": f'attachment; filename="{file_path.name}"',
+                                    **CORS_HEADERS
                                 },
                             )
                         else:
@@ -866,6 +886,7 @@ async def download_single_file(request: web.Request) -> web.Response:
                                 headers={
                                     "CONTENT-TYPE": "application/zip",
                                     "CONTENT-DISPOSITION": f'attachment; filename="{file_name}.zip"',
+                                    **CORS_HEADERS
                                 },
                             )
 

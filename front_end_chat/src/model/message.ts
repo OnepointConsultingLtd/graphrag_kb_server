@@ -17,7 +17,8 @@ export type ServerMessage = {
 
 export enum ChatMessageType {
     USER = "user",
-    AGENT = "agent"
+    AGENT = "agent",
+    AGENT_ERROR = "agent_error"
 }
 
 export type ChatMessage = {
@@ -26,4 +27,10 @@ export type ChatMessage = {
 	type: ChatMessageType;
 	timestamp: Date;
 	conversationId?: string;
+    references?: Reference[];
+}
+
+export type QueryResponse = {
+    response: string;
+    sources: string[];
 }
