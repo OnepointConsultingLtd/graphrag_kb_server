@@ -19,7 +19,7 @@ export function extractReferences(text: string): Reference[] {
 }
 
 export function removeReferencesFromText(text: string): string {
-    return text.split("\n").filter(l => {
+    return text.split("\n").filter(l => l.trim() !== "References:").filter(l => {
         const match = l.match(referenceRegex)
         return !match
     }).join("\n")

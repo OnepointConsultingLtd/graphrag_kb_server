@@ -7,23 +7,25 @@ import { MARKDOWN_DIALOGUE_ID } from '../components/MarkdownDialogue';
 
 type ChatStore = {
     jwt: string;
-    setJwt: (jwt: string) => void;
     projects?: ProjectCategories;
     chatMessages: ChatMessage[];
     isFloating: boolean;
     isThinking: boolean;
     isMarkdownDialogueOpen: boolean;
-    setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
     markdownDialogueContent: string;
+    selectedProject?: Project;
+    copiedMessageId: string | null;
+    setJwt: (jwt: string) => void;
+    setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
     setMarkdownDialogueContent: (content: string) => void;
     logout: () => void;
     addChatMessage: (chatMessage: ChatMessage) => void;
     clearChatMessages: () => void;
     setProjects: (projects: ProjectCategories) => void;
-    selectedProject?: Project;
     setSelectedProject: (project: Project) => void;
     initializeProjects: () => Promise<void>;
     setIsThinking: (isThinking: boolean) => void;
+    setCopiedMessageId: (id: string) => void;
 }
 
 const THRESHOLD = 50;
@@ -31,7 +33,7 @@ const THRESHOLD = 50;
 function initJwt() {
     // Try to extract from location first
     const urlParams = new URLSearchParams(window.location.search);
-    let jwt = urlParams.get("jwt");
+    let jwt = urlParams.get("token");
     if (jwt) {
         return jwt;
     }
@@ -62,6 +64,7 @@ const useChatStore = create<ChatStore>()(
             isThinking: false,
             isMarkdownDialogueOpen: false,
             markdownDialogueContent: "",
+            copiedMessageId: null,
             setJwt: (jwt: string) => set({ jwt }),
             setProjects: (projects: ProjectCategories) => set({ projects }),
             setSelectedProject: (project: Project) => set({ selectedProject: project }),
@@ -71,7 +74,13 @@ const useChatStore = create<ChatStore>()(
             clearChatMessages: () => set(() => {
                 return { chatMessages: [], isThinking: false }
             }),
-            logout: () => set({ jwt: "", projects: undefined, selectedProject: undefined, chatMessages: [] }),
+            logout: () => set({ 
+                jwt: "",
+                projects: undefined, 
+                selectedProject: undefined, 
+                chatMessages: [],
+                copiedMessageId: null
+            }),
             initializeProjects: async () => {
                 const jwt = get().jwt
                 if (jwt) {
@@ -87,7 +96,8 @@ const useChatStore = create<ChatStore>()(
             setMarkdownDialogueContent: (content: string) => set(() => {
                 openMarkdownDialogue(true);
                 return { markdownDialogueContent: content }
-            })
+            }),
+            setCopiedMessageId: (id: string) => set({ copiedMessageId: id })
         }),
         {
             name: "chat-store",

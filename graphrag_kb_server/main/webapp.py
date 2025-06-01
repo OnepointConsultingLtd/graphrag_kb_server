@@ -2,6 +2,7 @@ from typing import Tuple, Dict
 from pathlib import Path
 import asyncio
 import base64
+from urllib.parse import urlparse
 
 from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
 from aiohttp import web
@@ -52,9 +53,10 @@ async def static_routing_middleware(request: web.Request, handler):
 
         # Route static files based on referer
         file_path = None
-        if any(referer.endswith(link) for link in GRAPHRAG_LINKS):
+        address = urlparse(referer).path
+        if any(address.endswith(link) for link in GRAPHRAG_LINKS):
             file_path = GRAPHRAG_INDEX.parent / path.lstrip("/")
-        elif any(referer.endswith(link) for link in CHAT_LINKS):
+        elif any(address.endswith(link) for link in CHAT_LINKS):
             file_path = CHAT_INDEX.parent / path.lstrip("/")
 
         if file_path and file_path.exists() and file_path.is_file():

@@ -1,6 +1,9 @@
 import type { ChatMessage } from "../../model/message";
 import { ChatMessageType } from "../../model/message";
 import ReactMarkdown from "react-markdown";
+import CopyButton from "./CopyButton";
+import { useShallow } from "zustand/react/shallow";
+import useChatStore from "../../context/chatStore";
 
 async function copyToClipboard(text: string) {
     try {
@@ -21,7 +24,9 @@ async function copyToClipboard(text: string) {
 }
 
 
-export default function RenderReactMarkdown({ message, listItemClassName = "text-slate-600" }: { message: ChatMessage, listItemClassName?: string }) {
+export default function RenderReactMarkdown({ message, listItemClassName = "text-slate-600" }: 
+    { message: ChatMessage, listItemClassName?: string }) {
+    const setCopiedMessageId = useChatStore(useShallow((state) => state.setCopiedMessageId));
     return (
         <>
             <ReactMarkdown
@@ -30,15 +35,15 @@ export default function RenderReactMarkdown({ message, listItemClassName = "text
                         <a
                             {...props}
                             className={`underline ${message.type === ChatMessageType.USER
-                                    ? "text-purple-100 hover:text-white"
-                                    : "text-purple-500 hover:text-purple-600"
+                                ? "text-purple-100 hover:text-white"
+                                : "text-purple-500 hover:text-purple-600"
                                 } transition-colors duration-200`}
                             target="_blank"
                             rel="noopener noreferrer"
                         />
                     ),
                     p: ({ ...props }) => (
-                        <p {...props} className={message.type === ChatMessageType.USER ? "" :`mb-4`} />
+                        <p {...props} className={message.type === ChatMessageType.USER ? "" : `mb-4`} />
                     ),
                     ul: ({ ...props }) => (
                         <ul {...props} className="my-4 ml-4 space-y-2 list-disc" />
@@ -54,6 +59,22 @@ export default function RenderReactMarkdown({ message, listItemClassName = "text
             >
                 {message.text}
             </ReactMarkdown>
+            <div className="flex items-center justify-between mt-2 text-xs">
+                <p className={message.type === ChatMessageType.USER ? 'text-purple-100' : 'text-slate-400'}>
+                    {typeof message.timestamp === 'string' ? new Date(message.timestamp).toLocaleTimeString() : message.timestamp.toLocaleTimeString()}
+                </p>
+
+                {message.type === ChatMessageType.AGENT && (
+                    <CopyButton
+                        text={message.text}
+                        id={message.id}
+                        onCopy={() => {
+                            copyToClipboard(message.text);
+                            setCopiedMessageId(message.id);
+                        }}
+                    />
+                )}
+            </div>
         </>
     )
 }

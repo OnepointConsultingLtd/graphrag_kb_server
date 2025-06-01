@@ -3,13 +3,13 @@ export const Platform = {
     LIGHTRAG: "lightrag"
 } as const;
 
-export enum SearchType {
-    LOCAL = "local",
-    GLOBAL = "global",
-    DRIFT = "drift",
-    ALL = "all",
-    NAIVE = "naive"
-}
+export const SearchType = {
+    LOCAL: "local",
+    GLOBAL: "global",
+    DRIFT: "drift",
+    ALL: "all",
+    NAIVE: "naive"
+} as const;
 
 export type Platform = typeof Platform[keyof typeof Platform];
 
@@ -29,3 +29,5 @@ export type Project = {
     search_type: SearchType;
     platform: Platform;
 }
+
+export type SearchType = typeof SearchType[keyof typeof SearchType];

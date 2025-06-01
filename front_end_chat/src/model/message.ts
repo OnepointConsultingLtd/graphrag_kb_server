@@ -1,3 +1,5 @@
+import type { Reference } from "./references";
+
 export const MessageType = {
     ERROR: "ERROR",
     INFO: "INFO",
@@ -15,11 +17,13 @@ export type ServerMessage = {
     messageType: MessageType;
 }
 
-export enum ChatMessageType {
-    USER = "user",
-    AGENT = "agent",
-    AGENT_ERROR = "agent_error"
-}
+export const ChatMessageType = {
+    USER: 'USER',
+    AGENT: 'AGENT',
+    AGENT_ERROR: 'AGENT_ERROR'
+} as const;
+
+export type ChatMessageType = typeof ChatMessageType[keyof typeof ChatMessageType];
 
 export type ChatMessage = {
 	id: string;

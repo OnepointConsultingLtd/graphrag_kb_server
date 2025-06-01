@@ -13,6 +13,9 @@ class Tennant(BaseModel):
     visualization_url: str = Field(
         default="", description="The url of the visualization for this tennant"
     )
+    chat_url: str = Field(
+        default="", description="The url of the chat for this tennant"
+    )
 
     def as_dict(self):
         return {
@@ -20,4 +23,5 @@ class Tennant(BaseModel):
             "creation_timestamp": self.creation_timestamp.isoformat(),
             "token": self.token,
             "visualization_url": self.visualization_url,
+            "chat_url": self.chat_url,
         }

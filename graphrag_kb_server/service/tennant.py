@@ -62,6 +62,7 @@ def list_tennants() -> list[Tennant]:
                         creation_timestamp=get_creation_time(d),
                         token=token,
                         visualization_url=f"//{websocket_cfg.websocket_server}:{websocket_cfg.websocket_port}/graphrag.html?token={token}",
+                        chat_url=f"//{websocket_cfg.websocket_server}:{websocket_cfg.websocket_port}/chat.html?token={token}",
                     )
                 )
     return tennants
