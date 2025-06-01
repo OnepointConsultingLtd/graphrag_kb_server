@@ -63,7 +63,6 @@ export default function RenderReactMarkdown({ message, listItemClassName = "text
                 <p className={message.type === ChatMessageType.USER ? 'text-purple-100' : 'text-slate-400'}>
                     {typeof message.timestamp === 'string' ? new Date(message.timestamp).toLocaleTimeString() : message.timestamp.toLocaleTimeString()}
                 </p>
-
                 {message.type === ChatMessageType.AGENT && (
                     <CopyButton
                         text={message.text}

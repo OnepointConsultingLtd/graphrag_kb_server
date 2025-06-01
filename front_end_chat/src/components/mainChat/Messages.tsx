@@ -61,13 +61,13 @@ export default function Messages() {
                                         }`}
                                 >
                                     <RenderReactMarkdown message={message} />
-                                    {message.references?.length && (
+                                    {message.references?.length && message.references.length > 0 ? (
                                         <ul className="mt-2">
                                             {message.references.map((reference) => (
                                                 <ReferenceDisplay key={reference.url} reference={reference} />
                                             ))}
                                         </ul>
-                                    )}
+                                    ) : null}
                                 </div>
                             </div>
                         ))}
