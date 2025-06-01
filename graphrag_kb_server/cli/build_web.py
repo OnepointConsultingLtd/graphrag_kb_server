@@ -10,7 +10,7 @@ def install_build(path: Path):
 
 
 def _create_path(path: str) -> Path:
-    front_end_path = (Path(__file__) /f"../../../{path}").resolve()
+    front_end_path = (Path(__file__) / f"../../../{path}").resolve()
     assert (
         front_end_path.exists()
     ), f"The front end path '{front_end_path}' does not exist."
@@ -36,6 +36,7 @@ def process_graphrag():
 def process_chat():
     front_end_path = _create_path("front_end_chat")
     install_build(front_end_path)
+
 
 def run():
     process_graphrag()

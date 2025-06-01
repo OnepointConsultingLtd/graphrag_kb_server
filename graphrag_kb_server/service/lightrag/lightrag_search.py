@@ -1,20 +1,25 @@
-from pathlib import Path
-from typing import Literal
 from dataclasses import asdict
 
 from lightrag import LightRAG, QueryParam
 from lightrag.operate import kg_query
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
+from graphrag_kb_server.model.rag_parameters import QueryParameters
 
 
 async def lightrag_search(
-    project_folder: Path,
-    query: str,
-    mode: Literal["local", "global", "hybrid", "naive", "mix", "bypass"],
+    query_params: QueryParameters,
     only_need_context: bool = False,
 ) -> str:
+    project_folder = query_params.context_params.project_dir
+    query = query_params.context_params.query
+    system_prompt = query_params.system_prompt
+    mode = query_params.search
     rag: LightRAG = await initialize_rag(project_folder)
     param = QueryParam(mode=mode, only_need_context=only_need_context)
+    system_prompt = f"""
+In case of a coloquial question or non context related sentence you can respond to it without focusing on the context.
+{system_prompt}
+"""
     if mode in ["local", "global", "hybrid", "mix"]:
         global_config = asdict(rag)
         return await kg_query(
@@ -26,9 +31,7 @@ async def lightrag_search(
             param,
             global_config,
             hashing_kv=rag.llm_response_cache,
-            system_prompt=None,
+            system_prompt=system_prompt,
             chunks_vdb=rag.chunks_vdb,
         )
-    return await rag.aquery(
-        query, param
-    )
+    return await rag.aquery(query, param)

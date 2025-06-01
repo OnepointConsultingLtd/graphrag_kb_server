@@ -10,12 +10,12 @@ from yarl import URL
 from markdown import markdown
 from aiohttp.web import Response
 
-from graphrag_kb_server.model.rag_parameters import ContextParameters
+from graphrag_kb_server.model.rag_parameters import ContextParameters, QueryParameters
 from graphrag_kb_server.model.context import Search
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
-from graphrag_kb_server.service.query import rag_local, rag_global, rag_drift
+from graphrag_kb_server.service.query import rag_local, rag_global
 from graphrag_kb_server.service.query import (
     rag_local_build_context,
     rag_global_build_context,
@@ -57,11 +57,10 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
 from graphrag_kb_server.service.lightrag.lightrag_clustering import (
     generate_communities_excel,
 )
-
+from graphrag_kb_server.main.simple_template import HTML_CONTENT
+from graphrag_kb_server.main.query_support import execute_query
 
 routes = web.RouteTableDef()
-
-HTML_CONTENT = "<html><body style='font-family: sans-serif'><h1>{question}</h1><section>{response}</section></body></html>"
 
 
 def extract_tennant_folder(request: web.Request) -> Path | Response:
@@ -80,7 +79,12 @@ def handle_project_folder(
     request: web.Request, tennant_folder: Path
 ) -> Path | Response:
     engine = find_engine_from_query(request)
-    project = request.rel_url.query.get("project", Format.JSON.value)
+    project = request.rel_url.query.get("project")
+    if not project:
+        return invalid_response(
+            "No project",
+            "Please specify the project name",
+        )
     project_dir: Path = find_project_folder(tennant_folder, engine, project)
     if not project_dir.exists():
         return invalid_response(
@@ -192,13 +196,13 @@ async def about(request: web.Request) -> web.Response:
                         question = "What are the main topics?"
                         search = get_search(request)
                         engine = find_engine_from_query(request)
+                        search_params = ContextParameters(
+                            query=question,
+                            project_dir=project_dir,
+                            context_size=cfg.local_context_max_tokens,
+                        )
                         match engine:
                             case Engine.GRAPHRAG:
-                                search_params = ContextParameters(
-                                    query=question,
-                                    project_dir=project_dir,
-                                    context_size=cfg.local_context_max_tokens,
-                                )
                                 promise = (
                                     rag_local
                                     if search == Search.LOCAL.value
@@ -206,9 +210,13 @@ async def about(request: web.Request) -> web.Response:
                                 )
                                 response = await promise(search_params)
                             case Engine.LIGHTRAG:
-                                response = await lightrag_search(
-                                    project_dir, question, search
+                                query_params = QueryParameters(
+                                    format=Format.HTML.value,
+                                    search=search,
+                                    engine=Engine.LIGHTRAG.value,
+                                    context_params=search_params,
                                 )
+                                response = await lightrag_search(query_params)
                         return web.Response(
                             text=HTML_CONTENT.format(
                                 question=question, response=markdown(response)
@@ -331,6 +339,7 @@ async def upload_index(request: web.Request) -> web.Response:
         handle_request, request=request, response_format=Format.JSON.value
     )
 
+
 @routes.options("/protected/project/query")
 async def query_options(_: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
@@ -389,7 +398,7 @@ async def query(request: web.Request) -> web.Response:
           format: int32
     responses:
       '200':
-        description: Expected response to a valid request
+        description: The response to the query in either json, html or markdown format
       '400':
         description: Bad Request - No project found.
         content:
@@ -414,52 +423,126 @@ async def query(request: web.Request) -> web.Response:
                             request.rel_url, project_dir
                         )
                         engine = find_engine_from_query(request)
-                        match engine:
-                            case Engine.GRAPHRAG:
-                                match search:
-                                    case Search.GLOBAL:
-                                        response = await rag_global(context_params)
-                                    case Search.DRIFT:
-                                        response = await rag_drift(context_params)
-                                    case _:
-                                        response = await rag_local(context_params)
-                            case Engine.LIGHTRAG:
-                                match search:
-                                    case Search.GLOBAL | Search.LOCAL | Search.ALL | Search.NAIVE:
-                                        response = await lightrag_search(
-                                            project_dir, context_params.query, search if search != Search.ALL else "hybrid"
-                                        )
-                                    case _:
-                                        raise web.HTTPBadRequest(
-                                            text="LightRAG does not support local search",
-                                            headers=CORS_HEADERS
-                                        )
-                        match format:
-                            case Format.HTML:
-                                return web.Response(
-                                    text=HTML_CONTENT.format(
-                                        question=context_params.query,
-                                        response=markdown(response),
-                                    ),
-                                    content_type="text/html",
-                                    headers=CORS_HEADERS
-                                )
-                            case Format.MARKDOWN:
-                                return web.Response(
-                                    text=response,
-                                    content_type="text/plain",
-                                    headers=CORS_HEADERS
-                                )
-                            case Format.JSON:
-                                return web.json_response(
-                                    {
-                                        "question": context_params.query,
-                                        "response": response,
-                                    },
-                                    headers=CORS_HEADERS
-                                )
-                        raise web.HTTPBadRequest(
-                            text="Please make sure the format is specified."
+                        return await execute_query(
+                            QueryParameters(
+                                format=format,
+                                search=search,
+                                engine=engine,
+                                context_params=context_params,
+                            )
+                        )
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.options("/protected/project/chat")
+async def chat_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.post("/protected/project/chat")
+async def chat(request: web.Request) -> web.Response:
+    """
+    Chat with the RAG index
+    ---
+    summary: returns the response to a chat from an LLM using the RAG index
+    tags:
+      - project
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              question:
+                type: string
+                description: The question for which the context is retrieved. For example 'What are the main topics?'
+                default: "What are the main topics?"
+              search:
+                type: string
+                description: The type of the search (local, global, drift). Drift only works with graphrag.
+                enum: [local, global, all, drift, naive]
+              format:
+                type: string
+                description: The format of the output (json, html, markdown)
+                enum: [json, html, markdown]
+              context_size:
+                type: integer
+                description: The size of the context, like eg 14000
+                format: int32
+                default: 14000
+              system_prompt:
+                type: string
+                description: The system prompt to use for the chat. This will need to have some parameters to work like 'user_prompt'
+                default: ""
+    responses:
+      '200':
+        description: The response to the query in either json, html or markdown format
+      '400':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No project found"
+
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match extract_tennant_folder(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as tennant_folder:
+                match handle_project_folder(request, tennant_folder):
+                    case Response() as error_response:
+                        return error_response
+                    case Path() as project_dir:
+                        body = request["data"]["body"]
+                        (
+                            format,
+                            search,
+                            engine,
+                            question,
+                            system_prompt,
+                            context_size,
+                        ) = (
+                            body["format"],
+                            body["search"],
+                            find_engine_from_query(request),
+                            body["question"],
+                            body["system_prompt"],
+                            body["context_size"],
+                        )
+                        context_params = ContextParameters(
+                            query=question,
+                            project_dir=project_dir,
+                            context_size=context_size,
+                        )
+                        return await execute_query(
+                            QueryParameters(
+                                format=format,
+                                search=search,
+                                engine=engine,
+                                context_params=context_params,
+                                system_prompt=system_prompt,
+                            )
                         )
 
     return await handle_error(handle_request, request=request)
@@ -599,12 +682,16 @@ async def context(request: web.Request) -> web.Response:
                         match search:
                             case Search.GLOBAL | Search.LOCAL | Search.ALL:
                                 actual_search = (
-                                    search if search is not Search.ALL else "hybrid"
+                                    search if search != Search.ALL else "hybrid"
+                                )
+                                query_params = QueryParameters(
+                                    format=Format.MARKDOWN.value,
+                                    search=actual_search,
+                                    engine=Engine.LIGHTRAG.value,
+                                    context_params=context_params,
                                 )
                                 context_builder_result = await lightrag_search(
-                                    project_dir,
-                                    context_params.query,
-                                    actual_search,
+                                    query_params,
                                     True,
                                 )
                                 return web.json_response(
@@ -770,9 +857,11 @@ async def download_project(request: web.Request) -> web.Response:
 
     return await handle_error(handle_request, request=request)
 
+
 @routes.options("/protected/project/download/single_file")
 async def download_single_file_options(_: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
 
 @routes.get("/protected/project/download/single_file")
 async def download_single_file(request: web.Request) -> web.Response:
@@ -841,13 +930,16 @@ async def download_single_file(request: web.Request) -> web.Response:
                         )
                     case _:
                         input_dir = project_dir / INPUT_FOLDER
-                        if input_dir.resolve().as_posix() in Path(file_name).resolve().as_posix():
+                        if (
+                            input_dir.resolve().as_posix()
+                            in Path(file_name).resolve().as_posix()
+                        ):
                             return web.FileResponse(
                                 file_name,
                                 headers={
                                     "CONTENT-DISPOSITION": f'attachment; filename="{Path(file_name).name}"',
-                                    **CORS_HEADERS
-                                }
+                                    **CORS_HEADERS,
+                                },
                             )
                         file_paths = [
                             file
@@ -863,7 +955,7 @@ async def download_single_file(request: web.Request) -> web.Response:
                                 file_path,
                                 headers={
                                     "CONTENT-DISPOSITION": f'attachment; filename="{file_path.name}"',
-                                    **CORS_HEADERS
+                                    **CORS_HEADERS,
                                 },
                             )
                         else:
@@ -886,7 +978,7 @@ async def download_single_file(request: web.Request) -> web.Response:
                                 headers={
                                     "CONTENT-TYPE": "application/zip",
                                     "CONTENT-DISPOSITION": f'attachment; filename="{file_name}.zip"',
-                                    **CORS_HEADERS
+                                    **CORS_HEADERS,
                                 },
                             )
 
@@ -1359,7 +1451,9 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                             df = df[df["entity_type"] == category]
                         return web.json_response(df.to_dict(orient="records")[:limit])
                     case "xls":
-                        excel_bytes = get_sorted_centrality_scores_as_xls(project_dir, limit)
+                        excel_bytes = get_sorted_centrality_scores_as_xls(
+                            project_dir, limit
+                        )
                         return web.Response(
                             body=excel_bytes,
                             headers={

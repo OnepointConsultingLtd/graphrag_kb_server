@@ -36,10 +36,21 @@ export async function sendQuery(jwt: string, question: string, project: Project)
     const params = new URLSearchParams();
     params.set("project", project.name);
     params.set("engine", project.platform);
-    params.set("search", project.search_type);
-    params.set("question", question);
-    params.set("format", "json");
-    const response = await fetch(`${BASE_SERVER}/protected/project/query?${params.toString()}`, createHeaders(jwt));
+    const response = await fetch(`${BASE_SERVER}/protected/project/chat?${params.toString()}`, {
+        ...createHeaders(jwt),
+        method: 'POST',
+        headers: {
+            ...createHeaders(jwt).headers,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            "question": question,
+            "search": project.search_type,
+            "format": "json",
+            "context_size": 14000,
+            "system_prompt": ""
+        })
+    });
     if (!response.ok) {
         throw new Error(`Failed to fetch projects. Error code: ${response.status}. Error: ${response.statusText}`);
     }
