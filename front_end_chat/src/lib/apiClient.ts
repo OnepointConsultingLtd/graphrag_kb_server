@@ -48,7 +48,7 @@ export async function sendQuery(jwt: string, question: string, project: Project)
             "search": project.search_type,
             "format": "json",
             "context_size": 14000,
-            "system_prompt": ""
+            "system_prompt_additional": project.additional_prompt_instructions
         })
     });
     if (!response.ok) {

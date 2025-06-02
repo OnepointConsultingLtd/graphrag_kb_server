@@ -37,12 +37,31 @@ function SelectSearchType() {
     )
 }
 
+function AdditionalPromptInstructions() {
+    const { selectionPlatform, additionalPromptInstructions, setAdditionalPromptInstructions } = useProjectSelectionStore(useShallow((state) => ({
+        selectionPlatform: state.selectionPlatform,
+        additionalPromptInstructions: state.additionalPromptInstructions,
+        setAdditionalPromptInstructions: state.setAdditionalPromptInstructions
+    })));
+    if (selectionPlatform === Platform.GRAPHRAG) {
+        return null;
+    }
+    return (
+        <div className="w-full">
+            <h3 className="text-lg py-2">Additional prompt instructions</h3>
+            <textarea className="textarea textarea-primary w-full" placeholder="Additional prompt instructions" value={additionalPromptInstructions} 
+                onChange={(e) => setAdditionalPromptInstructions(e.target.value)} />
+        </div>
+    )
+}
+
 export default function ProjectSelector() {
-    const { selectionPlatform, selectionProject, setSelectionProject, searchType } = useProjectSelectionStore(useShallow((state) => ({
+    const { selectionPlatform, selectionProject, setSelectionProject, searchType, additionalPromptInstructions } = useProjectSelectionStore(useShallow((state) => ({
         selectionPlatform: state.selectionPlatform,
         selectionProject: state.selectionProject,
         setSelectionProject: state.setSelectionProject,
-        searchType: state.searchType
+        searchType: state.searchType,
+        additionalPromptInstructions: state.additionalPromptInstructions
     })));
     const { projects, setSelectedProject } = useChatStore(useShallow((state) => ({
         projects: state.projects,
@@ -72,6 +91,7 @@ export default function ProjectSelector() {
                             ))}
                         </select>
                         <SelectSearchType />
+                        <AdditionalPromptInstructions />
                         <div className="w-full flex justify-end mt-6">
                             <button className="btn btn-primary w-[200px]" type="button"
                                 onClick={() => {
@@ -80,7 +100,8 @@ export default function ProjectSelector() {
                                         updated_timestamp: new Date(),
                                         input_files: [],
                                         search_type: searchType,
-                                        platform: selectionPlatform as Platform
+                                        platform: selectionPlatform as Platform,
+                                        additional_prompt_instructions: additionalPromptInstructions
                                     })
                                 }}
                                 disabled={!selectionProject}>Start Chat</button>

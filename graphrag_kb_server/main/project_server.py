@@ -488,9 +488,9 @@ async def chat(request: web.Request) -> web.Response:
                 description: The size of the context, like eg 14000
                 format: int32
                 default: 14000
-              system_prompt:
+              system_prompt_additional:
                 type: string
-                description: The system prompt to use for the chat. This will need to have some parameters to work like 'user_prompt'
+                description: Additional instructions to the LLM. This will not override the original system prompt.
                 default: ""
     responses:
       '200':
@@ -520,14 +520,14 @@ async def chat(request: web.Request) -> web.Response:
                             search,
                             engine,
                             question,
-                            system_prompt,
+                            system_prompt_additional,
                             context_size,
                         ) = (
                             body["format"],
                             body["search"],
                             find_engine_from_query(request),
                             body["question"],
-                            body["system_prompt"],
+                            body["system_prompt_additional"],
                             body["context_size"],
                         )
                         context_params = ContextParameters(
@@ -541,7 +541,7 @@ async def chat(request: web.Request) -> web.Response:
                                 search=search,
                                 engine=engine,
                                 context_params=context_params,
-                                system_prompt=system_prompt,
+                                system_prompt_additional=system_prompt_additional,
                             )
                         )
 

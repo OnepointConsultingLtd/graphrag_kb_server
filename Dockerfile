@@ -24,7 +24,7 @@ RUN pip install uv
 # Create necessary directories
 # Read-only application directories
 
-# Writable data directories (will be mounted as volumes)
+# Writable data directories (/var/graphrag will be mounted as volume)
 RUN mkdir -p /var/graphrag/upload \
     /var/graphrag/tennants \
     /var/graphrag/config \
@@ -36,6 +36,7 @@ COPY uv.lock .
 COPY graphrag_kb_server/ ./graphrag_kb_server/
 COPY prompts/ ./prompts/
 COPY front_end/ ./front_end/
+COPY front_end_chat/ ./front_end_chat/
 COPY run.sh .
 COPY README.md .
 COPY config/security.yaml config/security.yaml
@@ -49,15 +50,12 @@ COPY .env_docker .env
 # Install Python dependencies using uv
 RUN uv pip install --system .
 
-# Install front-end dependencies and build
-WORKDIR /opt/graphrag_kb_server/front_end
-RUN rm -rf package-lock.json
-RUN npm install
-RUN npm ci --production=false
-RUN npm run build
-# Clean up development dependencies
-RUN npm ci --production=true
-RUN rm -rf node_modules/.cache
+# Install graphrag front-end chat dependencies and build
+COPY build_frontend.sh /usr/local/bin/build_frontend.sh
+RUN chmod +x /usr/local/bin/build_frontend.sh
+
+RUN /usr/local/bin/build_frontend.sh /opt/graphrag_kb_server/front_end
+RUN /usr/local/bin/build_frontend.sh /opt/graphrag_kb_server/front_end_chat
 
 WORKDIR /var/graphrag
 COPY config/administration_local.yaml config/administration.yaml

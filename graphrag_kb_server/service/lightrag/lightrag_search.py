@@ -4,7 +4,7 @@ from lightrag import LightRAG, QueryParam
 from lightrag.operate import kg_query
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.model.rag_parameters import QueryParameters
-
+from lightrag.operate import PROMPTS
 
 async def lightrag_search(
     query_params: QueryParameters,
@@ -12,13 +12,14 @@ async def lightrag_search(
 ) -> str:
     project_folder = query_params.context_params.project_dir
     query = query_params.context_params.query
-    system_prompt = query_params.system_prompt
+    system_prompt_additional = query_params.system_prompt_additional or ""
     mode = query_params.search
     rag: LightRAG = await initialize_rag(project_folder)
     param = QueryParam(mode=mode, only_need_context=only_need_context)
-    system_prompt = f"""
+    system_prompt = f"""{system_prompt_additional}
+
 In case of a coloquial question or non context related sentence you can respond to it without focusing on the context.
-{system_prompt}
+{PROMPTS["rag_response"]}
 """
     if mode in ["local", "global", "hybrid", "mix"]:
         global_config = asdict(rag)

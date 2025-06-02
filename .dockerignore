@@ -1,5 +1,6 @@
 # Node modules
 front_end/node_modules/
+front_end_chat/node_modules/
 
 # Python
 __pycache__/

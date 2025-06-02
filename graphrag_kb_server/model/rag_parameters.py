@@ -1,7 +1,6 @@
 from pathlib import Path
 from pydantic import BaseModel, Field, field_validator
 from graphrag_kb_server.model.engines import Engine
-from lightrag.operate import PROMPTS
 
 
 class ContextParameters(BaseModel):
@@ -15,13 +14,7 @@ class QueryParameters(BaseModel):
     search: str = Field(description="The search type.")
     engine: Engine = Field(description="The engine to use.")
     context_params: ContextParameters = Field(description="The context parameters.")
-    system_prompt: str | None = Field(
-        default=PROMPTS["rag_response"],
-        description="The system prompt to use for the chat.",
+    system_prompt_additional: str | None = Field(
+        default="",
+        description="Additional instructions to the LLM. This will not override the original system prompt.",
     )
-
-    @field_validator("system_prompt")
-    def validate_system_prompt(cls, v: str | None) -> str:
-        if not v or v.strip() == "":
-            return PROMPTS["rag_response"]
-        return v
