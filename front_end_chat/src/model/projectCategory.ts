@@ -28,6 +28,7 @@ export type Project = {
     input_files: string[];
     search_type: SearchType;
     platform: Platform;
+    additional_prompt_instructions: string;
 }
 
 export type SearchType = typeof SearchType[keyof typeof SearchType];
