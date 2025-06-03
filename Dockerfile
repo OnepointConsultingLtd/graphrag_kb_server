@@ -54,6 +54,12 @@ RUN uv pip install --system .
 COPY build_frontend.sh /usr/local/bin/build_frontend.sh
 RUN chmod +x /usr/local/bin/build_frontend.sh
 
+# Copy the server_prod.js file to server.ts for front-end
+RUN cp /opt/graphrag_kb_server/front_end/server_prod.js /opt/graphrag_kb_server/front_end/server.ts
+
+# Copy the server_prod.ts file to server.ts for front-end chat
+RUN cp /opt/graphrag_kb_server/front_end_chat/src/lib/server_prod.ts /opt/graphrag_kb_server/front_end_chat/src/lib/server.ts
+
 RUN /usr/local/bin/build_frontend.sh /opt/graphrag_kb_server/front_end
 RUN /usr/local/bin/build_frontend.sh /opt/graphrag_kb_server/front_end_chat
 

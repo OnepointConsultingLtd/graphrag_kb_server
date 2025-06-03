@@ -1,5 +1,5 @@
 from pathlib import Path
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from graphrag_kb_server.model.engines import Engine
 
 
@@ -14,7 +14,19 @@ class QueryParameters(BaseModel):
     search: str = Field(description="The search type.")
     engine: Engine = Field(description="The engine to use.")
     context_params: ContextParameters = Field(description="The context parameters.")
+    system_prompt: str | None = Field(
+        default=None,
+        description="The system prompt to use.",
+    )
     system_prompt_additional: str | None = Field(
         default="",
         description="Additional instructions to the LLM. This will not override the original system prompt.",
+    )
+    hl_keywords: list[str] = Field(
+        default=[],
+        description="High-level keywords to add to the query.",
+    )
+    ll_keywords: list[str] = Field(
+        default=[],
+        description="Low-level keywords to add to the query.",
     )

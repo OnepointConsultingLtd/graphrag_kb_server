@@ -4,10 +4,14 @@ from pathlib import Path
 import pandas as pd
 import rustworkx as rx
 
+from graphrag_kb_server.utils.cache import GenericSimpleCache
+
 from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     create_network_from_project_dir,
     networkx_to_rustworkx,
 )
+
+lightrag_cache = GenericSimpleCache[pd.DataFrame]()
 
 
 def get_sorted_centrality_scores(
@@ -37,12 +41,16 @@ def get_sorted_centrality_scores(
 
 
 def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
+    cached_data = lightrag_cache.get(project_dir)
+    if cached_data is not None:
+        return cached_data
     sorted_centrality = get_sorted_centrality_scores(project_dir)
     data = pd.DataFrame(
         sorted_centrality,
         columns=["entity_id", "entity_type", "description", "file_path", "centrality"],
     )
     data.index = range(1, len(data) + 1)
+    lightrag_cache.set(project_dir, data)
     return data
 
 

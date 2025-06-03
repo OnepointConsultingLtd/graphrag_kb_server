@@ -492,6 +492,16 @@ async def chat(request: web.Request) -> web.Response:
                 type: string
                 description: Additional instructions to the LLM. This will not override the original system prompt.
                 default: ""
+              hl_keywords:
+                type: array
+                items:
+                  type: string
+                description: High-level keywords to add to the query.
+              ll_keywords:
+                type: array
+                items:
+                  type: string
+                description: Low-level keywords to add to the query.
     responses:
       '200':
         description: The response to the query in either json, html or markdown format
@@ -522,6 +532,8 @@ async def chat(request: web.Request) -> web.Response:
                             question,
                             system_prompt_additional,
                             context_size,
+                            hl_keywords,
+                            ll_keywords,
                         ) = (
                             body["format"],
                             body["search"],
@@ -529,6 +541,8 @@ async def chat(request: web.Request) -> web.Response:
                             body["question"],
                             body["system_prompt_additional"],
                             body["context_size"],
+                            body.get("hl_keywords", []),
+                            body.get("ll_keywords", []),
                         )
                         context_params = ContextParameters(
                             query=question,
@@ -542,6 +556,8 @@ async def chat(request: web.Request) -> web.Response:
                                 engine=engine,
                                 context_params=context_params,
                                 system_prompt_additional=system_prompt_additional,
+                                hl_keywords=hl_keywords,
+                                ll_keywords=ll_keywords,
                             )
                         )
 

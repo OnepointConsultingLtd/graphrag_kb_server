@@ -4,7 +4,14 @@ from lightrag import LightRAG, QueryParam
 from lightrag.operate import kg_query
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.model.rag_parameters import QueryParameters
+
 from lightrag.operate import PROMPTS
+from lightrag.operate import extract_keywords_only
+
+
+def _combine_keywords(old_keywords: list[str], new_keywords: list[str]) -> list[str]:
+    return list(set(old_keywords + new_keywords))
+
 
 async def lightrag_search(
     query_params: QueryParameters,
@@ -15,14 +22,28 @@ async def lightrag_search(
     system_prompt_additional = query_params.system_prompt_additional or ""
     mode = query_params.search
     rag: LightRAG = await initialize_rag(project_folder)
-    param = QueryParam(mode=mode, only_need_context=only_need_context)
-    system_prompt = f"""{system_prompt_additional}
+    param = QueryParam(
+        mode=mode,
+        only_need_context=only_need_context,
+        hl_keywords=query_params.hl_keywords,
+        ll_keywords=query_params.ll_keywords,
+    )
+    if query_params.system_prompt:
+        system_prompt = query_params.system_prompt
+    else:
+        system_prompt = f"""{system_prompt_additional}
 
 In case of a coloquial question or non context related sentence you can respond to it without focusing on the context.
 {PROMPTS["rag_response"]}
 """
     if mode in ["local", "global", "hybrid", "mix"]:
         global_config = asdict(rag)
+        hl_keywords, ll_keywords = await extract_keywords_only(
+            query, param, global_config, rag.llm_response_cache
+        )
+        # Add the keywords to the query parameters
+        param.hl_keywords = _combine_keywords(param.hl_keywords, hl_keywords)
+        param.ll_keywords = _combine_keywords(param.ll_keywords, ll_keywords)
         return await kg_query(
             query.strip(),
             rag.chunk_entity_relation_graph,
