@@ -502,6 +502,14 @@ async def chat(request: web.Request) -> web.Response:
                 items:
                   type: string
                 description: Low-level keywords to add to the query.
+              include_context:
+                type: boolean
+                description: Whether to include the context in the response.
+                default: false
+              include_context_as_text:
+                type: boolean
+                description: Whether to include the context as text in the response.
+                default: false
     responses:
       '200':
         description: The response to the query in either json, html or markdown format
@@ -534,6 +542,8 @@ async def chat(request: web.Request) -> web.Response:
                             context_size,
                             hl_keywords,
                             ll_keywords,
+                            include_context,
+                            include_context_as_text,
                         ) = (
                             body["format"],
                             body["search"],
@@ -543,6 +553,8 @@ async def chat(request: web.Request) -> web.Response:
                             body["context_size"],
                             body.get("hl_keywords", []),
                             body.get("ll_keywords", []),
+                            body.get("include_context", False),
+                            body.get("include_context_as_text", False),
                         )
                         context_params = ContextParameters(
                             query=question,
@@ -558,6 +570,8 @@ async def chat(request: web.Request) -> web.Response:
                                 system_prompt_additional=system_prompt_additional,
                                 hl_keywords=hl_keywords,
                                 ll_keywords=ll_keywords,
+                                include_context=include_context,
+                                include_context_as_text=include_context_as_text,
                             )
                         )
 

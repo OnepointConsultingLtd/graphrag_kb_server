@@ -9,6 +9,7 @@ from graphrag_kb_server.service.query import rag_local, rag_global, rag_drift
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
+from graphrag_kb_server.model.chat_response import ChatResponse
 
 
 async def execute_query(query_params: QueryParameters) -> web.Response:
@@ -27,12 +28,16 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
                     response = await rag_drift(context_params)
                 case _:
                     response = await rag_local(context_params)
+            chat_response = ChatResponse(
+                question=context_params.query,
+                response=response,
+            )
         case Engine.LIGHTRAG:
             match search:
                 case Search.GLOBAL | Search.LOCAL | Search.ALL | Search.NAIVE:
                     if search == Search.ALL:
                         query_params.search = "hybrid"
-                    response = await lightrag_search(query_params)
+                    chat_response = await lightrag_search(query_params)
                 case _:
                     raise web.HTTPBadRequest(
                         text="LightRAG does not support local search",
@@ -54,10 +59,7 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
             )
         case Format.JSON:
             return web.json_response(
-                {
-                    "question": context_params.query,
-                    "response": response,
-                },
+                chat_response.model_dump(),
                 headers=CORS_HEADERS,
             )
     raise web.HTTPBadRequest(text="Please make sure the format is specified.")

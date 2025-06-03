@@ -30,3 +30,10 @@ class QueryParameters(BaseModel):
         default=[],
         description="Low-level keywords to add to the query.",
     )
+    include_context: bool = Field(
+        default=False, description="Whether to include the context in the response."
+    )
+    include_context_as_text: bool = Field(
+        default=False,
+        description="Whether to include the context as text in the response.",
+    )
