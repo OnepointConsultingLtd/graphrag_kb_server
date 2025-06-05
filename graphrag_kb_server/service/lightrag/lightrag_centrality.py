@@ -11,7 +11,8 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     networkx_to_rustworkx,
 )
 
-lightrag_cache = GenericSimpleCache[pd.DataFrame]()
+# Full day cache
+lightrag_cache = GenericSimpleCache[pd.DataFrame](timeout=3600 * 24)
 
 
 def get_sorted_centrality_scores(

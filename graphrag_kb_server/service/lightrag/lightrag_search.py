@@ -101,7 +101,11 @@ In case of a coloquial question or non context related sentence you can respond 
         return ChatResponse(
             question=query,
             response=response,
-            context=context if query_params.include_context and query_params.include_context_as_text else None,
+            context=(
+                context
+                if query_params.include_context and query_params.include_context_as_text
+                else None
+            ),
             entities_context=entities_context if query_params.include_context else None,
             relations_context=(
                 relations_context if query_params.include_context else None

@@ -1,4 +1,5 @@
 import zipfile
+import json
 import io
 import re
 from pathlib import Path
@@ -59,6 +60,7 @@ from graphrag_kb_server.service.lightrag.lightrag_clustering import (
 )
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
 from graphrag_kb_server.main.query_support import execute_query
+from graphrag_kb_server.service.lightrag.lightrag_summary import get_summary
 
 routes = web.RouteTableDef()
 
@@ -921,6 +923,12 @@ async def download_single_file(request: web.Request) -> web.Response:
         description: The file name
         schema:
           type: string
+      - name: summary
+        in: query
+        required: true
+        description: Whether to include the summary or the file content in the response.
+        schema:
+          type: boolean
     security:
       - bearerAuth: []
     responses:
@@ -938,7 +946,7 @@ async def download_single_file(request: web.Request) -> web.Response:
 
     async def handle_request(request: web.Request) -> web.Response:
 
-        def create_file_not_found_error(file_name: str, input_dir: Path):
+        def _create_file_not_found_error(file_name: str, input_dir: Path):
             possible_files = [
                 file.name for file in list(input_dir.glob("**/*")) if file.is_file()
             ]
@@ -946,6 +954,18 @@ async def download_single_file(request: web.Request) -> web.Response:
                 "No files found",
                 f"The file' {file_name}' does not exist. Possible files: {possible_files[:10]}",
             )
+
+        def _get_summary(project_dir: Path, file_path_str: str) -> web.FileResponse:
+            summary = get_summary(project_dir, file_path_str)
+            file_path = Path(file_path_str)
+            if summary is not None and isinstance(summary, str):
+                return web.Response(
+                    body=summary.encode('utf-8'),
+                    headers={
+                        "CONTENT-DISPOSITION": f'attachment; filename="{file_path.stem}_summary{file_path.suffix}"',
+                        **CORS_HEADERS,
+                    },
+                )
 
         match match_process_dir(request):
             case Response() as error_response:
@@ -960,10 +980,17 @@ async def download_single_file(request: web.Request) -> web.Response:
                         )
                     case _:
                         input_dir = project_dir / INPUT_FOLDER
+                        summary = (
+                            request.rel_url.query.get("summary", "false") == "true"
+                        )
+                        engine = request.rel_url.query.get("engine")
                         if (
                             input_dir.resolve().as_posix()
                             in Path(file_name).resolve().as_posix()
                         ):
+                            if summary and engine == "lightrag":
+                                return _get_summary(project_dir, file_name)
+
                             return web.FileResponse(
                                 file_name,
                                 headers={
@@ -978,9 +1005,12 @@ async def download_single_file(request: web.Request) -> web.Response:
                         ]
                         length = len(file_paths)
                         if length == 0:
-                            return create_file_not_found_error(file_name, input_dir)
+                            return _create_file_not_found_error(file_name, input_dir)
                         elif length == 1:
                             file_path = file_paths[0]
+                            if summary and engine == "lightrag":
+                                return _get_summary(project_dir, file_path)
+
                             return web.FileResponse(
                                 file_path,
                                 headers={

@@ -20,6 +20,7 @@ class GenericSimpleCache(Generic[T]):
             if time.time() - entry["timestamp"] < self.timeout:
                 return entry["value"]
             else:
+                # Delete entry if it has expired
                 del self.cache[posix_path]
         return None
 
