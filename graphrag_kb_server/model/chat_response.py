@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 class ChatResponse(BaseModel):
     question: str = Field(..., description="The question that was asked.")
-    response: str = Field(..., description="The response to the chat request.")
+    response: str | dict = Field(..., description="The response to the chat request.")
     context: str | None = Field(
         default=None, description="The context used to generate the response."
     )

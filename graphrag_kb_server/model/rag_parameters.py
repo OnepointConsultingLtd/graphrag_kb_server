@@ -37,3 +37,7 @@ class QueryParameters(BaseModel):
         default=False,
         description="Whether to include the context as text in the response.",
     )
+    structured_output: bool = Field(
+        default=False,
+        description="Whether to use structured output.",
+    )

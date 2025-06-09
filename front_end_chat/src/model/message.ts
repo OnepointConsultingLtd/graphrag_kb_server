@@ -34,7 +34,18 @@ export type ChatMessage = {
     references?: Reference[];
 }
 
+export type EntityContextEntry = {
+    id: number;
+    entity: string;
+    type: string;
+    description: string;
+    rank: number;
+    created_at: string;
+    file_path: string;
+}
+
 export type QueryResponse = {
     response: string;
     sources: string[];
+    entities_context: EntityContextEntry[];
 }

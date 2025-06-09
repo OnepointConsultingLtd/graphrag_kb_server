@@ -1,3 +1,4 @@
+import type { QueryResponse } from "../model/message"
 import type { Reference } from "../model/references"
 import { BASE_SERVER } from "./server"
 
@@ -6,7 +7,7 @@ const referenceRegex = /\*\s*(\[.*?\])\s*(.+)\/(.+)/
 export function extractReferences(text: string): Reference[] {
     return text.split("\n").map(l => {
         const match = l.match(referenceRegex)
-        if(match) {
+        if (match) {
             return {
                 file: match[3],
                 path: match[2] + "/" + match[3],
@@ -16,6 +17,34 @@ export function extractReferences(text: string): Reference[] {
         }
         return null
     }).filter(Boolean) as Reference[]
+}
+
+export function extractEntityContext(response: QueryResponse, limit: number = 10): Reference[] {
+    debugger
+    const references: Reference[] = []
+    let i = 0
+    while (references.length < limit && i < response.entities_context.length) {
+        const entry = response.entities_context[i++]
+        if (entry) {
+            const files = entry.file_path.split("<SEP>")
+            for (const f of files) {
+                const reference: Reference = {
+                    file: f.split("/").pop() || "",
+                    path: f,
+                    url: `${BASE_SERVER}/protected/project/download/single_file?file=${encodeURI(f)}`,
+                    type: "[KG]"
+                }
+                references.push(reference)
+                if (references.length >= limit) {
+                    break
+                }
+            }
+        }
+        if (references.length >= limit) {
+            break
+        }
+    }
+    return references
 }
 
 export function removeReferencesFromText(text: string): string {

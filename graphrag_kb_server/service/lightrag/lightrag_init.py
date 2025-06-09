@@ -1,5 +1,7 @@
 from pathlib import Path
+import json
 
+from pydantic import BaseModel, Field
 from lightrag import LightRAG
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
 from lightrag.llm.openai import gpt_4o_mini_complete, gpt_4o_complete, openai_embed
@@ -14,6 +16,18 @@ from graphrag_kb_server.utils.cache import GenericSimpleCache
 
 
 lightrag_cache = GenericSimpleCache[LightRAG]()
+
+
+class Reference(BaseModel):
+    type: str = Field(description="The type of the reference")
+    file: str = Field(description="The file of the reference")
+
+
+class ResponseSchema(BaseModel):
+    response: str = Field(description="The response to the user's question")
+    references: list[Reference] = Field(
+        description="The references to the user's question"
+    )
 
 
 async def gemini_model_func(
@@ -41,12 +55,16 @@ async def gemini_model_func(
     combined_prompt += f"user: {prompt}"
 
     # 3. Call the Gemini model
+    config_dict = {"max_output_tokens": 5000, "temperature": 0, "top_k": 10}
+    structured_output = "structured_output" in kwargs and kwargs["structured_output"]
+    if structured_output:
+        config_dict["response_schema"] = ResponseSchema
+        config_dict["response_mime_type"] = "application/json"
+
     response = client.models.generate_content(
         model=lightrag_cfg.lightrag_model,
         contents=[combined_prompt],
-        config=types.GenerateContentConfig(
-            max_output_tokens=5000, temperature=0, top_k=10
-        ),
+        config=types.GenerateContentConfig(**config_dict),
     )
 
     # 4. Get token counts with null safety
@@ -67,6 +85,8 @@ async def gemini_model_func(
 
     token_tracker.add_usage(token_counts)
 
+    if structured_output:
+        return json.loads(response.text)
     # 5. Return the response text
     return response.text
 

@@ -1,11 +1,12 @@
 import zipfile
-import json
+import asyncio
 import io
 import re
 from pathlib import Path
 from typing import Optional, Callable, Awaitable
 
 from aiohttp import web
+import pandas as pd
 
 from yarl import URL
 from markdown import markdown
@@ -512,6 +513,10 @@ async def chat(request: web.Request) -> web.Response:
                 type: boolean
                 description: Whether to include the context as text in the response.
                 default: false
+              structured_output:
+                type: boolean
+                description: Whether to use structured output.
+                default: false
     responses:
       '200':
         description: The response to the query in either json, html or markdown format
@@ -546,8 +551,9 @@ async def chat(request: web.Request) -> web.Response:
                             ll_keywords,
                             include_context,
                             include_context_as_text,
+                            structured_output,
                         ) = (
-                            body["format"],
+                            body.get("format", Format.JSON.value),
                             body["search"],
                             find_engine_from_query(request),
                             body["question"],
@@ -557,6 +563,7 @@ async def chat(request: web.Request) -> web.Response:
                             body.get("ll_keywords", []),
                             body.get("include_context", False),
                             body.get("include_context_as_text", False),
+                            body.get("structured_output", False),
                         )
                         context_params = ContextParameters(
                             query=question,
@@ -574,6 +581,7 @@ async def chat(request: web.Request) -> web.Response:
                                 ll_keywords=ll_keywords,
                                 include_context=include_context,
                                 include_context_as_text=include_context_as_text,
+                                structured_output=structured_output,
                             )
                         )
 
@@ -960,7 +968,7 @@ async def download_single_file(request: web.Request) -> web.Response:
             file_path = Path(file_path_str)
             if summary is not None and isinstance(summary, str):
                 return web.Response(
-                    body=summary.encode('utf-8'),
+                    body=summary.encode("utf-8"),
                     headers={
                         "CONTENT-DISPOSITION": f'attachment; filename="{file_path.stem}_summary{file_path.suffix}"',
                         **CORS_HEADERS,
@@ -1366,7 +1374,9 @@ async def lightrag_graph_visualization(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                graph_file = generate_lightrag_graph_visualization(project_dir)
+                graph_file = await asyncio.to_thread(
+                    generate_lightrag_graph_visualization, project_dir
+                )
                 disposition = request.rel_url.query.get("disposition", "attachment")
                 return web.FileResponse(
                     graph_file,
@@ -1428,7 +1438,9 @@ async def lightrag_entity_types(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                graph = create_network_from_project_dir(project_dir)
+                graph = await asyncio.to_thread(
+                    create_network_from_project_dir, project_dir
+                )
                 entity_types = extract_entity_types(graph)
                 return web.json_response(entity_types)
 
@@ -1481,6 +1493,13 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
           type: string
           default: category
           enum: ["category", "organization", "geo", "person", "equipment", "technology", "event", "economic_policy", "UNKNOWN"]
+      - name: categories
+        in: query
+        required: false
+        description: Categories for filtering as a comma separted list. Optional. If provided, the category parameter is ignored. Possible values are "category", "organization", "geo", "person", "equipment", "technology"
+        schema:
+          type: string
+          default: category
     security:
       - bearerAuth: []
     responses:
@@ -1505,14 +1524,23 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                 limit = int(request.rel_url.query.get("limit", 20))
                 match format:
                     case "json":
-                        df = get_sorted_centrality_scores_as_pd(project_dir)
+                        df = await asyncio.to_thread(
+                            get_sorted_centrality_scores_as_pd, project_dir
+                        )
                         category = request.rel_url.query.get("category", None)
-                        if category:
-                            df = df[df["entity_type"] == category]
-                        return web.json_response(df.to_dict(orient="records")[:limit])
+                        categories = request.rel_url.query.get("categories", None)
+                        if categories:
+                            dfs = []
+                            for category in categories.split(","):
+                                category = category.strip()
+                                dfs.append(df[df["entity_type"] == category][:limit])
+                            df = pd.concat(dfs)
+                        elif category:
+                            df = df[df["entity_type"] == category][:limit]
+                        return web.json_response(df.to_dict(orient="records"))
                     case "xls":
-                        excel_bytes = get_sorted_centrality_scores_as_xls(
-                            project_dir, limit
+                        excel_bytes = asyncio.to_thread(
+                            get_sorted_centrality_scores_as_xls, project_dir, limit
                         )
                         return web.Response(
                             body=excel_bytes,

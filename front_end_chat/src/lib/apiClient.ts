@@ -48,7 +48,8 @@ export async function sendQuery(jwt: string, question: string, project: Project)
             "search": project.search_type,
             "format": "json",
             "context_size": 14000,
-            "system_prompt_additional": project.additional_prompt_instructions
+            "system_prompt_additional": project.additional_prompt_instructions,
+            "include_context": true
         })
     });
     if (!response.ok) {
@@ -62,6 +63,7 @@ export async function downloadFile(jwt: string, project: Project, reference: Ref
     params.set("project", project.name);
     params.set("engine", project.platform);
     params.set("file", reference.path);
+    params.set("summary", "false");
     const response = await fetch(`${BASE_SERVER}/protected/project/download/single_file?${params.toString()}`, createHeaders(jwt));
     if (!response.ok) {
         throw new Error(`Failed to download file. Error code: ${response.status}. Error: ${response.statusText}`);

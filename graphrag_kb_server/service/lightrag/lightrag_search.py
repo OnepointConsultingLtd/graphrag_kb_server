@@ -17,7 +17,6 @@ from lightrag.operate import (
     CacheData,
     compute_args_hash,
     get_conversation_turns,
-    process_combine_contexts,
     _get_node_data,
     _get_edge_data,
     _get_vector_context,
@@ -32,6 +31,43 @@ from graphrag_kb_server.model.chat_response import ChatResponse
 
 def _combine_keywords(old_keywords: list[str], new_keywords: list[str]) -> list[str]:
     return list(set(old_keywords + new_keywords))
+
+
+PROMPTS[
+    "rag_response"
+] = """---Role---
+
+You are a helpful assistant responding to user query about Knowledge Graph and Document Chunks provided in JSON format below.
+
+
+---Goal---
+
+Generate a concise response based on Knowledge Base and follow Response Rules, considering both the conversation history and the current query. Summarize all information in the provided Knowledge Base, and incorporating general knowledge relevant to the Knowledge Base. Do not include information not provided by Knowledge Base.
+
+When handling relationships with timestamps:
+1. Each relationship has a "created_at" timestamp indicating when we acquired this knowledge
+2. When encountering conflicting relationships, consider both the semantic content and the timestamp
+3. Don't automatically prefer the most recently created relationships - use judgment based on the context
+4. For time-specific queries, prioritize temporal information in the content before considering creation timestamps
+
+---Conversation History---
+{history}
+
+---Knowledge Graph and Document Chunks---
+{context_data}
+
+---Response Rules---
+
+- Target format and length: {response_type}
+- Use markdown formatting with appropriate section headings
+- Please respond in the same language as the user's question.
+- Ensure the response maintains continuity with the conversation history.
+- List up to 10 most important reference sources at the end under "References" section. Clearly indicating whether each source is from Knowledge Graph (KG) or Document Chunks (DC), and include the file path if available, in the following format: [KG/DC] file_path
+- If you don't know the answer, just say so.
+- Do not make anything up. Do not include information not provided by the Knowledge Base.
+- Addtional user prompt: {user_prompt}
+
+Response:"""
 
 
 async def lightrag_search(
@@ -97,6 +133,7 @@ In case of a coloquial question or non context related sentence you can respond 
             max_val,
             rag.llm_response_cache,
             system_prompt,
+            structured_output=query_params.structured_output,
         )
         return ChatResponse(
             question=query,
@@ -296,6 +333,39 @@ async def _build_query_context(
     return entities_context, relations_context, text_units_context
 
 
+def process_combine_contexts(*context_lists):
+    """
+    Combine multiple context lists and remove duplicate content
+
+    Args:
+        *context_lists: Any number of context lists
+
+    Returns:
+        Combined context list with duplicates removed
+    """
+    seen_content = {}
+    combined_data = []
+
+    # Iterate through all input context lists
+    for context_list in context_lists:
+        if not context_list:  # Skip empty lists
+            continue
+        for item in context_list:
+            content_dict = {
+                k: v for k, v in item.items() if k != "id" and k != "created_at"
+            }
+            content_key = tuple(sorted(content_dict.items()))
+            if content_key not in seen_content:
+                seen_content[content_key] = item
+                combined_data.append(item)
+
+    # Reassign IDs
+    for i, item in enumerate(combined_data):
+        item["id"] = str(i + 1)
+
+    return combined_data
+
+
 def _build_context_str(
     entities_context: list[dict],
     relations_context: list[dict],
@@ -340,6 +410,7 @@ async def extended_kg_query(
     max_val: int,
     hashing_kv: BaseKVStorage | None = None,
     system_prompt: str | None = None,
+    structured_output: bool = False,
 ) -> str | AsyncIterator[str]:
 
     if query_param.model_func:
@@ -382,6 +453,7 @@ async def extended_kg_query(
         query,
         system_prompt=sys_prompt,
         stream=query_param.stream,
+        structured_output=structured_output,
     )
     if isinstance(response, str) and len(response) > len(sys_prompt):
         response = (
