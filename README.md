@@ -249,6 +249,9 @@ OPENAI_API_KEY
 GEMINI_API_KEY
 ```
 
+ADMIN_TOKEN_NAME can be your name
+ADMIN_TOKEN_EMAIL can be your email
+
 As well as the volume for this path:
 
 ```

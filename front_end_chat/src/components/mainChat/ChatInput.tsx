@@ -4,7 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import { ChatMessageType, type QueryResponse } from "../../model/message";
 import { v4 as uuidv4 } from 'uuid';
 import { sendQuery } from "../../lib/apiClient";
-import { extractReferences, removeReferencesFromText } from "../../lib/referenceExtraction";
+import { extractReferences, extractSimpleReferences, removeReferencesFromText } from "../../lib/referenceExtraction";
 
 export default function ChatInput() {
     const [inputText, setInputText] = useState("");
@@ -32,8 +32,8 @@ export default function ChatInput() {
             sendQuery(jwt, inputText, selectedProject)
                 .then((response: QueryResponse) => {
                     console.info("response", response);
-                    const finalResponse = removeReferencesFromText(response.response)
-                    const references = extractReferences(response.response)
+                    const finalResponse = response?.response?.response
+                    const references = extractSimpleReferences(response?.response)
                     addChatMessage({
                         id: uuidv4(),
                         text: finalResponse,

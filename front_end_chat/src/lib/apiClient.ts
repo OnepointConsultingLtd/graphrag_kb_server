@@ -49,7 +49,8 @@ export async function sendQuery(jwt: string, question: string, project: Project)
             "format": "json",
             "context_size": 14000,
             "system_prompt_additional": project.additional_prompt_instructions,
-            "include_context": true
+            "include_context": true,
+            "structured_output": true
         })
     });
     if (!response.ok) {
@@ -62,7 +63,7 @@ export async function downloadFile(jwt: string, project: Project, reference: Ref
     const params = new URLSearchParams();
     params.set("project", project.name);
     params.set("engine", project.platform);
-    params.set("file", reference.path);
+    params.set("file", reference.path || "");
     params.set("summary", "false");
     const response = await fetch(`${BASE_SERVER}/protected/project/download/single_file?${params.toString()}`, createHeaders(jwt));
     if (!response.ok) {

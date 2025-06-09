@@ -219,7 +219,8 @@ async def about(request: web.Request) -> web.Response:
                                     engine=Engine.LIGHTRAG.value,
                                     context_params=search_params,
                                 )
-                                response = await lightrag_search(query_params)
+                                chat_response = await lightrag_search(query_params)
+                                response = chat_response.response
                         return web.Response(
                             text=HTML_CONTENT.format(
                                 question=question, response=markdown(response)

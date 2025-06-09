@@ -1,4 +1,4 @@
-$DOCKER_IMAGE = "gilf/graphrag_kb_server:v0.2.0"
+$DOCKER_IMAGE = "gilf/graphrag_kb_server:v0.4.0"
 
 .\docker_build.ps1
 

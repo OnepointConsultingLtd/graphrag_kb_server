@@ -1,4 +1,4 @@
-import type { QueryResponse } from "../model/message"
+import type { QueryResponse, StructuredQueryResponse } from "../model/message"
 import type { Reference } from "../model/references"
 import { BASE_SERVER } from "./server"
 
@@ -17,6 +17,13 @@ export function extractReferences(text: string): Reference[] {
         }
         return null
     }).filter(Boolean) as Reference[]
+}
+
+export function removeReferencesFromText(text: string): string {
+    return text.split("\n").filter(l => l.trim() !== "References:").filter(l => {
+        const match = l.match(referenceRegex)
+        return !match
+    }).join("\n")
 }
 
 export function extractEntityContext(response: QueryResponse, limit: number = 10): Reference[] {
@@ -47,9 +54,14 @@ export function extractEntityContext(response: QueryResponse, limit: number = 10
     return references
 }
 
-export function removeReferencesFromText(text: string): string {
-    return text.split("\n").filter(l => l.trim() !== "References:").filter(l => {
-        const match = l.match(referenceRegex)
-        return !match
-    }).join("\n")
+export function extractSimpleReferences(response: StructuredQueryResponse): Reference[] {
+    const references = response.references
+    return references.map(r => {
+        return {
+            file: r.file.split("/").pop() || "",
+            path: r.file,
+            url: `${BASE_SERVER}/protected/project/download/single_file?file=${encodeURI(r.file)}`,
+            type: `[${r.type}]`
+        }
+    })
 }

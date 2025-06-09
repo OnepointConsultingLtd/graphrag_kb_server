@@ -44,8 +44,13 @@ export type EntityContextEntry = {
     file_path: string;
 }
 
-export type QueryResponse = {
+export type StructuredQueryResponse = {
     response: string;
+    references: Reference[];
+}
+
+export type QueryResponse = {
+    response: StructuredQueryResponse;
     sources: string[];
     entities_context: EntityContextEntry[];
 }
