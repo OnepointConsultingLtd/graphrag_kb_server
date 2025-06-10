@@ -3,6 +3,7 @@ from typing import Any, cast
 import html
 import datetime
 import pandas as pd
+import asyncio
 
 from graspologic.utils import largest_connected_component
 import networkx as nx
@@ -24,10 +25,13 @@ ParentMapping = dict[int, int]
 async def cluster_graph_from_project_dir(
     project_dir: Path, lightrag_max_cluster_size: int = 10
 ) -> Communities:
-    graph = create_network_from_project_dir(project_dir)
-    communities = _cluster_graph(graph, lightrag_max_cluster_size, True, 42)
+    graph: nx.classes.graph.Graph = create_network_from_project_dir(project_dir)
+    communities = await asyncio.to_thread(
+        _cluster_graph, graph, lightrag_max_cluster_size, True, 42
+    )
     client = genai.Client(api_key=cfg.gemini_api_key)
-    for index, community in enumerate(communities):
+
+    async def process_community(community: Community, index: int) -> Community:
         logger.info(
             f"Generating community report for community {index + 1} of {len(communities)}"
         )
@@ -51,6 +55,19 @@ async def cluster_graph_from_project_dir(
                     f"Error generating community report for community {index + 1}: {e}"
                 )
                 retries -= 1
+        return community
+
+    batch_size = 5
+    batches = [
+        communities[i : i + batch_size] for i in range(0, len(communities), batch_size)
+    ]
+    for batch_index, batch in enumerate(batches):
+        await asyncio.gather(
+            *[
+                process_community(community, batch_index * batch_size + index)
+                for index, community in enumerate(batch)
+            ]
+        )
 
     return communities
 
@@ -64,6 +81,21 @@ def generate_communities_dataframe(communities: Communities) -> pd.DataFrame:
     )
 
 
+async def generate_communities_df(
+    project_dir: Path, lightrag_max_cluster_size: int = 10
+) -> pd.DataFrame:
+    cluster_json_file = project_dir / f"communities_{lightrag_max_cluster_size}.json"
+    if cluster_json_file.exists():
+        return pd.read_json(cluster_json_file)
+    communities = await cluster_graph_from_project_dir(
+        project_dir, lightrag_max_cluster_size
+    )
+    df = generate_communities_dataframe(communities)
+    df.index = range(1, len(df) + 1)
+    df.to_json(cluster_json_file, index=True)
+    return df
+
+
 async def generate_communities_excel(
     project_dir: Path, lightrag_max_cluster_size: int = 10
 ) -> Path:
@@ -71,13 +103,16 @@ async def generate_communities_excel(
         project_dir
         / f"communities_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
     )
-    communities = await cluster_graph_from_project_dir(
-        project_dir, lightrag_max_cluster_size
-    )
-    df = generate_communities_dataframe(communities)
-    df.index = range(1, len(df) + 1)
+    df = await generate_communities_df(project_dir, lightrag_max_cluster_size)
     df.to_excel(communities_file, index=True)
     return communities_file
+
+
+async def generate_communities_json(
+    project_dir: Path, lightrag_max_cluster_size: int = 10
+) -> list[dict[str, Any]]:
+    df = await generate_communities_df(project_dir, lightrag_max_cluster_size)
+    return df.to_dict(orient="records", index=True)
 
 
 async def _generate_community_report(
@@ -105,7 +140,7 @@ The community is represented by a list of nodes and can be found between the <co
 The report should be a short description of the community, including a description of the most important nodes in the community and their relationships.
 
     """
-    response = client.models.generate_content(
+    response = await client.aio.models.generate_content(
         model=lightrag_cfg.lightrag_model,
         contents=prompt,
         config={

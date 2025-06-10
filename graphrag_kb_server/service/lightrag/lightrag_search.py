@@ -73,7 +73,7 @@ Response:"""
 async def lightrag_search(
     query_params: QueryParameters,
     only_need_context: bool = False,
-) -> str:
+) -> ChatResponse:
     project_folder = query_params.context_params.project_dir
     query = query_params.context_params.query
     system_prompt_additional = query_params.system_prompt_additional or ""
@@ -140,7 +140,11 @@ In case of a coloquial question or non context related sentence you can respond 
             response=response,
             context=(
                 context
-                if query_params.include_context and query_params.include_context_as_text
+                if (
+                    query_params.include_context
+                    and query_params.include_context_as_text
+                )
+                or only_need_context
                 else None
             ),
             entities_context=entities_context if query_params.include_context else None,

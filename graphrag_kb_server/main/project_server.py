@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Optional, Callable, Awaitable
 
 from aiohttp import web
-import pandas as pd
 
 from yarl import URL
 from markdown import markdown
@@ -58,10 +57,16 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
 )
 from graphrag_kb_server.service.lightrag.lightrag_clustering import (
     generate_communities_excel,
+    generate_communities_json,
 )
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
 from graphrag_kb_server.main.query_support import execute_query
 from graphrag_kb_server.service.lightrag.lightrag_summary import get_summary
+from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
+    create_communities_gexf_for_project,
+    find_community_lightrag,
+)
+from graphrag_kb_server.service.file_find_service import find_original_file
 
 routes = web.RouteTableDef()
 
@@ -736,9 +741,7 @@ async def context(request: web.Request) -> web.Response:
                                     True,
                                 )
                                 return web.json_response(
-                                    {
-                                        "context_text": context_builder_result,
-                                    }
+                                    {"context_text": context_builder_result.context}
                                 )
                             case _:
                                 raise web.HTTPBadRequest(
@@ -934,8 +937,14 @@ async def download_single_file(request: web.Request) -> web.Response:
           type: string
       - name: summary
         in: query
-        required: true
+        required: false
         description: Whether to include the summary or the file content in the response.
+        schema:
+          type: boolean
+      - name: original_file
+        in: query
+        required: false
+        description: Whether to include the original file content in the response.
         schema:
           type: boolean
     security:
@@ -981,6 +990,9 @@ async def download_single_file(request: web.Request) -> web.Response:
                 return error_response
             case Path() as project_dir:
                 file_name = request.rel_url.query.get("file", None)
+                original_file = (
+                    request.rel_url.query.get("original_file", "false") == "true"
+                )
                 match file_name:
                     case None:
                         return invalid_response(
@@ -1000,13 +1012,27 @@ async def download_single_file(request: web.Request) -> web.Response:
                             if summary and engine == "lightrag":
                                 return _get_summary(project_dir, file_name)
 
-                            return web.FileResponse(
-                                file_name,
-                                headers={
-                                    "CONTENT-DISPOSITION": f'attachment; filename="{Path(file_name).name}"',
-                                    **CORS_HEADERS,
-                                },
-                            )
+                            if not original_file:
+                                return web.FileResponse(
+                                    file_name,
+                                    headers={
+                                        "CONTENT-DISPOSITION": f'attachment; filename="{Path(file_name).name}"',
+                                        **CORS_HEADERS,
+                                    },
+                                )
+                            else:
+                                original_file_path = find_original_file(project_dir, Path(file_name))
+                                if original_file_path:
+                                    return web.FileResponse(
+                                        original_file_path,
+                                        headers={
+                                            "CONTENT-DISPOSITION": f'attachment; filename="{original_file_path.name}"',
+                                            **CORS_HEADERS,
+                                        },
+                                    )
+                                else:
+                                    return _create_file_not_found_error(file_name, input_dir)
+
                         file_paths = [
                             file
                             for file in list(input_dir.glob("**/*"))
@@ -1157,6 +1183,21 @@ async def topics_network(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          default: graphrag
+          enum: [graphrag,lightrag]
+      - name: recreate
+        in: query
+        required: false
+        description: Whether to recreate the gexf file (applies only to lightrag)
+        schema:
+          type: boolean
+          default: false
     security:
       - bearerAuth: []
     responses:
@@ -1177,7 +1218,15 @@ async def topics_network(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                graph_file = generate_gexf_file(project_dir)
+                engine = request.rel_url.query.get("engine", "graphrag")
+                recreate = request.rel_url.query.get("recreate", "false") == "true"
+                match engine:
+                    case "graphrag":
+                        graph_file = generate_gexf_file(project_dir)
+                    case "lightrag":
+                        graph_file = await create_communities_gexf_for_project(
+                            project_dir, recreate=recreate
+                        )
                 return send_gexf_file(project_dir, graph_file)
 
     return await handle_error(handle_request, request=request)
@@ -1209,6 +1258,14 @@ async def topics_network_community(request: web.Request) -> web.Response:
         description: The community id
         schema:
           type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          default: graphrag
+          enum: [graphrag,lightrag]
     security:
       - bearerAuth: []
     responses:
@@ -1237,7 +1294,14 @@ async def topics_network_community(request: web.Request) -> web.Response:
 
     async def handle_request(request: web.Request) -> web.Response:
         async def process_community(project_dir: Path, community_id: str):
-            community_report = find_community(project_dir, community_id)
+            engine = request.rel_url.query.get("engine", "graphrag")
+            match engine:
+                case "graphrag":
+                    community_report = find_community(project_dir, community_id)
+                case "lightrag":
+                    community_report = await find_community_lightrag(
+                        project_dir, community_id
+                    )
             if community_report:
                 return web.json_response(
                     community_report.model_dump(), headers=CORS_HEADERS
@@ -1531,16 +1595,15 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                         category = request.rel_url.query.get("category", None)
                         categories = request.rel_url.query.get("categories", None)
                         if categories:
-                            dfs = []
-                            for category in categories.split(","):
-                                category = category.strip()
-                                dfs.append(df[df["entity_type"] == category][:limit])
-                            df = pd.concat(dfs)
+                            category_list = [
+                                cat.strip() for cat in categories.split(",")
+                            ]
+                            df = df[df["entity_type"].isin(category_list)][:limit]
                         elif category:
                             df = df[df["entity_type"] == category][:limit]
                         return web.json_response(df.to_dict(orient="records"))
                     case "xls":
-                        excel_bytes = asyncio.to_thread(
+                        excel_bytes = await asyncio.to_thread(
                             get_sorted_centrality_scores_as_xls, project_dir, limit
                         )
                         return web.Response(
@@ -1577,6 +1640,14 @@ async def lightrag_communities_report(request: web.Request) -> web.Response:
           type: string
           default: lightrag
           enum: [lightrag]
+      - name: format
+        in: query
+        required: true
+        description: The format of the response
+        schema:
+          type: string
+          default: json
+          enum: [json, xls]
       - name: max_cluster_size
         in: query
         required: true
@@ -1605,14 +1676,27 @@ async def lightrag_communities_report(request: web.Request) -> web.Response:
                 return error_response
             case Path() as project_dir:
                 max_cluster_size = request.rel_url.query.get("max_cluster_size", "10")
-                communities_file = await generate_communities_excel(
-                    project_dir, int(max_cluster_size)
-                )
-                return web.FileResponse(
-                    communities_file,
-                    headers={
-                        "CONTENT-DISPOSITION": f'attachment; filename="{project_dir}/{communities_file.name}"'
-                    },
-                )
+                format = request.rel_url.query.get("format", "json")
+                match format:
+                    case "json":
+                        communities_dict = await generate_communities_json(
+                            project_dir, int(max_cluster_size)
+                        )
+                        return web.json_response(communities_dict)
+                    case "xls":
+                        communities_file = await generate_communities_excel(
+                            project_dir, int(max_cluster_size)
+                        )
+                        return web.FileResponse(
+                            communities_file,
+                            headers={
+                                "CONTENT-DISPOSITION": f'attachment; filename="{project_dir}/{communities_file.name}"'
+                            },
+                        )
+                    case _:
+                        return web.Response(
+                            status=400,
+                            text="Invalid format",
+                        )
 
     return await handle_error(handle_request, request=request)

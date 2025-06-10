@@ -6,6 +6,7 @@ import { BASE_SERVER } from './server.js';
 import { createGraph, extractEdges, extractNodes } from './graph.js';
 import { setToken } from './token.js';
 import { setSelectedProject } from './project.js';
+import { ENGINE_NAME_SEPARATOR } from './api.js';
 
 let token = '';
 
@@ -14,9 +15,10 @@ window.network = null;
 window.graph = null;
 
 function loadGraph(project, token) {
+    const [engine, projectName] = project.split(ENGINE_NAME_SEPARATOR);
     // Load the GEXF file
     fetch(
-        `${BASE_SERVER}/protected/project/topics_network?project=${project}`,
+        `${BASE_SERVER}/protected/project/topics_network?project=${projectName}&engine=${engine}`,
         createHeaders(token),
     )
         .then(response => response.text())

@@ -61,7 +61,7 @@ async def gemini_model_func(
         config_dict["response_schema"] = ResponseSchema
         config_dict["response_mime_type"] = "application/json"
 
-    response = client.models.generate_content(
+    response = await client.aio.models.generate_content(
         model=lightrag_cfg.lightrag_model,
         contents=[combined_prompt],
         config=types.GenerateContentConfig(**config_dict),

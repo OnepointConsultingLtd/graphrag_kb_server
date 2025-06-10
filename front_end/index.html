@@ -28,7 +28,7 @@
                             <option value="" disabled>Select a project</option>
                             <template x-for="project in projects" :key="project">
                               <!-- Bind the value AND set the visible text. -->
-                              <option :value="project" x-text="project"></option>
+                              <option :value="project.value" x-text="project.label"></option>
                             </template>
                           </select>
                         <template x-if="$store.app.selectedProject">
