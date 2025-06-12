@@ -215,11 +215,18 @@ export const BASE_SERVER = "https://yourdomain.com"
 
 ## Starting the front end
 
-To start the front end in development mode:
+To start the front end for graph visualisation in development mode:
 
 ```bash
 cd front_end
-yarn run dev
+yarn dev
+```
+
+To start the front end for the chat application in development mode:
+
+```bash
+cd front_end_chat
+yarn dev
 ```
 
 Make sure to start the server with the command below.
@@ -240,7 +247,9 @@ You can access it via: http://localhost:9999/index
 
 You can build the image with the scripts `docker_build.ps1` or `docker_build.sh`.
 
-However when you start the project you will need to define the environment variables:
+## Run Docker
+
+When you start the container, please define these variables:
 
 ```
 ADMIN_TOKEN_NAME
