@@ -22,10 +22,16 @@ def create_conversion_map(project_dir: Path) -> dict[str, str]:
         return {}
     conversion_map = {}
     for original_file in original_file_path.glob("**/*"):
-        if original_file.is_file() and original_file.suffix != ".txt" and original_file.suffix != ".md":
+        if (
+            original_file.is_file()
+            and original_file.suffix != ".txt"
+            and original_file.suffix != ".md"
+        ):
             copy_path = copy.copy(original_file)
             copy_path = copy_path.parent / f"{convert_file_name(copy_path)}.txt"
-            file_splits = copy_path.as_posix().replace(project_dir.as_posix(), "").split("/")
+            file_splits = (
+                copy_path.as_posix().replace(project_dir.as_posix(), "").split("/")
+            )
             file_splits[1] = INPUT_FOLDER
             copy_path = project_dir / Path(*file_splits)
             if copy_path.exists():
@@ -46,5 +52,7 @@ def find_original_file(project_dir: Path, file_path: Path) -> Path | None:
 
 if __name__ == "__main__":
     project_dir = Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full")
-    sample_file = Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full/input/clustre/Articles and PoVs")
+    sample_file = Path(
+        "C:/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full/input/clustre/Articles and PoVs"
+    )
     find_original_file(project_dir, sample_file)

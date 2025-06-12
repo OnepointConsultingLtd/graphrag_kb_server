@@ -46,7 +46,9 @@ def extract_entity_types(graph: nx.classes.graph.Graph) -> dict[str, int]:
 
 def extract_entity_types_excel(graph: nx.classes.graph.Graph) -> bytes:
     entity_counts = extract_entity_types(graph)
-    df = pd.DataFrame([(k,v) for k,v in entity_counts.items()], columns=["entity_type", "count"])
+    df = pd.DataFrame(
+        [(k, v) for k, v in entity_counts.items()], columns=["entity_type", "count"]
+    )
     # Create BytesIO buffer
     buffer = BytesIO()
     df.to_excel(buffer, index=True, header=True)
@@ -140,7 +142,9 @@ if __name__ == "__main__":
 
     def test_connected_components():
         G = create_network_from_project_dir(project_dir)
-        connected_components = [c for c in sorted(nx.connected_components(G), key=len, reverse=True)]
+        connected_components = [
+            c for c in sorted(nx.connected_components(G), key=len, reverse=True)
+        ]
         data = []
         for cc in connected_components:
             print(f"{len(cc)}: {cc}")

@@ -1,0 +1,16 @@
+entity-matching:
+  system_prompt: 'You are a helpful assistant that matches user interests and profile to entities.'
+  user_prompt: 'Given the following user profile and his chosen topics of interest which you can find between the <user_profile> and <topics_of_interest> tags, please match them to the most likely entity from the list of entities between the <entities> tags.
+Make sure that you rank them also according to the user interests. On top you should have the most relevant entities according to the user interests.
+
+<user_profile>
+{user_profile}
+</user_profile>
+
+<entities>
+{entities}
+</entities>
+
+<topics_of_interest>
+{topics_of_interest}
+</topics_of_interest>'

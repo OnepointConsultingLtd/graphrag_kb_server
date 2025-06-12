@@ -31,6 +31,10 @@ from graphrag_kb_server.service.project import (
 from graphrag_kb_server.service.zip_service import zip_input
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
+from graphrag_kb_server.main.project_request_functions import (
+    extract_tennant_folder,
+    handle_project_folder,
+)
 from graphrag_kb_server.service.index_support import unzip_file
 from graphrag_kb_server.service.community_service import (
     prepare_community_extraction,
@@ -70,37 +74,6 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
 from graphrag_kb_server.service.file_find_service import find_original_file
 
 routes = web.RouteTableDef()
-
-
-def extract_tennant_folder(request: web.Request) -> Path | Response:
-    token_data = request["token_data"]
-    if token_data is None:
-        return invalid_response(
-            "No tennant information", "No tennant information available in request"
-        )
-    tennant_folder = cfg.graphrag_root_dir_path / token_data["sub"]
-    if not tennant_folder.exists():
-        return invalid_response("No tennant folder", "Tennant folder was deleted.")
-    return tennant_folder
-
-
-def handle_project_folder(
-    request: web.Request, tennant_folder: Path
-) -> Path | Response:
-    engine = find_engine_from_query(request)
-    project = request.rel_url.query.get("project")
-    if not project:
-        return invalid_response(
-            "No project",
-            "Please specify the project name",
-        )
-    project_dir: Path = find_project_folder(tennant_folder, engine, project)
-    if not project_dir.exists():
-        return invalid_response(
-            "No project folder found",
-            f"There is no project folder {project}",
-        )
-    return project_dir
 
 
 def match_process_dir(request: web.Request) -> Response | Path:
@@ -146,7 +119,7 @@ def get_search(request: web.Request) -> str:
 
 
 @routes.get("/")
-async def index(request: web.Request) -> web.Response:
+async def index(_: web.Request) -> web.Response:
     return web.json_response({"status": "OK"})
 
 
@@ -526,7 +499,7 @@ async def chat(request: web.Request) -> web.Response:
                 default: false
     responses:
       '200':
-        description: The response to the query in either json, html or markdown format
+        description: The response to the query in either json
       '400':
         description: Bad Request - No project found.
         content:
@@ -1022,7 +995,9 @@ async def download_single_file(request: web.Request) -> web.Response:
                                     },
                                 )
                             else:
-                                original_file_path = find_original_file(project_dir, Path(file_name))
+                                original_file_path = find_original_file(
+                                    project_dir, Path(file_name)
+                                )
                                 if original_file_path:
                                     return web.FileResponse(
                                         original_file_path,
@@ -1032,7 +1007,9 @@ async def download_single_file(request: web.Request) -> web.Response:
                                         },
                                     )
                                 else:
-                                    return _create_file_not_found_error(file_name, input_dir)
+                                    return _create_file_not_found_error(
+                                        file_name, input_dir
+                                    )
 
                         file_paths = [
                             file
