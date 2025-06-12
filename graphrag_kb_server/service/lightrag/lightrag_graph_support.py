@@ -1,6 +1,9 @@
 from pathlib import Path
 from collections import Counter
 import json
+from io import BytesIO
+
+import pandas as pd
 
 import networkx as nx
 import rustworkx as rx
@@ -39,6 +42,15 @@ def extract_entity_types(graph: nx.classes.graph.Graph) -> dict[str, int]:
     for node in graph.nodes(data=True):
         entity_types[node[1]["entity_type"]] += 1
     return dict(entity_types)
+
+
+def extract_entity_types_excel(graph: nx.classes.graph.Graph) -> bytes:
+    entity_counts = extract_entity_types(graph)
+    df = pd.DataFrame([(k,v) for k,v in entity_counts.items()], columns=["entity_type", "count"])
+    # Create BytesIO buffer
+    buffer = BytesIO()
+    df.to_excel(buffer, index=True, header=True)
+    return buffer.getvalue()
 
 
 def create_network_from_communities(
@@ -120,4 +132,21 @@ if __name__ == "__main__":
         assert community_report is not None
         print(community_report)
 
-    test_find_community_lightrag()
+    def test_extract_entity_types_excel():
+        G = create_network_from_project_dir(project_dir)
+        entity_types = extract_entity_types_excel(G)
+        with open("entity_types.xlsx", "wb") as f:
+            f.write(entity_types)
+
+    def test_connected_components():
+        G = create_network_from_project_dir(project_dir)
+        connected_components = [c for c in sorted(nx.connected_components(G), key=len, reverse=True)]
+        data = []
+        for cc in connected_components:
+            print(f"{len(cc)}: {cc}")
+            data.append((len(cc), cc))
+        df = pd.DataFrame(data, columns=["size", "nodes"])
+        df.index = range(1, len(df) + 1)
+        df.to_excel("connected_components_1.xlsx", index=True, header=True)
+
+    test_connected_components()

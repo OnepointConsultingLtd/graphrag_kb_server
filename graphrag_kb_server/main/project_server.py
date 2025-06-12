@@ -54,6 +54,7 @@ from graphrag_kb_server.service.lightrag.lightrag_centrality import (
 from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     extract_entity_types,
     create_network_from_project_dir,
+    extract_entity_types_excel,
 )
 from graphrag_kb_server.service.lightrag.lightrag_clustering import (
     generate_communities_excel,
@@ -1476,6 +1477,14 @@ async def lightrag_entity_types(request: web.Request) -> web.Response:
           type: string
           default: lightrag
           enum: [lightrag]
+      - name: format
+        in: query
+        required: true
+        description: The format of the response
+        schema:
+          type: string
+          default: json
+          enum: [json, xls]
     security:
       - bearerAuth: []
     responses:
@@ -1503,11 +1512,28 @@ async def lightrag_entity_types(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
+                format = request.rel_url.query.get("format", None)
                 graph = await asyncio.to_thread(
                     create_network_from_project_dir, project_dir
                 )
-                entity_types = extract_entity_types(graph)
-                return web.json_response(entity_types)
+                match format:
+                    case "json":
+                        entity_types = extract_entity_types(graph)
+                        return web.json_response(entity_types)
+                    case "xls":
+                        entity_types = extract_entity_types_excel(graph)
+                        return web.Response(
+                            body=entity_types,
+                            headers={
+                                "CONTENT-TYPE": "application/vnd.ms-excel",
+                                "CONTENT-DISPOSITION": f'attachment; filename="{project_dir.stem}_entity_types.xlsx"',
+                            },
+                        )
+                    case _:
+                        return web.Response(
+                            status=400,
+                            text="Invalid format",
+                        )
 
     return await handle_error(handle_request, request=request)
 
