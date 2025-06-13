@@ -7,12 +7,14 @@ from graphrag_kb_server.main.project_request_functions import (
     extract_tennant_folder,
     handle_project_folder,
 )
+from graphrag_kb_server.model.search.match_query import MatchQuery
+from graphrag_kb_server.service.search.matching_service import match_entities_with_lightrag
 
 #
 routes = web.RouteTableDef()
 
 
-@routes.post("/protected/search/match_entities")
+@routes.post("/protected/search/expand_entities")
 async def match_entities(request: web.Request) -> web.Response:
     """
     Given a user profile and topics of interest, find matching the entities to the user profile and topics of interest
@@ -43,6 +45,11 @@ async def match_entities(request: web.Request) -> web.Response:
           schema:
             type: object
             properties:
+              question:
+                type: string
+                description: The question used to find extra entities. This is optional.
+                nullable: true
+                default: "How can I use AI to improve my automation and achieve truly autonomous systems?"
               user_profile:
                 type: string
                 description: The profile of the user, describing his interests.
@@ -73,7 +80,7 @@ async def match_entities(request: web.Request) -> web.Response:
               entities_limit:
                 type: integer
                 description: The number of entities to return
-                default: 10
+                default: 50
     responses:
       '200':
         description: The response to the query in either json, html or markdown format
@@ -96,6 +103,10 @@ async def match_entities(request: web.Request) -> web.Response:
                     case Response() as error_response:
                         return error_response
                     case Path() as project_dir:
-                        pass
+                        body = request["data"]["body"]
+                        match_query = MatchQuery(**body)
+                        match_output = await match_entities_with_lightrag(project_dir, match_query)
+                        return web.json_response(match_output.model_dump())
+
 
     return await handle_error(handle_request, request=request)

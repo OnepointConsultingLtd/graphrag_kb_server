@@ -22,21 +22,17 @@ def _convert_df_to_entities(df: pd.DataFrame) -> list[Entity]:
         for e in zip(df["entity_id"], df["entity_type"], df["description"])
     ]
 
+SCORE_THRESHOLD = 0.5
 
 async def match_entities_with_lightrag(
     project_dir: Path, query: MatchQuery
 ) -> MatchOutput:
-    user_profile, topics_of_interest, entity_types, entities_limit = (
-        query.user_profile,
-        query.topics_of_interest,
-        query.entity_types,
-        query.entities_limit,
-    )
     df = await asyncio.to_thread(get_sorted_centrality_scores_as_pd, project_dir)
+    entity_types, entities_limit = query.entity_types, query.entities_limit
     df = df[df["entity_type"].isin(entity_types)][:entities_limit]
     all_entities = _convert_df_to_entities(df)
-    entity_list = await match_entities(user_profile, topics_of_interest, all_entities)
-    entity_list = [entity for entity in entity_list.entities if entity.score > 0]
+    entity_list = await match_entities(query, all_entities)
+    entity_list = [entity for entity in entity_list.entities if entity.score > SCORE_THRESHOLD]
     entity_dict = defaultdict(list)
     entity_type_dict = {e.name: e.type for e in all_entities}
     for entity in entity_list:
@@ -53,13 +49,15 @@ def _convert_entities_to_str(entities: list[Entity]) -> str:
 
 
 async def match_entities(
-    user_profile: str, topics_of_interest: list[Entity], existing_entities: list[Entity]
+    query: MatchQuery, existing_entities: list[Entity]
 ) -> EntityList:
+    user_profile, topics_of_interest, question = query.user_profile, query.topics_of_interest, query.question
     entities_str = _convert_entities_to_str(existing_entities)
     topics_of_interest_str = _convert_entities_to_str(topics_of_interest)
     system_prompt = prompts["entity-matching"]["system_prompt"]
     user_prompt = prompts["entity-matching"]["user_prompt"]
     user_contents = user_prompt.format(
+        question=question if question else "",
         user_profile=user_profile,
         topics_of_interest=topics_of_interest_str,
         entities=entities_str,
@@ -78,7 +76,7 @@ user:{user_contents}
     )
     entities = json.loads(response.text)
     entities_with_score = [
-        EntityWithScore(entity=e["entity"], score=e["score"], reasoning=e["reasoning"])
+        EntityWithScore(entity=e["entity"], score=e["score"], reasoning=e["reasoning"], abstraction=e["abstraction"])
         for e in entities["entities"]
     ]
     return EntityList(entities=entities_with_score)
@@ -101,9 +99,10 @@ if __name__ == "__main__":
         match_entities_with_lightrag(
             Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full"),
             MatchQuery(
+                question="How can I use AI to improve my automation and achieve truly autonomous systems?",
                 user_profile="I am a software engineer interested in automation and Robotics",
                 topics_of_interest=topics_of_interest,
-                entities=["category"],
+                entity_types=["category"],
                 entities_limit=30,
             ),
         )
@@ -111,4 +110,4 @@ if __name__ == "__main__":
     for entity_type, entity_list in entity_list.entity_dict.items():
         print("# ", entity_type)
         for entity in entity_list.entities:
-            print("- ", entity.entity, entity.score, entity.reasoning)
+            print("- ", entity.entity, entity.score, entity.reasoning, entity.abstraction)
