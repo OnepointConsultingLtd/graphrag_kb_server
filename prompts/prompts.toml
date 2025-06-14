@@ -1,0 +1,107 @@
+[entity-matching]
+system_prompt = """You are a helpful assistant that matches user interests and profile to entities."""
+user_prompt = """Given the following user profile, an optional question and the user''s chosen topics of interest which you can find between the <user_profile>, <question> and <topics_of_interest> tags, please match them to the most likely entity from the list of entities which can be found between the <entities> tags. Make sure that you rank them also according to the user interests. On top you should have the most relevant entities according to the user interests.
+
+  Also divide the entities into two groups:
+  - high-level keywords: Identify high-level key words that summarize the main concepts, themes, or topics of the entire text. These should capture the overarching ideas present in the document.
+  - low-level keywords: Identify low-level key words that summarize more specific topics or subconcepts that are related to the high-level keywords.
+
+  For example: high-level concept "AI" has the following low-level keywords: "machine learning", "deep learning", "natural language processing", "computer vision", "robotics", "automation", "data science", "analytics", "cloud computing", "blockchain", "cybersecurity", "internet of things", "augmented reality", "virtual reality", "mixed reality"
+
+  If the question is provided, use it to find extra entities that are related to the question.
+
+<question>
+{question}
+</question>
+
+<user_profile>
+{user_profile}
+</user_profile>
+
+<entities>
+{entities}
+</entities>
+
+<topics_of_interest>
+{topics_of_interest}
+</topics_of_interest>
+"""
+
+[document-retrieval]
+question-template = """Can you please provide information related to the following user profile and optional question:
+  
+  <user_profile>
+  {user_profile}
+  </user_profile>
+
+  <question>
+  {question}
+  </question>
+  
+  <high_level_keywords>
+  {high_level_keywords}
+  </high_level_keywords>
+
+  <low_level_keywords>
+  {low_level_keywords}
+  </low_level_keywords>
+"""
+
+[document-summarization]
+system_prompt = """You are a helpful assistant that summarizes documents and uses British English."""
+human_prompt_question = """---Role---
+You are a helpful assistant tasked with summarising a document based on the user's interests and the question they are asking.
+--- Goal ---
+The content of the document can be found between the <document> and </document> tags.
+The user's interests and the question they are asking can be found between the <user_profile> and </user_profile> tags.
+The question asked by the user which retrieved the document can be found between the <question> and </question> tags.
+
+<document>
+{document}
+</document>
+
+<user_profile>
+{user_profile}
+</user_profile>
+
+<question>
+{question}
+</question>
+
+---Instructions---
+
+- The output should be a summary of the document in British English and also a section (paragraph) on how the document relates to the user's interests and the question they are asking, if it is relevant.
+- Use this format:
+
+# Summary
+(paragraph text)
+
+# Relevance
+(paragraph text)
+
+"""
+human_prompt_no_question = """---Role---
+You are a helpful assistant tasked with summarising a document based on the user's interests and the question they are asking.
+--- Goal ---
+The content of the document can be found between the <document> and </document> tags.
+The user's interests can be found between the <user_profile> and </user_profile> tags.
+
+<document>
+{document}
+</document>
+
+<user_profile>
+{user_profile}
+</user_profile>
+
+---Instructions---
+
+- The output should be a summary of the document in British English and also a section (paragraph) on how the document relates to the user's interests and the question they are asking, if it is relevant.
+- Use this format:
+
+# Summary
+(paragraph text)
+
+# Relevance
+(paragraph text)
+"""

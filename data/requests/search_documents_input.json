@@ -1,0 +1,24 @@
+{
+    "user_profile": "John Doe is an embedded systems engineer who is interested in automation and Internet of Things.",
+    "question": "How can I use AI to improve my automation and achieve truly autonomous systems?",
+    "topics_of_interest": {
+      "entity_dict": {
+        "category": {
+          "entities": [
+            {
+              "entity": "Machine Learning",
+              "score": 0.92,
+              "reasoning": "This topic frequently appears in user-relevant articles.",
+              "abstraction": "high-level"
+            },
+            {
+              "entity": "Edge Computing",
+              "score": 0.85,
+              "reasoning": "This aligns with the user's interest in embedded systems.",
+              "abstraction": "low-level"
+            }
+          ]
+        }
+      }
+    }
+  }

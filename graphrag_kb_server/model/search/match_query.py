@@ -5,7 +5,8 @@ from graphrag_kb_server.model.search.entity import Entity, EntityList
 
 class MatchQuery(BaseModel):
     question: str | None = Field(
-        default=None, description="The question used to find extra entities. This is optional"
+        default=None,
+        description="The question used to find extra entities. This is optional",
     )
     user_profile: str = Field(
         ..., description="The user profile with some information about the user"
@@ -27,3 +28,6 @@ class MatchOutput(BaseModel):
         default={},
         description="A dictionary of entity names and their corresponding entity lists",
     )
+
+if __name__ == "__main__":
+    print(MatchOutput.model_json_schema())

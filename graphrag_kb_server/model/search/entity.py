@@ -6,10 +6,12 @@ class Abstraction(StrEnum):
     HIGH_LEVEL = "high-level"
     LOW_LEVEL = "low-level"
 
+
 class Entity(BaseModel):
     name: str = Field(..., description="The name of the entity")
     type: str = Field(default="category", description="The type of the entity")
     description: str = Field(..., description="The description of the entity")
+
 
 class EntityWithScore(BaseModel):
     entity: str = Field(..., description="The entity name")
