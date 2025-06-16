@@ -23,6 +23,7 @@ type ChatStore = {
     clearChatMessages: () => void;
     setProjects: (projects: ProjectCategories) => void;
     setSelectedProject: (project: Project) => void;
+    setIsFloating: (isFloating: boolean) => void;
     initializeProjects: () => Promise<void>;
     setIsThinking: (isThinking: boolean) => void;
     setCopiedMessageId: (id: string) => void;
@@ -68,6 +69,7 @@ const useChatStore = create<ChatStore>()(
             setJwt: (jwt: string) => set({ jwt }),
             setProjects: (projects: ProjectCategories) => set({ projects }),
             setSelectedProject: (project: Project) => set({ selectedProject: project }),
+            setIsFloating: (isFloating: boolean) => set({ isFloating }),
             addChatMessage: (message: ChatMessage) => set((state) => {
                 return { chatMessages: [...state.chatMessages.slice(state.chatMessages.length > THRESHOLD ? 1 : 0), message] }
             }),

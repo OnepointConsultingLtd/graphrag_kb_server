@@ -100,6 +100,17 @@ export default function ChatInput() {
                 }
               }}
             />
+
+            <button
+              type="submit"
+              disabled={isThinking || inputText.trim() === ""}
+              className="absolute lg:hidden right-4 bottom-4 bg-white px-4 hover:bg-gray-200 text-blue-500 p-2 rounded-lg cursor-pointer flex items-center gap-2"
+              aria-label={
+                isThinking ? "Processing your message" : "Send message"
+              }
+            >
+              Send
+            </button>
           </form>
         </div>
       </div>
