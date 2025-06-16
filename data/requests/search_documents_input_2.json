@@ -1,0 +1,48 @@
+{
+    "user_profile": "John Doe is an embedded systems engineer who is interested in automation and Internet of Things.",
+    "question": "How can I use AI to improve my automation and achieve truly autonomous systems?",
+    "topics_of_interest": {
+      "entity_dict": {
+        "category": {
+          "entities": [
+            {
+              "entity": "AI",
+              "score": 0.95,
+              "reasoning": "The user explicitly stated an interest in AI, making it highly relevant.",
+              "abstraction": "high-level"
+            },
+            {
+              "entity": "Artificial Intelligence",
+              "score": 0.95,
+              "reasoning": "The user explicitly stated an interest in AI, making it highly relevant.",
+              "abstraction": "high-level"
+            },
+            {
+              "entity": "Machine Learning",
+              "score": 0.9,
+              "reasoning": "The user specifically mentioned Machine Learning as a topic of interest within AI.",
+              "abstraction": "low-level"
+            },
+            {
+              "entity": "Automation",
+              "score": 0.85,
+              "reasoning": "The user profile indicates an interest in automation, and the question asks about using AI to improve automation.",
+              "abstraction": "high-level"
+            },
+            {
+              "entity": "LLMs",
+              "score": 0.7,
+              "reasoning": "Since the user asks about using AI to improve automation and achieve truly autonomous systems, LLMs are a relevant low-level keyword because they facilitate this.",
+              "abstraction": "low-level"
+            },
+            {
+              "entity": "Generative AI",
+              "score": 0.65,
+              "reasoning": "Since the user asks about using AI to improve automation and achieve truly autonomous systems, Generative AI is a relevant low-level keyword because it facilitates this.",
+              "abstraction": "low-level"
+            }
+          ]
+        }
+      }
+    }
+  }

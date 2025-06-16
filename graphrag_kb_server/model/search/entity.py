@@ -1,4 +1,10 @@
+from enum import StrEnum
 from pydantic import BaseModel, Field
+
+
+class Abstraction(StrEnum):
+    HIGH_LEVEL = "high-level"
+    LOW_LEVEL = "low-level"
 
 
 class Entity(BaseModel):
@@ -15,6 +21,10 @@ class EntityWithScore(BaseModel):
     reasoning: str = Field(
         ...,
         description="The reasoning behind the choice of this entity and how why it matches the user interests",
+    )
+    abstraction: Abstraction = Field(
+        ...,
+        description="The abstraction of the entity. Whether it is a high-level (overarching topic) or low-level keyword (specific subtopic)",
     )
 
 

@@ -974,11 +974,11 @@ async def download_single_file(request: web.Request) -> web.Response:
                             "Please specify a file name",
                         )
                     case _:
-                        input_dir = project_dir / INPUT_FOLDER
                         summary = (
                             request.rel_url.query.get("summary", "false") == "true"
                         )
                         engine = request.rel_url.query.get("engine")
+                        input_dir = project_dir / INPUT_FOLDER
                         if (
                             input_dir.resolve().as_posix()
                             in Path(file_name).resolve().as_posix()

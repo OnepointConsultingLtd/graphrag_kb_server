@@ -5,7 +5,6 @@ import datetime
 import pandas as pd
 import asyncio
 
-from graspologic.utils import largest_connected_component
 import networkx as nx
 
 from graphrag_kb_server.logger import logger
@@ -225,6 +224,7 @@ def _stable_largest_connected_component(graph: nx.Graph) -> nx.Graph:
     This was copied from GraphRAG.
     """
     # NOTE: The import is done here to reduce the initial import time of the module
+    from graspologic.utils import largest_connected_component
 
     graph = graph.copy()
     graph = cast("nx.Graph", largest_connected_component(graph))
