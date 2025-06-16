@@ -1,11 +1,8 @@
 import asyncio
-import json
 from pathlib import Path
 from collections import defaultdict
 
 import pandas as pd
-from google import genai
-from google.genai import types
 
 from graphrag_kb_server.model.search.match_query import MatchQuery, MatchOutput
 from graphrag_kb_server.model.search.entity import Entity, EntityList, EntityWithScore

@@ -62,6 +62,19 @@ async def auth_middleware(request: web.Request, handler):
                     status=UNAUTHORIZED,
                     headers=CORS_HEADERS,
                 )
+
+        permissions = token_dict.get("permissions", ["read", "write"])
+        if (
+            request.method in ["POST", "PATCH", "DELETE"]
+            and "write" not in permissions
+            and not request_path.startswith("/protected/project/chat")
+            and not request_path.startswith("/protected/search")
+        ):
+            return web.json_response(
+                {"error": "Only subjects with write permissions can perform this action."},
+                status=UNAUTHORIZED,
+                headers=CORS_HEADERS,
+            )
     except web.HTTPUnauthorized as e:
         logger.error(f"Unauthorized access attempt: {e.reason}")
         return web.json_response(
@@ -79,7 +92,7 @@ async def read_admin_token(request: web.Request) -> web.Response:
     ---
     summary: reads the admin token from the environment variables if the requester knows the name and email used to generate it.
     tags:
-      - tennant
+      - admin
     security: []  # Empty security array indicates no authentication required
     parameters:
       - name: name
@@ -148,7 +161,7 @@ async def create_tennant(request: web.Request) -> web.Response:
     ---
     summary: creates a tennant and returns a JSON token which can be used to operate in the context of the tennant.
     tags:
-      - tennant
+      - admin
     security:
       - bearerAuth: []
     requestBody:
@@ -242,7 +255,7 @@ async def delete_tennant(request: web.Request) -> web.Response:
     ---
     summary: Deletes a single tennant
     tags:
-      - tennant
+      - admin
     security:
       - bearerAuth: []
     requestBody:
@@ -320,7 +333,7 @@ async def list_tennants(request: web.Request) -> web.Response:
     ---
     summary: lists all available tennants in the system.
     tags:
-      - tennant
+      - admin
     security:
       - bearerAuth: []
     responses:
@@ -356,4 +369,87 @@ async def list_tennants(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
-logger.info("multi_tennant_server.py loaded")
+@routes.post("/protected/token/create_read_only_token")
+async def create_read_only_token(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: used to create a read only token for accessing a tennancy
+    tags:
+      - token
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                description: The email
+    responses:
+      '200':
+        description: Expected response to a valid request
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - token
+                - folder_name
+              properties:
+                email:
+                  type: string
+                  description: The email
+                token:
+                  type: string
+                  description: The generated token
+      '400':
+        description: Expected response when the data is invalid
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - error_code
+                - error
+                - folder_name
+              properties:
+                error_code:
+                  type: integer
+                  description: The error code
+                error:
+                  type: string
+                  description: The error name
+                description:
+                  type: string
+                  description: The description of the error
+      '401':
+        description: Unauthorized
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        body = await request.json()
+        if "email" in body:
+            email = body["email"]
+            sub = request["token_data"]["sub"]
+            token_data = JWTTokenData(name=sub, email=email)
+            jwt_token: JWTToken | Error = await generate_token(
+                token_data, generate_folder=False, read_only=True
+            )
+            if isinstance(jwt_token, JWTToken):
+                return web.json_response(jwt_token.model_dump())
+            else:
+                return web.json_response(jwt_token.model_dump(), status=400)
+        else:
+            return invalid_response(
+                "Invalid request body",
+                "Make sure you specify the email and project name.",
+            )
+
+    return await handle_error(handle_request, request=request)

@@ -18,8 +18,8 @@ from graphrag_kb_server.service.search.search_documents import (
 )
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
-    SummarisationResponseWithDocument,
 )
+
 #
 routes = web.RouteTableDef()
 
@@ -34,8 +34,10 @@ async def _handle_request(request: web.Request, func: Callable) -> web.Response:
                     return error_response
                 case Path() as project_dir:
                     body = request["data"]["body"]
+
                     async def func_wrapper(_: web.Request):
                         return await func(project_dir, body)
+
                     return func_wrapper
 
 
@@ -118,19 +120,19 @@ async def match_entities(request: web.Request) -> web.Response:
               message: "No project found"
 
     """
-                    
+
     async def handle_expansion(project_dir: Path, body: dict) -> web.Response:
         match_query = MatchQuery(**body)
-        match_output = await match_entities_with_lightrag(
-            project_dir, match_query
-        )
+        match_output = await match_entities_with_lightrag(project_dir, match_query)
         return web.json_response(match_output.model_dump())
 
-    return await handle_error(await _handle_request(request, handle_expansion), request=request)
+    return await handle_error(
+        await _handle_request(request, handle_expansion), request=request
+    )
 
 
 @routes.post("/protected/search/relevant_documents")
-async def relevant_documents(request: web.Request) -> web.Response:    
+async def relevant_documents(request: web.Request) -> web.Response:
     """
     Given a user profile an optional question and expanded topics of interest, find matching documents and explain their relevance to the user's interests and question.
     ---
@@ -218,7 +220,7 @@ async def relevant_documents(request: web.Request) -> web.Response:
                             score: 0.85
                             reasoning: "This aligns with the user's interest in embedded systems."
                             abstraction: "low-level"
-                      
+
     responses:
       '200':
         description: The matching documents and their relevance to the user's interests and question
@@ -230,10 +232,12 @@ async def relevant_documents(request: web.Request) -> web.Response:
               status: "error"
               message: "No project found"
     """
-    
+
     async def handle_search_documents(project_dir: Path, body: dict) -> web.Response:
         search_query = DocumentSearchQuery(**body)
         search_result = await retrieve_relevant_documents(project_dir, search_query)
         return web.json_response(search_result.model_dump())
 
-    return await handle_error(await _handle_request(request, handle_search_documents), request=request)
+    return await handle_error(
+        await _handle_request(request, handle_search_documents), request=request
+    )

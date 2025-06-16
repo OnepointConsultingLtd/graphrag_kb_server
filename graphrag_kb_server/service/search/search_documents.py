@@ -55,13 +55,19 @@ async def retrieve_relevant_documents(
     summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
     # Summarize and score
     for i in range(len(document_paths)):
-        summaries_with_document_paths.append(SummarisationResponseWithDocument(
-            summary=summaries[i].summary,
-            relevancy_score=summaries[i].relevancy_score,
-            relevance=summaries[i].relevance,
-            document_path=document_paths[i],
-        ))
-    summaries_with_document_paths = sorted(summaries_with_document_paths, key=lambda x: x.get_relevancy_score_points(), reverse=True)
+        summaries_with_document_paths.append(
+            SummarisationResponseWithDocument(
+                summary=summaries[i].summary,
+                relevancy_score=summaries[i].relevancy_score,
+                relevance=summaries[i].relevance,
+                document_path=document_paths[i],
+            )
+        )
+    summaries_with_document_paths = sorted(
+        summaries_with_document_paths,
+        key=lambda x: x.get_relevancy_score_points(),
+        reverse=True,
+    )
     response = chat_response.response["response"]
     return SearchResults(
         documents=summaries_with_document_paths,
@@ -108,16 +114,22 @@ async def summarize_document_with_document_path(
 async def summarize_document(request: SummarisationRequest) -> SummarisationResponse:
     if request.question is None or len(request.question.strip()) == 0:
         user_prompt = prompts["document-summarization"]["human_prompt_question"].format(
-                user_profile=request.user_profile,
-                question=request.question,
-                document=request.document,
-            )
+            user_profile=request.user_profile,
+            question=request.question,
+            document=request.document,
+        )
     else:
-        user_prompt = prompts["document-summarization"]["human_prompt_no_question"].format(
+        user_prompt = prompts["document-summarization"][
+            "human_prompt_no_question"
+        ].format(
             user_profile=request.user_profile,
             document=request.document,
         )
-    summarisation_response_dict = await structured_completion(prompts["document-summarization"]["system_prompt"], user_prompt, SummarisationResponse)
+    summarisation_response_dict = await structured_completion(
+        prompts["document-summarization"]["system_prompt"],
+        user_prompt,
+        SummarisationResponse,
+    )
     return SummarisationResponse(**summarisation_response_dict)
 
 
@@ -194,7 +206,7 @@ if __name__ == "__main__":
         query_params = generate_query(
             project_dir,
             document_search_query,
-            "What are the main challenges in the field of AI?"
+            "What are the main challenges in the field of AI?",
         )
         print(query_params)
 
@@ -211,14 +223,25 @@ if __name__ == "__main__":
         print(chat_response)
 
     def test_get_document_text():
-        document_text = get_document_text(project_dir, Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full/input/clustre/Case studies/Case_Study_-_AIMIA_and_Zuhlke.txt"))
+        document_text = get_document_text(
+            project_dir,
+            Path(
+                "/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full/input/clustre/Case studies/Case_Study_-_AIMIA_and_Zuhlke.txt"
+            ),
+        )
         print(document_text)
-        document_text = get_document_text(project_dir, Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre_2/input/clustre/Case studies/Case_Study_-_AIMIA_and_Zuhlke.txt"))
+        document_text = get_document_text(
+            project_dir,
+            Path(
+                "/var/graphrag/tennants/gil_fernandes/lightrag/clustre_2/input/clustre/Case studies/Case_Study_-_AIMIA_and_Zuhlke.txt"
+            ),
+        )
         print(document_text)
-
 
     def test_retrieve_relevant_documents():
-        search_results = asyncio.run(retrieve_relevant_documents(project_dir, create_document_search_query()))
+        search_results = asyncio.run(
+            retrieve_relevant_documents(project_dir, create_document_search_query())
+        )
         print(search_results.response)
         for document in search_results.documents:
             print(document.summary)

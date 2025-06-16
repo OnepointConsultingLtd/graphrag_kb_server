@@ -11,6 +11,7 @@ type ChatStore = {
     chatMessages: ChatMessage[];
     isFloating: boolean;
     isThinking: boolean;
+    displayFloatingChatIntro: boolean;
     isMarkdownDialogueOpen: boolean;
     markdownDialogueContent: string;
     selectedProject?: Project;
@@ -38,12 +39,23 @@ function initJwt() {
     if (jwt) {
         return jwt;
     }
+    if (window.chatConfig?.jwt) {
+        return window.chatConfig.jwt;
+    }
     // Try to extract from localStorage
     jwt = localStorage.getItem("jwt");
     if (jwt) {
         return jwt;
     }
     return "";
+}
+
+function initProject() {
+    const project = window.chatConfig?.project;
+    if (project) {
+        return project;
+    }
+    return undefined;
 }
 
 function openMarkdownDialogue(open: boolean) {
@@ -59,10 +71,11 @@ const useChatStore = create<ChatStore>()(
         (set, get) => ({
             jwt: initJwt(),
             projects: undefined,
-            selectedProject: undefined,
+            selectedProject: initProject(),
             chatMessages: [],
             isFloating: false, // TODO: create initialisation function
             isThinking: false,
+            displayFloatingChatIntro: window.chatConfig?.displayFloatingChatIntro ?? false,
             isMarkdownDialogueOpen: false,
             markdownDialogueContent: "",
             copiedMessageId: null,

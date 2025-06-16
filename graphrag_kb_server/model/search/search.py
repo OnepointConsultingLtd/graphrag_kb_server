@@ -92,7 +92,7 @@ class SummarisationResponse(BaseModel):
 
     def get_relevancy_score_points(self) -> int:
         return RELEVANCE_SCORE_POINTS_MAP[self.relevancy_score]
-    
+
 
 class SearchResults(BaseModel):
     documents: list[SummarisationResponseWithDocument] = Field(
