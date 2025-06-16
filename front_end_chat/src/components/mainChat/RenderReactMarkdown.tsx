@@ -77,7 +77,7 @@ export default function RenderReactMarkdown({
 
       {/* Date and copy button */}
       <div className="flex items-center justify-between mt-2 text-xs">
-        <p
+        <div
           className={
             message.type === ChatMessageType.USER
               ? "text-purple-100"
@@ -91,7 +91,7 @@ export default function RenderReactMarkdown({
                 : message.timestamp.toISOString()
             }
           />
-        </p>
+        </div>
 
         <CopyButton
           text={message.text}

@@ -23,7 +23,7 @@ export default function FloatingChatMain({
   }, [setIsFloating]);
 
   return (
-    <div className="sm:!h-[calc(100vh-130px)] !h-[calc(100dvh)]  !w-full lg:!w-[436px] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col justify-between">
+    <div className="sm:!h-[calc(100vh-130px)] !h-[calc(100dvh)]  !w-full lg:!w-[436px] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col justify-between relative">
       <div className="flex flex-col flex-1 ">
         {/* Header */}
         <header className="sticky justify-between top-0 z-10 w-full rounded-xl px-4 py-4 bg-gradient-to-r from-[#e0f2fe] via-[#38bdf8] to-[#0284c7] flex items-center">
