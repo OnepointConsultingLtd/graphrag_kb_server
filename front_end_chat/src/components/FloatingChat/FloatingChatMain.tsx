@@ -52,7 +52,7 @@ export default function FloatingChatMain({
         </header>
 
         {/* Messages Container */}
-        <div className="flex-1 max-h-[60vh] h-screen overflow-y-auto">
+        <div className="flex-1 h-screen overflow-y-auto">
           <Messages />
         </div>
         <div className="mt-2 px-4 pb-4">
