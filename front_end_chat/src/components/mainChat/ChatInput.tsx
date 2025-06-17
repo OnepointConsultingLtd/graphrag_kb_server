@@ -8,7 +8,7 @@ import { ChatMessageType, type QueryResponse } from "../../model/message";
 
 export default function ChatInput() {
   const [inputText, setInputText] = useState("");
-  const [addChatMessage, isThinking, setIsThinking, jwt, selectedProject] =
+  const [addChatMessage, isThinking, setIsThinking, jwt, selectedProject, chatMessages] =
     useChatStore(
       useShallow((state) => [
         state.addChatMessage,
@@ -16,6 +16,7 @@ export default function ChatInput() {
         state.setIsThinking,
         state.jwt,
         state.selectedProject,
+        state.chatMessages
       ])
     );
 
@@ -30,7 +31,12 @@ export default function ChatInput() {
       timestamp: new Date(),
     });
     if (selectedProject) {
-      sendQuery(jwt, inputText, selectedProject)
+      sendQuery({
+        jwt,
+        question: inputText,
+        project: selectedProject,
+        chatHistory: chatMessages,
+      })
         .then((response: QueryResponse) => {
           console.info("response", response);
           const finalResponse = response?.response?.response;
