@@ -537,7 +537,7 @@ async def chat(request: web.Request) -> web.Response:
                             include_context,
                             include_context_as_text,
                             structured_output,
-                            chat_history
+                            chat_history,
                         ) = (
                             body.get("format", Format.JSON.value),
                             body["search"],

@@ -24,7 +24,10 @@ from lightrag.operate import (
 from lightrag.base import BaseGraphStorage, BaseVectorStorage, BaseKVStorage
 
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
-from graphrag_kb_server.model.rag_parameters import QueryParameters, convert_to_lightrag_query_params
+from graphrag_kb_server.model.rag_parameters import (
+    QueryParameters,
+    convert_to_lightrag_query_params,
+)
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.chat_response import ChatResponse
 

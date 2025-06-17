@@ -87,6 +87,9 @@ class Config:
     if not upload_dir.exists():
         upload_dir.mkdir(parents=True)
 
+    server_base_url = os.getenv("SERVER_BASE_URL")
+    assert server_base_url is not None, "Please specify the server base URL"
+
 
 class WebsocketConfig:
     websocket_server = os.getenv("SERVER")

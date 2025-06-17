@@ -1,6 +1,11 @@
 from pathlib import Path
 
-from graphrag_kb_server.model.rag_parameters import QueryParameters, convert_to_lightrag_query_params, MessageType, ContextParameters
+from graphrag_kb_server.model.rag_parameters import (
+    QueryParameters,
+    convert_to_lightrag_query_params,
+    MessageType,
+    ContextParameters,
+)
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.model.engines import Engine
 

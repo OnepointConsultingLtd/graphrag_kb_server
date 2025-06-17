@@ -16,6 +16,7 @@ from graphrag_kb_server.service.jwt_service import (
     generate_admin_token,
     save_security_yaml,
 )
+from graphrag_kb_server.service.snippet_generation_service import find_chat_assets
 
 init_logger()
 
@@ -39,7 +40,6 @@ logger.info(f"PATH_INDEX: {GRAPHRAG_INDEX}")
 @web.middleware
 async def static_routing_middleware(request: web.Request, handler):
     if request.method == "GET":
-        referer = request.headers.get("Referer", "")
         path = request.path
 
         # Skip routing for API endpoints and specific routes
@@ -53,6 +53,7 @@ async def static_routing_middleware(request: web.Request, handler):
 
         # Route static files based on referer
         file_path = None
+        referer = request.headers.get("Referer", "")
         address = urlparse(referer).path
         if any(address.endswith(link) for link in GRAPHRAG_LINKS):
             file_path = GRAPHRAG_INDEX.parent / path.lstrip("/")
@@ -61,6 +62,15 @@ async def static_routing_middleware(request: web.Request, handler):
 
         if file_path and file_path.exists() and file_path.is_file():
             return web.FileResponse(path=file_path)
+        
+        # Just the necessary stuff for the chat UI
+        _, css_files, script_files = find_chat_assets()
+        for css_file in css_files:
+            if path.endswith(css_file.name):
+                return web.FileResponse(path=css_file)
+        for script_file in script_files:
+            if path.endswith(script_file.name):
+                return web.FileResponse(path=script_file)
 
     return await handler(request)
 

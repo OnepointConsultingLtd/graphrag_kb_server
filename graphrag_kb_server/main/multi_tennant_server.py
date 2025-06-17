@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from aiohttp import web
 
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
@@ -9,6 +11,8 @@ from graphrag_kb_server.service.tennant import (
     list_tennants as local_list_tennants,
 )
 from graphrag_kb_server.service.validations import validate_email
+from graphrag_kb_server.model.snippet import Snippet, Project
+from graphrag_kb_server.service.snippet_generation_service import generate_snippet, inject_scripts_path
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import admin_cfg, jwt_cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
@@ -378,7 +382,7 @@ async def create_read_only_token(request: web.Request) -> web.Response:
     ---
     summary: used to create a read only token for accessing a tennancy
     tags:
-      - token
+      - tennant
     security:
       - bearerAuth: []
     requestBody:
@@ -440,10 +444,7 @@ async def create_read_only_token(request: web.Request) -> web.Response:
         if "email" in body:
             email = body["email"]
             sub = request["token_data"]["sub"]
-            token_data = JWTTokenData(name=sub, email=email)
-            jwt_token: JWTToken | Error = await generate_token(
-                token_data, generate_folder=False, read_only=True
-            )
+            jwt_token: JWTToken | Error = await _generate_jwt_token(email, sub)
             if isinstance(jwt_token, JWTToken):
                 return web.json_response(jwt_token.model_dump())
             else:
@@ -452,6 +453,153 @@ async def create_read_only_token(request: web.Request) -> web.Response:
             return invalid_response(
                 "Invalid request body",
                 "Make sure you specify the email and project name.",
+            )
+
+    return await handle_error(handle_request, request=request)
+
+
+async def _generate_jwt_token(email: str, sub: str) -> JWTToken | Error:
+    token_data = JWTTokenData(name=sub, email=email)
+    jwt_token: JWTToken | Error = await generate_token(
+        token_data, generate_folder=False, read_only=True
+    )
+    return jwt_token
+
+
+@routes.post("/protected/snippet/generate_snippet")
+async def create_snippet(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: used to create a snippet for a chat experience.
+    tags:
+      - tennant
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                description: The email
+                default: "john.doe@graphrag.com"
+              widget_type:
+                type: string
+                description: The type of widget to be used
+                default: "FLOATING_CHAT"
+                enum:
+                  - FLOATING_CHAT
+                  - CHAT
+              root_element_id:
+                type: string
+                description: The id of the root element to be used
+                default: "root"
+              jwt:
+                type: string
+                description: The JWT token. If not provided, the snippet will be generated for the project in the request body.
+              project:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the project
+                  search_type:
+                    type: string
+                    description: The type of search to be used
+                    enum:
+                      - local
+                      - global
+                      - all
+                  platform:
+                    type: string
+                    description: The platform to be used
+                    enum:
+                      - lightrag
+                      - graphrag
+                  additional_prompt_instructions:
+                    type: string
+                    description: The additional prompt instructions
+                    default: "You are a helpful assistant."
+                required:
+                  - name
+                  - search_type
+                  - platform
+                  - additional_prompt_instructions
+            required:
+              - email
+              - widget_type
+              - root_element_id
+    responses:
+      '200':
+        description: Expected response to a valid request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                snippet:
+                  type: string
+                  description: The snippet code
+      '400':
+        description: Expected response when the data is invalid
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - error_code
+                - error
+                - folder_name
+              properties:
+                error_code:
+                  type: integer
+                  description: The error code
+                error:
+                  type: string
+                  description: The error name
+                description:
+                  type: string
+                  description: The description of the error
+      '401':
+        description: Unauthorized
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        body = await request.json()
+        if "email" in body and "widget_type" in body and "root_element_id" in body:
+            jwt_token = body.get("jwt", None)
+            if jwt_token is None or jwt_token.strip() == "":
+                # Generate a new JWT token
+                email = body["email"]
+                sub = request["token_data"]["sub"]
+                jwt_token: JWTToken | Error = await _generate_jwt_token(email, sub)
+                if isinstance(jwt_token, JWTToken):
+                    jwt_token = jwt_token.token
+                else:
+                    return invalid_response(
+                        "Failed to generate JWT token",
+                        "Failed to generate JWT token",
+                    )
+            timestamp = datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            snippet = Snippet(
+                widget_type=body["widget_type"],
+                root_element_id=body["root_element_id"],
+                jwt=jwt_token,
+                project=Project(**body["project"], updated_timestamp=timestamp, input_files=[]),
+                css_path="",
+                script_path="",
+            )
+            inject_scripts_path(snippet)
+            generated_snippet = generate_snippet(snippet)
+            return web.Response(text=generated_snippet, content_type='text/html')
+        else:
+            return invalid_response(
+                "Invalid request body",
+                "Make sure you specify the email, widget type, and root element id.",
             )
 
     return await handle_error(handle_request, request=request)
