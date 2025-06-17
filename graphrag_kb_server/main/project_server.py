@@ -497,6 +497,11 @@ async def chat(request: web.Request) -> web.Response:
                 type: boolean
                 description: Whether to use structured output.
                 default: false
+              chat_history:
+                type: array
+                items:
+                  type: object
+                description: The chat history.
     responses:
       '200':
         description: The response to the query in either json
@@ -532,6 +537,7 @@ async def chat(request: web.Request) -> web.Response:
                             include_context,
                             include_context_as_text,
                             structured_output,
+                            chat_history
                         ) = (
                             body.get("format", Format.JSON.value),
                             body["search"],
@@ -544,6 +550,7 @@ async def chat(request: web.Request) -> web.Response:
                             body.get("include_context", False),
                             body.get("include_context_as_text", False),
                             body.get("structured_output", False),
+                            body.get("chat_history", []),
                         )
                         context_params = ContextParameters(
                             query=question,
@@ -562,6 +569,7 @@ async def chat(request: web.Request) -> web.Response:
                                 include_context=include_context,
                                 include_context_as_text=include_context_as_text,
                                 structured_output=structured_output,
+                                chat_history=chat_history,
                             )
                         )
 

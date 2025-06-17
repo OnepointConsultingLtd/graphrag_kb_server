@@ -5,7 +5,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from graphrag_kb_server.logger import logger
-from graphrag.language_model.factory import ModelFactory
 from graphrag.config.models.language_model_config import LanguageModelConfig
 from graphrag.config.enums import ModelType
 
@@ -62,6 +61,8 @@ class Config:
         model=openai_api_model_embedding,
         type=ModelType.OpenAIEmbedding,
     )
+    from graphrag.language_model.factory import ModelFactory
+
     llm = ModelFactory.create_chat_model(
         name="openai-model", model_type=ModelType.OpenAIChat, config=llm_config
     )

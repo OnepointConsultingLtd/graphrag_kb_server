@@ -71,7 +71,9 @@ async def auth_middleware(request: web.Request, handler):
             and not request_path.startswith("/protected/search")
         ):
             return web.json_response(
-                {"error": "Only subjects with write permissions can perform this action."},
+                {
+                    "error": "Only subjects with write permissions can perform this action."
+                },
                 status=UNAUTHORIZED,
                 headers=CORS_HEADERS,
             )
@@ -362,7 +364,7 @@ async def list_tennants(request: web.Request) -> web.Response:
         description: Internal server error.
     """
 
-    async def handle_request(request: web.Request) -> web.Response:
+    async def handle_request(_: web.Request) -> web.Response:
         tennants = local_list_tennants()
         return web.json_response([t.as_dict() for t in tennants])
 

@@ -1,6 +1,16 @@
+from enum import StrEnum
 from pathlib import Path
 from pydantic import BaseModel, Field
+
+from lightrag import QueryParam
+
 from graphrag_kb_server.model.engines import Engine
+
+
+
+class MessageType(StrEnum):
+    USER = "user"
+    ASSISTANT = "assistant"
 
 
 class ContextParameters(BaseModel):
@@ -41,3 +51,18 @@ class QueryParameters(BaseModel):
         default=False,
         description="Whether to use structured output.",
     )
+    chat_history: list[dict[str, str]] = Field(
+        default=[],
+        description="The chat history.",
+    )
+
+
+def convert_to_lightrag_query_params(query_params: QueryParameters, only_need_context: bool = False) -> QueryParam:
+    param = QueryParam(
+        mode=query_params.search,
+        only_need_context=only_need_context,
+        hl_keywords=query_params.hl_keywords,
+        ll_keywords=query_params.ll_keywords,
+        conversation_history=query_params.chat_history,
+    )
+    return param
