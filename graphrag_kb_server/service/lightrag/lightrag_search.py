@@ -24,7 +24,7 @@ from lightrag.operate import (
 from lightrag.base import BaseGraphStorage, BaseVectorStorage, BaseKVStorage
 
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
-from graphrag_kb_server.model.rag_parameters import QueryParameters
+from graphrag_kb_server.model.rag_parameters import QueryParameters, convert_to_lightrag_query_params
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.chat_response import ChatResponse
 
@@ -77,14 +77,8 @@ async def lightrag_search(
     project_folder = query_params.context_params.project_dir
     query = query_params.context_params.query
     system_prompt_additional = query_params.system_prompt_additional or ""
-    mode = query_params.search
     rag: LightRAG = await initialize_rag(project_folder)
-    param = QueryParam(
-        mode=mode,
-        only_need_context=only_need_context,
-        hl_keywords=query_params.hl_keywords,
-        ll_keywords=query_params.ll_keywords,
-    )
+    param = convert_to_lightrag_query_params(query_params, only_need_context)
     if query_params.system_prompt:
         system_prompt = query_params.system_prompt
     else:
@@ -93,7 +87,7 @@ async def lightrag_search(
 In case of a coloquial question or non context related sentence you can respond to it without focusing on the context.
 {PROMPTS["rag_response"]}
 """
-    if mode in ["local", "global", "hybrid", "mix"]:
+    if param.mode in ["local", "global", "hybrid", "mix"]:
         global_config = asdict(rag)
         hl_keywords, ll_keywords = await extract_keywords_only(
             query, param, global_config, rag.llm_response_cache

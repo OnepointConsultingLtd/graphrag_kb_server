@@ -24,7 +24,11 @@ export default function Messages() {
     <div className="flex-1 flex-col mb-[4rem]">
       <div className="overflow-y-auto">
         <div className="mx-auto">
-          <div className={`flex flex-col gap-6 ${isFloating ? "p-1" : "p-6"}`}>
+          <div
+            className={`flex flex-col gap-6 ${
+              isFloating ? "p-1 pt-8" : "p-2 lg:p-6"
+            }`}
+          >
             {!chatMessages ||
               (chatMessages.length === 0 && (
                 <div className="flex-1 flex items-center justify-center text-gray-500 absolute top-0 left-0 right-0 bottom-0">
@@ -56,10 +60,10 @@ export default function Messages() {
                     message.type === ChatMessageType.USER
                       ? "justify-end"
                       : "justify-start"
-                  } animate-slideIn items-end`}
+                  } animate-slideIn items-start`}
                 >
                   {message.type === ChatMessageType.AGENT && (
-                    <div className="flex-shrink-0 mr-2">
+                    <div className="flex-shrink-0 hidden lg:block mr-2">
                       <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 border border-blue-300">
                         A
                       </div>
@@ -68,14 +72,14 @@ export default function Messages() {
                   <div
                     className={`text-left ${
                       isFloating ? "p-2" : "p-6"
-                    } relative ${
+                    } relative max-w-full rounded-lg rounded-tr-sm ${
                       message.type === ChatMessageType.USER
                         ? isFloating
-                          ? "bg-gradient-to-br from-purple-500 to-blue-500 text-white rounded-lg rounded-tr-sm max-w-[85%] md:max-w-[70%] shadow-lg"
-                          : "bg-gradient-to-br from-sky-500 to-blue-500 text-white rounded-lg rounded-tr-sm max-w-[85%] md:max-w-[50%] shadow-lg"
+                          ? "bg-gradient-to-br from-purple-500 to-blue-500 md:max-w-[70%] shadow-lg text-white"
+                          : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
                         : isFloating
                         ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
-                        : "bg-white text-slate-800 rounded-2xl rounded-tl-sm !max-w-[85%] md:!max-w-[70%] border border-sky-100"
+                        : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
                     }`}
                   >
                     <RenderReactMarkdown message={message} />
@@ -91,8 +95,10 @@ export default function Messages() {
                       </ul>
                     ) : null}
                   </div>
+
+                  
                   {message.type === ChatMessageType.USER && (
-                    <div className="flex-shrink-0 ml-2">
+                    <div className="flex-shrink-0 hidden lg:block ml-2">
                       <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center font-bold text-purple-700 border border-purple-300">
                         U
                       </div>
@@ -101,6 +107,8 @@ export default function Messages() {
                 </div>
               );
             })}
+
+            {/* Thinking Indicator */}
             {isThinking && <ThinkingIndicator />}
           </div>
         </div>

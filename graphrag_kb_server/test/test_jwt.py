@@ -25,10 +25,29 @@ def test_generate_token():
 
 
 def test_generate_token_twice():
-    folder_name, token_data = regenerate_test_tennant()
+    _, token_data = regenerate_test_tennant()
     token = asyncio.run(generate_token(token_data))
     assert token is not None
     assert isinstance(token, JWTToken)
+    decoded = asyncio.run(decode_token(token.token))
+    assert "permissions" in decoded, "Cannot find permissions in decoded token"
+    assert decoded["permissions"] == [
+        "read",
+        "write",
+    ], "The token should have read and write permissions"
     error = asyncio.run(generate_token(token_data))
     assert error is not None
     assert isinstance(error, Error), "The result of the operation should be an error"
+
+
+def test_generate_read_only_token():
+    _, token_data = regenerate_test_tennant()
+    token = asyncio.run(
+        generate_token(token_data, generate_folder=False, read_only=True)
+    )
+    assert token is not None
+    assert isinstance(token, JWTToken)
+    decoded = asyncio.run(decode_token(token.token))
+    assert decoded["permissions"] == [
+        "read"
+    ], "The token should have read and write permissions"

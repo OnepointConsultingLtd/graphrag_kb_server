@@ -19,7 +19,7 @@ def rename_to_folder(name: str) -> str:
 
 
 async def generate_token(
-    token_data: JWTTokenData, generate_folder: bool = True
+    token_data: JWTTokenData, generate_folder: bool = True, read_only: bool = False
 ) -> JWTToken | Error:
     name, email, time_delta_minutes = (
         token_data.name,
@@ -33,6 +33,10 @@ async def generate_token(
         "iat": int(time.time()),
         "email": email,
     }
+    if read_only:
+        payload["permissions"] = ["read"]
+    else:
+        payload["permissions"] = ["read", "write"]
     if time_delta_minutes is not None:
         payload["exp"] = datetime.now(timezone.utc) + timedelta(
             seconds=time_delta_minutes

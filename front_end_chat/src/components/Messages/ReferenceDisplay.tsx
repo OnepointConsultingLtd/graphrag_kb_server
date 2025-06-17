@@ -18,6 +18,7 @@ export default function ReferenceDisplay({
     ])
   );
 
+  console.log("Testing");
   function openReference(e: React.MouseEvent<HTMLAnchorElement>) {
     e.preventDefault();
     if (project) {

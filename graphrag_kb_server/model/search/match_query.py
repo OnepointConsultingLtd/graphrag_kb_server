@@ -29,5 +29,6 @@ class MatchOutput(BaseModel):
         description="A dictionary of entity names and their corresponding entity lists",
     )
 
+
 if __name__ == "__main__":
     print(MatchOutput.model_json_schema())

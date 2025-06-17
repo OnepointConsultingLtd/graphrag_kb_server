@@ -1,6 +1,9 @@
 import type { Project } from "../model/projectCategory";
 import type { Reference } from "../model/references";
 import { BASE_SERVER } from "./server";
+import type { Query } from "../model/query";
+import type { ChatMessage } from "../model/message";
+import { ChatMessageType } from "../model/message";
 
 function createHeaders(jwt: string) {
     return {
@@ -32,7 +35,17 @@ export async function fetchProjects(jwt: string) {
     }
 }
 
-export async function sendQuery(jwt: string, question: string, project: Project) {
+export function convertChatHistoryToLightragChatHistory(chatHistory: ChatMessage[]) {
+    const maxSize = 10;
+    return chatHistory.map((message) => ({
+        role: message.type === ChatMessageType.USER ? "user" : "assistant",
+        content: message.text
+    })).slice(0, maxSize);
+}
+
+
+export async function sendQuery(query: Query) {
+    const { jwt, question, project, chatHistory } = query;
     const params = new URLSearchParams();
     params.set("project", project.name);
     params.set("engine", project.platform);
@@ -50,7 +63,8 @@ export async function sendQuery(jwt: string, question: string, project: Project)
             "context_size": 14000,
             "system_prompt_additional": project.additional_prompt_instructions,
             "include_context": true,
-            "structured_output": true
+            "structured_output": true,
+            "chat_history": convertChatHistoryToLightragChatHistory(chatHistory)
         })
     });
     if (!response.ok) {
