@@ -36,10 +36,11 @@ export async function fetchProjects(jwt: string) {
 }
 
 export function convertChatHistoryToLightragChatHistory(chatHistory: ChatMessage[]) {
+    const maxSize = 10;
     return chatHistory.map((message) => ({
         role: message.type === ChatMessageType.USER ? "user" : "assistant",
         content: message.text
-    }));
+    })).slice(0, maxSize);
 }
 
 
