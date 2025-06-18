@@ -8,17 +8,23 @@ import { ChatMessageType, type QueryResponse } from "../../model/message";
 
 export default function ChatInput() {
   const [inputText, setInputText] = useState("");
-  const [addChatMessage, isThinking, setIsThinking, jwt, selectedProject, chatMessages] =
-    useChatStore(
-      useShallow((state) => [
-        state.addChatMessage,
-        state.isThinking,
-        state.setIsThinking,
-        state.jwt,
-        state.selectedProject,
-        state.chatMessages
-      ])
-    );
+  const [
+    addChatMessage,
+    isThinking,
+    setIsThinking,
+    jwt,
+    selectedProject,
+    chatMessages,
+  ] = useChatStore(
+    useShallow((state) => [
+      state.addChatMessage,
+      state.isThinking,
+      state.setIsThinking,
+      state.jwt,
+      state.selectedProject,
+      state.chatMessages,
+    ])
+  );
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -82,9 +88,9 @@ export default function ChatInput() {
   }, [inputText]);
 
   return (
-    <div className=" sticky bottom-0">
-      <div className="mx-auto w-full py-4">
-        <div className="flex flex-col gap-2">
+    <div className="sticky bottom-0">
+      <div className="mx-auto w-full py-2 lg:py-4">
+        <div className="flex flex-col gap-2 mx-4">
           <form onSubmit={onSubmit} className="relative">
             <textarea
               id="chat-input"
