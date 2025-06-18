@@ -17,6 +17,7 @@ from graphrag_kb_server.model.context import Search
 def project_directory():
     # Code to create or initialize your resource
     project_dir = Path(__file__) / "../../../data/onepoint"
+    project_dir = project_dir.resolve()
     assert project_dir.exists(), "Project directory does not exist"
 
     yield project_dir  # The test will have access to this resource object

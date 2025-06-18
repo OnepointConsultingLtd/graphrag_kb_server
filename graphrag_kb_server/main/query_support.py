@@ -48,14 +48,14 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
             return web.Response(
                 text=HTML_CONTENT.format(
                     question=context_params.query,
-                    response=markdown(response),
+                    response=markdown(chat_response.response),
                 ),
                 content_type="text/html",
                 headers=CORS_HEADERS,
             )
         case Format.MARKDOWN:
             return web.Response(
-                text=response, content_type="text/plain", headers=CORS_HEADERS
+                text=chat_response.response, content_type="text/plain", headers=CORS_HEADERS
             )
         case Format.JSON:
             return web.json_response(
