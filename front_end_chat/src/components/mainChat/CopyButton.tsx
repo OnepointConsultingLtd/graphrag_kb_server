@@ -1,21 +1,31 @@
+import { FaCheckSquare, FaRegCopy } from "react-icons/fa";
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 
-
-export default function CopyButton({ text, id, onCopy }: {
-    id: string;
-    text: string;
-    onCopy: (text: string, id: string) => void;
+export default function CopyButton({
+  text,
+  id,
+  onCopy,
+  isUser,
+}: {
+  id: string;
+  text: string;
+  onCopy: (text: string, id: string) => void;
+  isUser: boolean;
 }) {
-    const copiedMessageId = useChatStore(useShallow((state) => state.copiedMessageId));
-    const isActive = copiedMessageId === id;
+  const { copiedMessageId } = useChatStore(
+    useShallow((state) => ({
+      copiedMessageId: state.copiedMessageId,
+    }))
+  );
+  const isActive = copiedMessageId === id;
 
-    const baseColorClass = 'text-[#64748b] hover:text-[#0ea5e9]';
+  const baseColorClass = "text-[#64748b] hover:text-[#0ea5e9]";
 
-    return (
-        <button
-            onClick={() => onCopy(text, id)}
-            className={`
+  return (
+    <button
+      onClick={() => onCopy(text, id)}
+      className={`
           p-1 rounded-md
           ${baseColorClass}
           before:opacity-90 before:rounded-lg
@@ -25,41 +35,17 @@ export default function CopyButton({ text, id, onCopy }: {
           cursor-pointer
           relative
         `}
-            title={isActive ? 'Copied!' : 'Copy to clipboard'}
-        >
-            <span className="relative block w-4 h-4 transition-all duration-300 hover:scale-110">
-                {isActive ? (
-                    <svg
-                        className="absolute inset-0 w-full h-full transition-transform duration-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2.5"
-                            d="M5 13l4 4L19 7"
-                        />
-                    </svg>
-                ) : (
-                    <svg
-                        className="absolute inset-0 w-full h-full transition-transform duration-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                    </svg>
-                )}
-            </span>
-        </button>
-    );
+      title={isActive ? "Copied!" : "Copy to clipboard"}
+    >
+      <span className="relative block w-4 h-4 transition-all duration-300 hover:scale-110">
+        {isActive ? (
+          <FaCheckSquare
+            className={`${isUser ? "text-green-500" : "text-blue-500"}`}
+          />
+        ) : (
+          <FaRegCopy className={`${isUser ? "text-white" : "text-blue-500"}`} />
+        )}
+      </span>
+    </button>
+  );
 }

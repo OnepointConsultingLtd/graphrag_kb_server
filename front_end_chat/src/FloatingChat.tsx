@@ -34,7 +34,7 @@ const FloatingChat = () => {
 
         {/* Floating Chat */}
         {isFloatingOpen ? (
-          <div className="absolute lg:fixed bottom-10 right-8 z-50">
+          <div className="sm:fixed bottom-10 right-8 z-50">
             <MarkdownDialogue />
             <FloatingChatMain handleFloatingBtn={handleFloatingBtn} />
           </div>

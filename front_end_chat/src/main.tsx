@@ -21,7 +21,7 @@ declare global {
 }
 
 function chooseComponent() {
-  const widgetType = window.chatConfig?.widgetType;;
+  const widgetType = window.chatConfig?.widgetType;
   switch (widgetType) {
     case AppComponent.FLOATING_CHAT:
       return <FloatingChat />;
@@ -30,14 +30,18 @@ function chooseComponent() {
   }
 }
 
-createRoot(document.getElementById(window.chatConfig?.rootElementId ?? "root")!).render(
+createRoot(
+  document.getElementById(window.chatConfig?.rootElementId ?? "root")!
+).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={chooseComponent()} />
-        <Route path="/floating-chat" element={<FloatingChat />} />
-        <Route path="*" element={chooseComponent()} />
-      </Routes>
+      <div className="lg:w-[1280px]">
+        <Routes>
+          <Route path="/" element={chooseComponent()} />
+          <Route path="/floating-chat" element={<FloatingChat />} />
+          <Route path="*" element={chooseComponent()} />
+        </Routes>
+      </div>
     </BrowserRouter>
   </StrictMode>
 );

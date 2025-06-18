@@ -1,67 +1,37 @@
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
-import { Platform, SearchType } from "../../model/projectCategory";
+import { IoMdLogOut } from "react-icons/io";
+import { MdAutorenew } from "react-icons/md";
+import { MdNewLabel } from "react-icons/md";
+import ButtonWrapper from "../Buttons/ButtonWrapper";
 
 export function NewChatButton() {
   const clearChatMessages = useChatStore(
     useShallow((state) => state.clearChatMessages)
   );
+
   return (
-    <div className="flex justify-start">
-      <button onClick={clearChatMessages} className="btn btn-primary">
-        <svg
-          className="w-5 h-5 transition-transform duration-500 ease-out group-hover:rotate-90"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2.5"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-        <span className="font-medium md:!block !hidden">New Chat</span>
-      </button>
-    </div>
+    <ButtonWrapper onClick={clearChatMessages} name="New Chat">
+      <MdAutorenew className="text-2xl" />
+    </ButtonWrapper>
   );
 }
 
 export function NewProject() {
-  const newProject = useChatStore(useShallow((state) => state.newProject));
+  const { newProject } = useChatStore(
+    useShallow((state) => ({
+      newProject: state.newProject,
+    }))
+  );
 
   const handleNewProject = () => {
-    const defaultProject = {
-      name: "New Project",
-      updated_timestamp: new Date(),
-      input_files: [],
-      search_type: SearchType.LOCAL,
-      platform: Platform.GRAPHRAG,
-      additional_prompt_instructions: "",
-    };
-    newProject(defaultProject);
+    newProject(undefined);
   };
 
   return (
-    <div className="flex justify-start">
-      <button onClick={handleNewProject} className="btn btn-primary">
-        <svg
-          className="w-5 h-5 transition-transform duration-500 ease-out group-hover:rotate-90"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2.5"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-        <span className="font-medium md:!block !hidden">New Project</span>
-      </button>
-    </div>
+    <ButtonWrapper onClick={handleNewProject} name="New Project">
+      <MdNewLabel className="text-2xl" />
+    </ButtonWrapper>
   );
 }
 
@@ -71,22 +41,11 @@ function LogoutButton() {
       logout: state.logout,
     }))
   );
+
   return (
-    <button onClick={logout} className="btn btn-secondary">
-      <svg
-        stroke="currentColor"
-        fill="currentColor"
-        strokeWidth="0"
-        viewBox="0 0 512 512"
-        height="25px"
-        width="25px"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M312 372c-7.7 0-14 6.3-14 14 0 9.9-8.1 18-18 18H94c-9.9 0-18-8.1-18-18V126c0-9.9 8.1-18 18-18h186c9.9 0 18 8.1 18 18 0 7.7 6.3 14 14 14s14-6.3 14-14c0-25.4-20.6-46-46-46H94c-25.4 0-46 20.6-46 46v260c0 25.4 20.6 46 46 46h186c25.4 0 46-20.6 46-46 0-7.7-6.3-14-14-14z"></path>
-        <path d="M372.9 158.1c-2.6-2.6-6.1-4.1-9.9-4.1-3.7 0-7.3 1.4-9.9 4.1-5.5 5.5-5.5 14.3 0 19.8l65.2 64.2H162c-7.7 0-14 6.3-14 14s6.3 14 14 14h256.6L355 334.2c-5.4 5.4-5.4 14.3 0 19.8l.1.1c2.7 2.5 6.2 3.9 9.8 3.9 3.8 0 7.3-1.4 9.9-4.1l82.6-82.4c4.3-4.3 6.5-9.3 6.5-14.7 0-5.3-2.3-10.3-6.5-14.5l-84.5-84.2z"></path>
-      </svg>
-      <span className="font-medium md:!block !hidden">Logout</span>
-    </button>
+    <ButtonWrapper onClick={logout} name="Logout">
+      <IoMdLogOut className="text-2xl" />
+    </ButtonWrapper>
   );
 }
 
@@ -126,6 +85,11 @@ function ProjectName() {
 }
 
 export default function Header() {
+  const { chatMessages } = useChatStore(
+    useShallow((state) => ({
+      chatMessages: state.chatMessages,
+    }))
+  );
   return (
     <div className="w-full mx-auto">
       <div className="flex justify-between items-center">
@@ -133,9 +97,11 @@ export default function Header() {
           <div className="flex items-center space-x-4 w-full justify-between">
             <ProjectName />
             <div className="flex items-center space-x-4">
-              <NewChatButton />
-              <LogoutButton />
+              {!!chatMessages.length && chatMessages.length > 0 && (
+                <NewChatButton />
+              )}
               <NewProject />
+              <LogoutButton />
             </div>
           </div>
         </header>

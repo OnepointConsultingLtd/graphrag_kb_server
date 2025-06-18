@@ -1,9 +1,9 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import type { Project, ProjectCategories } from '../model/projectCategory';
-import type { ChatMessage } from '../model/message';
-import { fetchProjects } from '../lib/apiClient';
-import { MARKDOWN_DIALOGUE_ID } from '../components/MarkdownDialogue';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Project, ProjectCategories } from "../model/projectCategory";
+import type { ChatMessage } from "../model/message";
+import { fetchProjects } from "../lib/apiClient";
+import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
 
 type ChatStore = {
     jwt: string;
@@ -31,8 +31,8 @@ type ChatStore = {
     setMessagesEndRef: (ref: HTMLDivElement | null) => void;
     scrollToBottom: () => void;
     setCopiedMessageId: (id: string) => void;
-    newProject: (project: Project) => void;
-}
+    newProject: (project: Project | undefined) => void;
+};
 
 const THRESHOLD = 50;
 
@@ -64,9 +64,13 @@ function initProject() {
 
 function openMarkdownDialogue(open: boolean) {
     if (open) {
-        (document.getElementById(MARKDOWN_DIALOGUE_ID) as HTMLDialogElement)?.showModal();
+        (
+            document.getElementById(MARKDOWN_DIALOGUE_ID) as HTMLDialogElement
+        )?.showModal();
     } else {
-        (document.getElementById(MARKDOWN_DIALOGUE_ID) as HTMLDialogElement)?.close();
+        (
+            document.getElementById(MARKDOWN_DIALOGUE_ID) as HTMLDialogElement
+        )?.close();
     }
 }
 
@@ -79,42 +83,59 @@ const useChatStore = create<ChatStore>()(
             chatMessages: [],
             isFloating: false,
             isThinking: false,
-            displayFloatingChatIntro: window.chatConfig?.displayFloatingChatIntro ?? false,
+            displayFloatingChatIntro:
+                window.chatConfig?.displayFloatingChatIntro ?? false,
             isMarkdownDialogueOpen: false,
             markdownDialogueContent: "",
             copiedMessageId: null,
             messagesEndRef: null,
             setJwt: (jwt: string) => set({ jwt }),
             setProjects: (projects: ProjectCategories) => set({ projects }),
-            setSelectedProject: (project: Project) => set({ selectedProject: project }),
+            setSelectedProject: (project: Project) =>
+                set({ selectedProject: project }),
             setIsFloating: (isFloating: boolean) => set({ isFloating }),
-            setMessagesEndRef: (ref: HTMLDivElement | null) => set({ messagesEndRef: ref }),
-            addChatMessage: (message: ChatMessage) => set((state) => {
-                return { chatMessages: [...state.chatMessages.slice(state.chatMessages.length > THRESHOLD ? 1 : 0), message] }
-            }),
-            clearChatMessages: () => set(() => {
-                return { chatMessages: [], isThinking: false }
-            }),
+            setMessagesEndRef: (ref: HTMLDivElement | null) =>
+                set({ messagesEndRef: ref }),
+            addChatMessage: (message: ChatMessage) =>
+                set((state) => {
+                    return {
+                        chatMessages: [
+                            ...state.chatMessages.slice(
+                                state.chatMessages.length > THRESHOLD ? 1 : 0
+                            ),
+                            message,
+                        ],
+                    };
+                }),
+            clearChatMessages: () =>
+                set(() => {
+                    return { chatMessages: [], isThinking: false };
+                }),
+
+
             // Logout completely
-            logout: () => set({
-                jwt: "",
-                projects: undefined,
-                selectedProject: undefined,
-                chatMessages: [],
-                copiedMessageId: null
-            }),
-            // Switch to a new project while keeping the user logged in
-            newProject: (project: Project) => set({
-                projects: undefined,
-                chatMessages: [],
-                copiedMessageId: null,
-                selectedProject: project
-            }),
+            logout: () =>
+                set({
+                    jwt: "",
+                    projects: undefined,
+                    selectedProject: undefined,
+                    chatMessages: [],
+                    copiedMessageId: null,
+                }),
+
+            newProject: (project: Project | undefined) =>
+                set({
+                    projects: undefined,
+                    chatMessages: [],
+                    copiedMessageId: null,
+                    selectedProject: project,
+                }),
+
             initializeProjects: async () => {
-                const jwt = get().jwt
+                const jwt = get().jwt;
                 if (jwt) {
-                    const projects = await fetchProjects(jwt)
-                    set({ projects })
+                    const projects = await fetchProjects(jwt);
+                    set({ projects });
                 }
             },
             scrollToBottom: () => {
@@ -124,15 +145,17 @@ const useChatStore = create<ChatStore>()(
                 }
             },
             setIsThinking: (isThinking: boolean) => set({ isThinking }),
-            setIsMarkdownDialogueOpen: (isOpen: boolean) => set(() => {
-                openMarkdownDialogue(isOpen);
-                return { isMarkdownDialogueOpen: isOpen }
-            }),
-            setMarkdownDialogueContent: (content: string) => set(() => {
-                openMarkdownDialogue(true);
-                return { markdownDialogueContent: content }
-            }),
-            setCopiedMessageId: (id: string) => set({ copiedMessageId: id })
+            setIsMarkdownDialogueOpen: (isOpen: boolean) =>
+                set(() => {
+                    openMarkdownDialogue(isOpen);
+                    return { isMarkdownDialogueOpen: isOpen };
+                }),
+            setMarkdownDialogueContent: (content: string) =>
+                set(() => {
+                    openMarkdownDialogue(true);
+                    return { markdownDialogueContent: content };
+                }),
+            setCopiedMessageId: (id: string) => set({ copiedMessageId: id }),
         }),
         {
             name: "chat-store",
@@ -140,8 +163,8 @@ const useChatStore = create<ChatStore>()(
                 jwt: state.jwt,
                 projects: state.projects,
                 selectedProject: state.selectedProject,
-                chatMessages: state.chatMessages
-            })
+                chatMessages: state.chatMessages,
+            }),
         }
     )
 );

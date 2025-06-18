@@ -94,11 +94,13 @@ export default function RenderReactMarkdown({
         </div>
 
         <CopyButton
+          isUser={message.type === ChatMessageType.USER}
           text={message.text}
           id={message.id}
           onCopy={() => {
             copyToClipboard(message.text);
             setCopiedMessageId(message.id);
+            setTimeout(() => setCopiedMessageId(""), 1500);
           }}
         />
       </div>
