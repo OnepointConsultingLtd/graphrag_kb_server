@@ -1665,7 +1665,7 @@ async def lightrag_communities_report(request: web.Request) -> web.Response:
         description: The maximum number of nodes in a community
         schema:
           type: integer
-          default: 10
+          default: 200
     security:
       - bearerAuth: []
     responses:
