@@ -31,7 +31,7 @@ type ChatStore = {
     setMessagesEndRef: (ref: HTMLDivElement | null) => void;
     scrollToBottom: () => void;
     setCopiedMessageId: (id: string) => void;
-    newProject: (project: Project | undefined) => void;
+    newProject: () => void;
 };
 
 const THRESHOLD = 50;
@@ -111,8 +111,6 @@ const useChatStore = create<ChatStore>()(
                 set(() => {
                     return { chatMessages: [], isThinking: false };
                 }),
-
-
             // Logout completely
             logout: () =>
                 set({
@@ -122,15 +120,12 @@ const useChatStore = create<ChatStore>()(
                     chatMessages: [],
                     copiedMessageId: null,
                 }),
-
-            newProject: (project: Project | undefined) =>
+            newProject: () =>
                 set({
-                    projects: undefined,
                     chatMessages: [],
                     copiedMessageId: null,
-                    selectedProject: project,
+                    selectedProject: undefined,
                 }),
-
             initializeProjects: async () => {
                 const jwt = get().jwt;
                 if (jwt) {

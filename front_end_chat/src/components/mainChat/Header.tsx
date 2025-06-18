@@ -25,11 +25,11 @@ export function NewProject() {
   );
 
   const handleNewProject = () => {
-    newProject(undefined);
+    newProject();
   };
 
   return (
-    <ButtonWrapper onClick={handleNewProject} name="New Project">
+    <ButtonWrapper onClick={handleNewProject} name="Switch Project">
       <MdNewLabel className="text-2xl" />
     </ButtonWrapper>
   );
