@@ -16,6 +16,7 @@ type ChatStore = {
     markdownDialogueContent: string;
     selectedProject?: Project;
     copiedMessageId: string | null;
+    messagesEndRef: HTMLDivElement | null;
     setJwt: (jwt: string) => void;
     setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
     setMarkdownDialogueContent: (content: string) => void;
@@ -27,7 +28,10 @@ type ChatStore = {
     setIsFloating: (isFloating: boolean) => void;
     initializeProjects: () => Promise<void>;
     setIsThinking: (isThinking: boolean) => void;
+    setMessagesEndRef: (ref: HTMLDivElement | null) => void;
+    scrollToBottom: () => void;
     setCopiedMessageId: (id: string) => void;
+    newProject: (project: Project) => void;
 }
 
 const THRESHOLD = 50;
@@ -73,34 +77,50 @@ const useChatStore = create<ChatStore>()(
             projects: undefined,
             selectedProject: initProject(),
             chatMessages: [],
-            isFloating: false, // TODO: create initialisation function
+            isFloating: false,
             isThinking: false,
             displayFloatingChatIntro: window.chatConfig?.displayFloatingChatIntro ?? false,
             isMarkdownDialogueOpen: false,
             markdownDialogueContent: "",
             copiedMessageId: null,
+            messagesEndRef: null,
             setJwt: (jwt: string) => set({ jwt }),
             setProjects: (projects: ProjectCategories) => set({ projects }),
             setSelectedProject: (project: Project) => set({ selectedProject: project }),
             setIsFloating: (isFloating: boolean) => set({ isFloating }),
+            setMessagesEndRef: (ref: HTMLDivElement | null) => set({ messagesEndRef: ref }),
             addChatMessage: (message: ChatMessage) => set((state) => {
                 return { chatMessages: [...state.chatMessages.slice(state.chatMessages.length > THRESHOLD ? 1 : 0), message] }
             }),
             clearChatMessages: () => set(() => {
                 return { chatMessages: [], isThinking: false }
             }),
-            logout: () => set({ 
+            // Logout completely
+            logout: () => set({
                 jwt: "",
-                projects: undefined, 
-                selectedProject: undefined, 
+                projects: undefined,
+                selectedProject: undefined,
                 chatMessages: [],
                 copiedMessageId: null
+            }),
+            // Switch to a new project while keeping the user logged in
+            newProject: (project: Project) => set({
+                projects: undefined,
+                chatMessages: [],
+                copiedMessageId: null,
+                selectedProject: project
             }),
             initializeProjects: async () => {
                 const jwt = get().jwt
                 if (jwt) {
                     const projects = await fetchProjects(jwt)
                     set({ projects })
+                }
+            },
+            scrollToBottom: () => {
+                const messagesEndRef = get().messagesEndRef;
+                if (messagesEndRef) {
+                    messagesEndRef.scrollIntoView({ behavior: "smooth" });
                 }
             },
             setIsThinking: (isThinking: boolean) => set({ isThinking }),
@@ -121,21 +141,10 @@ const useChatStore = create<ChatStore>()(
                 projects: state.projects,
                 selectedProject: state.selectedProject,
                 chatMessages: state.chatMessages
-            }),
-            onRehydrateStorage: () => (state, error) => {
-                if (error) {
-                    console.error("Error during hydration", error);
-                }
-
-                // If no jwt was found in storage, call initJwt() to set a default
-                if (!state?.jwt) {
-                    const defaultJwt = initJwt();
-                    state?.setJwt(defaultJwt);
-                }
-            },
+            })
         }
     )
-)
+);
 
 // Initialize projects after store creation
 useChatStore.getState().initializeProjects();

@@ -1,5 +1,6 @@
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
+import { Platform, SearchType } from "../../model/projectCategory";
 
 export function NewChatButton() {
   const clearChatMessages = useChatStore(
@@ -22,6 +23,43 @@ export function NewChatButton() {
           />
         </svg>
         <span className="font-medium md:!block !hidden">New Chat</span>
+      </button>
+    </div>
+  );
+}
+
+export function NewProject() {
+  const newProject = useChatStore(useShallow((state) => state.newProject));
+
+  const handleNewProject = () => {
+    const defaultProject = {
+      name: "New Project",
+      updated_timestamp: new Date(),
+      input_files: [],
+      search_type: SearchType.LOCAL,
+      platform: Platform.GRAPHRAG,
+      additional_prompt_instructions: "",
+    };
+    newProject(defaultProject);
+  };
+
+  return (
+    <div className="flex justify-start">
+      <button onClick={handleNewProject} className="btn btn-primary">
+        <svg
+          className="w-5 h-5 transition-transform duration-500 ease-out group-hover:rotate-90"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2.5"
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+        <span className="font-medium md:!block !hidden">New Project</span>
       </button>
     </div>
   );
@@ -97,6 +135,7 @@ export default function Header() {
             <div className="flex items-center space-x-4">
               <NewChatButton />
               <LogoutButton />
+              <NewProject />
             </div>
           </div>
         </header>

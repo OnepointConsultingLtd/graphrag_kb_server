@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 import { ChatMessageType } from "../../model/message";
@@ -7,18 +7,39 @@ import RenderReactMarkdown from "./RenderReactMarkdown";
 import ThinkingIndicator from "./ThinkingIndicator";
 
 export default function Messages() {
-  const { chatMessages, isFloating, setIsFloating, isThinking } = useChatStore(
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const {
+    chatMessages,
+    isFloating,
+    setIsFloating,
+    isThinking,
+    scrollToBottom,
+    
+    setMessagesEndRef,
+  } = useChatStore(
     useShallow((state) => ({
       chatMessages: state.chatMessages,
       isFloating: state.isFloating,
       setIsFloating: state.setIsFloating,
       isThinking: state.isThinking,
+      scrollToBottom: state.scrollToBottom,
+      setMessagesEndRef: state.setMessagesEndRef,
     }))
   );
 
   useEffect(() => {
     setIsFloating(false);
   }, [setIsFloating]);
+
+  useEffect(() => {
+    setMessagesEndRef(messagesEndRef.current);
+  }, [setMessagesEndRef]);
+
+  useEffect(() => {
+    if (isThinking) {
+      scrollToBottom();
+    }
+  }, [chatMessages, isThinking, scrollToBottom]);
 
   return (
     <div className="flex-1 flex-col mb-[4rem]">
@@ -96,7 +117,6 @@ export default function Messages() {
                     ) : null}
                   </div>
 
-                  
                   {message.type === ChatMessageType.USER && (
                     <div className="flex-shrink-0 hidden lg:block ml-2">
                       <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center font-bold text-purple-700 border border-purple-300">
@@ -107,6 +127,7 @@ export default function Messages() {
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
 
             {/* Thinking Indicator */}
             {isThinking && <ThinkingIndicator />}
