@@ -35,7 +35,7 @@ createRoot(
 ).render(
   <StrictMode>
     <BrowserRouter>
-      <div className="lg:w-[1280px]">
+      <div className="lg:w-[1280px] mx-auto">
         <Routes>
           <Route path="/" element={chooseComponent()} />
           <Route path="/floating-chat" element={<FloatingChat />} />
