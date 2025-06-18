@@ -1,6 +1,6 @@
 import type { QueryResponse, StructuredQueryResponse } from "../model/message"
 import type { Reference } from "../model/references"
-import { BASE_SERVER } from "./server"
+import { getBaseServer } from "./server"
 
 const referenceRegex = /\*\s*(\[.*?\])\s*(.+)\/(.+)/
 
@@ -11,7 +11,7 @@ export function extractReferences(text: string): Reference[] {
             return {
                 file: match[3],
                 path: match[2] + "/" + match[3],
-                url: `${BASE_SERVER}/protected/project/download/single_file?file=${encodeURI(match[2] + "/" + match[3])}`,
+                url: `${getBaseServer()}/protected/project/download/single_file?file=${encodeURI(match[2] + "/" + match[3])}`,
                 type: match[1]
             }
         }
@@ -38,7 +38,7 @@ export function extractEntityContext(response: QueryResponse, limit: number = 10
                 const reference: Reference = {
                     file: f.split("/").pop() || "",
                     path: f,
-                    url: `${BASE_SERVER}/protected/project/download/single_file?file=${encodeURI(f)}`,
+                    url: `${getBaseServer()}/protected/project/download/single_file?file=${encodeURI(f)}`,
                     type: "[KG]"
                 }
                 references.push(reference)
@@ -60,7 +60,7 @@ export function extractSimpleReferences(response: StructuredQueryResponse): Refe
         return {
             file: r.file.split("/").pop() || "",
             path: r.file,
-            url: `${BASE_SERVER}/protected/project/download/single_file?file=${encodeURI(r.file)}`,
+            url: `${getBaseServer()}/protected/project/download/single_file?file=${encodeURI(r.file)}`,
             type: `[${r.type}]`
         }
     })

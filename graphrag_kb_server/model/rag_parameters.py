@@ -7,7 +7,6 @@ from lightrag import QueryParam
 from graphrag_kb_server.model.engines import Engine
 
 
-
 class MessageType(StrEnum):
     USER = "user"
     ASSISTANT = "assistant"
@@ -57,7 +56,9 @@ class QueryParameters(BaseModel):
     )
 
 
-def convert_to_lightrag_query_params(query_params: QueryParameters, only_need_context: bool = False) -> QueryParam:
+def convert_to_lightrag_query_params(
+    query_params: QueryParameters, only_need_context: bool = False
+) -> QueryParam:
     param = QueryParam(
         mode=query_params.search,
         only_need_context=only_need_context,

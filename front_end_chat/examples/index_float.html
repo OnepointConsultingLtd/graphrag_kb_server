@@ -1,32 +1,29 @@
-<!doctype html>
-<html lang="en">
+<html>
 
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Project Chat</title>
-  <script>
-    window.chatConfig = {
-      widgetType: "FLOATING_CHAT",
-      rootElementId: "root",
-      jwt: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnaWxfZmVybmFuZGVzIiwibmFtZSI6ImdpbF9mZXJuYW5kZXMiLCJpYXQiOjE3NTAwODY5OTYsImVtYWlsIjoiZ2lsLmZlcm5hbmRlc0BnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6WyJyZWFkIl19.pNebd_SoC7QTU35OCVSmZuKzn3EhuEHaKK3lxWl2-n3j8vM42jRH9v9LbZyCApbtbhtnXvl4J-Nul2e04MHV2A",
-      project: {
-        name: "clustre_full",
-        updated_timestamp: "2025-06-16T15:17:33.945Z",
-        input_files: [],
-        search_type: "local",
-        platform: "lightrag",
-        additional_prompt_instructions: ""
-      }
-    };
-  </script>
-  <script type="module" crossorigin src="/assets/index-DwkZlIms.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BP7tuhB6.css">
+  <title>Test Chat</title>
 </head>
 
 <body>
-  <div id="root"></div>
+  <script>
+    window.chatConfig = {
+      widgetType: "FLOATING_CHAT",
+      rootElementId: "myroot",
+      jwt: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnaWxfZmVybmFuZGVzIiwibmFtZSI6ImdpbF9mZXJuYW5kZXMiLCJpYXQiOjE3NTAyMzYwNTAsImVtYWlsIjoiam9obi5kb2VAZ3JhcGhyYWcuY29tIiwicGVybWlzc2lvbnMiOlsicmVhZCJdfQ.QGXtgd9mRktEAHpWBnmRf5GY1HE8B44WqEnh549Ki2J9cTVvq0h0wvripawVehzAl1Hvm1WO100M1f7tOo527A",
+      baseServer: "http://localhost:9999",
+      project: {
+        name: "clustre_full",
+        updated_timestamp: "2025-06-18T08:40:50.046Z",
+        input_files: [],
+        search_type: "local",
+        platform: "lightrag",
+        additional_prompt_instructions: "You are a helpful assistant."
+      }
+    };
+  </script>
+  <script type="module" crossorigin src="http://localhost:9999/assets/index-fixed.js"></script>
+  <link rel="stylesheet" crossorigin href="http://localhost:9999/assets/index-fixed.css">
+  <div id="myroot"></div>
 </body>
 
 </html>
