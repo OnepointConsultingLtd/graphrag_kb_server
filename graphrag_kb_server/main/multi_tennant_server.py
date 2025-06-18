@@ -14,7 +14,7 @@ from graphrag_kb_server.service.validations import validate_email
 from graphrag_kb_server.model.snippet import Snippet, Project
 from graphrag_kb_server.service.snippet_generation_service import generate_snippet, inject_scripts_path
 from graphrag_kb_server.logger import logger
-from graphrag_kb_server.config import admin_cfg, jwt_cfg
+from graphrag_kb_server.config import admin_cfg, jwt_cfg, cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
 
 
@@ -592,6 +592,7 @@ async def create_snippet(request: web.Request) -> web.Response:
                 project=Project(**body["project"], updated_timestamp=timestamp, input_files=[]),
                 css_path="",
                 script_path="",
+                base_server=cfg.server_base_url,
             )
             inject_scripts_path(snippet)
             generated_snippet = generate_snippet(snippet)

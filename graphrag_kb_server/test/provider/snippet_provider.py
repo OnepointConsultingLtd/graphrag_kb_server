@@ -9,6 +9,7 @@ def create_snippet() -> tuple[str, str, Snippet]:
         widget_type=WidgetType.FLOATING_CHAT,
         root_element_id=root_element_id,
         jwt=jwt_token,
+        base_server="http://localhost:9999",
         project=Project(
             name="project",
             updated_timestamp="2025-06-16T15:17:33.945Z",

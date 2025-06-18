@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "composite": true,
-    "types": ["vitest/globals"],
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",

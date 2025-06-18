@@ -34,6 +34,7 @@ def inject_scripts_path(snippet: Snippet) -> str:
         raise FileNotFoundError(f"No script files found in {assets_path}")
     snippet.css_path = _build_http_path(css_files[0], assets_path)
     snippet.script_path = _build_http_path(script_files[0], assets_path)
+    snippet.base_server = cfg.server_base_url
 
 
 if __name__ == "__main__":

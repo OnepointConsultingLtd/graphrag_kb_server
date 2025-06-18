@@ -15,6 +15,7 @@ declare global {
       jwt?: string;
       project?: Project;
       displayFloatingChatIntro?: boolean;
+      baseServer?: string;
     };
   }
 }

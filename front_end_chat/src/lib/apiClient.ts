@@ -1,6 +1,6 @@
 import type { Project } from "../model/projectCategory";
 import type { Reference } from "../model/references";
-import { BASE_SERVER } from "./server";
+import { getBaseServer } from "./server";
 import type { Query } from "../model/query";
 import type { ChatMessage } from "../model/message";
 import { ChatMessageType } from "../model/message";
@@ -15,7 +15,7 @@ function createHeaders(jwt: string) {
 
 export async function fetchProjects(jwt: string) {
     try {
-        const response = await fetch(`${BASE_SERVER}/protected/projects`, createHeaders(jwt));
+        const response = await fetch(`${getBaseServer()}/protected/projects`, createHeaders(jwt));
         if (!response.ok) {
             throw new Error(`Failed to fetch projects. Error code: ${response.status}. Error: ${response.statusText}`);
         }
@@ -49,7 +49,7 @@ export async function sendQuery(query: Query) {
     const params = new URLSearchParams();
     params.set("project", project.name);
     params.set("engine", project.platform);
-    const response = await fetch(`${BASE_SERVER}/protected/project/chat?${params.toString()}`, {
+    const response = await fetch(`${getBaseServer()}/protected/project/chat?${params.toString()}`, {
         ...createHeaders(jwt),
         method: 'POST',
         headers: {
@@ -82,7 +82,7 @@ export async function downloadFile(jwt: string, project: Project, reference: Ref
     if (originalFile) {
         params.set("original_file", "true");
     }
-    const response = await fetch(`${BASE_SERVER}/protected/project/download/single_file?${params.toString()}`, createHeaders(jwt));
+    const response = await fetch(`${getBaseServer()}/protected/project/download/single_file?${params.toString()}`, createHeaders(jwt));
     if (!response.ok) {
         throw new Error(`Failed to download file. Error code: ${response.status}. Error: ${response.statusText}`);
     }
