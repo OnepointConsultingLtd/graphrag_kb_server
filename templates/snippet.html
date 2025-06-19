@@ -1,0 +1,20 @@
+<script>
+    window.chatConfig = {
+        widgetType: "{{snippet.widget_type}}",
+        rootElementId: "{{snippet.root_element_id}}",
+        jwt: "{{snippet.jwt}}",
+        baseServer: "{{snippet.base_server}}",
+        project: {
+            name: "{{snippet.project.name}}",
+            updated_timestamp: "{{snippet.project.updated_timestamp}}",
+            input_files: [],
+            search_type: "{{snippet.project.search_type}}",
+            platform: "{{snippet.project.platform}}",
+            additional_prompt_instructions: "{{snippet.project.additional_prompt_instructions}}"
+        },
+        organisationName: "{{snippet.organisation_name}}"
+    };
+</script>
+<script type="module" crossorigin src="{{snippet.script_path}}"></script>
+<link rel="stylesheet" crossorigin href="{{snippet.css_path}}">
+<div id="{{snippet.root_element_id}}"></div>

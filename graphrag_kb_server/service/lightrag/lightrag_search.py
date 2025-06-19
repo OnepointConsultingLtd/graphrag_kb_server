@@ -92,6 +92,7 @@ In case of a coloquial question or non context related sentence you can respond 
 """
     if param.mode in ["local", "global", "hybrid", "mix"]:
         global_config = asdict(rag)
+        param.conversation_history = [h for h in param.conversation_history if h.get("role") is not None]
         hl_keywords, ll_keywords = await extract_keywords_only(
             query, param, global_config, rag.llm_response_cache
         )
