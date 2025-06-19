@@ -41,3 +41,4 @@ class Snippet(BaseModel):
     base_server: str = Field(..., description="The base server")
     css_path: str = Field(..., description="The path to the CSS file")
     script_path: str = Field(..., description="The path to the script file")
+    organisation_name: str = Field(default="", description="The organisation name")

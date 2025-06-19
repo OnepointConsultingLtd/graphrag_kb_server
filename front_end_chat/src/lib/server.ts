@@ -1,7 +1,8 @@
 // The base URL. Change this to reflect the domain you are operating on.
-const BASE_SERVER = "http://localhost:9999";
+const BASE_SERVER = '//' + location.host;
 
 export function getBaseServer() {
+    console.log("window.chatConfig?.baseServer", window.chatConfig?.baseServer);
     if(window.chatConfig?.baseServer) {
         return window.chatConfig.baseServer;
     }

@@ -501,6 +501,10 @@ async def create_snippet(request: web.Request) -> web.Response:
               jwt:
                 type: string
                 description: The JWT token. If not provided, the snippet will be generated for the project in the request body.
+              organisation_name:
+                type: string
+                description: The name of the organisation
+                default: "My Organisation"
               project:
                 type: object
                 properties:
@@ -593,6 +597,7 @@ async def create_snippet(request: web.Request) -> web.Response:
                 css_path="",
                 script_path="",
                 base_server=cfg.server_base_url,
+                organisation_name=body.get("organisation_name", ""),
             )
             inject_scripts_path(snippet)
             generated_snippet = generate_snippet(snippet)
