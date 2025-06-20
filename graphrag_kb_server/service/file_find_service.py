@@ -3,13 +3,13 @@ import copy
 from pathlib import Path
 
 from graphrag_kb_server.logger import logger
-from graphrag_kb_server.utils.cache import GenericSimpleCache
+from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
 
 
 ORIGINAL_INPUT_FOLDER = "original_input"
 INPUT_FOLDER = "input"
 
-file_conversion_cache = GenericSimpleCache[dict[Path, Path]]()
+file_conversion_cache = GenericProjectSimpleCache[dict[Path, Path]]()
 
 
 def convert_file_name(file: Path) -> str:

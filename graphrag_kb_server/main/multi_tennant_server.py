@@ -12,7 +12,10 @@ from graphrag_kb_server.service.tennant import (
 )
 from graphrag_kb_server.service.validations import validate_email
 from graphrag_kb_server.model.snippet import Snippet, Project
-from graphrag_kb_server.service.snippet_generation_service import generate_snippet, inject_scripts_path
+from graphrag_kb_server.service.snippet_generation_service import (
+    generate_snippet,
+    inject_scripts_path,
+)
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import admin_cfg, jwt_cfg, cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
@@ -588,12 +591,18 @@ async def create_snippet(request: web.Request) -> web.Response:
                         "Failed to generate JWT token",
                         "Failed to generate JWT token",
                     )
-            timestamp = datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            timestamp = (
+                datetime.now(timezone.utc)
+                .isoformat(timespec="milliseconds")
+                .replace("+00:00", "Z")
+            )
             snippet = Snippet(
                 widget_type=body["widget_type"],
                 root_element_id=body["root_element_id"],
                 jwt=jwt_token,
-                project=Project(**body["project"], updated_timestamp=timestamp, input_files=[]),
+                project=Project(
+                    **body["project"], updated_timestamp=timestamp, input_files=[]
+                ),
                 css_path="",
                 script_path="",
                 base_server=cfg.server_base_url,
@@ -601,7 +610,7 @@ async def create_snippet(request: web.Request) -> web.Response:
             )
             inject_scripts_path(snippet)
             generated_snippet = generate_snippet(snippet)
-            return web.Response(text=generated_snippet, content_type='text/html')
+            return web.Response(text=generated_snippet, content_type="text/html")
         else:
             return invalid_response(
                 "Invalid request body",

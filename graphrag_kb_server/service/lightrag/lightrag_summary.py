@@ -1,9 +1,9 @@
 from pathlib import Path
 import json
 
-from graphrag_kb_server.utils.cache import GenericSimpleCache
+from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
 
-lightrag_summary_cache = GenericSimpleCache[dict](timeout=3600 * 24)
+lightrag_summary_cache = GenericProjectSimpleCache[dict](timeout=3600 * 24)
 SUMMARY_FILE_NAME = "onepoint_lightrag_summary.json"
 
 

@@ -7,7 +7,7 @@ from graphrag.query.structured_search.local_search.search import LocalSearch
 T = TypeVar("T")
 
 
-class GenericSimpleCache(Generic[T]):
+class GenericProjectSimpleCache(Generic[T]):
 
     def __init__(self, timeout: int = 3600):
         self.cache: Dict[str, Dict[str, Any]] = {}
@@ -31,4 +31,4 @@ class GenericSimpleCache(Generic[T]):
         }
 
 
-local_search_mixed_context_cache = GenericSimpleCache[LocalSearch]()
+local_search_mixed_context_cache = GenericProjectSimpleCache[LocalSearch]()

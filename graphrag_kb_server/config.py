@@ -133,6 +133,17 @@ class LightRAGConfig:
     assert lightrag_model is not None, "Please specify the LightRAG model"
 
 
+class LinkedInConfig:
+    linkedin_credentials: dict[str, str] = {}
+    for key, value in os.environ.items():
+        if key.startswith("LINKEDIN_USER_"):
+            cred_number = key[len("LINKEDIN_USER_") :]
+            linkedin_credentials[os.getenv(f"{key}")] = os.getenv(
+                f"LINKEDIN_PASSWORD_{cred_number}"
+            )
+    linkedin_credentials_list = list(linkedin_credentials.items())
+
+
 websocket_cfg = WebsocketConfig()
 
 jwt_cfg = JWTConfig()
@@ -141,5 +152,7 @@ admin_cfg = AdminConfig()
 
 lightrag_cfg = LightRAGConfig()
 
+linkedin_cfg = LinkedInConfig()
+
 if __name__ == "__main__":
-    print(cfg.llm)
+    print(linkedin_cfg.linkedin_credentials)
