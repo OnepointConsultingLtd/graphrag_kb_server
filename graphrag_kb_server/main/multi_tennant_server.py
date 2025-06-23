@@ -29,6 +29,15 @@ ADMIN_TOKEN_PATH = "/tennant/admin_token"
 routes = web.RouteTableDef()
 
 
+async def _validate_token(token: str) -> dict:
+    try:
+        token_dict = await decode_token(token)
+        return token_dict
+    except Exception:
+        logger.error("Cannot decode token")
+        raise web.HTTPUnauthorized(reason="Invalid JWT token", headers=CORS_HEADERS)
+
+
 async def authenticate_request(request) -> dict:
     auth_header = request.headers.get("Authorization", None)
     if request.method == "OPTIONS" or request.path == ADMIN_TOKEN_PATH:
@@ -39,12 +48,7 @@ async def authenticate_request(request) -> dict:
             reason="Missing or invalid Authorization header", headers=CORS_HEADERS
         )
     token = auth_header[len("Bearer ") :]
-    try:
-        token_dict = await decode_token(token)
-        return token_dict
-    except Exception:
-        logger.error("Cannot decode token")
-        raise web.HTTPUnauthorized(reason="Invalid JWT token", headers=CORS_HEADERS)
+    return await _validate_token(token)
 
 
 @web.middleware
@@ -616,5 +620,64 @@ async def create_snippet(request: web.Request) -> web.Response:
                 "Invalid request body",
                 "Make sure you specify the email, widget type, and root element id.",
             )
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.options("/token/validate_token")
+async def validate_token_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.post("/token/validate_token")
+async def validate_token(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: used to validate a token for accessing a tennancy. This is a public endpoint and can be used to validate a token without authentication.
+    tags:
+      - tennant
+    security: []  # Empty security array indicates no authentication required
+    parameters:
+      - name: token
+        in: query
+        required: true
+        description: The token to be validated
+        schema:
+          type: string
+    responses:
+      '200':
+        description: If the token is valid and the token is a read write token
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                snippet:
+                  type: string
+                  description: The snippet code
+      '401':
+        description: Unauthorized in case the token is invalid or the token is a read only token
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+                  description: The error message
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        token = request.rel_url.query.get("token", None)
+        if token is None or token.strip() == "":
+            return invalid_response("Invalid token", "Please specify a valid token", headers=CORS_HEADERS)
+        token_dict = await _validate_token(token)
+        
+        if token_dict.get("permissions", ["read", "write"]) == ["read", "write"]:
+            return web.json_response({"message": "Token is valid", **token_dict}, headers=CORS_HEADERS)
+        else:
+            return invalid_response("Invalid token", "Please specify a valid token", status=401, headers=CORS_HEADERS)
+        
 
     return await handle_error(handle_request, request=request)

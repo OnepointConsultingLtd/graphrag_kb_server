@@ -17,7 +17,7 @@ from graphrag_kb_server.model.linkedin.profile import (
 from graphrag_kb_server.logger import logger
 
 
-_cache = TTLCache(maxsize=200, ttl=60 * 60 * 4) # 3 hours
+_cache = TTLCache(maxsize=200, ttl=60 * 60 * 4)  # 3 hours
 
 
 def _extract_profile_dict(profile: str) -> dict | None:

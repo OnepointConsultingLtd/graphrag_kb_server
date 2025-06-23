@@ -57,7 +57,10 @@ async def linkedin_profile(request: web.Request) -> web.Response:
         profile_id = request.match_info.get("id", None)
         if profile_id is None:
             return invalid_response(
-                "No profile id", "Please specify a profile id.", status=400, headers=CORS_HEADERS
+                "No profile id",
+                "Please specify a profile id.",
+                status=400,
+                headers=CORS_HEADERS,
             )
         profile = extract_profile(profile_id)
         if profile is None:
@@ -67,6 +70,9 @@ async def linkedin_profile(request: web.Request) -> web.Response:
                 status=404,
                 headers=CORS_HEADERS,
             )
-        return web.Response(text=profile.model_dump_json(), headers={**CORS_HEADERS, "Content-Type": "application/json"})
+        return web.Response(
+            text=profile.model_dump_json(),
+            headers={**CORS_HEADERS, "Content-Type": "application/json"},
+        )
 
     return await handle_error(handle_request, request=request)
