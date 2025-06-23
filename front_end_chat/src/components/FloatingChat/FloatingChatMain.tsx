@@ -11,10 +11,11 @@ export default function FloatingChatMain({
 }: {
   handleFloatingBtn: () => void;
 }) {
-  const { selectedProject, setIsFloating } = useChatStore(
+  const { selectedProject, setIsFloating, organisation_name } = useChatStore(
     useShallow((state) => ({
       selectedProject: state.selectedProject,
       setIsFloating: state.setIsFloating,
+      organisation_name: state.organisation_name,
     }))
   );
 
@@ -29,8 +30,7 @@ export default function FloatingChatMain({
         <header className="sticky justify-between top-0 z-10 w-full sm:rounded-xl px-4 py-4 bg-gradient-to-r from-[#e0f2fe] via-[#38bdf8] to-[#0284c7] flex items-center">
           <div className="flex flex-col">
             <span className="text-2xl font-bold mr-3 select-none">
-              <span className="text-[#0284c7]">One</span>
-              <span className="text-[#2563eb]">point</span>
+              <span className="text-[#0284c7]">{organisation_name} </span>
             </span>
             <h1 className="!text-sm md:!text-base font-bold text-white">
               {selectedProject?.name || "Unknown Project"}

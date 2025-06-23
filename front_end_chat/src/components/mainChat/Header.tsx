@@ -90,6 +90,7 @@ export default function Header() {
       chatMessages: state.chatMessages,
     }))
   );
+
   return (
     <div className="w-full mx-auto">
       <div className="flex justify-between items-center">

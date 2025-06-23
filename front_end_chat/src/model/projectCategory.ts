@@ -1,6 +1,8 @@
+import { ENGINES } from "../constants/engines";
+
 export const Platform = {
-    GRAPHRAG: "graphrag",
-    LIGHTRAG: "lightrag"
+    GRAPHRAG: ENGINES.GRAPHRAG,
+    LIGHTRAG: ENGINES.LIGHTRAG
 } as const;
 
 export const SearchType = {

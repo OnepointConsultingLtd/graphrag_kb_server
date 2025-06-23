@@ -15,6 +15,7 @@ type ChatStore = {
     isMarkdownDialogueOpen: boolean;
     markdownDialogueContent: string;
     selectedProject?: Project;
+    organisation_name: string;
     copiedMessageId: string | null;
     messagesEndRef: HTMLDivElement | null;
     setJwt: (jwt: string) => void;
@@ -89,6 +90,7 @@ const useChatStore = create<ChatStore>()(
             markdownDialogueContent: "",
             copiedMessageId: null,
             messagesEndRef: null,
+            organisation_name: window.chatConfig?.organisation_name ?? "Onepoint",
             setJwt: (jwt: string) => set({ jwt }),
             setProjects: (projects: ProjectCategories) => set({ projects }),
             setSelectedProject: (project: Project) =>
