@@ -1,32 +1,25 @@
-import { useAuth0 } from "@auth0/auth0-react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Actions from "./components/Dashboard/Actions";
 import CreateProjectModal from "./components/Dashboard/CreateProjectModal";
 import GenerateSnippetModal from "./components/Dashboard/GenerateSnippetModal";
 import Header from "./components/Dashboard/Header";
-import Loading from "./components/Loading";
 import ProjectList from "./components/Dashboard/ProjectList";
 import UserProfile from "./components/Dashboard/UserProfile";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 
 export default function Dashboard() {
-  const { isAuthenticated, isLoading } = useAuth0();
   const navigate = useNavigate();
 
+  const isTokenValidated = localStorage.getItem("tokenValidated") === "true";
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
-    // Only redirect if not loading and not authenticated
-    if (!isLoading && !isAuthenticated) {
+    if (!isTokenValidated && !token) {
       navigate("/login1");
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isTokenValidated, token, navigate]);
 
-  // Show loading while Auth0 is initializing
-  if (isLoading) {
-    return <Loading />;
-  }
-
-  // Don't render dashboard if not authenticated
-  if (!isAuthenticated) {
+  if (!isTokenValidated) {
     return null;
   }
 

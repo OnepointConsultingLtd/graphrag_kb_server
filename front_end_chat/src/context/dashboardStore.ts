@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DashboardState, Project } from '../types/types';
+import { DashboardState, Project, ApiProjectsResponse } from '../types/types';
 import { ENGINES } from '../constants/engines';
 import initialProjects from '../lib/initialProjects';
 
@@ -55,7 +55,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 			status: 'active',
 			engine: engine,
 		};
-		set((state) => ({ projects: [newProject, ...state.projects] }));
+		set((state) => {
+			if (Array.isArray(state.projects)) {
+				return { projects: [newProject, ...state.projects] };
+			}
+			// If projects is not an array, convert it to array format
+			return { projects: [newProject] };
+		});
 	},
 
 	toggleProjectSelection: (id) => {
@@ -82,6 +88,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
 	getSelectedProjects: () => {
 		const { projects, selectedProjects } = get();
-		return projects.filter(p => selectedProjects.includes(p.id));
-	}
+		if (Array.isArray(projects)) {
+			return projects.filter(p => selectedProjects.includes(p.id));
+		}
+		// If projects is not an array, return empty array for now
+		return [];
+	},
+
+	setProjects: (projects: Project[] | ApiProjectsResponse) => set({ projects })
 })); 

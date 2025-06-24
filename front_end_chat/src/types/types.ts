@@ -7,13 +7,29 @@ export type Project = {
 	fileCount: number;
 	status: "active" | "archived";
 	engine: Engine;
+}
 
+export type ApiProject = {
+	id: string;
+	name: string;
+	updated_timestamp: string;
+	input_files: unknown[];
+	createdAt?: string;
+}
+
+export type ApiProjectsResponse = {
+	graphrag_projects?: {
+		projects: ApiProject[];
+	};
+	lightrag_projects?: {
+		projects: ApiProject[];
+	};
 }
 
 export type ModalType = 'create' | 'snippet' | 'delete' | 'update' | null;
 
 export type DashboardState = {
-	projects: Project[];
+	projects: Project[] | ApiProjectsResponse;
 	selectedProjects: string[];
 	isModalOpen: boolean;
 	modalType: ModalType;
@@ -49,6 +65,7 @@ export type DashboardState = {
 	// Actions
 	addProject: (projectName: string, engine: Engine) => void;
 	toggleProjectSelection: (id: string) => void;
+	setProjects: (projects: Project[] | ApiProjectsResponse) => void;
 
 	// Modal controls
 	openModal: (type: ModalType) => void;

@@ -1,47 +1,104 @@
+import { useEffect, useState } from "react";
 import { FaLightbulb } from "react-icons/fa";
 import { useDashboardStore } from "../../context/dashboardStore";
+import { ApiProjectsResponse } from "../../types/types";
+import RenderProjectList from "../Dashboard/RenderProjectList";
+import Loading from "../Loading";
 
 export default function ProjectList() {
-  const { projects, selectedProjects, toggleProjectSelection } =
-    useDashboardStore();
+  const { projects, selectedProjects, setProjects } = useDashboardStore();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const isTokenValidated =
+        localStorage.getItem("tokenValidated") === "true";
+
+      if (!token || !isTokenValidated) {
+        setError("No valid token found. Please login again.");
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await fetch(`http://localhost:9999/protected/projects`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setProjects(data);
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      setError("Failed to load projects. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">{error}</p>
+          <button
+            onClick={fetchProjects}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if projects is the API response structure
+  const apiProjects = projects as ApiProjectsResponse;
 
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg">
-      <div className="space-y-2 p-4">
-        {projects.map((project) => {
-          const isSelected = selectedProjects.includes(project.id);
-          return (
-            <div
-              key={project.id}
-              className={`flex items-center p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${
-                isSelected
-                  ? "bg-blue-900 border-blue-500"
-                  : "border-transparent"
-              }`}
-              onClick={() => toggleProjectSelection(project.id)}
-            >
-              <div
-                className={`p-3 rounded-full mr-4 ${
-                  isSelected ? "bg-white" : "bg-blue-500"
-                }`}
-              >
-                <FaLightbulb
-                  className={isSelected ? "text-blue-900" : "text-white"}
-                />
-              </div>
-              <div>
-                <h3
-                  className={`text-lg font-semibold ${
-                    isSelected ? "text-white" : "text-blue-400"
-                  }`}
-                >
-                  {project.name}
-                </h3>
-                <p className="text-sm text-gray-400">{project.engine}</p>
-              </div>
+      <div className="p-4">
+        <RenderProjectList
+          title="GraphRAG Projects"
+          projectList={apiProjects.graphrag_projects?.projects || []}
+          colorScheme="blue"
+          selectedProjects={selectedProjects}
+        />
+
+        <RenderProjectList
+          title="LightRAG Projects"
+          projectList={apiProjects.lightrag_projects?.projects || []}
+          colorScheme="green"
+          selectedProjects={selectedProjects}
+        />
+
+        {/* Show message if no projects found */}
+        {(!apiProjects.graphrag_projects?.projects ||
+          apiProjects.graphrag_projects.projects.length === 0) &&
+          (!apiProjects.lightrag_projects?.projects ||
+            apiProjects.lightrag_projects.projects.length === 0) && (
+            <div className="text-center text-gray-400">
+              <FaLightbulb className="text-4xl mx-auto mb-4 text-gray-600" />
+              <p>No projects found</p>
             </div>
-          );
-        })}
+          )}
       </div>
     </div>
   );
