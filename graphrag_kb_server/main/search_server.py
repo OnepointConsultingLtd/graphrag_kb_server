@@ -242,7 +242,7 @@ async def relevant_documents(request: web.Request) -> web.Response:
     async def handle_search_documents(project_dir: Path, body: dict) -> web.Response:
         search_query = DocumentSearchQuery(**body)
         search_result = await retrieve_relevant_documents(project_dir, search_query)
-        return web.json_response(search_result.model_dump())
+        return web.json_response(search_result.model_dump(), headers=CORS_HEADERS)
 
     return await handle_error(
         await _handle_request(request, handle_search_documents), request=request

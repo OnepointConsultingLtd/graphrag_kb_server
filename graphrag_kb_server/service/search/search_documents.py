@@ -85,6 +85,8 @@ async def search_documents(
 
 def get_document_text(project_dir: Path, document_path: Path) -> str:
     document_text = f"Source not found: {document_path}"
+    if not document_path.is_file():
+        return f"Source not found: {document_path}"
     if not document_path.exists():
         file_name = document_path.name
         similar_files = list(project_dir.rglob(f"**/{file_name}"))
