@@ -116,6 +116,6 @@ async def initialize_rag(project_folder: Path) -> LightRAG:
     await rag.initialize_storages()
     await initialize_pipeline_status()
     lightrag_cache.set(project_folder, rag)
-    # Disable LLM cache for now
-    rag.llm_response_cache.global_config["enable_llm_cache"] = False
+    # Enable LLM cache for now
+    rag.llm_response_cache.global_config["enable_llm_cache"] = True
     return rag

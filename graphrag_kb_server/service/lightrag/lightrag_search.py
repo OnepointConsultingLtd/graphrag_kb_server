@@ -6,6 +6,7 @@ import os
 
 import numpy as np
 
+
 from lightrag import LightRAG, QueryParam
 
 from lightrag.operate import (
@@ -71,6 +72,7 @@ When handling relationships with timestamps:
 - Addtional user prompt: {user_prompt}
 
 Response:"""
+
 
 
 async def lightrag_search(
@@ -178,11 +180,9 @@ async def prepare_context(
 
     # Handle cache
     args_hash = compute_args_hash(query_param.mode, query, cache_type="query")
-    cached_response, quantized, min_val, max_val = await handle_cache(
+    _, quantized, min_val, max_val = await handle_cache(
         hashing_kv, args_hash, query, query_param.mode, cache_type="query"
     )
-    if cached_response is not None:
-        return cached_response
 
     hl_keywords, ll_keywords = await get_keywords_from_query(
         query, query_param, global_config, hashing_kv
@@ -191,7 +191,7 @@ async def prepare_context(
     # Handle empty keywords
     if hl_keywords == [] and ll_keywords == []:
         logger.warning("low_level_keywords and high_level_keywords is empty")
-        return PROMPTS["fail_response"]
+        return PROMPTS["fail_response"], args_hash, quantized, min_val, max_val, [], [], []
     if ll_keywords == [] and query_param.mode in ["local", "hybrid"]:
         logger.warning(
             "low_level_keywords is empty, switching from %s mode to global mode",

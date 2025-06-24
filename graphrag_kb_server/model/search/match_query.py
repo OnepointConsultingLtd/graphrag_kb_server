@@ -28,6 +28,9 @@ class MatchOutput(BaseModel):
         default={},
         description="A dictionary of entity names and their corresponding entity lists",
     )
+    model_config = {
+        'frozen': True  # Pydantic v2 config syntax
+    }
 
 
 if __name__ == "__main__":
