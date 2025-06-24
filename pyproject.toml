@@ -23,6 +23,7 @@ dependencies = [
     "pyvis>=0.3.2",
     "rustworkx>=0.16.0",
     "tomli>=2.2.1",
+    "linkedin-api>=2.3.1",
 ]
 
 [project.scripts]

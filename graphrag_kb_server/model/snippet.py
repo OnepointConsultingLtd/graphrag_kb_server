@@ -23,7 +23,9 @@ class Project(BaseModel):
     updated_timestamp: str = Field(
         ..., description="The updated timestamp of the project"
     )
-    input_files: list[str] = Field(default=[], description="The input files of the project")
+    input_files: list[str] = Field(
+        default=[], description="The input files of the project"
+    )
     search_type: SearchType = Field(..., description="The type of search to be used")
     platform: Platform = Field(..., description="The platform to be used")
     additional_prompt_instructions: str = Field(

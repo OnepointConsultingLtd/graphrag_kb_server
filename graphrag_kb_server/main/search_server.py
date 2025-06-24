@@ -19,6 +19,7 @@ from graphrag_kb_server.service.search.search_documents import (
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
 )
+from graphrag_kb_server.main.cors import CORS_HEADERS
 
 #
 routes = web.RouteTableDef()
@@ -39,6 +40,11 @@ async def _handle_request(request: web.Request, func: Callable) -> web.Response:
                         return await func(project_dir, body)
 
                     return func_wrapper
+
+
+@routes.options("/protected/search/expand_entities")
+async def match_entities_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 
 @routes.post("/protected/search/expand_entities")
@@ -124,7 +130,7 @@ async def match_entities(request: web.Request) -> web.Response:
     async def handle_expansion(project_dir: Path, body: dict) -> web.Response:
         match_query = MatchQuery(**body)
         match_output = await match_entities_with_lightrag(project_dir, match_query)
-        return web.json_response(match_output.model_dump())
+        return web.json_response(match_output.model_dump(), headers=CORS_HEADERS)
 
     return await handle_error(
         await _handle_request(request, handle_expansion), request=request

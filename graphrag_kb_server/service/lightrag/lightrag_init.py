@@ -12,10 +12,10 @@ from google import genai
 from google.genai import types
 
 from graphrag_kb_server.config import cfg, lightrag_cfg
-from graphrag_kb_server.utils.cache import GenericSimpleCache
+from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
 
 
-lightrag_cache = GenericSimpleCache[LightRAG]()
+lightrag_cache = GenericProjectSimpleCache[LightRAG]()
 
 
 class Reference(BaseModel):

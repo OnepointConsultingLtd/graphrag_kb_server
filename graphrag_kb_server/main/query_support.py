@@ -55,7 +55,9 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
             )
         case Format.MARKDOWN:
             return web.Response(
-                text=chat_response.response, content_type="text/plain", headers=CORS_HEADERS
+                text=chat_response.response,
+                content_type="text/plain",
+                headers=CORS_HEADERS,
             )
         case Format.JSON:
             return web.json_response(

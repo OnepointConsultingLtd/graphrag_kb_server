@@ -12,7 +12,10 @@ from graphrag_kb_server.service.tennant import (
 )
 from graphrag_kb_server.service.validations import validate_email
 from graphrag_kb_server.model.snippet import Snippet, Project
-from graphrag_kb_server.service.snippet_generation_service import generate_snippet, inject_scripts_path
+from graphrag_kb_server.service.snippet_generation_service import (
+    generate_snippet,
+    inject_scripts_path,
+)
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import admin_cfg, jwt_cfg, cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
@@ -26,6 +29,15 @@ ADMIN_TOKEN_PATH = "/tennant/admin_token"
 routes = web.RouteTableDef()
 
 
+async def _validate_token(token: str) -> dict:
+    try:
+        token_dict = await decode_token(token)
+        return token_dict
+    except Exception:
+        logger.error("Cannot decode token")
+        raise web.HTTPUnauthorized(reason="Invalid JWT token", headers=CORS_HEADERS)
+
+
 async def authenticate_request(request) -> dict:
     auth_header = request.headers.get("Authorization", None)
     if request.method == "OPTIONS" or request.path == ADMIN_TOKEN_PATH:
@@ -36,12 +48,7 @@ async def authenticate_request(request) -> dict:
             reason="Missing or invalid Authorization header", headers=CORS_HEADERS
         )
     token = auth_header[len("Bearer ") :]
-    try:
-        token_dict = await decode_token(token)
-        return token_dict
-    except Exception:
-        logger.error("Cannot decode token")
-        raise web.HTTPUnauthorized(reason="Invalid JWT token", headers=CORS_HEADERS)
+    return await _validate_token(token)
 
 
 @web.middleware
@@ -588,12 +595,18 @@ async def create_snippet(request: web.Request) -> web.Response:
                         "Failed to generate JWT token",
                         "Failed to generate JWT token",
                     )
-            timestamp = datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            timestamp = (
+                datetime.now(timezone.utc)
+                .isoformat(timespec="milliseconds")
+                .replace("+00:00", "Z")
+            )
             snippet = Snippet(
                 widget_type=body["widget_type"],
                 root_element_id=body["root_element_id"],
                 jwt=jwt_token,
-                project=Project(**body["project"], updated_timestamp=timestamp, input_files=[]),
+                project=Project(
+                    **body["project"], updated_timestamp=timestamp, input_files=[]
+                ),
                 css_path="",
                 script_path="",
                 base_server=cfg.server_base_url,
@@ -601,11 +614,70 @@ async def create_snippet(request: web.Request) -> web.Response:
             )
             inject_scripts_path(snippet)
             generated_snippet = generate_snippet(snippet)
-            return web.Response(text=generated_snippet, content_type='text/html')
+            return web.Response(text=generated_snippet, content_type="text/html")
         else:
             return invalid_response(
                 "Invalid request body",
                 "Make sure you specify the email, widget type, and root element id.",
             )
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.options("/token/validate_token")
+async def validate_token_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.post("/token/validate_token")
+async def validate_token(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: used to validate a token for accessing a tennancy. This is a public endpoint and can be used to validate a token without authentication.
+    tags:
+      - tennant
+    security: []  # Empty security array indicates no authentication required
+    parameters:
+      - name: token
+        in: query
+        required: true
+        description: The token to be validated
+        schema:
+          type: string
+    responses:
+      '200':
+        description: If the token is valid and the token is a read write token
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                snippet:
+                  type: string
+                  description: The snippet code
+      '401':
+        description: Unauthorized in case the token is invalid or the token is a read only token
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+                  description: The error message
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        token = request.rel_url.query.get("token", None)
+        if token is None or token.strip() == "":
+            return invalid_response("Invalid token", "Please specify a valid token", headers=CORS_HEADERS)
+        token_dict = await _validate_token(token)
+        
+        if token_dict.get("permissions", ["read", "write"]) == ["read", "write"]:
+            return web.json_response({"message": "Token is valid", **token_dict}, headers=CORS_HEADERS)
+        else:
+            return invalid_response("Invalid token", "Please specify a valid token", status=401, headers=CORS_HEADERS)
+        
 
     return await handle_error(handle_request, request=request)

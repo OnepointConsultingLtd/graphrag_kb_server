@@ -39,8 +39,8 @@ def inject_scripts_path(snippet: Snippet) -> str:
 
 if __name__ == "__main__":
     from graphrag_kb_server.test.provider.snippet_provider import create_snippet
+
     root_element_id, jwt_token, snippet = create_snippet()
     inject_scripts_path(snippet)
     print(snippet.css_path)
     print(snippet.script_path)
-    

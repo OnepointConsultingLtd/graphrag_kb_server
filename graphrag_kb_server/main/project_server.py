@@ -1612,7 +1612,9 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                             df = df[df["entity_type"].isin(category_list)][:limit]
                         elif category:
                             df = df[df["entity_type"] == category][:limit]
-                        return web.json_response(df.to_dict(orient="records"), headers=CORS_HEADERS)
+                        return web.json_response(
+                            df.to_dict(orient="records"), headers=CORS_HEADERS
+                        )
                     case "xls":
                         excel_bytes = await asyncio.to_thread(
                             get_sorted_centrality_scores_as_xls, project_dir, limit
@@ -1622,7 +1624,7 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                             headers={
                                 "CONTENT-TYPE": "application/vnd.ms-excel",
                                 "CONTENT-DISPOSITION": f'attachment; filename="{project_dir.stem}_centrality.xlsx"',
-                                **CORS_HEADERS
+                                **CORS_HEADERS,
                             },
                         )
 

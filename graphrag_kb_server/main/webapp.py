@@ -67,7 +67,7 @@ async def static_routing_middleware(request: web.Request, handler):
 
         if file_path and file_path.exists() and file_path.is_file():
             return web.FileResponse(path=file_path, headers=CORS_HEADERS)
-        
+
         # Just the necessary stuff for the chat UI
         _, css_files, script_files = find_chat_assets()
         for css_file in css_files:
