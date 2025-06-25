@@ -37,12 +37,12 @@ async def retrieve_relevant_documents(
         A list of summarization responses with document paths
     """
     chat_response = await search_documents(project_dir, query)
-    document_paths = []
+    document_paths_topics = []
     for reference in chat_response.response["references"][:DOCUMENT_PATHS_LIMIT]:
         docs = reference["file"].split("<SEP>")
-        document_paths.append(docs[0])
+        document_paths_topics.append((docs[0], reference["main_keyword"]))
     promises = []
-    for document_path in document_paths:
+    for document_path, _ in document_paths_topics:
         summarisation_request = SummarisationRequestWithDocumentPath(
             user_profile=query.user_profile,
             question=query.question,
@@ -54,13 +54,14 @@ async def retrieve_relevant_documents(
     summaries_with_document_paths = []
     summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
     # Summarize and score
-    for i in range(len(document_paths)):
+    for i in range(len(document_paths_topics)):
         summaries_with_document_paths.append(
             SummarisationResponseWithDocument(
                 summary=summaries[i].summary,
                 relevancy_score=summaries[i].relevancy_score,
                 relevance=summaries[i].relevance,
-                document_path=document_paths[i],
+                document_path=document_paths_topics[i][0],
+                main_keyword=document_paths_topics[i][1],
             )
         )
     summaries_with_document_paths = sorted(

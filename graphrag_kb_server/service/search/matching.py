@@ -24,7 +24,7 @@ SCORE_THRESHOLD = 0.5
 
 
 async def match_entities_with_lightrag(
-    project_dir: Path, query: MatchQuery
+    project_dir: Path, query: MatchQuery, score_threshold: float = SCORE_THRESHOLD
 ) -> MatchOutput:
     df = await asyncio.to_thread(get_sorted_centrality_scores_as_pd, project_dir)
     entity_types, entities_limit = query.entity_types, query.entities_limit
@@ -32,7 +32,7 @@ async def match_entities_with_lightrag(
     all_entities = _convert_df_to_entities(df)
     entity_list = await match_entities(query, all_entities)
     entity_list = [
-        entity for entity in entity_list.entities if entity.score > SCORE_THRESHOLD
+        entity for entity in entity_list.entities if entity.score > score_threshold
     ]
     entity_dict = defaultdict(list)
     entity_type_dict = {e.name: e.type for e in all_entities}

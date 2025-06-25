@@ -21,6 +21,9 @@ class MatchQuery(BaseModel):
     entities_limit: int = Field(
         default=10, description="The maximum number of entities to return"
     )
+    score_threshold: float = Field(
+        default=0.5, description="The score threshold for the entities"
+    )
 
 
 class MatchOutput(BaseModel):

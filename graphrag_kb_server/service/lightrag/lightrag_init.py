@@ -20,6 +20,7 @@ lightrag_cache = GenericProjectSimpleCache[LightRAG]()
 
 class Reference(BaseModel):
     type: str = Field(description="The type of the reference")
+    main_keyword: str = Field(description="The main keyword or topic of the reference")
     file: str = Field(description="The file of the reference")
 
 
