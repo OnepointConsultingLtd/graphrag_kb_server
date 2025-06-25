@@ -1,7 +1,8 @@
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../context/chatStore";
-import Login from "./Login";
+// import Login from "./Login";
 import ProjectSelector from "./ProjectSelector";
+import Login from "../Login";
 
 export default function AppWrapper({
   children,

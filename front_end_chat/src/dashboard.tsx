@@ -11,11 +11,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const isTokenValidated = localStorage.getItem("tokenValidated") === "true";
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("chat-store");
 
   useEffect(() => {
     if (!isTokenValidated && !token) {
-      navigate("/login1");
+      navigate("/login");
     }
   }, [isTokenValidated, token, navigate]);
 

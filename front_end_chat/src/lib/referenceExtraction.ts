@@ -27,7 +27,6 @@ export function removeReferencesFromText(text: string): string {
 }
 
 export function extractEntityContext(response: QueryResponse, limit: number = 10): Reference[] {
-    debugger
     const references: Reference[] = []
     let i = 0
     while (references.length < limit && i < response.entities_context.length) {
@@ -56,7 +55,7 @@ export function extractEntityContext(response: QueryResponse, limit: number = 10
 
 export function extractSimpleReferences(response: StructuredQueryResponse): Reference[] {
     const references = response.references
-    return references.map(r => {
+    return references?.map(r => {
         return {
             file: r.file.split("/").pop() || "",
             path: r.file,

@@ -3,10 +3,12 @@ import {
   FaEnvelope,
   FaUser,
   FaSignOutAlt,
-  FaFolder
+  FaFolder,
 } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import Loading from "../Loading";
+import { useShallow } from "zustand/shallow";
+import useChatStore from "../../context/chatStore";
 
 type UserData = {
   message: string;
@@ -20,6 +22,11 @@ export default function UserProfile() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const { logout } = useChatStore(
+    useShallow((state) => ({
+      logout: state.logout,
+    }))
+  );
   useEffect(() => {
     const savedUserData = localStorage.getItem("userData");
     const isTokenValidated = localStorage.getItem("tokenValidated") === "true";
@@ -36,7 +43,8 @@ export default function UserProfile() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
+    logout();
+    localStorage.removeItem("chat-store");
     localStorage.removeItem("tokenValidated");
     localStorage.removeItem("userData");
     window.location.href = "/login";
@@ -87,11 +95,6 @@ export default function UserProfile() {
 
           <div className="text-sm text-gray-400">
             <span className="font-medium">Sub:</span> {userData.sub}
-          </div>
-
-          <div className="text-xs text-gray-500">
-            <span className="font-medium">Token Issued At:</span>{" "}
-            {new Date(userData.iat * 1000).toLocaleString()}
           </div>
         </div>
       </div>

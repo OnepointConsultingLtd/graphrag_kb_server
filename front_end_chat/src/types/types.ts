@@ -7,6 +7,9 @@ export type Project = {
 	fileCount: number;
 	status: "active" | "archived";
 	engine: Engine;
+	updated_timestamp: string;
+	input_files: unknown[];
+		
 }
 
 export type ApiProject = {

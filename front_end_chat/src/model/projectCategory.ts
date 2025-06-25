@@ -25,8 +25,9 @@ export type ProjectCategories = {
 }
 
 export type Project = {
+    id: string;
     name: string;
-    updated_timestamp: Date;
+    updated_timestamp: string;
     input_files: string[];
     search_type: SearchType;
     platform: Platform;
