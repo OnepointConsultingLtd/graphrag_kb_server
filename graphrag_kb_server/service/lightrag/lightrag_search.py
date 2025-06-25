@@ -460,6 +460,8 @@ async def extended_kg_query(
         stream=query_param.stream,
         structured_output=structured_output,
     )
+    expand_files(response)
+    
     if isinstance(response, str) and len(response) > len(sys_prompt):
         response = (
             response.replace(sys_prompt, "")
@@ -488,3 +490,20 @@ async def extended_kg_query(
         )
 
     return response
+
+
+def expand_files(response: dict):
+    final_references = []
+    for reference in response["references"]:
+        file = reference.get("file", None)
+        type = reference.get("type", None)
+        main_keyword = reference.get("main_keyword", None)
+        if file is not None:
+            files = file.split("<SEP>")
+            for file in files:
+                final_references.append({
+                    "file": file,
+                    "type": type,
+                    "main_keyword": main_keyword,
+                })
+    response["references"] = final_references
