@@ -1,8 +1,8 @@
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../context/chatStore";
 // import Login from "./Login";
-import ProjectSelector from "./ProjectSelector";
 import Login from "../Login";
+import Dashboard from "../dashboard";
 
 export default function AppWrapper({
   children,
@@ -21,7 +21,7 @@ export default function AppWrapper({
   }
 
   if (!selectedProject) {
-    return <ProjectSelector />;
+    return <Dashboard />;
   }
 
   return <>{children}</>;

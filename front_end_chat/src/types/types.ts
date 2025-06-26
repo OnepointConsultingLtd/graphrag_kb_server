@@ -1,16 +1,15 @@
+
 export type Engine = "graphrag" | "lightrag";
 
 export type Project = {
-	id: string;
 	name: string;
 	createdAt: string;
 	fileCount: number;
 	status: "active" | "archived";
 	engine: Engine;
-	updated_timestamp: string;
-	input_files: unknown[];
-		
 }
+
+export type ChatTypeOptions = "full_page" | "floating";
 
 export type ApiProject = {
 	id: string;

@@ -1,15 +1,14 @@
-import { useState } from "react";
 import { FaLightbulb } from "react-icons/fa";
-import { useDashboardStore } from "../../context/dashboardStore";
-import { ApiProject } from "../../types/types";
+import { useShallow } from "zustand/shallow";
+import useProjectSelectionStore from "../../context/projectSelectionStore";
+import { Project } from "../../model/projectCategory";
 import ChatConfigDialog from "../ChatConfigDialog";
-import { Platform } from "../../model/projectCategory";
 
 type RenderProjectListProps = {
   title: string;
-  projectList: ApiProject[];
+  projectList: Project[];
   colorScheme: "blue" | "green";
-  selectedProjects: string[];
+  platform: string;
 };
 
 const colors = {
@@ -35,10 +34,23 @@ export default function RenderProjectList({
   title,
   projectList,
   colorScheme,
-  selectedProjects,
+  platform,
 }: RenderProjectListProps) {
-  const { toggleProjectSelection } = useDashboardStore();
-  const [showDialog, setShowDialog] = useState(false);
+  const {
+    selectionProject,
+    selectionPlatform,
+    setSelectionProjectAndPlatform,
+    isChatConfigDialogOpen,
+    setIsChatConfigDialogOpen,
+  } = useProjectSelectionStore(
+    useShallow((state) => ({
+      selectionProject: state.selectionProject,
+      selectionPlatform: state.selectionPlatform,
+      setSelectionProjectAndPlatform: state.setSelectionProjectAndPlatform,
+      isChatConfigDialogOpen: state.isChatConfigDialogOpen,
+      setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
+    }))
+  );
 
   if (!projectList || projectList.length === 0) return null;
 
@@ -48,9 +60,11 @@ export default function RenderProjectList({
     <div className="mb-8">
       <h2 className={`text-xl font-bold ${scheme.title} mb-4`}>{title}</h2>
       <div className="space-y-2">
-        {projectList.map((project: ApiProject, index: number) => {
+        {projectList.map((project: Project, index: number) => {
           const uniqueId = `${colorScheme}_${project.name}_${index}`;
-          const isSelected = selectedProjects.includes(uniqueId);
+
+          const isSelected =
+            selectionProject === project.name && selectionPlatform === platform;
 
           return (
             <div
@@ -58,7 +72,9 @@ export default function RenderProjectList({
               className={`flex justify-between items-center p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${
                 isSelected ? scheme.selected : "border-transparent"
               }`}
-              onClick={() => toggleProjectSelection(uniqueId)}
+              onClick={() =>
+                setSelectionProjectAndPlatform(project.name, platform)
+              }
             >
               <div className="flex items-center">
                 <div
@@ -88,7 +104,7 @@ export default function RenderProjectList({
               {/* Button to chat */}
               <button
                 onClick={() => {
-                  setShowDialog(true);
+                  setIsChatConfigDialogOpen(true);
                 }}
                 // disabled={!selectionProject}
                 className="bg-blue-500  px-4 py-2 rounded-md"
@@ -97,22 +113,11 @@ export default function RenderProjectList({
                   Start Chat
                 </a>
               </button>
-              {showDialog && (
-                <ChatConfigDialog
-                  isOpen={showDialog}
-                  onClose={() => setShowDialog(false)}
-                  project={project}
-                  platform={
-                    colorScheme === "blue"
-                      ? ("graphrag" as Platform)
-                      : ("lightrag" as Platform)
-                  }
-                />
-              )}
             </div>
           );
         })}
       </div>
+      {isChatConfigDialogOpen && <ChatConfigDialog />}
     </div>
   );
 }

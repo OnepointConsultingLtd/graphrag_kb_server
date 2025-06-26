@@ -19,19 +19,19 @@ export type Projects = {
     projects: Project[];
 }
 
-export type ProjectCategories = {
-    graphrag_projects: Projects;
-    lightrag_projects: Projects;
-}
-
 export type Project = {
-    id: string;
     name: string;
-    updated_timestamp: string;
+    updated_timestamp: Date;
     input_files: string[];
     search_type: SearchType;
     platform: Platform;
     additional_prompt_instructions: string;
 }
+
+export type ProjectCategories = {
+    graphrag_projects: Projects;
+    lightrag_projects: Projects;
+}
+
 
 export type SearchType = typeof SearchType[keyof typeof SearchType];

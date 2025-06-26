@@ -1,17 +1,15 @@
 import { FaLightbulb } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
-import { useDashboardStore } from "../../context/dashboardStore";
 import RenderProjectList from "../Dashboard/RenderProjectList";
 
 export default function ProjectList() {
-  const { selectedProjects } = useDashboardStore();
-
   const { projects } = useChatStore(
     useShallow((state) => ({
       projects: state.projects,
     }))
   );
+
 
   const apiProjects = projects;
 
@@ -22,14 +20,14 @@ export default function ProjectList() {
           title="GraphRAG Projects"
           projectList={apiProjects?.graphrag_projects?.projects || []}
           colorScheme="blue"
-          selectedProjects={selectedProjects}
+          platform="graphrag"
         />
 
         <RenderProjectList
           title="LightRAG Projects"
           projectList={apiProjects?.lightrag_projects?.projects || []}
           colorScheme="green"
-          selectedProjects={selectedProjects}
+          platform="lightrag"
         />
 
         {/* Show message if no projects found */}

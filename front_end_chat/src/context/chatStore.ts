@@ -4,6 +4,8 @@ import type { Project, ProjectCategories } from "../model/projectCategory";
 import type { ChatMessage } from "../model/message";
 import { fetchProjects } from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
+import { ChatTypeOptions } from "../types/types";
+import { ChatType } from "../lib/chatTypes";
 
 type ChatStore = {
     jwt: string;
@@ -18,6 +20,8 @@ type ChatStore = {
     organisation_name: string;
     copiedMessageId: string | null;
     messagesEndRef: HTMLDivElement | null;
+    chatType: ChatTypeOptions;
+    newProject: () => void;
     setJwt: (jwt: string) => void;
     setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
     setMarkdownDialogueContent: (content: string) => void;
@@ -32,7 +36,8 @@ type ChatStore = {
     setMessagesEndRef: (ref: HTMLDivElement | null) => void;
     scrollToBottom: () => void;
     setCopiedMessageId: (id: string) => void;
-    newProject: () => void;
+    setSelectedProjectAndChatType: (project: Project, isFloating: boolean) => void;
+    setChatType: (chatType: ChatTypeOptions) => void;
 };
 
 const THRESHOLD = 50;
@@ -90,14 +95,22 @@ const useChatStore = create<ChatStore>()(
             markdownDialogueContent: "",
             copiedMessageId: null,
             messagesEndRef: null,
+            chatType: ChatType.FULL_PAGE as ChatTypeOptions,
             organisation_name: window.chatConfig?.organisation_name ?? "Onepoint",
             setJwt: (jwt: string) => set({ jwt }),
             setProjects: (projects: ProjectCategories) => set({ projects }),
-            setSelectedProject: (project: Project) =>
-                set({ selectedProject: project }),
+            setSelectedProject: (project: Project) => set((state) => {
+                return {
+                    selectedProject: project,
+                    isFloating: state.chatType === ChatType.FLOATING,
+                }
+            }),
+            
+            
             setIsFloating: (isFloating: boolean) => set({ isFloating }),
             setMessagesEndRef: (ref: HTMLDivElement | null) =>
                 set({ messagesEndRef: ref }),
+
             addChatMessage: (message: ChatMessage) =>
                 set((state) => {
                     return {
@@ -153,7 +166,10 @@ const useChatStore = create<ChatStore>()(
                     return { markdownDialogueContent: content };
                 }),
             setCopiedMessageId: (id: string) => set({ copiedMessageId: id }),
+            setSelectedProjectAndChatType: (selectedProject, isFloating: boolean) => set({ selectedProject, isFloating }),
+            setChatType: (chatType: ChatTypeOptions) => set({ chatType }),
         }),
+
         {
             name: "chat-store",
             partialize: (state) => ({

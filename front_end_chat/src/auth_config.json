@@ -1,7 +1,0 @@
-{
-	"domain": "dev-7zspfd085o3dosgt.us.auth0.com",
-	"clientId": "mRC9KOS42Y7v29rqZ3SsOQ3hufOpHuYO",
-	"audience": "https://dev-7zspfd085o3dosgt.us.auth0.com/api/v2/",
-	"appOrigin": "http://localhost:5173",
-	"apiOrigin": "http://localhost:5173"
-  }

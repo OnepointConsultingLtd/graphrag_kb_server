@@ -1,10 +1,9 @@
 import { create } from 'zustand';
 import { DashboardState, Project, ApiProjectsResponse } from '../types/types';
 import { ENGINES } from '../constants/engines';
-import initialProjects from '../lib/initialProjects';
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
-	projects: initialProjects,
+	projects: [],
 	selectedProjects: [],
 	isModalOpen: false,
 	modalType: null,
@@ -48,7 +47,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
 	addProject: (projectName, engine) => {
 		const newProject: Project = {
-			id: `${Math.random()}`,
 			name: projectName,
 			createdAt: new Date().toISOString().split('T')[0],
 			fileCount: 1,
@@ -89,7 +87,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 	getSelectedProjects: () => {
 		const { projects, selectedProjects } = get();
 		if (Array.isArray(projects)) {
-			return projects.filter(p => selectedProjects.includes(p.id));
+			return projects.filter(p => selectedProjects.includes(p.name));
 		}
 		// If projects is not an array, return empty array for now
 		return [];
