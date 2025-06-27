@@ -473,6 +473,11 @@ async def _generate_jwt_token(email: str, sub: str) -> JWTToken | Error:
     return jwt_token
 
 
+@routes.options("/protected/snippet/generate_snippet")
+async def create_snippet_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
 @routes.post("/protected/snippet/generate_snippet")
 async def create_snippet(request: web.Request) -> web.Response:
     """
@@ -594,6 +599,7 @@ async def create_snippet(request: web.Request) -> web.Response:
                     return invalid_response(
                         "Failed to generate JWT token",
                         "Failed to generate JWT token",
+                        headers=CORS_HEADERS
                     )
             timestamp = (
                 datetime.now(timezone.utc)
@@ -614,11 +620,12 @@ async def create_snippet(request: web.Request) -> web.Response:
             )
             inject_scripts_path(snippet)
             generated_snippet = generate_snippet(snippet)
-            return web.Response(text=generated_snippet, content_type="text/html")
+            return web.Response(text=generated_snippet, content_type="text/html", headers=CORS_HEADERS)
         else:
             return invalid_response(
                 "Invalid request body",
                 "Make sure you specify the email, widget type, and root element id.",
+                headers=CORS_HEADERS
             )
 
     return await handle_error(handle_request, request=request)
