@@ -105,8 +105,8 @@ const useChatStore = create<ChatStore>()(
                     isFloating: state.chatType === ChatType.FLOATING,
                 }
             }),
-            
-            
+
+
             setIsFloating: (isFloating: boolean) => set({ isFloating }),
             setMessagesEndRef: (ref: HTMLDivElement | null) =>
                 set({ messagesEndRef: ref }),

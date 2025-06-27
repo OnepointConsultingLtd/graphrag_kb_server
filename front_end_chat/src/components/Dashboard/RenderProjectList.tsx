@@ -1,6 +1,7 @@
 import { FaLightbulb } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
+import useChatStore from "../../context/chatStore";
 import { Project } from "../../model/projectCategory";
 import ChatConfigDialog from "../ChatConfigDialog";
 
@@ -52,9 +53,28 @@ export default function RenderProjectList({
     }))
   );
 
+  const { setSelectedProject } = useChatStore(
+    useShallow((state) => ({
+      setSelectedProject: state.setSelectedProject,
+    }))
+  );
+
   if (!projectList || projectList.length === 0) return null;
 
   const scheme = colors[colorScheme];
+
+  const handleProjectClick = (project: Project) => {
+    const isCurrentlySelected =
+      selectionProject === project.name && selectionPlatform === platform;
+    console.log("Project clicked:", isCurrentlySelected);
+    setSelectionProjectAndPlatform(project.name, platform);
+
+    if (isCurrentlySelected) {
+      setSelectedProject(undefined);
+    } else {
+      setSelectedProject(project);
+    }
+  };
 
   return (
     <div className="mb-8">
@@ -72,9 +92,7 @@ export default function RenderProjectList({
               className={`flex justify-between items-center p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${
                 isSelected ? scheme.selected : "border-transparent"
               }`}
-              onClick={() =>
-                setSelectionProjectAndPlatform(project.name, platform)
-              }
+              onClick={() => handleProjectClick(project)}
             >
               <div className="flex items-center">
                 <div
@@ -103,11 +121,11 @@ export default function RenderProjectList({
 
               {/* Button to chat */}
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering the project selection
                   setIsChatConfigDialogOpen(true);
                 }}
-                // disabled={!selectionProject}
-                className="bg-blue-500  px-4 py-2 rounded-md"
+                className="bg-blue-500 px-4 py-2 rounded-md"
               >
                 <a href={`#`} className="!text-white">
                   Start Chat

@@ -1,34 +1,64 @@
-import React from "react";
+import React, { useState } from "react";
 import { FaCopy } from "react-icons/fa";
+import { useShallow } from "zustand/shallow";
+import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
-import Modal from "./Modal";
+import useProjectSelectionStore from "../../context/projectSelectionStore";
+import { getBaseServer } from "../../lib/server";
+import { Platform } from "../../model/projectCategory";
 import RenderLabel from "./Form/RenderLabel";
+import Modal from "./Modal";
+import SelectSearchEngine from "./SelectSearchEngine";
 
 export default function GenerateSnippetModal() {
   const {
     modalType,
     closeModal,
-    getSelectedProjects,
     email,
     setEmail,
-    widgetType,
-    setWidgetType,
     rootElementId,
     setRootElementId,
     organisationName,
     setOrganisationName,
-    searchType,
-    setSearchType,
-    additionalPromptInstructions,
-    setAdditionalPromptInstructions,
-    isSnippetSubmitting,
-    setIsSnippetSubmitting,
     snippetError,
     setSnippetError,
     generatedSnippet,
+    isSnippetSubmitting,
+    setIsSnippetSubmitting,
     setGeneratedSnippet,
   } = useDashboardStore();
-  const selectedProjects = getSelectedProjects();
+
+  const [widgetType, setWidgetType] = useState<string>("FLOATING_CHAT");
+
+  const { jwt, organisation_name } = useChatStore(
+    useShallow((state) => ({
+      jwt: state.jwt,
+      organisation_name: state.organisation_name,
+    }))
+  );
+
+  const {
+    selectionProject,
+    searchType,
+    selectionPlatform,
+    additionalPromptInstructions,
+    setAdditionalPromptInstructions,
+    setSelectionPlatform,
+  } = useProjectSelectionStore(
+    useShallow((state) => ({
+      selectionProject: state.selectionProject,
+      searchType: state.searchType,
+      selectionPlatform: state.selectionPlatform,
+      additionalPromptInstructions: state.additionalPromptInstructions,
+      setAdditionalPromptInstructions: state.setAdditionalPromptInstructions,
+      setSelectionPlatform: state.setSelectionPlatform,
+    }))
+  );
+
+  console.log("Selection project:", selectionProject);
+  console.log("Search type:", searchType);
+  console.log("Selection platform:", selectionPlatform);
+  console.log("Additional prompt instructions:", additionalPromptInstructions);
 
   const resetForm = () => {
     setGeneratedSnippet(null);
@@ -52,8 +82,7 @@ export default function GenerateSnippetModal() {
     setSnippetError(null);
     setGeneratedSnippet(null);
 
-    const project = selectedProjects[0];
-    if (!project) {
+    if (!selectionProject) {
       setSnippetError("No project selected.");
       setIsSnippetSubmitting(false);
       return;
@@ -63,23 +92,24 @@ export default function GenerateSnippetModal() {
       email,
       widget_type: widgetType,
       root_element_id: rootElementId,
-      jwt: "string",
-      organisation_name: organisationName,
+      jwt: jwt,
+      organisation_name: organisationName || organisation_name,
       project: {
-        name: project.name,
+        name: selectionProject,
         search_type: searchType,
-        platform: project.engine,
+        platform: selectionPlatform,
         additional_prompt_instructions: additionalPromptInstructions,
       },
     };
 
     try {
       const response = await fetch(
-        "http://localhost:9999/protected/snippet/generate_snippet",
+        `${getBaseServer()}/protected/snippet/generate_snippet`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${jwt}`,
           },
           body: JSON.stringify(requestBody),
         }
@@ -87,6 +117,7 @@ export default function GenerateSnippetModal() {
 
       const responseData = await response.json();
 
+      console.log("Response data:", responseData);
       if (!response.ok) {
         throw new Error(
           responseData.description || `HTTP error! status: ${response.status}`
@@ -116,7 +147,7 @@ export default function GenerateSnippetModal() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="input input-bordered w-full bg-gray-700"
+              className="input input-primary w-full bg-gray-700"
               required
             />
           </div>
@@ -126,7 +157,7 @@ export default function GenerateSnippetModal() {
               type="text"
               value={organisationName}
               onChange={(e) => setOrganisationName(e.target.value)}
-              className="input input-bordered w-full bg-gray-700"
+              className="input input-primary w-full bg-gray-700"
               required
             />
           </div>
@@ -135,22 +166,15 @@ export default function GenerateSnippetModal() {
             <select
               value={widgetType}
               onChange={(e) => setWidgetType(e.target.value)}
-              className="select select-bordered w-full bg-gray-700"
+              className="select select-primary  w-full bg-gray-700"
             >
               <option>FLOATING_CHAT</option>
-              <option>FULL_PAGE</option>
+              <option>CHAT</option>
             </select>
           </div>
           <div>
             <RenderLabel label="Search Type" />
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="select select-bordered w-full bg-gray-700"
-            >
-              <option>local</option>
-              <option>global</option>
-            </select>
+            <SelectSearchEngine />
           </div>
         </div>
 
@@ -161,17 +185,29 @@ export default function GenerateSnippetModal() {
             type="text"
             value={rootElementId}
             onChange={(e) => setRootElementId(e.target.value)}
-            className="input input-bordered w-full bg-gray-700"
+            className="input input-primary w-full bg-gray-700"
           />
         </div>
+
+        {/* Platform */}
+        <div>
+          <RenderLabel label="Platform" />
+          <p className="text-gray-400 ">{selectionPlatform}</p>
+        </div>
+
         {/* Additional Instructions */}
         <div>
           <RenderLabel label="Additional Instructions" />
           <textarea
+            name="additionalPromptInstructions"
+            id="additionalPromptInstructions"
             value={additionalPromptInstructions}
+            placeholder="Enter additional instructions"
             onChange={(e) => setAdditionalPromptInstructions(e.target.value)}
-            className="textarea textarea-bordered w-full bg-gray-700"
-          />
+            className="textarea textarea-primary w-full bg-gray-700 text-gray-400 min-h-[100px]"
+          >
+            {additionalPromptInstructions || "No additional instructions"}
+          </textarea>
         </div>
 
         {/* Error */}
@@ -210,7 +246,7 @@ export default function GenerateSnippetModal() {
           <button
             type="submit"
             className="btn btn-secondary"
-            disabled={isSnippetSubmitting || selectedProjects.length === 0}
+            disabled={isSnippetSubmitting || !selectionProject}
           >
             {isSnippetSubmitting ? (
               <span className="loading loading-spinner"></span>

@@ -1,12 +1,19 @@
 import { FaCode, FaEdit, FaPlus, FaTrash } from "react-icons/fa";
+import { useShallow } from "zustand/shallow";
 import { useDashboardStore } from "../../context/dashboardStore";
+import useProjectSelectionStore from "../../context/projectSelectionStore";
 
 export default function Actions() {
-  const { openModal, selectedProjects } = useDashboardStore();
-  const isActionDisabled = selectedProjects.length === 0;
+  const { openModal } = useDashboardStore();
+  const { selectionProject } = useProjectSelectionStore(
+    useShallow((state) => ({
+      selectionProject: state.selectionProject,
+    }))
+  );
+  const isActionDisabled = !selectionProject;
 
   const handleUpdateProjects = () => {
-    console.log("Update projects:", selectedProjects);
+    console.log("Update projects:", selectionProject);
   };
 
   return (
