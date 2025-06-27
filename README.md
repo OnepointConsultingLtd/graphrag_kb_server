@@ -262,6 +262,8 @@ SERVER_BASE_URL
 ADMIN_TOKEN_NAME can be your name
 ADMIN_TOKEN_EMAIL can be your email
 
+SERVER_BASE_URL is used for snippet generation and should be your domain, ie. something like e.g. http(s)://<domain>(:<port>)
+
 As well as the volume for this path:
 
 ```

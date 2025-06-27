@@ -6,6 +6,7 @@ import os
 
 import numpy as np
 
+
 from lightrag import LightRAG, QueryParam
 
 from lightrag.operate import (
@@ -178,11 +179,9 @@ async def prepare_context(
 
     # Handle cache
     args_hash = compute_args_hash(query_param.mode, query, cache_type="query")
-    cached_response, quantized, min_val, max_val = await handle_cache(
+    _, quantized, min_val, max_val = await handle_cache(
         hashing_kv, args_hash, query, query_param.mode, cache_type="query"
     )
-    if cached_response is not None:
-        return cached_response
 
     hl_keywords, ll_keywords = await get_keywords_from_query(
         query, query_param, global_config, hashing_kv
@@ -191,7 +190,16 @@ async def prepare_context(
     # Handle empty keywords
     if hl_keywords == [] and ll_keywords == []:
         logger.warning("low_level_keywords and high_level_keywords is empty")
-        return PROMPTS["fail_response"]
+        return (
+            PROMPTS["fail_response"],
+            args_hash,
+            quantized,
+            min_val,
+            max_val,
+            [],
+            [],
+            [],
+        )
     if ll_keywords == [] and query_param.mode in ["local", "hybrid"]:
         logger.warning(
             "low_level_keywords is empty, switching from %s mode to global mode",
@@ -460,6 +468,8 @@ async def extended_kg_query(
         stream=query_param.stream,
         structured_output=structured_output,
     )
+    expand_files(response)
+
     if isinstance(response, str) and len(response) > len(sys_prompt):
         response = (
             response.replace(sys_prompt, "")
@@ -488,3 +498,32 @@ async def extended_kg_query(
         )
 
     return response
+
+
+def expand_files(response: dict[str, any] | str) -> None:
+    """
+    Expands file references in the response by splitting files separated by '<SEP>'.
+    
+    Args:
+        response: Response dictionary containing references or a string (ignored)
+    
+    Modifies:
+        response: Updates the 'references' key with expanded file references
+    """
+    final_references = {}
+    if isinstance(response, str) or "references" not in response:
+        return
+    for reference in response["references"]:
+        file_content = reference.get("file", None)
+        type = reference.get("type", None)
+        main_keyword = reference.get("main_keyword", None)
+        if file_content is not None:
+            files = file_content.split("<SEP>")
+            for file in files:
+                final_references[file] = {
+                    "file": file,
+                    "type": type,
+                    "main_keyword": main_keyword,
+                }
+
+    response["references"] = list(final_references.values())

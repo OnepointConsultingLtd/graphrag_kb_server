@@ -21,6 +21,9 @@ class MatchQuery(BaseModel):
     entities_limit: int = Field(
         default=10, description="The maximum number of entities to return"
     )
+    score_threshold: float = Field(
+        default=0.5, description="The score threshold for the entities"
+    )
 
 
 class MatchOutput(BaseModel):
@@ -28,6 +31,7 @@ class MatchOutput(BaseModel):
         default={},
         description="A dictionary of entity names and their corresponding entity lists",
     )
+    model_config = {"frozen": True}  # Pydantic v2 config syntax
 
 
 if __name__ == "__main__":

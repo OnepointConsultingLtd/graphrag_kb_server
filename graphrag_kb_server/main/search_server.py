@@ -114,6 +114,10 @@ async def match_entities(request: web.Request) -> web.Response:
                 type: integer
                 description: The number of entities to return
                 default: 50
+              score_threshold:
+                type: number
+                description: The score threshold for the entities
+                default: 0.5
     responses:
       '200':
         description: The response to the query in either json, html or markdown format
@@ -129,7 +133,9 @@ async def match_entities(request: web.Request) -> web.Response:
 
     async def handle_expansion(project_dir: Path, body: dict) -> web.Response:
         match_query = MatchQuery(**body)
-        match_output = await match_entities_with_lightrag(project_dir, match_query)
+        match_output = await match_entities_with_lightrag(
+            project_dir, match_query, score_threshold=match_query.score_threshold
+        )
         return web.json_response(match_output.model_dump(), headers=CORS_HEADERS)
 
     return await handle_error(
@@ -242,7 +248,7 @@ async def relevant_documents(request: web.Request) -> web.Response:
     async def handle_search_documents(project_dir: Path, body: dict) -> web.Response:
         search_query = DocumentSearchQuery(**body)
         search_result = await retrieve_relevant_documents(project_dir, search_query)
-        return web.json_response(search_result.model_dump())
+        return web.json_response(search_result.model_dump(), headers=CORS_HEADERS)
 
     return await handle_error(
         await _handle_request(request, handle_search_documents), request=request

@@ -55,7 +55,10 @@ export function extractEntityContext(response: QueryResponse, limit: number = 10
 
 export function extractSimpleReferences(response: StructuredQueryResponse): Reference[] {
     const references = response.references
-    return references?.map(r => {
+    if(!references) {
+        return []
+    }
+    return references.map(r => {
         return {
             file: r.file.split("/").pop() || "",
             path: r.file,

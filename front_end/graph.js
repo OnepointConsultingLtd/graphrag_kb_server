@@ -130,7 +130,7 @@ export function createGraph(nodes, edges, incomingDegrees, outGoingDegrees) {
         if (params.nodes.length > 0) {
             const clickedNodeId = params.nodes[0];
             const token = getToken();
-            if (token) {
+            if (token && !clickedNodeId.includes(ENTITY_PREFIX)) {
                 const nodeDetails = document.getElementById('node-details');
                 getCommunityDetails(clickedNodeId, token).then(json => {
                     const summary = json['summary'];

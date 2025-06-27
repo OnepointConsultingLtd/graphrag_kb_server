@@ -13,7 +13,7 @@ from aiohttp.web import Response
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters, QueryParameters
 from graphrag_kb_server.model.context import Search
-
+from graphrag_kb_server.model.project import IndexingStatus
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.service.query import rag_local, rag_global
@@ -27,6 +27,8 @@ from graphrag_kb_server.service.project import (
     clear_rag,
     acreate_graph_rag,
     list_projects as project_listing,
+    write_project_file,
+    single_project_status,
 )
 from graphrag_kb_server.service.zip_service import zip_input
 from graphrag_kb_server.model.web_format import Format
@@ -245,6 +247,10 @@ async def upload_index(request: web.Request) -> web.Response:
                 type: boolean
                 default: false
                 description: Whether to update the existing index or create a new one. Works only for LightRAG and has no effect on GraphRAG.
+              asynchronous:
+                type: boolean
+                default: false
+                description: Whether to run the indexing asynchronously.
     responses:
       "200":
         description: Successful upload
@@ -262,15 +268,27 @@ async def upload_index(request: web.Request) -> web.Response:
               message: "No file was uploaded"
     """
 
+    async def handle_project_indexing(
+        project_folder: Path, incremental: bool, engine: Engine, saved_files: list[Path]
+    ):
+        match engine:
+            case Engine.GRAPHRAG:
+                await acreate_graph_rag(True, project_folder)
+            case Engine.LIGHTRAG:
+                await acreate_lightrag(
+                    True, project_folder, incremental, saved_files[0]
+                )
+        write_project_file(project_folder, IndexingStatus.COMPLETED)
+
     async def handle_request(request: web.Request) -> web.Response:
         saved_files = []
         body = request["data"]["body"]
         file = body["file"]
         file_name = body["file_name"]
-        project = body["project"]
         engine_str = body["engine"]
         incremental = body["incremental"]
-        project = re.sub(r"[^a-z0-9_-]", "_", project.lower())
+        asynchronous = body["asynchronous"]
+        sanitized_project_name = re.sub(r"[^a-z0-9_-]", "_", body["project"].lower())
         match extract_tennant_folder(request):
             case Response() as error_response:
                 return error_response
@@ -281,41 +299,60 @@ async def upload_index(request: web.Request) -> web.Response:
                     saved_files.append(uploaded_file)
                 if (file_length := len(saved_files)) == 0:
                     return web.json_response(
-                        {"error": "No file was uploaded"}, status=400
+                        {"error": "No file was uploaded"},
+                        status=400,
+                        headers=CORS_HEADERS,
                     )
                 # Extract the zip file
                 engine = find_engine(engine_str)
                 project_folder: Path = find_project_folder(
-                    tennant_folder, engine, project
+                    tennant_folder, engine, sanitized_project_name
                 )
                 if engine == Engine.GRAPHRAG or not incremental:
                     clear_rag(project_folder)
                 try:
                     unzip_file(project_folder, saved_files[0])
+                    write_project_file(project_folder, IndexingStatus.IN_PROGRESS)
                 except zipfile.BadZipFile:
+                    write_project_file(project_folder, IndexingStatus.FAILED)
                     return web.json_response(
-                        {"error": "Uploaded file is not a valid zip file"}, status=400
+                        {"error": "Uploaded file is not a valid zip file"},
+                        status=400,
+                        headers=CORS_HEADERS,
                     )
                 except Exception as e:
+                    write_project_file(project_folder, IndexingStatus.FAILED)
                     return web.json_response(
-                        {"error": f"Failed to process uploaded file: {e}"}, status=500
+                        {"error": f"Failed to process uploaded file: {e}"},
+                        status=500,
+                        headers=CORS_HEADERS,
                     )
-                match engine:
-                    case Engine.GRAPHRAG:
-                        await acreate_graph_rag(True, project_folder)
-                    case Engine.LIGHTRAG:
-                        await acreate_lightrag(
-                            True, project_folder, incremental, saved_files[0]
+                if asynchronous:
+                    asyncio.create_task(
+                        handle_project_indexing(
+                            project_folder, incremental, engine, saved_files
                         )
+                    )
+                else:
+                    await handle_project_indexing(
+                        project_folder, incremental, engine, saved_files
+                    )
                 return web.json_response(
                     {
-                        "message": f"{file_length} file{"" if len(saved_files) == 0 else ""} uploaded, extracted and indexed from {project_folder}."
+                        "message": (
+                            f"{file_length} file{"" if len(saved_files) == 0 else ""} uploaded, extracted and indexed from {project_folder}."
+                            if not asynchronous
+                            else "Indexing in progress..."
+                        )
                     },
                     status=200,
+                    headers=CORS_HEADERS,
                 )
             case _:
                 return web.json_response(
-                    {"error": "Could not extract tennant folder."}, status=500
+                    {"error": "Could not extract tennant folder."},
+                    status=500,
+                    headers=CORS_HEADERS,
                 )
 
     return await handle_error(
@@ -768,6 +805,85 @@ async def list_projects(request: web.Request) -> web.Response:
             case Path() as tennant_dir:
                 projects = project_listing(tennant_dir)
                 return web.json_response(projects.model_dump(), headers=CORS_HEADERS)
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.options("/protected/project/status/{engine}/{project_name}")
+async def project_status_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.get("/protected/project/status/{engine}/{project_name}")
+async def project_status(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns the status information of a project
+    tags:
+      - project
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: engine
+        in: path
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag]
+      - name: project_name
+        in: path
+        required: true
+        description: The project name
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Used to return the information about a project.
+        content:
+          application/json:
+            example:
+              project_name: "project_name"
+              indexing_status: "completed"
+              updated_timestamp: "2021-01-01T00:00:00Z"
+              input_files: ["file1.txt", "file2.txt"]
+      '400':
+        description: Bad Request - No project found
+        content:
+          application/json:
+            example:
+              error_code: 1
+              error_name: "No tennant information"
+              error_description: "No tennant information available in request"
+    """
+
+    def _project_not_found(project_dir: Path) -> web.Response:
+        return web.json_response(
+            {"error": f"Project not found: {project_dir}"},
+            status=404,
+            headers=CORS_HEADERS,
+        )
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match extract_tennant_folder(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as tennant_dir:
+                engine = request.match_info.get("engine", None)
+                project_name = request.match_info.get("project_name", None)
+                project_dir = tennant_dir / engine / project_name
+                if not project_dir.exists():
+                    return _project_not_found(project_dir)
+                project = single_project_status(project_dir)
+                if not project:
+                    return _project_not_found(project_dir)
+                return web.json_response(project.model_dump(), headers=CORS_HEADERS)
+            case _:
+                return invalid_response(
+                    "No tennant information",
+                    "No tennant information available in request",
+                )
 
     return await handle_error(handle_request, request=request)
 

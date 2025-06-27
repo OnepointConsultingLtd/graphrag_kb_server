@@ -8,11 +8,22 @@ class GenerationStatus(StrEnum):
     CREATED = "created"
 
 
+class IndexingStatus(StrEnum):
+    UNKNOWN = "unknown"
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class Project(BaseModel):
     name: str = Field(..., description="The name of the project")
-    updated_timestamp: datetime = Field(..., description="When the tennant was created")
+    updated_timestamp: datetime = Field(..., description="When the project was created")
     input_files: list[str] = Field(
         ..., description="The list of file names in this project"
+    )
+    indexing_status: IndexingStatus = Field(
+        default=IndexingStatus.UNKNOWN, description="The status of the indexing"
     )
 
     @field_serializer("updated_timestamp")

@@ -46,6 +46,10 @@ class SummarisationResponse(BaseModel):
         ...,
         description="The relevancy score of the document in the context of the user's interests and the question they are asking (in case the question is provided)",
     )
+    main_keyword: str = Field(
+        ...,
+        description="The main keyword or topic of the reference",
+    )
 
     def get_relevancy_score_points(self) -> int:
         return RELEVANCE_SCORE_POINTS_MAP[self.relevancy_score]
