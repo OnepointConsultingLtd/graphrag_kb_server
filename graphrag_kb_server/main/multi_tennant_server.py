@@ -671,13 +671,21 @@ async def validate_token(request: web.Request) -> web.Response:
     async def handle_request(request: web.Request) -> web.Response:
         token = request.rel_url.query.get("token", None)
         if token is None or token.strip() == "":
-            return invalid_response("Invalid token", "Please specify a valid token", headers=CORS_HEADERS)
+            return invalid_response(
+                "Invalid token", "Please specify a valid token", headers=CORS_HEADERS
+            )
         token_dict = await _validate_token(token)
-        
+
         if token_dict.get("permissions", ["read", "write"]) == ["read", "write"]:
-            return web.json_response({"message": "Token is valid", **token_dict}, headers=CORS_HEADERS)
+            return web.json_response(
+                {"message": "Token is valid", **token_dict}, headers=CORS_HEADERS
+            )
         else:
-            return invalid_response("Invalid token", "Please specify a valid token", status=401, headers=CORS_HEADERS)
-        
+            return invalid_response(
+                "Invalid token",
+                "Please specify a valid token",
+                status=401,
+                headers=CORS_HEADERS,
+            )
 
     return await handle_error(handle_request, request=request)

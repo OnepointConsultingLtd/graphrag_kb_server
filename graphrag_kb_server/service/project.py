@@ -1,10 +1,11 @@
 import shutil
 import re
 import yaml
+import json
 
 from pathlib import Path
 from datetime import datetime
-from typing import Union
+from typing import Union, Final
 
 from collections.abc import AsyncIterable
 from graphrag.index.typing.pipeline_run_result import PipelineRunResult
@@ -21,13 +22,16 @@ from graphrag_kb_server.model.project import (
     ProjectListing,
     EngineProjectListing,
     GenerationStatus,
+    IndexingStatus,
 )
 from graphrag_kb_server.model.engines import Engine
 
 
-ROOT_DIR = Path(cfg.graphrag_root_dir)
-DIR_VECTOR_DB = ROOT_DIR / cfg.vector_db_dir
-INPUT_DIR = ROOT_DIR / "input"
+PROJECT_INFO_FILE: Final = "project.json"
+
+ROOT_DIR: Final = Path(cfg.graphrag_root_dir)
+DIR_VECTOR_DB: Final = ROOT_DIR / cfg.vector_db_dir
+INPUT_DIR: Final = ROOT_DIR / "input"
 
 create_folder_props = {"parents": True, "exist_ok": True}
 
@@ -76,15 +80,33 @@ def _extract_graphrag_projects(tennants_dir: Path) -> ProjectListing:
     return ProjectListing(projects=projects)
 
 
-def add_input_files(f: Path, input_files_dir: Path, projects: list[Project]):
-    input_files = list([p.name for p in input_files_dir.glob("*")])
-    name = f.name
-    updated_timestamp = datetime.fromtimestamp(f.stat().st_mtime)
+def single_project_status(project_dir: Path) -> Project | None:
+    projects: list[Project] = []
+    if not project_dir.exists():
+        return None
+    input_files_dir = project_dir / "input"
+    add_input_files(project_dir, input_files_dir, projects)
+    return projects[0] if len(projects) > 0 else None
+
+
+def add_input_files(project_dir: Path, input_files_dir: Path, projects: list[Project]):
+    input_files = list([p.name for p in input_files_dir.rglob("**/*.txt")])
+    project_file = project_dir / PROJECT_INFO_FILE
+    if project_file.exists():
+        try:
+            project = Project.model_validate_json(project_file.read_text())
+            projects.append(project)
+            return
+        except json.JSONDecodeError:
+            logger.warning(f"Invalid project file: {project_file}")
+    name = project_dir.name
+    updated_timestamp = datetime.fromtimestamp(project_dir.stat().st_mtime)
     projects.append(
         Project(
             name=name,
             updated_timestamp=updated_timestamp,
             input_files=input_files,
+            indexing_status=IndexingStatus.UNKNOWN,
         )
     )
 
@@ -175,3 +197,17 @@ async def acreate_graph_rag(
     input_dir = _prepare_graph_rag(kb_path)
     await index(**prepare_index_args(input_dir.parent))
     return GenerationStatus.CREATED
+
+
+def write_project_file(project_dir: Path, status: IndexingStatus) -> Project:
+    project_name = project_dir.name
+    files = project_dir.rglob("input/**/*.txt")
+    project = Project(
+        name=project_name,
+        updated_timestamp=datetime.now(),
+        indexing_status=status,
+        input_files=[f.as_posix() for f in files],
+    )
+    project_file = project_dir / PROJECT_INFO_FILE
+    project_file.write_text(project.model_dump_json())
+    return project

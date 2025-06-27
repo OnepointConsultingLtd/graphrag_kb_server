@@ -45,7 +45,7 @@ export default function ChatInput() {
       })
         .then((response: QueryResponse) => {
           console.info("response", response);
-          const finalResponse = response?.response?.response;
+          const finalResponse = response?.response?.response ?? response?.response;
           const references = extractSimpleReferences(response?.response);
           addChatMessage({
             id: uuidv4(),

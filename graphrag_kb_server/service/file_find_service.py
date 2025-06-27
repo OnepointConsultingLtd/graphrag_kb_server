@@ -1,13 +1,14 @@
 import re
 import copy
 from pathlib import Path
+from typing import Final
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
 
 
-ORIGINAL_INPUT_FOLDER = "original_input"
-INPUT_FOLDER = "input"
+ORIGINAL_INPUT_FOLDER: Final = "original_input"
+INPUT_FOLDER: Final = "input"
 
 file_conversion_cache = GenericProjectSimpleCache[dict[Path, Path]]()
 

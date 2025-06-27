@@ -54,9 +54,10 @@ export async function getCommunityDetails(id, token) {
 }
 
 export async function getCommunityEntities(id, token) {
+    const project = window.project.replace(/.+?\:+/, "")
     try {
         const response = await fetch(
-            `${BASE_SERVER}/protected/project/topics_network/community_entities/${id}?project=${window.project}`,
+            `${BASE_SERVER}/protected/project/topics_network/community_entities/${id}?project=${project}`,
             createHeaders(token),
         );
         throwError(response);

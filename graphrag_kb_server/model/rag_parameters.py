@@ -16,9 +16,7 @@ class ContextParameters(BaseModel):
     query: str = Field(description="The query fpr which the context is retrieved.")
     project_dir: Path = Field(description="The path of the project.")
     context_size: int = Field(description="The context size in tokens.")
-    model_config = {
-        'frozen': True  # Pydantic v2 config syntax
-    }
+    model_config = {"frozen": True}  # Pydantic v2 config syntax
 
 
 class QueryParameters(BaseModel):
@@ -57,9 +55,7 @@ class QueryParameters(BaseModel):
         default=[],
         description="The chat history.",
     )
-    model_config = {
-        'frozen': True  # Pydantic v2 config syntax
-    }
+    model_config = {"frozen": True}  # Pydantic v2 config syntax
 
 
 def convert_to_lightrag_query_params(

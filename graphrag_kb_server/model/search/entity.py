@@ -33,4 +33,3 @@ class EntityList(BaseModel):
         ...,
         description="A sorted list of entity names ordered by relevance according to the user interests",
     )
-    
