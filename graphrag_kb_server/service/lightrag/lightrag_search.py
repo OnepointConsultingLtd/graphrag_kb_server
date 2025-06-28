@@ -503,10 +503,10 @@ async def extended_kg_query(
 def expand_files(response: dict[str, any] | str) -> None:
     """
     Expands file references in the response by splitting files separated by '<SEP>'.
-    
+
     Args:
         response: Response dictionary containing references or a string (ignored)
-    
+
     Modifies:
         response: Updates the 'references' key with expanded file references
     """

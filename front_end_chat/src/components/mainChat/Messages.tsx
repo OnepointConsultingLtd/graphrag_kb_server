@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 import { ChatMessageType } from "../../model/message";
-import ReferenceDisplay from "../Messages/ReferenceDisplay";
+import ReferenceDisplay from "../messages/ReferenceDisplay";
 import RenderReactMarkdown from "./RenderReactMarkdown";
 import ThinkingIndicator from "./ThinkingIndicator";
 import { ChatType } from "../../lib/chatTypes";

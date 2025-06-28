@@ -8,6 +8,7 @@ import { getBaseServer } from "../../lib/server";
 import RenderLabel from "./Form/RenderLabel";
 import Modal from "./Modal";
 import SelectSearchEngine from "./SelectSearchEngine";
+import { generateSnippet } from "../../lib/apiClient";
 
 export default function GenerateSnippetModal() {
   const {
@@ -113,26 +114,7 @@ export default function GenerateSnippetModal() {
     };
 
     try {
-      const response = await fetch(
-        `${getBaseServer()}/protected/snippet/generate_snippet`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${jwt}`,
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
-
-      const responseData = await response.json();
-
-      console.log("Response data:", responseData);
-      if (!response.ok) {
-        throw new Error(
-          responseData.description || `HTTP error! status: ${response.status}`
-        );
-      }
+      const responseData = await generateSnippet(jwt, requestBody);
 
       setGeneratedSnippet(responseData.snippet);
     } catch (err) {

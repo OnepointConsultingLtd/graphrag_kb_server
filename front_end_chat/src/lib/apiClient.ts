@@ -104,3 +104,46 @@ export async function downloadFile(jwt: string, project: Project, reference: Ref
     }
     return response;
 }
+
+export async function uploadIndex(jwt: string, formData: FormData) {
+    const response = await fetch(`${getBaseServer()}/protected/project/upload_index`, {
+        method: "POST",
+        body: formData,
+        headers: {
+            Authorization: `Bearer ${jwt}`,
+        }
+    });
+
+    if (!response.ok) {
+        const errorData = await response
+            .json()
+            .catch(() => ({ message: "An unknown error occurred." }));
+        throw new Error(
+            errorData.detail || `HTTP error! status: ${response.status}`
+        );
+    }
+}
+
+export async function generateSnippet(jwt: string, requestBody: object) {
+    const response = await fetch(
+        `${getBaseServer()}/protected/snippet/generate_snippet`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwt}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ description: `HTTP error! status: ${response.status}` }));
+        
+        throw new Error(errorData.description || `HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+}

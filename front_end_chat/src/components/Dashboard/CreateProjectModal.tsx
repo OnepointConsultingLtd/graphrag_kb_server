@@ -4,19 +4,22 @@ import { useDashboardStore } from "../../context/dashboardStore";
 import { Engine } from "../../types/types";
 import RenderLabel from "./Form/RenderLabel";
 import Modal from "./Modal";
+import useChatStore from "../../context/chatStore";
+import { useShallow } from "zustand/react/shallow"; 
+import { uploadIndex } from "../../lib/apiClient";
 
 export default function CreateProjectModal() {
   const {
     isModalOpen,
     modalType,
-    closeModal,
-    addProject,
     projectName,
     engine,
     incremental,
     file,
     isSubmitting,
     error,
+    uploadSuccessMessage,
+    closeModal,
     setProjectName,
     setEngine,
     setIncremental,
@@ -24,7 +27,12 @@ export default function CreateProjectModal() {
     setIsSubmitting,
     setError,
     resetCreateProjectForm,
+    setUploadSuccessMessage,
   } = useDashboardStore();
+
+  const { jwt, refreshProjects } = useChatStore(
+    useShallow((state) => ({ jwt: state.jwt, refreshProjects: state.refreshProjects }))
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,6 +56,7 @@ export default function CreateProjectModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    debugger
     if (!file || !projectName) {
       setError("Project name and file are required.");
       return;
@@ -61,24 +70,13 @@ export default function CreateProjectModal() {
     formData.append("project", projectName);
     formData.append("engine", engine);
     formData.append("incremental", String(incremental));
+    formData.append("asynchronous", "true");
 
     try {
-      const response = await fetch("/protected/project/upload_index", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "An unknown error occurred." }));
-        throw new Error(
-          errorData.detail || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      addProject(projectName, engine);
-      handleClose();
+      await uploadIndex(jwt, formData);
+      refreshProjects();
+      setUploadSuccessMessage(`Index (${projectName}) uploaded successfully. Please wait for the index to be ready.`);
+      resetForm();
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -162,6 +160,7 @@ export default function CreateProjectModal() {
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
+        {uploadSuccessMessage && <div className="alert alert-success">{uploadSuccessMessage}</div>}
 
         <div className="modal-action mt-6">
           <button

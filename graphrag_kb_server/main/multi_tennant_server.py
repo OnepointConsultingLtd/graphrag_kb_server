@@ -599,7 +599,7 @@ async def create_snippet(request: web.Request) -> web.Response:
                     return invalid_response(
                         "Failed to generate JWT token",
                         "Failed to generate JWT token",
-                        headers=CORS_HEADERS
+                        headers=CORS_HEADERS,
                     )
             timestamp = (
                 datetime.now(timezone.utc)
@@ -620,12 +620,14 @@ async def create_snippet(request: web.Request) -> web.Response:
             )
             inject_scripts_path(snippet)
             generated_snippet = generate_snippet(snippet)
-            return web.json_response({"snippet": generated_snippet}, headers=CORS_HEADERS)
+            return web.json_response(
+                {"snippet": generated_snippet}, headers=CORS_HEADERS
+            )
         else:
             return invalid_response(
                 "Invalid request body",
                 "Make sure you specify the email, widget type, and root element id.",
-                headers=CORS_HEADERS
+                headers=CORS_HEADERS,
             )
 
     return await handle_error(handle_request, request=request)

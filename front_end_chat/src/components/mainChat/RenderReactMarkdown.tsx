@@ -3,7 +3,7 @@ import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 import type { ChatMessage } from "../../model/message";
 import { ChatMessageType } from "../../model/message";
-import MessageTimestamp from "../Messages/MessageTimestamp";
+import MessageTimestamp from "../messages/MessageTimestamp";
 import CopyButton from "./CopyButton";
 
 async function copyToClipboard(text: string) {

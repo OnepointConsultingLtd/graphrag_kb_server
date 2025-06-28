@@ -41,7 +41,7 @@ export default function Actions() {
         className="btn btn-accent btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50"
       >
         <FaEdit className="mr-2 group-hover:rotate-12 transition-transform" />
-        Update Projects
+        Update Project
       </button>
 
       <button
@@ -49,7 +49,7 @@ export default function Actions() {
         className="btn btn-error btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50"
       >
         <FaTrash className="mr-2 group-hover:animate-bounce" />
-        Delete Projects
+        Delete Project
       </button>
     </div>
   );

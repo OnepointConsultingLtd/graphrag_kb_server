@@ -215,6 +215,11 @@ async def about(request: web.Request) -> web.Response:
 DEFAULT_QUESTION = "What are the main topics?"
 
 
+@routes.options("/protected/project/upload_index")
+async def upload_index_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
 @routes.post("/protected/project/upload_index")
 async def upload_index(request: web.Request) -> web.Response:
     """

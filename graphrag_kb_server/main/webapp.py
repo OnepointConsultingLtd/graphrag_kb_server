@@ -27,7 +27,7 @@ FILE_INDEX = "index.html"
 GRAPHRAG_INDEX = (Path(__file__) / f"../../../front_end/dist/{FILE_INDEX}").resolve()
 GRAPHRAG_LINKS = ["/graphrag.htm", "/graphrag.html", "/graphrag"]
 CHAT_INDEX = (Path(__file__) / f"../../../front_end_chat/dist/{FILE_INDEX}").resolve()
-CHAT_LINKS = ["/chat.htm", "/chat.html", "/chat"]
+CHAT_LINKS = ["/chat", "/dashboard", "/login", "/floating-chat"]
 
 for link in [GRAPHRAG_INDEX, CHAT_INDEX]:
     assert (

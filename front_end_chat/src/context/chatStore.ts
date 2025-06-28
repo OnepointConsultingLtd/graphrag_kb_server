@@ -36,6 +36,7 @@ type ChatStore = {
     setCopiedMessageId: (id: string) => void;
     setSelectedProjectAndChatType: (project: Project, chatType: ChatTypeOptions) => void;
     setChatType: (chatType: ChatTypeOptions) => void;
+    refreshProjects: () => void;
 };
 
 const THRESHOLD = 50;
@@ -51,7 +52,11 @@ function initJwt() {
         return window.chatConfig.jwt;
     }
     // Try to extract from localStorage
-    jwt = localStorage.getItem("jwt");
+    const chatStore = localStorage.getItem("chat-store");
+    if(!chatStore) {
+        return "";
+    }
+    jwt = JSON.parse(chatStore).state.jwt;
     if (jwt) {
         return jwt;
     }
@@ -182,6 +187,10 @@ const useChatStore = create<ChatStore>()(
                 setCopiedMessageId: (id: string) => set({ copiedMessageId: id }),
                 setSelectedProjectAndChatType: (selectedProject, chatType) => set({ selectedProject, chatType }),
                 setChatType: (chatType: ChatTypeOptions) => set({ chatType }),
+                refreshProjects: () => set((state) => {
+                    loadInitialProjects(state.jwt)
+                    return { ...state }
+                })
             }
         },
         {

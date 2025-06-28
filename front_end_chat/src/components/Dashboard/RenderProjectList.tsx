@@ -4,6 +4,10 @@ import useProjectSelectionStore from "../../context/projectSelectionStore";
 import useChatStore from "../../context/chatStore";
 import { Platform, SimpleProject, SearchType } from "../../model/projectCategory";
 import ChatConfigDialog from "./ChatConfigDialog";
+import { useEffect } from "react";
+
+// Constants
+const REFRESH_PROJECT_TIMEOUT = 1000 * 60 * 2; // 2 minutes in milliseconds
 
 type RenderProjectListProps = {
   title: string;
@@ -37,7 +41,7 @@ export default function RenderProjectList({
   colorScheme,
   platform,
 }: RenderProjectListProps) {
-  
+
   const {
     selectionProject,
     selectionPlatform,
@@ -54,11 +58,19 @@ export default function RenderProjectList({
     }))
   );
 
-  const { setSelectedProject } = useChatStore(
+  const { setSelectedProject, refreshProjects } = useChatStore(
     useShallow((state) => ({
       setSelectedProject: state.setSelectedProject,
+      refreshProjects: state.refreshProjects,
     }))
   );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshProjects();
+    }, REFRESH_PROJECT_TIMEOUT);
+    return () => clearInterval(interval);
+  }, []);
 
   if (!projectList || projectList.length === 0) return null;
 
@@ -102,7 +114,7 @@ export default function RenderProjectList({
               }`}
               onClick={() => handleProjectClick(project)}
             >
-              <div className="flex items-center">
+              <div className="flex items-center flex-1">
                 <div
                   className={`p-3 rounded-full mr-4 ${
                     isSelected ? "bg-white" : scheme.icon
@@ -112,7 +124,7 @@ export default function RenderProjectList({
                     className={isSelected ? scheme.iconSelected : "text-white"}
                   />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3
                     className={`text-lg font-semibold ${
                       isSelected ? scheme.nameSelected : scheme.name
@@ -121,9 +133,11 @@ export default function RenderProjectList({
                     {project.name}
                   </h3>
 
-                  <p className="text-xs text-gray-500">
-                    Files: {project.input_files?.length || 0}
-                  </p>
+                  <div className="lg:flex flex-row gap-2 text-xs text-gray-500">
+                    <div className="lg:w-16">Files: {project.input_files?.length || 0}</div>
+                    <div className="lg:w-32">Status: {project.indexing_status}</div>
+                    <div className="">Last update: {project.updated_timestamp.toLocaleString().replace(/.\d{4,}$/, "")}</div>
+                  </div>
                 </div>
               </div>
 
