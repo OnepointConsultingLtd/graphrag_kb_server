@@ -10,6 +10,7 @@ from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
 from graphrag_kb_server.model.chat_response import ChatResponse
+from graphrag_kb_server.service.graphrag.prompt_factory import inject_system_prompt_to_query_params
 
 
 async def execute_query(query_params: QueryParameters) -> web.Response:
@@ -21,6 +22,7 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
     )
     match engine:
         case Engine.GRAPHRAG:
+            context_params = inject_system_prompt_to_query_params(query_params)
             match search:
                 case Search.GLOBAL:
                     response = await rag_global(context_params)

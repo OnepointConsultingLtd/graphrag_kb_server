@@ -7,7 +7,7 @@ requires-python = ">=3.12.7,<3.13"
 readme = "README.md"
 license = "MIT"
 dependencies = [
-    "graphrag>=2.2.0,<3",
+    "graphrag>=2.3.0,<3",
     "python-dotenv>=1.0.1,<2",
     "numba==0.59.1",
     "markdown~=3.7",

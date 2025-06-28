@@ -4,7 +4,6 @@ import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
-import { getBaseServer } from "../../lib/server";
 import RenderLabel from "./Form/RenderLabel";
 import Modal from "./Modal";
 import SelectSearchEngine from "./SelectSearchEngine";
