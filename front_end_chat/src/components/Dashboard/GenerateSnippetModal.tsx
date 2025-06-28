@@ -11,7 +11,6 @@ import SelectSearchEngine from "./SelectSearchEngine";
 
 export default function GenerateSnippetModal() {
   const {
-    userData,
     modalType,
     closeModal,
     email,
@@ -28,7 +27,6 @@ export default function GenerateSnippetModal() {
     setGeneratedSnippet,
   } = useDashboardStore(
     useShallow((state) => ({
-      userData: state.userData,
       modalType: state.modalType,
       closeModal: state.closeModal,
       email: state.email,

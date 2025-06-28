@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route } from "react-router-dom";
+import { BrowserRouter, Route } from "react-router-dom";
 import { Routes } from "react-router-dom";
 import "./App.css";
 import PrivateRoute from "./components/PrivateRoute";

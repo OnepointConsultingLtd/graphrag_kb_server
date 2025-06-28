@@ -46,7 +46,7 @@ const useProjectSelectionStore = create<ProjectSelectionStore>((set) => ({
             if (!project) {
                 return { isChatConfigDialogOpen, selectionPlatform: "", selectionProject: "" }
             }
-            return { isChatConfigDialogOpen, selectionPlatform: project.platform, selectionProject: project.name }
+            return { isChatConfigDialogOpen, selectionProject: project.name }
         }),
     setLocalChatType: (localChatType: ChatTypeOptions) => set(() => ({ localChatType })),
     logout: () => set(() => ({ 
