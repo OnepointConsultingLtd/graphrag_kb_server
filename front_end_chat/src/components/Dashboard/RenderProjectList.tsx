@@ -2,12 +2,12 @@ import { FaLightbulb } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 import useChatStore from "../../context/chatStore";
-import { Project } from "../../model/projectCategory";
-import ChatConfigDialog from "../ChatConfigDialog";
+import { Platform, SimpleProject, SearchType } from "../../model/projectCategory";
+import ChatConfigDialog from "./ChatConfigDialog";
 
 type RenderProjectListProps = {
   title: string;
-  projectList: Project[];
+  projectList: SimpleProject[];
   colorScheme: "blue" | "green";
   platform: string;
 };
@@ -37,6 +37,7 @@ export default function RenderProjectList({
   colorScheme,
   platform,
 }: RenderProjectListProps) {
+  
   const {
     selectionProject,
     selectionPlatform,
@@ -63,7 +64,7 @@ export default function RenderProjectList({
 
   const scheme = colors[colorScheme];
 
-  const handleProjectClick = (project: Project) => {
+  const handleProjectClick = (project: SimpleProject) => {
     const isCurrentlySelected =
       selectionProject === project.name && selectionPlatform === platform;
     console.log("Project clicked:", isCurrentlySelected);
@@ -72,7 +73,14 @@ export default function RenderProjectList({
     if (isCurrentlySelected) {
       setSelectedProject(undefined);
     } else {
-      setSelectedProject(project);
+      setSelectedProject({
+        name: project.name,
+        updated_timestamp: project.updated_timestamp,
+        input_files: project.input_files,
+        search_type: SearchType.LOCAL,
+        platform: platform as Platform,
+        additional_prompt_instructions: "",
+      });
     }
   };
 
@@ -80,7 +88,7 @@ export default function RenderProjectList({
     <div className="mb-8">
       <h2 className={`text-xl font-bold ${scheme.title} mb-4`}>{title}</h2>
       <div className="space-y-2">
-        {projectList.map((project: Project, index: number) => {
+        {projectList.map((project: SimpleProject, index: number) => {
           const uniqueId = `${colorScheme}_${project.name}_${index}`;
 
           const isSelected =
@@ -123,7 +131,8 @@ export default function RenderProjectList({
               <button
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent triggering the project selection
-                  setIsChatConfigDialogOpen(true);
+                  handleProjectClick(project)
+                  setIsChatConfigDialogOpen(true, project);
                 }}
                 className="bg-blue-500 px-4 py-2 rounded-md"
               >

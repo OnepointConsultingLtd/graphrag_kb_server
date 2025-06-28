@@ -2,50 +2,46 @@ import { useState } from "react";
 import { FaKey } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "./context/chatStore";
-import { getBaseServer } from "./lib/server";
+import { useNavigate } from "react-router-dom";
+import { UserData } from "./model/userData";
+import { useDashboardStore } from "./context/dashboardStore";
+import { validateToken } from "./lib/apiClient";
 
 export default function Login() {
+
+  const navigate = useNavigate();
+
   const { setJwt } = useChatStore(
     useShallow((state) => ({
       setJwt: state.setJwt,
     }))
   );
 
+  const { setUserData } = useDashboardStore(
+    useShallow((state) => ({
+      setUserData: state.setUserData,
+    }))
+  );
+
   const [errorMessage, setErrorMessage] = useState("");
   const [token, setToken] = useState("");
 
-  const handleTokenValidation = async () => {
+  async function handleTokenValidation() {
     if (!token.trim()) {
-      alert("Please enter a token");
+      setErrorMessage("Please enter a token.");
       return;
     }
 
     try {
-      const response = await fetch(
-        `${getBaseServer()}/token/validate_token?token=${token}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Token validation failed");
-      }
-
-      const data = await response.json();
+      const data = await validateToken(token);
 
       setJwt(token);
-      localStorage.setItem("tokenValidated", "true");
-      localStorage.setItem("userData", JSON.stringify(data));
+      setUserData(data as UserData);
 
       setToken("");
       setErrorMessage("");
 
-      window.location.href = "/dashboard";
+      navigate("/dashboard");
     } catch (error) {
       console.error("Token validation error:", error);
       setErrorMessage("Token validation failed. Please try again.");

@@ -1,0 +1,25 @@
+---
+description: 
+globs: *.tsx,*.ts
+alwaysApply: false
+---
+# React Rules
+
+## Guidelines
+
+* Use types instead of interfaces in Typescript. Only use interfaces only when inheritance is involved
+* Use functions instead of closures when not inlining functions. Avoid creating variables assigned to closures. Use functions instead
+
+## Design Patterns
+
+* 
+
+## Technologies
+
+* Use React
+* Use Zustand for state management
+* Use Typescript
+
+## Folder Structure
+
+

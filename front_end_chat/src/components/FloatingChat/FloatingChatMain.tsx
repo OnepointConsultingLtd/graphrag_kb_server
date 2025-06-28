@@ -4,6 +4,8 @@ import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import ChatInput from "../mainChat/ChatInput";
 import { NewChatButton } from "../mainChat/Header";
+import { ChatType } from "../../lib/chatTypes";
+import { ChatTypeOptions } from "../../types/types";
 import Messages from "../mainChat/Messages";
 
 export default function FloatingChatMain({
@@ -11,17 +13,17 @@ export default function FloatingChatMain({
 }: {
   handleFloatingBtn: () => void;
 }) {
-  const { selectedProject, setIsFloating, organisation_name } = useChatStore(
+  const { selectedProject, setChatType, organisation_name } = useChatStore(
     useShallow((state) => ({
       selectedProject: state.selectedProject,
-      setIsFloating: state.setIsFloating,
+      setChatType: state.setChatType,
       organisation_name: state.organisation_name,
     }))
   );
 
   useEffect(() => {
-    setIsFloating(true);
-  }, [setIsFloating]);
+    setChatType(ChatType.FLOATING as ChatTypeOptions);
+  }, [setChatType]);
 
   return (
     <div className="sm:!h-[calc(100vh-130px)] !h-[calc(100dvh)]  !w-full sm:!w-[436px] bg-white sm:rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col justify-between relative">

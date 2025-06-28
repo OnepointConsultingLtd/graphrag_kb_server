@@ -4,6 +4,8 @@ import { IoMdLogOut } from "react-icons/io";
 import { MdAutorenew } from "react-icons/md";
 import { MdNewLabel } from "react-icons/md";
 import ButtonWrapper from "../Buttons/ButtonWrapper";
+import { useNavigate } from "react-router-dom";
+import useProjectSelectionStore from "../../context/projectSelectionStore";
 
 export function NewChatButton() {
   const clearChatMessages = useChatStore(
@@ -18,14 +20,23 @@ export function NewChatButton() {
 }
 
 export function NewProject() {
+
+  const navigate = useNavigate();
+
   const { newProject } = useChatStore(
     useShallow((state) => ({
       newProject: state.newProject,
     }))
   );
 
+  const { logout: logoutProjectSelection } = useProjectSelectionStore(
+    useShallow((state) => ({ logout: state.logout }))
+  );
+
   const handleNewProject = () => {
     newProject();
+    logoutProjectSelection();
+    navigate("/dashboard");
   };
 
   return (
@@ -36,14 +47,22 @@ export function NewProject() {
 }
 
 function LogoutButton() {
-  const { logout } = useChatStore(
-    useShallow((state) => ({
-      logout: state.logout,
-    }))
+  const navigate = useNavigate();
+
+  const { logout } = useChatStore(useShallow((state) => ({ logout: state.logout })));
+
+  const { logout: logoutProjectSelection } = useProjectSelectionStore(
+    useShallow((state) => ({ logout: state.logout }))
   );
 
+  const handleLogout = () => {
+    logout();
+    logoutProjectSelection();
+    navigate("/login");
+  };
+
   return (
-    <ButtonWrapper onClick={logout} name="Logout">
+    <ButtonWrapper onClick={handleLogout} name="Logout">
       <IoMdLogOut className="text-2xl" />
     </ButtonWrapper>
   );

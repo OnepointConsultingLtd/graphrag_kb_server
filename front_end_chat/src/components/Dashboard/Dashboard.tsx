@@ -1,16 +1,23 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Actions from "./components/Dashboard/Actions";
-import CreateProjectModal from "./components/Dashboard/CreateProjectModal";
-import GenerateSnippetModal from "./components/Dashboard/GenerateSnippetModal";
-import Header from "./components/Dashboard/Header";
-import ProjectList from "./components/Dashboard/ProjectList";
-import UserProfile from "./components/Dashboard/UserProfile";
+import Actions from "./Actions";
+import CreateProjectModal from "./CreateProjectModal";
+import GenerateSnippetModal from "./GenerateSnippetModal";
+import Header from "./Header";
+import ProjectList from "./ProjectList";
+import UserProfile from "./UserProfile";
+import useChatStore from "../../context/chatStore";
+import { useShallow } from "zustand/shallow";
 
 export default function Dashboard() {
+  const { jwt } = useChatStore(
+    useShallow((state) => ({
+      jwt: state.jwt,
+    }))
+  );
   const navigate = useNavigate();
 
-  const isTokenValidated = localStorage.getItem("tokenValidated") === "true";
+  const isTokenValidated = jwt.length > 0;
   const token = localStorage.getItem("chat-store");
 
   useEffect(() => {

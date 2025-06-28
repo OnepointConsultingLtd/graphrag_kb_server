@@ -8,9 +8,26 @@ import { ChatMessageType } from "../model/message";
 function createHeaders(jwt: string) {
     return {
         headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${jwt}`,
         },
     }
+}
+
+export async function validateToken(token: string) {
+    const response = await fetch(
+        `${getBaseServer()}/token/validate_token?token=${token}`,
+        {
+            method: "POST",
+            headers: {
+                ...createHeaders(token).headers
+            }
+        }
+    );
+    if (!response.ok) {
+        throw new Error(`Token validation failed. Error code: ${response.status}. Error: ${response.statusText}`);
+    }
+    return await response.json();
 }
 
 export async function fetchProjects(jwt: string) {
@@ -53,8 +70,7 @@ export async function sendQuery(query: Query) {
         ...createHeaders(jwt),
         method: 'POST',
         headers: {
-            ...createHeaders(jwt).headers,
-            'Content-Type': 'application/json'
+            ...createHeaders(jwt).headers
         },
         body: JSON.stringify({
             "question": question,

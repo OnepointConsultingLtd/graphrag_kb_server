@@ -5,13 +5,13 @@ import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 import { getBaseServer } from "../../lib/server";
-import { Platform } from "../../model/projectCategory";
 import RenderLabel from "./Form/RenderLabel";
 import Modal from "./Modal";
 import SelectSearchEngine from "./SelectSearchEngine";
 
 export default function GenerateSnippetModal() {
   const {
+    userData,
     modalType,
     closeModal,
     email,
@@ -26,7 +26,25 @@ export default function GenerateSnippetModal() {
     isSnippetSubmitting,
     setIsSnippetSubmitting,
     setGeneratedSnippet,
-  } = useDashboardStore();
+  } = useDashboardStore(
+    useShallow((state) => ({
+      userData: state.userData,
+      modalType: state.modalType,
+      closeModal: state.closeModal,
+      email: state.email,
+      setEmail: state.setEmail,
+      setRootElementId: state.setRootElementId,
+      rootElementId: state.rootElementId,
+      organisationName: state.organisationName,
+      setOrganisationName: state.setOrganisationName,
+      snippetError: state.snippetError,
+      setSnippetError: state.setSnippetError,
+      generatedSnippet: state.generatedSnippet,
+      isSnippetSubmitting: state.isSnippetSubmitting,
+      setIsSnippetSubmitting: state.setIsSnippetSubmitting,
+      setGeneratedSnippet: state.setGeneratedSnippet,
+    }))
+  );
 
   const [widgetType, setWidgetType] = useState<string>("FLOATING_CHAT");
 
@@ -43,7 +61,6 @@ export default function GenerateSnippetModal() {
     selectionPlatform,
     additionalPromptInstructions,
     setAdditionalPromptInstructions,
-    setSelectionPlatform,
   } = useProjectSelectionStore(
     useShallow((state) => ({
       selectionProject: state.selectionProject,
@@ -51,14 +68,9 @@ export default function GenerateSnippetModal() {
       selectionPlatform: state.selectionPlatform,
       additionalPromptInstructions: state.additionalPromptInstructions,
       setAdditionalPromptInstructions: state.setAdditionalPromptInstructions,
-      setSelectionPlatform: state.setSelectionPlatform,
     }))
   );
 
-  console.log("Selection project:", selectionProject);
-  console.log("Search type:", searchType);
-  console.log("Selection platform:", selectionPlatform);
-  console.log("Additional prompt instructions:", additionalPromptInstructions);
 
   const resetForm = () => {
     setGeneratedSnippet(null);
@@ -187,6 +199,12 @@ export default function GenerateSnippetModal() {
             onChange={(e) => setRootElementId(e.target.value)}
             className="input input-primary w-full bg-gray-700"
           />
+        </div>
+
+        {/* Project */}
+        <div>
+          <RenderLabel label="Project" />
+          <p className="text-gray-400 ">{selectionProject}</p>
         </div>
 
         {/* Platform */}

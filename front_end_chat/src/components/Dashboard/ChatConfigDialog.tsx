@@ -1,24 +1,21 @@
 import { useShallow } from "zustand/shallow";
-import useChatStore from "../context/chatStore";
-import useProjectSelectionStore from "../context/projectSelectionStore";
-import { ChatType } from "../lib/chatTypes";
-import { Platform, SearchType } from "../model/projectCategory";
-import { ChatTypeOptions } from "../types/types";
-import RenderLabel from "./Dashboard/Form/RenderLabel";
+import useChatStore from "../../context/chatStore";
+import useProjectSelectionStore from "../../context/projectSelectionStore";
+import { ChatType } from "../../lib/chatTypes";
+import { Platform, SearchType } from "../../model/projectCategory";
+import { ChatTypeOptions } from "../../types/types";
+import RenderLabel from "./Form/RenderLabel";
+import { useNavigate } from "react-router-dom";
 
 // TODO: Talk to Gil.
 const ChatTypeSelector = () => {
-  const { chatType, setChatType } = useChatStore(
-    useShallow((state) => ({
-      chatType: state.chatType,
-      setChatType: state.setChatType,
-    }))
-  );
 
-  const { selectionProject, selectionPlatform } = useProjectSelectionStore(
+  const { selectionProject, selectionPlatform, localChatType, setLocalChatType } = useProjectSelectionStore(
     useShallow((state) => ({
       selectionProject: state.selectionProject,
       selectionPlatform: state.selectionPlatform,
+      localChatType: state.localChatType,
+      setLocalChatType: state.setLocalChatType,
     }))
   );
 
@@ -28,22 +25,25 @@ const ChatTypeSelector = () => {
         Chat Type
       </h3>
       <div className="space-y-2">
-        {Object.entries(ChatType).map(([key, value]) => (
-          <label
-            className="flex items-center"
-            key={`${key}-${selectionProject}-${selectionPlatform}`}
-          >
-            <input
-              type="radio"
-              checked={chatType === value}
-              onChange={() => setChatType(value as ChatTypeOptions)}
-              className="mr-2 text-blue-600"
-              value={value}
-            />
-
-            <span className="text-gray-300">{key}</span>
-          </label>
-        ))}
+        {Object.entries(ChatType).map(([key, value]) => {
+          const isChecked = localChatType === value;
+          return (
+            <label
+              className="flex items-center"
+              key={`${key}-${selectionProject}-${selectionPlatform}`}
+            >
+              <input
+                type="radio"
+                checked={isChecked}
+                onChange={() => setLocalChatType(value as ChatTypeOptions)}
+                className="mr-2 text-blue-600"
+                value={value}
+              />
+  
+              <span className="text-gray-300">{key}</span>
+            </label>
+          )
+        })}
       </div>
     </div>
   );
@@ -96,23 +96,25 @@ const AdditionalInstructionsInput = ({
 );
 
 const ActionButtons = ({ onStartChat }: { onStartChat: () => void }) => {
-  const { setIsChatConfigDialogOpen } = useProjectSelectionStore(
+  const { setIsChatConfigDialogOpen, localChatType } = useProjectSelectionStore(
     useShallow((state) => ({
       setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
+      localChatType: state.localChatType,
     }))
   );
 
   return (
     <div className="flex space-x-3 mt-6">
       <button
-        onClick={() => setIsChatConfigDialogOpen(false)}
+        onClick={() => setIsChatConfigDialogOpen(false, null)}
         className="flex-1 cursor-pointer bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
       >
         Cancel
       </button>
       <button
         onClick={onStartChat}
-        className="flex-1 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
+        className="flex-1 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!localChatType}
       >
         Start Chat
       </button>
@@ -121,10 +123,13 @@ const ActionButtons = ({ onStartChat }: { onStartChat: () => void }) => {
 };
 
 export default function ChatConfigDialog() {
-  const { setSelectedProject, chatType } = useChatStore(
+
+  const navigate = useNavigate();
+
+  const { selectedProject, setSelectedProjectAndChatType } = useChatStore(
     useShallow((state) => ({
-      setSelectedProject: state.setSelectedProject,
-      chatType: state.chatType,
+      selectedProject: state.selectedProject,
+      setSelectedProjectAndChatType: state.setSelectedProjectAndChatType,
     }))
   );
 
@@ -134,7 +139,7 @@ export default function ChatConfigDialog() {
     searchType,
     setSearchType,
     selectionProject,
-    selectionPlatform,
+    localChatType,
   } = useProjectSelectionStore(
     useShallow((state) => ({
       additionalPromptInstructions: state.additionalPromptInstructions,
@@ -142,23 +147,22 @@ export default function ChatConfigDialog() {
       searchType: state.searchType,
       setSearchType: state.setSearchType,
       selectionProject: state.selectionProject,
-      selectionPlatform: state.selectionPlatform,
+      localChatType: state.localChatType
     }))
   );
 
-  console.log("selectionProject", selectionProject);
-  const handleStartChat = () => {
-    setSelectedProject({
+  function handleStartChat() {
+    setSelectedProjectAndChatType({
       name: selectionProject,
       updated_timestamp: new Date(),
       input_files: [],
       search_type: searchType,
-      platform: selectionPlatform as Platform,
+      platform: selectedProject?.platform as Platform,
       additional_prompt_instructions: additionalPromptInstructions,
-    });
+    }, localChatType);
 
-    const targetPath = chatType === ChatType.FLOATING ? "/floating-chat" : "/";
-    window.location.href = targetPath;
+    const targetPath = localChatType === ChatType.FLOATING ? "/floating-chat" : "/chat";
+    navigate(targetPath);
   };
 
   return (

@@ -82,7 +82,7 @@ export default function ReferenceDisplay({
 
   return (
     <li className="break-all flex">
-      {reference.type}{" "}
+      <span className="whitespace-nowrap mr-1">{reference.type}{" "}</span>
       <a
         href={reference.url}
         target="_blank"

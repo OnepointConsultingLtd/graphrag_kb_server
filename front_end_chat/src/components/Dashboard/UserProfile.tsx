@@ -9,45 +9,42 @@ import { useState, useEffect } from "react";
 import Loading from "../Loading";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
-
-type UserData = {
-  message: string;
-  sub: string;
-  name: string;
-  iat: number;
-  email: string;
-};
+import { useDashboardStore } from "../../context/dashboardStore";
+import { useNavigate } from "react-router-dom";
+import useProjectSelectionStore from "../../context/projectSelectionStore";
 
 export default function UserProfile() {
-  const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   const { logout } = useChatStore(
     useShallow((state) => ({
       logout: state.logout,
     }))
   );
-  useEffect(() => {
-    const savedUserData = localStorage.getItem("userData");
-    const isTokenValidated = localStorage.getItem("tokenValidated") === "true";
 
-    if (savedUserData && isTokenValidated) {
-      try {
-        const parsedUserData = JSON.parse(savedUserData);
-        setUserData(parsedUserData);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    }
+  const { logout: logoutProjectSelection } = useProjectSelectionStore(
+    useShallow((state) => ({
+      logout: state.logout,
+    }))
+  );
+
+  const { userData, setUserData } = useDashboardStore(
+    useShallow((state) => ({
+      userData: state.userData,
+      setUserData: state.setUserData,
+    }))
+  );
+
+  useEffect(() => {
     setIsLoading(false);
   }, []);
 
   const handleLogout = () => {
     logout();
-    localStorage.removeItem("chat-store");
-    localStorage.removeItem("tokenValidated");
-    localStorage.removeItem("userData");
-    window.location.href = "/login";
+    logoutProjectSelection();
+    setUserData(null);
+    navigate("/login");
   };
 
   if (isLoading) {

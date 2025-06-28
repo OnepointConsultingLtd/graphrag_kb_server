@@ -5,13 +5,15 @@ import { ChatMessageType } from "../../model/message";
 import ReferenceDisplay from "../Messages/ReferenceDisplay";
 import RenderReactMarkdown from "./RenderReactMarkdown";
 import ThinkingIndicator from "./ThinkingIndicator";
+import { ChatType } from "../../lib/chatTypes";
+import { ChatTypeOptions } from "../../types/types";
 
 export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const {
     chatMessages,
-    isFloating,
-    setIsFloating,
+    chatType,
+    setChatType,
     isThinking,
     scrollToBottom,
     
@@ -19,8 +21,8 @@ export default function Messages() {
   } = useChatStore(
     useShallow((state) => ({
       chatMessages: state.chatMessages,
-      isFloating: state.isFloating,
-      setIsFloating: state.setIsFloating,
+      chatType: state.chatType,
+      setChatType: state.setChatType,
       isThinking: state.isThinking,
       scrollToBottom: state.scrollToBottom,
       setMessagesEndRef: state.setMessagesEndRef,
@@ -28,8 +30,8 @@ export default function Messages() {
   );
 
   useEffect(() => {
-    setIsFloating(false);
-  }, [setIsFloating]);
+    setChatType(ChatType.FULL_PAGE as ChatTypeOptions);
+  }, [setChatType]);
 
   useEffect(() => {
     setMessagesEndRef(messagesEndRef.current);
@@ -40,6 +42,8 @@ export default function Messages() {
       scrollToBottom();
     }
   }, [chatMessages, isThinking, scrollToBottom]);
+
+  const isFloating = chatType === ChatType.FLOATING;
 
   return (
     <div className="flex-1 flex-col mb-[4rem]">

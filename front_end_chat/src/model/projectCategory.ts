@@ -16,7 +16,7 @@ export const SearchType = {
 export type Platform = typeof Platform[keyof typeof Platform];
 
 export type Projects = {
-    projects: Project[];
+    projects: SimpleProject[];
 }
 
 export type Project = {
@@ -26,6 +26,13 @@ export type Project = {
     search_type: SearchType;
     platform: Platform;
     additional_prompt_instructions: string;
+}
+
+export type SimpleProject = {
+    name: string;
+    updated_timestamp: Date;
+    input_files: string[];
+    indexing_status: string;
 }
 
 export type ProjectCategories = {
