@@ -243,8 +243,8 @@ export default function GenerateSnippetModal() {
               >
                 <FaCopy />
               </button>
-              <pre>
-                <code>{generatedSnippet}</code>
+              <pre className="overflow-x-auto">
+                <code className="whitespace-pre-wrap">{generatedSnippet}</code>
               </pre>
             </div>
           </div>

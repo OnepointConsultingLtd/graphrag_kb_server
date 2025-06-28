@@ -60,6 +60,7 @@ export type DashboardState = {
 
 	// Selectors
 	getSelectedProjects: () => Project[];
+	logout: () => void;
 }
 
 export const useDashboardStore = create<DashboardState>()(
@@ -73,7 +74,7 @@ export const useDashboardStore = create<DashboardState>()(
 		
 			// Create Project Modal States
 			projectName: "",
-			engine: ENGINES.GRAPHRAG,
+			engine: ENGINES.LIGHTRAG,
 			incremental: false,
 			file: null,
 			isSubmitting: false,
@@ -157,7 +158,9 @@ export const useDashboardStore = create<DashboardState>()(
 				return [];
 			},
 		
-			setProjects: (projects: Project[] | ApiProjectsResponse) => set({ projects })
+			setProjects: (projects: Project[] | ApiProjectsResponse) => set({ projects }),
+
+			logout: () => set({ userData: null, email: "john.doe@gmail.com", projects: [], selectedProjects: [], isModalOpen: false, modalType: null })
 		}),
         {
             name: "dashboard-store",

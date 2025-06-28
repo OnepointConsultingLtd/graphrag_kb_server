@@ -29,10 +29,10 @@ export default function UserProfile() {
     }))
   );
 
-  const { userData, setUserData } = useDashboardStore(
+  const { userData, logout: logoutDashboard } = useDashboardStore(
     useShallow((state) => ({
       userData: state.userData,
-      setUserData: state.setUserData,
+      logout: state.logout,
     }))
   );
 
@@ -43,7 +43,7 @@ export default function UserProfile() {
   const handleLogout = () => {
     logout();
     logoutProjectSelection();
-    setUserData(null);
+    logoutDashboard();
     navigate("/login");
   };
 

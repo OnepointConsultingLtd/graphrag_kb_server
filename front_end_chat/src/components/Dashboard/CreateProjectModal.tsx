@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { ENGINE_OPTIONS } from "../../constants/engines";
+import { ENGINE_OPTIONS, ENGINES } from "../../constants/engines";
 import { useDashboardStore } from "../../context/dashboardStore";
 import { Engine } from "../../types/types";
 import RenderLabel from "./Form/RenderLabel";
@@ -128,7 +128,7 @@ export default function CreateProjectModal() {
           </p>
         </div>
 
-        <div>
+        {engine === ENGINES.LIGHTRAG && <div>
           <RenderLabel label="Incremental Update" />
           <select
             className="select select-bordered w-full bg-gray-700"
@@ -142,7 +142,7 @@ export default function CreateProjectModal() {
             Whether to update the existing index or create a new one. Works only
             for LightRAG.
           </p>
-        </div>
+        </div>}
 
         <div>
           <RenderLabel label="Upload ZIP File" />

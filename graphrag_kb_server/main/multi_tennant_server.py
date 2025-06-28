@@ -620,7 +620,7 @@ async def create_snippet(request: web.Request) -> web.Response:
             )
             inject_scripts_path(snippet)
             generated_snippet = generate_snippet(snippet)
-            return web.Response(text=generated_snippet, content_type="text/html", headers=CORS_HEADERS)
+            return web.json_response({"snippet": generated_snippet}, headers=CORS_HEADERS)
         else:
             return invalid_response(
                 "Invalid request body",
