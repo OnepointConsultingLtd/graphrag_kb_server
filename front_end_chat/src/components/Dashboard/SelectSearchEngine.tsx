@@ -7,22 +7,22 @@ export default function SelectSearchEngine() {
     useShallow((state) => ({
       searchType: state.searchType,
       setSearchType: state.setSearchType,
-    }))
+    })),
   );
 
   return (
     <div>
-    <select
-      className="select select-primary w-full bg-gray-700"
-      value={searchType}
-      onChange={(e) => setSearchType(e.target.value as SearchType)}
-    >
-      {Object.values(SearchType).map((value, index) => (
-        <option key={`${index}-${value}`} value={value}>
-          {value}
-        </option>
-      ))}
-    </select>
+      <select
+        className="select select-primary w-full bg-gray-700"
+        value={searchType}
+        onChange={(e) => setSearchType(e.target.value as SearchType)}
+      >
+        {Object.values(SearchType).map((value, index) => (
+          <option key={`${index}-${value}`} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
       <p className="text-xs text-gray-500 mt-1">
         The type of engine used to run the RAG system.
       </p>

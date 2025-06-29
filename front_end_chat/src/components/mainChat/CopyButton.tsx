@@ -16,7 +16,7 @@ export default function CopyButton({
   const { copiedMessageId } = useChatStore(
     useShallow((state) => ({
       copiedMessageId: state.copiedMessageId,
-    }))
+    })),
   );
   const isActive = copiedMessageId === id;
 

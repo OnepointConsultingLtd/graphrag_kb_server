@@ -20,20 +20,20 @@ export default function UserProfile() {
   const { logout } = useChatStore(
     useShallow((state) => ({
       logout: state.logout,
-    }))
+    })),
   );
 
   const { logout: logoutProjectSelection } = useProjectSelectionStore(
     useShallow((state) => ({
       logout: state.logout,
-    }))
+    })),
   );
 
   const { userData, logout: logoutDashboard } = useDashboardStore(
     useShallow((state) => ({
       userData: state.userData,
       logout: state.logout,
-    }))
+    })),
   );
 
   useEffect(() => {

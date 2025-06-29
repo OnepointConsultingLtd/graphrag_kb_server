@@ -16,7 +16,7 @@ export default function Messages() {
     setChatType,
     isThinking,
     scrollToBottom,
-    
+
     setMessagesEndRef,
   } = useChatStore(
     useShallow((state) => ({
@@ -26,7 +26,7 @@ export default function Messages() {
       isThinking: state.isThinking,
       scrollToBottom: state.scrollToBottom,
       setMessagesEndRef: state.setMessagesEndRef,
-    }))
+    })),
   );
 
   useEffect(() => {
@@ -103,8 +103,8 @@ export default function Messages() {
                           ? "bg-gradient-to-br from-purple-500 to-blue-500 md:max-w-[70%] shadow-lg text-white"
                           : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
                         : isFloating
-                        ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
-                        : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
+                          ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
+                          : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
                     }`}
                   >
                     <RenderReactMarkdown message={message} />

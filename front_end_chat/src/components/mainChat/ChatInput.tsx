@@ -23,7 +23,7 @@ export default function ChatInput() {
       state.jwt,
       state.selectedProject,
       state.chatMessages,
-    ])
+    ]),
   );
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -45,7 +45,8 @@ export default function ChatInput() {
       })
         .then((response: QueryResponse) => {
           console.info("response", response);
-          const finalResponse = response?.response?.response ?? response?.response;
+          const finalResponse =
+            response?.response?.response ?? response?.response;
           const references = extractSimpleReferences(response?.response);
           addChatMessage({
             id: uuidv4(),
@@ -82,7 +83,7 @@ export default function ChatInput() {
       height:
         Math.min(
           baseHeight * 2 - 10 + baseHeight * inputText.split("\n").length,
-          200
+          200,
         ) + "px",
     };
   }, [inputText]);

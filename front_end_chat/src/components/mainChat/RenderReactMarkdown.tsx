@@ -32,7 +32,7 @@ export default function RenderReactMarkdown({
   listItemClassName?: string;
 }) {
   const setCopiedMessageId = useChatStore(
-    useShallow((state) => state.setCopiedMessageId)
+    useShallow((state) => state.setCopiedMessageId),
   );
 
   return (

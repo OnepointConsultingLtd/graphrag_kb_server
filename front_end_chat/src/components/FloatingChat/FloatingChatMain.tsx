@@ -18,7 +18,7 @@ export default function FloatingChatMain({
       selectedProject: state.selectedProject,
       setChatType: state.setChatType,
       organisation_name: state.organisation_name,
-    }))
+    })),
   );
 
   useEffect(() => {

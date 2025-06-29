@@ -10,7 +10,7 @@ export default function PrivateRoute({
   const { jwt } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
-    }))
+    })),
   );
 
   if (!jwt) {

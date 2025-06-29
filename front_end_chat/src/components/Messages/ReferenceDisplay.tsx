@@ -15,7 +15,7 @@ export default function ReferenceDisplay({
       state.jwt,
       state.selectedProject,
       state.setMarkdownDialogueContent,
-    ])
+    ]),
   );
 
   function openReference(e: React.MouseEvent<HTMLAnchorElement>) {
@@ -28,7 +28,7 @@ export default function ReferenceDisplay({
         })
         .catch((error) => {
           setMarkdownDialogueContent(
-            `An error occurred while downloading the file: ${error.message}`
+            `An error occurred while downloading the file: ${error.message}`,
           );
           console.error(error);
         });
@@ -42,7 +42,7 @@ export default function ReferenceDisplay({
         .then((response) => Promise.all([response, response.blob()]))
         .then(([response, blob]) => {
           const contentDisposition = response.headers.get(
-            "Content-Disposition"
+            "Content-Disposition",
           );
           let filename = "downloaded_file";
           if (contentDisposition) {
@@ -73,7 +73,7 @@ export default function ReferenceDisplay({
         })
         .catch((error) => {
           setMarkdownDialogueContent(
-            `An error occurred while downloading the original file: ${error.message}`
+            `An error occurred while downloading the original file: ${error.message}`,
           );
           console.error(error);
         });
@@ -82,7 +82,7 @@ export default function ReferenceDisplay({
 
   return (
     <li className="break-all flex">
-      <span className="whitespace-nowrap mr-1">{reference.type}{" "}</span>
+      <span className="whitespace-nowrap mr-1">{reference.type} </span>
       <a
         href={reference.url}
         target="_blank"

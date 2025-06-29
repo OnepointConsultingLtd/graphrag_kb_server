@@ -10,7 +10,7 @@ export default function MarkdownDialogue() {
     useShallow((state) => [
       state.setIsMarkdownDialogueOpen,
       state.markdownDialogueContent,
-    ])
+    ]),
   );
 
   const handleDialogueClose = () => {

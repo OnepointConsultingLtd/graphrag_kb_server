@@ -7,7 +7,7 @@ export default function ProjectList() {
   const { projects } = useChatStore(
     useShallow((state) => ({
       projects: state.projects,
-    }))
+    })),
   );
 
   return (

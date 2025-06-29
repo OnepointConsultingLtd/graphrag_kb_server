@@ -9,7 +9,7 @@ import useProjectSelectionStore from "../../context/projectSelectionStore";
 
 export function NewChatButton() {
   const clearChatMessages = useChatStore(
-    useShallow((state) => state.clearChatMessages)
+    useShallow((state) => state.clearChatMessages),
   );
 
   return (
@@ -20,17 +20,16 @@ export function NewChatButton() {
 }
 
 export function NewProject() {
-
   const navigate = useNavigate();
 
   const { newProject } = useChatStore(
     useShallow((state) => ({
       newProject: state.newProject,
-    }))
+    })),
   );
 
   const { logout: logoutProjectSelection } = useProjectSelectionStore(
-    useShallow((state) => ({ logout: state.logout }))
+    useShallow((state) => ({ logout: state.logout })),
   );
 
   const handleNewProject = () => {
@@ -49,10 +48,12 @@ export function NewProject() {
 function LogoutButton() {
   const navigate = useNavigate();
 
-  const { logout } = useChatStore(useShallow((state) => ({ logout: state.logout })));
+  const { logout } = useChatStore(
+    useShallow((state) => ({ logout: state.logout })),
+  );
 
   const { logout: logoutProjectSelection } = useProjectSelectionStore(
-    useShallow((state) => ({ logout: state.logout }))
+    useShallow((state) => ({ logout: state.logout })),
   );
 
   const handleLogout = () => {
@@ -72,7 +73,7 @@ function ProjectName() {
   const { selectedProject } = useChatStore(
     useShallow((state) => ({
       selectedProject: state.selectedProject,
-    }))
+    })),
   );
   return (
     <div className="flex items-center space-x-4 pr-4">
@@ -107,7 +108,7 @@ export default function Header() {
   const { chatMessages } = useChatStore(
     useShallow((state) => ({
       chatMessages: state.chatMessages,
-    }))
+    })),
   );
 
   return (

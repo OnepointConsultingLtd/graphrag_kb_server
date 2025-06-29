@@ -9,7 +9,7 @@ export default function Actions() {
   const { selectionProject } = useProjectSelectionStore(
     useShallow((state) => ({
       selectionProject: state.selectionProject,
-    }))
+    })),
   );
   const isActionDisabled = !selectionProject;
 

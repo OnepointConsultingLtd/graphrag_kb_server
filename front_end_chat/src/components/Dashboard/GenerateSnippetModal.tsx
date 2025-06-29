@@ -41,7 +41,7 @@ export default function GenerateSnippetModal() {
       isSnippetSubmitting: state.isSnippetSubmitting,
       setIsSnippetSubmitting: state.setIsSnippetSubmitting,
       setGeneratedSnippet: state.setGeneratedSnippet,
-    }))
+    })),
   );
 
   const [widgetType, setWidgetType] = useState<string>("FLOATING_CHAT");
@@ -50,7 +50,7 @@ export default function GenerateSnippetModal() {
     useShallow((state) => ({
       jwt: state.jwt,
       organisation_name: state.organisation_name,
-    }))
+    })),
   );
 
   const {
@@ -66,9 +66,8 @@ export default function GenerateSnippetModal() {
       selectionPlatform: state.selectionPlatform,
       additionalPromptInstructions: state.additionalPromptInstructions,
       setAdditionalPromptInstructions: state.setAdditionalPromptInstructions,
-    }))
+    })),
   );
-
 
   const resetForm = () => {
     setGeneratedSnippet(null);

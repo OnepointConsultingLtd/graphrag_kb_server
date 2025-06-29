@@ -9,14 +9,18 @@ import { useNavigate } from "react-router-dom";
 
 // TODO: Talk to Gil.
 const ChatTypeSelector = () => {
-
-  const { selectionProject, selectionPlatform, localChatType, setLocalChatType } = useProjectSelectionStore(
+  const {
+    selectionProject,
+    selectionPlatform,
+    localChatType,
+    setLocalChatType,
+  } = useProjectSelectionStore(
     useShallow((state) => ({
       selectionProject: state.selectionProject,
       selectionPlatform: state.selectionPlatform,
       localChatType: state.localChatType,
       setLocalChatType: state.setLocalChatType,
-    }))
+    })),
   );
 
   return (
@@ -39,10 +43,10 @@ const ChatTypeSelector = () => {
                 className="mr-2 text-blue-600"
                 value={value}
               />
-  
+
               <span className="text-gray-300">{key}</span>
             </label>
-          )
+          );
         })}
       </div>
     </div>
@@ -100,7 +104,7 @@ const ActionButtons = ({ onStartChat }: { onStartChat: () => void }) => {
     useShallow((state) => ({
       setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
       localChatType: state.localChatType,
-    }))
+    })),
   );
 
   return (
@@ -123,14 +127,13 @@ const ActionButtons = ({ onStartChat }: { onStartChat: () => void }) => {
 };
 
 export default function ChatConfigDialog() {
-
   const navigate = useNavigate();
 
   const { selectedProject, setSelectedProjectAndChatType } = useChatStore(
     useShallow((state) => ({
       selectedProject: state.selectedProject,
       setSelectedProjectAndChatType: state.setSelectedProjectAndChatType,
-    }))
+    })),
   );
 
   const {
@@ -147,23 +150,27 @@ export default function ChatConfigDialog() {
       searchType: state.searchType,
       setSearchType: state.setSearchType,
       selectionProject: state.selectionProject,
-      localChatType: state.localChatType
-    }))
+      localChatType: state.localChatType,
+    })),
   );
 
   function handleStartChat() {
-    setSelectedProjectAndChatType({
-      name: selectionProject,
-      updated_timestamp: new Date(),
-      input_files: [],
-      search_type: searchType,
-      platform: selectedProject?.platform as Platform,
-      additional_prompt_instructions: additionalPromptInstructions,
-    }, localChatType);
+    setSelectedProjectAndChatType(
+      {
+        name: selectionProject,
+        updated_timestamp: new Date(),
+        input_files: [],
+        search_type: searchType,
+        platform: selectedProject?.platform as Platform,
+        additional_prompt_instructions: additionalPromptInstructions,
+      },
+      localChatType,
+    );
 
-    const targetPath = localChatType === ChatType.FLOATING ? "/floating-chat" : "/chat";
+    const targetPath =
+      localChatType === ChatType.FLOATING ? "/floating-chat" : "/chat";
     navigate(targetPath);
-  };
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

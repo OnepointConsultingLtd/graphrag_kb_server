@@ -10,18 +10,33 @@ import ChatContainer from "./components/mainChat/ChatContainer";
 import { AppComponent } from "./lib/appComponents";
 import ChatRoute from "./components/ChatRoute";
 
-
 function chooseComponent() {
   const widgetType = window.chatConfig?.widgetType;
   switch (widgetType) {
     case AppComponent.FLOATING_CHAT:
-      return <ChatRoute><FloatingChat /></ChatRoute>;
+      return (
+        <ChatRoute>
+          <FloatingChat />
+        </ChatRoute>
+      );
     case AppComponent.CHAT:
-      return <ChatRoute><ChatContainer /></ChatRoute>;
+      return (
+        <ChatRoute>
+          <ChatContainer />
+        </ChatRoute>
+      );
     case AppComponent.DASHBOARD:
-      return <PrivateRoute><Dashboard /></PrivateRoute>;
+      return (
+        <PrivateRoute>
+          <Dashboard />
+        </PrivateRoute>
+      );
     default:
-      return <PrivateRoute><Dashboard /></PrivateRoute>;
+      return (
+        <PrivateRoute>
+          <Dashboard />
+        </PrivateRoute>
+      );
   }
 }
 
@@ -32,10 +47,31 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={chooseComponent()} />
-          <Route path="/floating-chat" element={<ChatRoute><FloatingChat /></ChatRoute>} />
-          <Route path="/chat" element={<ChatRoute><ChatContainer /></ChatRoute>} />
+          <Route
+            path="/floating-chat"
+            element={
+              <ChatRoute>
+                <FloatingChat />
+              </ChatRoute>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <ChatRoute>
+                <ChatContainer />
+              </ChatRoute>
+            }
+          />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
           <Route path="*" element={chooseComponent()} />
         </Routes>
       </BrowserRouter>

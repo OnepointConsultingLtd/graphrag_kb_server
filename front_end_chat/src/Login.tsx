@@ -8,19 +8,18 @@ import { useDashboardStore } from "./context/dashboardStore";
 import { validateToken } from "./lib/apiClient";
 
 export default function Login() {
-
   const navigate = useNavigate();
 
   const { setJwt } = useChatStore(
     useShallow((state) => ({
       setJwt: state.setJwt,
-    }))
+    })),
   );
 
   const { setUserData } = useDashboardStore(
     useShallow((state) => ({
       setUserData: state.setUserData,
-    }))
+    })),
   );
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -46,7 +45,7 @@ export default function Login() {
       console.error("Token validation error:", error);
       setErrorMessage("Token validation failed. Please try again.");
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">

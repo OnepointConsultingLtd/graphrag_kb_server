@@ -11,7 +11,7 @@ const FloatingChat = () => {
   const { displayFloatingChatIntro } = useChatStore(
     useShallow((state) => ({
       displayFloatingChatIntro: state.displayFloatingChatIntro,
-    }))
+    })),
   );
 
   const handleFloatingBtn = () => {

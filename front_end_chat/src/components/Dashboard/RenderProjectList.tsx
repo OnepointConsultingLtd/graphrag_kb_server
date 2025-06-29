@@ -2,7 +2,11 @@ import { FaLightbulb } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 import useChatStore from "../../context/chatStore";
-import { Platform, SimpleProject, SearchType } from "../../model/projectCategory";
+import {
+  Platform,
+  SimpleProject,
+  SearchType,
+} from "../../model/projectCategory";
 import ChatConfigDialog from "./ChatConfigDialog";
 import { useEffect } from "react";
 
@@ -41,7 +45,6 @@ export default function RenderProjectList({
   colorScheme,
   platform,
 }: RenderProjectListProps) {
-
   const {
     selectionProject,
     selectionPlatform,
@@ -55,14 +58,14 @@ export default function RenderProjectList({
       setSelectionProjectAndPlatform: state.setSelectionProjectAndPlatform,
       isChatConfigDialogOpen: state.isChatConfigDialogOpen,
       setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
-    }))
+    })),
   );
 
   const { setSelectedProject, refreshProjects } = useChatStore(
     useShallow((state) => ({
       setSelectedProject: state.setSelectedProject,
       refreshProjects: state.refreshProjects,
-    }))
+    })),
   );
 
   useEffect(() => {
@@ -76,13 +79,13 @@ export default function RenderProjectList({
 
   const scheme = colors[colorScheme];
 
-  const handleProjectClick = (project: SimpleProject) => {
+  const handleProjectClick = (project: SimpleProject, toggle: boolean) => {
+    
     const isCurrentlySelected =
       selectionProject === project.name && selectionPlatform === platform;
     console.log("Project clicked:", isCurrentlySelected);
-    setSelectionProjectAndPlatform(project.name, platform);
-
-    if (isCurrentlySelected) {
+    setSelectionProjectAndPlatform(project.name, platform, toggle);
+    if (isCurrentlySelected && toggle) {
       setSelectedProject(undefined);
     } else {
       setSelectedProject({
@@ -112,7 +115,7 @@ export default function RenderProjectList({
               className={`flex justify-between items-center p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${
                 isSelected ? scheme.selected : "border-transparent"
               }`}
-              onClick={() => handleProjectClick(project)}
+              onClick={() => handleProjectClick(project, true)}
             >
               <div className="flex items-center flex-1">
                 <div
@@ -134,9 +137,18 @@ export default function RenderProjectList({
                   </h3>
 
                   <div className="lg:flex flex-row gap-2 text-xs text-gray-500">
-                    <div className="lg:w-16">Files: {project.input_files?.length || 0}</div>
-                    <div className="lg:w-32">Status: {project.indexing_status}</div>
-                    <div className="">Last update: {project.updated_timestamp.toLocaleString().replace(/.\d{4,}$/, "")}</div>
+                    <div className="lg:w-16">
+                      Files: {project.input_files?.length || 0}
+                    </div>
+                    <div className="lg:w-32">
+                      Status: {project.indexing_status}
+                    </div>
+                    <div className="">
+                      Last update:{" "}
+                      {project.updated_timestamp
+                        .toLocaleString()
+                        .replace(/.\d{4,}$/, "")}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -145,7 +157,7 @@ export default function RenderProjectList({
               <button
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent triggering the project selection
-                  handleProjectClick(project)
+                  handleProjectClick(project, false);
                   setIsChatConfigDialogOpen(true, project);
                 }}
                 className="bg-blue-500 px-4 py-2 rounded-md"

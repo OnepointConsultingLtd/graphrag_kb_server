@@ -18,12 +18,10 @@ declare global {
   }
 }
 
-
-
 createRoot(
-  document.getElementById(window.chatConfig?.rootElementId ?? "root")!
+  document.getElementById(window.chatConfig?.rootElementId ?? "root")!,
 ).render(
   <StrictMode>
     <App />
-  </StrictMode>
+  </StrictMode>,
 );
