@@ -9,7 +9,7 @@ export type DashboardState = {
 	projects: Project[] | ApiProjectsResponse;
 	selectedProjects: string[];
 	isModalOpen: boolean;
-	modalType: ModalType;
+	modalType: ModalType | null;
 
 	// Create Project Modal States
 	projectName: string;
@@ -48,6 +48,7 @@ export type DashboardState = {
 
 	// Modal controls
 	openModal: (type: ModalType) => void;
+	openModalWithProject: (type: ModalType, projectName: string) => void;
 	closeModal: () => void;
 
 	// Create Project Modal Actions
@@ -141,7 +142,8 @@ export const useDashboardStore = create<DashboardState>()(
 			
 			
 				openModal: (type) => set({ modalType: type, isModalOpen: true }),
-				closeModal: () => set({ modalType: null, isModalOpen: false }),
+				openModalWithProject: (type, projectName) => set({ modalType: type, isModalOpen: true, projectName: projectName }),
+				closeModal: () => set({ modalType: null, isModalOpen: false, projectName: "" }),
 			
 			
 				// Reset Create Project Form

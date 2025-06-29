@@ -1,4 +1,3 @@
-
 export type Engine = "graphrag" | "lightrag";
 
 export type Project = {
@@ -28,4 +27,12 @@ export type ApiProjectsResponse = {
 	};
 }
 
-export type ModalType = 'create' | 'snippet' | 'delete' | 'update' | null;
+export enum ModalType {
+	CREATE = 'create',
+	SNIPPET = 'snippet',
+	DELETE = 'delete',
+	UPDATE = 'update'
+}
+
+// Type for nullable modal type
+export type ModalTypeOrNull = ModalType | null;

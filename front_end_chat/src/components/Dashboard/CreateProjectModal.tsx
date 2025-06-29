@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { ENGINE_OPTIONS, ENGINES } from "../../constants/engines";
 import { useDashboardStore } from "../../context/dashboardStore";
-import { Engine } from "../../types/types";
+import { Engine, ModalType } from "../../types/types";
 import RenderLabel from "./Form/RenderLabel";
 import Modal from "./Modal";
 import useChatStore from "../../context/chatStore";
@@ -90,22 +90,24 @@ export default function CreateProjectModal() {
 
   return (
     <Modal
-      isOpen={isModalOpen && modalType === "create"}
-      title="Create New Project"
+      isOpen={isModalOpen && modalType === ModalType.CREATE || modalType === ModalType.UPDATE}
+      title={modalType === ModalType.CREATE ? "Create New Project" : "Update Project"}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="label">
-            <span className="label-text text-white">Project Name</span>
+            <span className="label-text text-white">
+              Project Name
+            </span>
           </label>
-          <input
+          {modalType === ModalType.CREATE ? <input
             type="text"
             placeholder="The name of the project"
             className="input input-bordered w-full bg-gray-700"
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
             required
-          />
+          /> : <div className="text-gray-400">{projectName}</div> }
         </div>
 
         <div>
@@ -115,7 +117,7 @@ export default function CreateProjectModal() {
             value={engine}
             onChange={(e) => setEngine(e.target.value as Engine)}
           >
-            {ENGINE_OPTIONS.map((option) => (
+            {ENGINE_OPTIONS.filter((option) => modalType === ModalType.CREATE ? true : option.value === ENGINES.LIGHTRAG).map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
