@@ -180,18 +180,15 @@ export async function generateSnippet(jwt: string, requestBody: object) {
   return await response.json();
 }
 
-export async function deleteProject(jwt: string, project: Project, engine: string) {
+export async function deleteProject(jwt: string, project: string, engine: string) {
   console.log("checking the project", project);
   try {
     const response = await fetch(
-      `${getBaseServer()}/protected/project/delete_index?project=${project.name}&engine=${engine}`,
-      {
-        method: "DELETE",
-        headers: {
-          ...createHeaders(jwt).headers,
-        },
-      },
+      `${getBaseServer()}/protected/project/delete_index?project=${project}&engine=${engine}`,
+      createHeaders(jwt),
     );
+
+    console.log("response", response);
     if (!response.ok) {
       throw new Error(
         `Failed to delete project. Error code: ${response.status}. Error: ${response.statusText}`,

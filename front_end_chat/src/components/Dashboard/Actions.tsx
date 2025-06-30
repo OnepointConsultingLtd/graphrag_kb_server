@@ -14,18 +14,20 @@ export default function Actions() {
     })),
   );
 
-  console.log("selectionProject", selectionProject);
-
+  
   const { jwt, selectedProject } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
       selectedProject: state.selectedProject,
     })),
   );
-
+  
+  console.log("selectedProject", selectedProject);
 
   const handleDeleteProject = async () => {
-    await deleteProject(jwt, selectionProject, selectedProject?.platform);
+    if (selectedProject) {
+      await deleteProject(jwt, selectedProject.name, selectedProject.platform);
+    }
   }
 
   const isActionDisabled = !selectionProject;
