@@ -1,5 +1,6 @@
 from pathlib import Path
 import time
+import pickle
 from typing import TypeVar, Generic, Dict, Any
 
 from graphrag.query.structured_search.local_search.search import LocalSearch
@@ -32,3 +33,39 @@ class GenericProjectSimpleCache(Generic[T]):
 
 
 local_search_mixed_context_cache = GenericProjectSimpleCache[LocalSearch]()
+
+class PersistentSimpleCache(Generic[T]):
+
+    def __init__(self, key: str):
+        self.key = key
+
+    def _get_cache_file(self, project_dir: Path) -> Path:
+        cache_location = project_dir / "cache"
+        if not cache_location.exists():
+            cache_location.mkdir(parents=True, exist_ok=True)
+        return cache_location / f"{self.key}.pkl"
+
+    def get(self, project_dir: Path) -> T | None:
+        cache_file = self._get_cache_file(project_dir)
+        if cache_file.exists():
+            with open(cache_file, "rb") as f:
+                return pickle.load(f)
+        return None
+
+    def set(self, project_dir: Path, value: T):
+        cache_file = self._get_cache_file(project_dir)
+        with open(cache_file, "wb") as f:
+            pickle.dump(value, f)
+
+    def clear(self, project_dir: Path):
+        cache_file = self._get_cache_file(project_dir)
+        if cache_file.exists():
+            cache_file.unlink()
+
+
+if __name__ == "__main__":
+    cache = PersistentSimpleCache("test")
+    data = {"test": "test"}
+    project_dir = Path("/.")
+    cache.set(project_dir, data)
+    assert data == cache.get(project_dir)

@@ -46,7 +46,6 @@ function App() {
       <MarkdownDialogue />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={chooseComponent()} />
           <Route
             path="/floating-chat"
             element={
