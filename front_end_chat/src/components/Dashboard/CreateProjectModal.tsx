@@ -1,12 +1,12 @@
 import React, { useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { ENGINE_OPTIONS, ENGINES } from "../../constants/engines";
+import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
+import { uploadIndex } from "../../lib/apiClient";
 import { Engine, ModalType } from "../../types/types";
 import RenderLabel from "./Form/RenderLabel";
 import Modal from "./Modal";
-import useChatStore from "../../context/chatStore";
-import { useShallow } from "zustand/react/shallow";
-import { uploadIndex } from "../../lib/apiClient";
 
 export default function CreateProjectModal() {
   const {
@@ -22,7 +22,6 @@ export default function CreateProjectModal() {
     closeModal,
     setProjectName,
     setEngine,
-    setIncremental,
     setFile,
     setIsSubmitting,
     setError,
@@ -36,6 +35,7 @@ export default function CreateProjectModal() {
       refreshProjects: state.refreshProjects,
     })),
   );
+
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,7 +59,6 @@ export default function CreateProjectModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    debugger;
     if (!file || !projectName) {
       setError("Project name and file are required.");
       return;
@@ -143,24 +142,6 @@ export default function CreateProjectModal() {
             The type of engine used to run the RAG system.
           </p>
         </div>
-
-        {engine === ENGINES.LIGHTRAG && (
-          <div>
-            <RenderLabel label="Incremental Update" />
-            <select
-              className="select select-bordered w-full bg-gray-700"
-              value={String(incremental)}
-              onChange={(e) => setIncremental(e.target.value === "true")}
-            >
-              <option value="false">False</option>
-              <option value="true">True</option>
-            </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Whether to update the existing index or create a new one. Works
-              only for LightRAG.
-            </p>
-          </div>
-        )}
 
         <div>
           <RenderLabel label="Upload ZIP File" />
