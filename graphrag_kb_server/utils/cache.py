@@ -62,10 +62,3 @@ class PersistentSimpleCache(Generic[T]):
         if cache_file.exists():
             cache_file.unlink()
 
-
-if __name__ == "__main__":
-    cache = PersistentSimpleCache("test")
-    data = {"test": "test"}
-    project_dir = Path("/.")
-    cache.set(project_dir, data)
-    assert data == cache.get(project_dir)
