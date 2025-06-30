@@ -74,6 +74,8 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     find_community_lightrag,
 )
 from graphrag_kb_server.service.file_find_service import find_original_file
+from graphrag_kb_server.service.topic_generation import generate_topics
+from graphrag_kb_server.model.topics import TopicsRequest
 
 routes = web.RouteTableDef()
 
@@ -615,6 +617,84 @@ async def chat(request: web.Request) -> web.Response:
                             )
                         )
 
+    return await handle_error(handle_request, request=request)
+
+
+@routes.options("/protected/project/topics")
+async def project_topics_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.get("/protected/project/topics")
+async def project_topics(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns the main topics of a project
+    tags:
+      - project
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag]
+      - name: limit
+        in: query
+        required: false
+        description: The number of topics to return
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      - name: add_questions
+        in: query
+        required: false
+        description: Whether to add questions to the topics. Not implemented yet.
+        schema:
+          type: boolean
+          default: false
+      - name: entity_type_filter
+        in: query
+        required: false
+        description: The entity type to filter by. Only used for LightRAG
+        schema:
+          type: string
+          default: category
+    responses:
+      '200':
+        description: Expected response to a valid request
+      '400':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No project found"
+    """
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                engine = find_engine_from_query(request)
+                limit = request.rel_url.query.get("limit", 20)
+                add_questions = request.rel_url.query.get("add_questions", "false") == "true"
+                entity_type_filter = request.rel_url.query.get("entity_type_filter", "category")
+                topics = generate_topics(TopicsRequest(project_dir=project_dir, engine=engine, limit=limit, add_questions=add_questions, entity_type_filter=entity_type_filter))
+                return web.json_response(topics.model_dump(), headers=CORS_HEADERS)
+            case _:
+                return invalid_response("No project found", "No project found")
     return await handle_error(handle_request, request=request)
 
 
@@ -1188,7 +1268,7 @@ async def download_single_file(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
-@routes.get("/protected/project/topics")
+@routes.get("/protected/project/topics_graphrag")
 async def topics(request: web.Request) -> web.Response:
     """
     Optional route description
