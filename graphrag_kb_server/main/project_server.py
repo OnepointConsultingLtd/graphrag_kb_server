@@ -893,6 +893,11 @@ async def project_status(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
+@routes.options("/protected/project/delete_index")
+async def delete_index_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
 @routes.delete("/protected/project/delete_index")
 async def delete_index(request: web.Request) -> web.Response:
     """
@@ -938,8 +943,8 @@ async def delete_index(request: web.Request) -> web.Response:
                 deleted = clear_rag(project_dir)
                 return web.json_response(
                     {
-                        "deleted": deleted,
-                    }
+                        "deleted": deleted
+                    }, headers=CORS_HEADERS
                 )
 
     return await handle_error(handle_request, request=request)

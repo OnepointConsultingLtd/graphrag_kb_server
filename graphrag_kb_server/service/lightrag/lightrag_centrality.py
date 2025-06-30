@@ -15,7 +15,6 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
 lightrag_cache = PersistentSimpleCache[pd.DataFrame]("lightrag_centrality")
 
 
-
 def get_sorted_centrality_scores(
     project_dir: Path,
 ) -> list[tuple[str, str, str, str, float]]:
