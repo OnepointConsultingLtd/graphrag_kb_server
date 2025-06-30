@@ -30,18 +30,9 @@ const useProjectSelectionStore = create<ProjectSelectionStore>((set) => ({
   additionalPromptInstructions: "",
   isChatConfigDialogOpen: false,
   localChatType: null,
-  setSelectionProject: (project: string) =>
-    set(() => {
-      return { selectionProject: project, searchType: SearchType.LOCAL };
-    }),
-  setSearchType: (searchType: SearchType) =>
-    set(() => {
-      return { searchType: searchType };
-    }),
-  setAdditionalPromptInstructions: (additionalPromptInstructions: string) =>
-    set(() => {
-      return { additionalPromptInstructions: additionalPromptInstructions };
-    }),
+  setSelectionProject: (project: string) => set({ selectionProject: project, searchType: SearchType.LOCAL }),
+  setSearchType: (searchType: SearchType) => set({ searchType: searchType }),
+  setAdditionalPromptInstructions: (additionalPromptInstructions: string) => set({ additionalPromptInstructions: additionalPromptInstructions }),
 
   setSelectionProjectAndPlatform: (
     selectionProject: string,
