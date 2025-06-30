@@ -941,11 +941,7 @@ async def delete_index(request: web.Request) -> web.Response:
                 return error_response
             case Path() as project_dir:
                 deleted = clear_rag(project_dir)
-                return web.json_response(
-                    {
-                        "deleted": deleted
-                    }, headers=CORS_HEADERS
-                )
+                return web.json_response({"deleted": deleted}, headers=CORS_HEADERS)
 
     return await handle_error(handle_request, request=request)
 
