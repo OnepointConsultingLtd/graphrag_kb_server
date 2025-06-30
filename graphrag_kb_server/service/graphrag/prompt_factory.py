@@ -2,7 +2,9 @@ from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.model.rag_parameters import ContextParameters
 
 
-def inject_system_prompt_to_query_params(query_params: QueryParameters) -> ContextParameters:
+def inject_system_prompt_to_query_params(
+    query_params: QueryParameters,
+) -> ContextParameters:
     """
     Inject the system prompt to the query parameters.
     """
@@ -18,4 +20,3 @@ Additional Instructions: {system_prompt}
             context_size=context_params.context_size,
         )
     return context_params
-    

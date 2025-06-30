@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import rustworkx as rx
 
-from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
+from graphrag_kb_server.utils.cache import PersistentSimpleCache
 
 from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     create_network_from_project_dir,
@@ -12,7 +12,7 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
 )
 
 # Full day cache
-lightrag_cache = GenericProjectSimpleCache[pd.DataFrame](timeout=3600 * 24)
+lightrag_cache = PersistentSimpleCache[pd.DataFrame]("lightrag_centrality")
 
 
 def get_sorted_centrality_scores(

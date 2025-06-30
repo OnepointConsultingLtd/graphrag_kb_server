@@ -21,7 +21,7 @@ from graphrag_kb_server.model.search.search import (
 )
 from graphrag_kb_server.main.cors import CORS_HEADERS
 
-#
+
 routes = web.RouteTableDef()
 
 

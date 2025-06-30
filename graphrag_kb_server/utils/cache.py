@@ -34,6 +34,7 @@ class GenericProjectSimpleCache(Generic[T]):
 
 local_search_mixed_context_cache = GenericProjectSimpleCache[LocalSearch]()
 
+
 class PersistentSimpleCache(Generic[T]):
 
     def __init__(self, key: str):
@@ -61,11 +62,3 @@ class PersistentSimpleCache(Generic[T]):
         cache_file = self._get_cache_file(project_dir)
         if cache_file.exists():
             cache_file.unlink()
-
-
-if __name__ == "__main__":
-    cache = PersistentSimpleCache("test")
-    data = {"test": "test"}
-    project_dir = Path("/.")
-    cache.set(project_dir, data)
-    assert data == cache.get(project_dir)
