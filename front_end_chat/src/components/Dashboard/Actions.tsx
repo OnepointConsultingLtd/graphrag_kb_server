@@ -6,10 +6,8 @@ import { ModalType } from "../../types/types";
 
 export default function Actions() {
   const { openModal, openModalWithProject } = useDashboardStore();
-  const { selectionProject } = useProjectSelectionStore(
-    useShallow((state) => ({
-      selectionProject: state.selectionProject,
-    })),
+  const selectionProject = useProjectSelectionStore(
+    useShallow((state) => state.selectionProject),
   );
   const isActionDisabled = !selectionProject;
 

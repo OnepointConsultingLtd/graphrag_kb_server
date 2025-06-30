@@ -7,22 +7,25 @@ import { extractSimpleReferences } from "../../lib/referenceExtraction";
 import { ChatMessageType, type QueryResponse } from "../../model/message";
 
 export default function ChatInput() {
-  const [inputText, setInputText] = useState("");
   const [
-    addChatMessage,
-    isThinking,
-    setIsThinking,
+    inputText,
     jwt,
+    isThinking,
     selectedProject,
     chatMessages,
+    addChatMessage,
+    setIsThinking,
+    setInputText,
   ] = useChatStore(
     useShallow((state) => [
-      state.addChatMessage,
-      state.isThinking,
-      state.setIsThinking,
+      state.inputText,
       state.jwt,
+      state.isThinking,
       state.selectedProject,
       state.chatMessages,
+      state.addChatMessage,
+      state.setIsThinking,
+      state.setInputText
     ]),
   );
 
