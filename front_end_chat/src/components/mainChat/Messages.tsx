@@ -9,6 +9,13 @@ import { ChatType } from "../../lib/chatTypes";
 import { ChatTypeOptions } from "../../types/types";
 import { fetchTopics } from "../../lib/apiClient";
 
+function simplifyDescription(description: string) {
+  if (!description) {
+    return "";
+  }
+  return description.split("<SEP>")[0].split(".")[0].substring(0, 200) + " ...";
+}
+
 function ConversationStarter() {
   const {
     jwt,
@@ -62,7 +69,11 @@ function ConversationStarter() {
         {hasTopics && <div 
           className={`grid lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-${chatType === ChatType.FLOATING ? 1 : 3} grid-cols-${chatType === ChatType.FLOATING ? 1 : 2} gap-2`}>
           {topics?.topics.map((topic) => (
-            <button className="btn btn-primary h-18" key={`topic-${topic.name}-${topic.type}`} onClick={() => setInputText(`Tell me more about "${topic.name}"`)}>{topic.name}</button>
+            <button className="btn btn-primary h-18 tooltip"
+              data-tip={chatType === ChatType.FULL_PAGE ? simplifyDescription(topic.description) : undefined}
+              key={`topic-${topic.name}-${topic.type}`}
+              onClick={() => setInputText(`Tell me more about "${topic.name}"`)}
+            >{topic.name}</button>
           ))}
         </div>}
       </div>
@@ -108,7 +119,7 @@ export default function Messages() {
   const isFloating = chatType === ChatType.FLOATING;
 
   return (
-    <div className="flex-1 flex-col mb-[4rem]">
+    <div className="flex-1 flex-col">
       <div className="overflow-y-auto">
         <div className="mx-auto">
           <div
