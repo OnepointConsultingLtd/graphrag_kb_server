@@ -4,7 +4,6 @@ import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 import { ModalType } from "../../types/types";
-import { deleteProject } from "../../lib/apiClient";
 
 export default function Actions() {
   const { openModal, openModalWithProject } = useDashboardStore();
@@ -14,21 +13,12 @@ export default function Actions() {
     })),
   );
 
-  
-  const { jwt, selectedProject } = useChatStore(
+
+  const { selectedProject } = useChatStore(
     useShallow((state) => ({
-      jwt: state.jwt,
       selectedProject: state.selectedProject,
     })),
   );
-  
-  console.log("selectedProject", selectedProject);
-
-  const handleDeleteProject = async () => {
-    if (selectedProject) {
-      await deleteProject(jwt, selectedProject.name, selectedProject.platform);
-    }
-  }
 
   const isActionDisabled = !selectionProject;
   const isGraphrag = selectedProject?.platform === "graphrag";
@@ -51,19 +41,17 @@ export default function Actions() {
         Generate Snippets
       </button>
 
-          <button
-            onClick={() => openModalWithProject(ModalType.UPDATE, selectionProject)}
-            disabled={isActionDisabled || isGraphrag}
-            className="btn btn-accent btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50">
+      <button
+        onClick={() => openModalWithProject(ModalType.UPDATE, selectionProject)}
+        disabled={isActionDisabled || isGraphrag}
+        className="btn btn-accent btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50">
         <FaEdit className="mr-2 group-hover:rotate-12 transition-transform" />
         Update Project
       </button>
-        
-      
 
       <button
+        onClick={() => openModal(ModalType.DELETE)}
         disabled={isActionDisabled}
-        onClick={handleDeleteProject}
         className="btn btn-error btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50"
       >
         <FaTrash className="mr-2 group-hover:animate-bounce" />

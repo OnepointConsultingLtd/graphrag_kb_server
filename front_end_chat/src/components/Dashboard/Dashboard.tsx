@@ -1,5 +1,6 @@
 import Actions from "./Actions";
 import CreateProjectModal from "./CreateProjectModal";
+import DeleteConfirmation from "./DeleteConfirmation";
 import GenerateSnippetModal from "./GenerateSnippetModal";
 import Header from "./Header";
 import ProjectList from "./ProjectList";
@@ -17,6 +18,7 @@ export default function Dashboard() {
 
       <CreateProjectModal />
       <GenerateSnippetModal />
+      <DeleteConfirmation />
     </div>
   );
 }

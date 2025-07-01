@@ -181,14 +181,18 @@ export async function generateSnippet(jwt: string, requestBody: object) {
 }
 
 export async function deleteProject(jwt: string, project: string, engine: string) {
-  console.log("checking the project", project);
   try {
     const response = await fetch(
       `${getBaseServer()}/protected/project/delete_index?project=${project}&engine=${engine}`,
-      createHeaders(jwt),
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwt}`,
+        },
+      },
     );
 
-    console.log("response", response);
     if (!response.ok) {
       throw new Error(
         `Failed to delete project. Error code: ${response.status}. Error: ${response.statusText}`,
