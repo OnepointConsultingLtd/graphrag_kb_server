@@ -97,6 +97,7 @@ class WebsocketConfig:
     websocket_port_str = os.getenv("PORT")
     assert websocket_server is not None, "Please specify the websocket port"
     websocket_port = int(websocket_port_str)
+    websocket_cors_allowed_origins = os.getenv("WEBSOCKET_CORS_ALLOWED_ORIGINS", "*")
 
 
 class JWTConfig:

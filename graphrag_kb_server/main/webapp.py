@@ -1,5 +1,6 @@
 from typing import Tuple, Dict
 from pathlib import Path
+
 import asyncio
 import base64
 from urllib.parse import urlparse
@@ -8,7 +9,7 @@ from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
 from aiohttp import web
 
 from graphrag_kb_server.config import cfg, websocket_cfg
-from graphrag_kb_server.main import all_routes
+from graphrag_kb_server.main import all_routes, sio
 
 from graphrag_kb_server.main.multi_tennant_server import auth_middleware
 from graphrag_kb_server.logger import logger, init_logger
@@ -18,10 +19,10 @@ from graphrag_kb_server.service.jwt_service import (
 )
 from graphrag_kb_server.service.snippet_generation_service import find_chat_assets
 from graphrag_kb_server.main.cors import CORS_HEADERS
+from graphrag_kb_server.main.websocket import *
+
 
 init_logger()
-
-# from graphrag_kb_server.main.websocket import sio
 
 FILE_INDEX = "index.html"
 GRAPHRAG_INDEX = (Path(__file__) / f"../../../front_end/dist/{FILE_INDEX}").resolve()
@@ -109,7 +110,7 @@ def run_server():
     app = web.Application(middlewares=[static_routing_middleware, auth_middleware])
     app.middlewares.append(auth_middleware)
     logger.info("Set up application ...")
-    # sio.attach(app)
+    sio.attach(app)
 
     loop = asyncio.new_event_loop()
     logger.info("Event loop created ...")

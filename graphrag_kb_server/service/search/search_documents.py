@@ -1,5 +1,6 @@
 from pathlib import Path
 import asyncio
+from typing import Coroutine
 
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
@@ -19,28 +20,20 @@ from graphrag_kb_server.model.search.search import (
     SearchResults,
 )
 from graphrag_kb_server.service.google_ai_client import structured_completion
+from graphrag_kb_server.callbacks.callback_support import BaseCallback
 
 DOCUMENT_PATHS_LIMIT = 10
 
 
-async def retrieve_relevant_documents(
-    project_dir: Path, query: DocumentSearchQuery
-) -> SearchResults:
-    """
-    Searches documents that are relevant to the query and summarizes them according to the user's profile and question.
-
-    Args:
-        project_dir: The directory of the project
-        query: The query to search for documents
-
-    Returns:
-        A list of summarization responses with document paths
-    """
-    chat_response = await search_documents(project_dir, query)
+def _extract_references(chat_response: ChatResponse) -> list[tuple[str, str]]:
     document_paths_topics = []
     for reference in chat_response.response["references"][:DOCUMENT_PATHS_LIMIT]:
         docs = reference["file"].split("<SEP>")
         document_paths_topics.append((docs[0], reference["main_keyword"]))
+    return document_paths_topics
+
+
+def _create_summarisation_promises(document_paths_topics: list[tuple[str, str]], project_dir:Path, query: DocumentSearchQuery) -> list[Coroutine]:
     promises = []
     for document_path, _ in document_paths_topics:
         summarisation_request = SummarisationRequestWithDocumentPath(
@@ -51,9 +44,11 @@ async def retrieve_relevant_documents(
         promises.append(
             summarize_document_with_document_path(project_dir, summarisation_request)
         )
+    return promises
+
+
+def _combine_summaries(summaries: list[SummarisationResponse], document_paths_topics: list[tuple[str, str]]) -> list[SummarisationResponseWithDocument]:
     summaries_with_document_paths = []
-    summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
-    # Summarize and score
     for i in range(len(document_paths_topics)):
         summaries_with_document_paths.append(
             SummarisationResponseWithDocument(
@@ -69,6 +64,32 @@ async def retrieve_relevant_documents(
         key=lambda x: x.get_relevancy_score_points(),
         reverse=True,
     )
+    return summaries_with_document_paths
+
+async def retrieve_relevant_documents(
+    project_dir: Path, query: DocumentSearchQuery, callback: BaseCallback = None
+) -> SearchResults:
+    """
+    Searches documents that are relevant to the query and summarizes them according to the user's profile and question.
+
+    Args:
+        project_dir: The directory of the project
+        query: The query to search for documents
+
+    Returns:
+        A list of summarization responses with document paths
+    """
+    if callback is not None:
+        await callback.callback("🔥 Preparing answer...")
+    chat_response = await search_documents(project_dir, query)
+    if callback is not None:
+        await callback.callback(chat_response.response["response"])
+    document_paths_topics = _extract_references(chat_response)
+    if callback is not None:
+        await callback.callback(f"Extracted {len(document_paths_topics)} references")
+    promises = _create_summarisation_promises(document_paths_topics, project_dir, query)
+    summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
+    summaries_with_document_paths = _combine_summaries(summaries, document_paths_topics)
     response = chat_response.response["response"]
     return SearchResults(
         documents=summaries_with_document_paths,
