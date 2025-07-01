@@ -22,6 +22,7 @@ export default function CreateProjectModal() {
     closeModal,
     setProjectName,
     setEngine,
+    setIncremental,
     setFile,
     setIsSubmitting,
     setError,
@@ -30,12 +31,8 @@ export default function CreateProjectModal() {
   } = useDashboardStore();
 
   const { jwt, refreshProjects } = useChatStore(
-    useShallow((state) => ({
-      jwt: state.jwt,
-      refreshProjects: state.refreshProjects,
-    })),
+    useShallow((state) => ({ jwt: state.jwt, refreshProjects: state.refreshProjects }))
   );
-
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,9 +74,7 @@ export default function CreateProjectModal() {
     try {
       await uploadIndex(jwt, formData);
       refreshProjects();
-      setUploadSuccessMessage(
-        `Index (${projectName}) uploaded successfully. Please wait for the index to be ready.`,
-      );
+      setUploadSuccessMessage(`Index (${projectName}) uploaded successfully. Please wait for the index to be ready.`);
       resetForm();
     } catch (err) {
       if (err instanceof Error) {
@@ -94,31 +89,24 @@ export default function CreateProjectModal() {
 
   return (
     <Modal
-      isOpen={
-        (isModalOpen && modalType === ModalType.CREATE) ||
-        modalType === ModalType.UPDATE
-      }
-      title={
-        modalType === ModalType.CREATE ? "Create New Project" : "Update Project"
-      }
+      isOpen={isModalOpen && modalType === ModalType.CREATE || modalType === ModalType.UPDATE}
+      title={modalType === ModalType.CREATE ? "Create New Project" : "Update Project"}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="label">
-            <span className="label-text text-white">Project Name</span>
+            <span className="label-text text-white">
+              Project Name
+            </span>
           </label>
-          {modalType === ModalType.CREATE ? (
-            <input
-              type="text"
-              placeholder="The name of the project"
-              className="input input-bordered w-full bg-gray-700"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              required
-            />
-          ) : (
-            <div className="text-gray-400">{projectName}</div>
-          )}
+          {modalType === ModalType.CREATE ? <input
+            type="text"
+            placeholder="The name of the project"
+            className="input input-bordered w-full bg-gray-700"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            required
+          /> : <div className="text-gray-400">{projectName}</div>}
         </div>
 
         <div>
@@ -128,11 +116,7 @@ export default function CreateProjectModal() {
             value={engine}
             onChange={(e) => setEngine(e.target.value as Engine)}
           >
-            {ENGINE_OPTIONS.filter((option) =>
-              modalType === ModalType.CREATE
-                ? true
-                : option.value === ENGINES.LIGHTRAG,
-            ).map((option) => (
+            {ENGINE_OPTIONS.filter((option) => modalType === ModalType.CREATE ? true : option.value === ENGINES.LIGHTRAG).map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -142,6 +126,22 @@ export default function CreateProjectModal() {
             The type of engine used to run the RAG system.
           </p>
         </div>
+
+        {engine === ENGINES.LIGHTRAG && modalType === ModalType.UPDATE && <div>
+          <RenderLabel label="Incremental Update" />
+          <select
+            className="select select-bordered w-full bg-gray-700"
+            value={String(incremental)}
+            onChange={(e) => setIncremental(e.target.value === "true")}
+          >
+            <option value="false">False</option>
+            <option value="true">True</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Whether to update the existing index or create a new one. Works only
+            for LightRAG.
+          </p>
+        </div>}
 
         <div>
           <RenderLabel label="Upload ZIP File" />
@@ -161,9 +161,7 @@ export default function CreateProjectModal() {
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
-        {uploadSuccessMessage && (
-          <div className="alert alert-success">{uploadSuccessMessage}</div>
-        )}
+        {uploadSuccessMessage && <div className="alert alert-success">{uploadSuccessMessage}</div>}
 
         <div className="modal-action mt-6">
           <button

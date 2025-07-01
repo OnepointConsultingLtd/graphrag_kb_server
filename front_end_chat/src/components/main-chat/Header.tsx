@@ -3,7 +3,7 @@ import useChatStore from "../../context/chatStore";
 import { IoMdLogOut } from "react-icons/io";
 import { MdAutorenew } from "react-icons/md";
 import { MdNewLabel } from "react-icons/md";
-import ButtonWrapper from "../Buttons/ButtonWrapper";
+import ButtonWrapper from "../buttons/ButtonWrapper";
 import { useNavigate } from "react-router-dom";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useShallow } from "zustand/shallow";
-import FloatingChatButton from "./components/FloatingChat/FloatingChatButton";
-import FloatingChatMain from "./components/FloatingChat/FloatingChatMain";
-import FloatingIntro from "./components/FloatingChat/FloatingIntro";
+import FloatingChatButton from "./components/floating-chat/FloatingChatButton";
+import FloatingChatMain from "./components/floating-chat/FloatingChatMain";
+import FloatingIntro from "./components/floating-chat/FloatingIntro";
 import MarkdownDialogue from "./components/MarkdownDialogue";
 import useChatStore from "./context/chatStore";
 

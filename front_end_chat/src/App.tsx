@@ -6,7 +6,7 @@ import MarkdownDialogue from "./components/MarkdownDialogue";
 import Dashboard from "./components/Dashboard/Dashboard";
 import FloatingChat from "./FloatingChat";
 import Login from "./Login";
-import ChatContainer from "./components/mainChat/ChatContainer";
+import ChatContainer from "./components/main-chat/ChatContainer";
 import { AppComponent } from "./lib/appComponents";
 import ChatRoute from "./components/ChatRoute";
 
