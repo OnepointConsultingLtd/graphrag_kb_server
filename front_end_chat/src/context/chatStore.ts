@@ -6,6 +6,7 @@ import { fetchProjects } from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
 import { ChatTypeOptions } from "../types/types";
 import { ChatType } from "../lib/chatTypes";
+import type { Topics } from "../model/topics";
 
 type ChatStore = {
   jwt: string;
@@ -20,6 +21,8 @@ type ChatStore = {
   copiedMessageId: string | null;
   messagesEndRef: HTMLDivElement | null;
   chatType: ChatTypeOptions;
+  topics: Topics | null,
+  inputText: string,
   newProject: () => void;
   setJwt: (jwt: string) => void;
   setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
@@ -40,6 +43,8 @@ type ChatStore = {
   ) => void;
   setChatType: (chatType: ChatTypeOptions) => void;
   refreshProjects: () => void;
+  setTopics: (topics: Topics) => void;
+  setInputText: (inputText: string) => void;
 };
 
 const THRESHOLD = 50;
@@ -115,6 +120,8 @@ const useChatStore = create<ChatStore>()(
         messagesEndRef: null,
         chatType: ChatType.FULL_PAGE as ChatTypeOptions,
         organisation_name: window.chatConfig?.organisation_name ?? "Onepoint",
+        topics: null,
+        inputText: "",
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {
@@ -124,11 +131,11 @@ const useChatStore = create<ChatStore>()(
           }),
         setProjects: (projects: ProjectCategories) => set({ projects }),
         setSelectedProject: (project: Project | undefined) =>
-          set(() => {
-            return {
+          set(() => ({
               selectedProject: project,
-            };
-          }),
+              inputText: "",
+              topics: null,
+            })),
         setMessagesEndRef: (ref: HTMLDivElement | null) =>
           set({ messagesEndRef: ref }),
 
@@ -156,6 +163,8 @@ const useChatStore = create<ChatStore>()(
             chatMessages: [],
             chatType: null,
             copiedMessageId: null,
+            topics: null,
+            inputText: "",
           }),
         newProject: () =>
           set({
@@ -197,6 +206,8 @@ const useChatStore = create<ChatStore>()(
             loadInitialProjects(state.jwt);
             return { ...state };
           }),
+        setTopics: (topics: Topics) => set({ topics }),
+        setInputText: (inputText: string) => set({ inputText }),
       };
     },
     {
@@ -207,6 +218,7 @@ const useChatStore = create<ChatStore>()(
         selectedProject: state.selectedProject,
         chatMessages: state.chatMessages,
         chatType: state.chatType,
+        topics: state.topics,
       }),
     },
   ),

@@ -84,7 +84,10 @@ class SummarisationRequest(AbstractSummarizationRequest):
 
 
 class SummarisationResponse(BaseModel):
-    summary: str = Field(..., description="The summary of the document. You can use markdown to highlight the most important keywords of the summary in bold characters.")
+    summary: str = Field(
+        ...,
+        description="The summary of the document. You can use markdown to highlight the most important keywords of the summary in bold characters.",
+    )
     relevance: str = Field(
         ...,
         description="""An explanation of the relevance of the document in the context of the user's interests and the question they are asking (in case the question is provided)""",

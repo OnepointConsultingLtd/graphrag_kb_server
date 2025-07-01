@@ -7,6 +7,7 @@ from graphrag_kb_server.model.engines import Engine
 
 DEFAULT_TOPIC_LIMIT: Final[int] = 20
 
+
 class Topic(BaseModel):
     name: str = Field(..., description="The name of the topic")
     description: str = Field(..., description="The description of the topic")
@@ -19,7 +20,14 @@ class Topics(BaseModel):
 
 
 class TopicsRequest(BaseModel):
-    limit: int = Field(default=DEFAULT_TOPIC_LIMIT, description="The number of topics to generate")
+    limit: int = Field(
+        default=DEFAULT_TOPIC_LIMIT, description="The number of topics to generate"
+    )
     project_dir: Path = Field(..., description="The project directory")
     engine: Engine = Field(..., description="The engine to use")
-    add_questions: bool = Field(default=False, description="Whether to add questions to the topics")
+    add_questions: bool = Field(
+        default=False, description="Whether to add questions to the topics"
+    )
+    entity_type_filter: str = Field(
+        default="category", description="The entity type to filter by. Only used for LightRAG"
+    )

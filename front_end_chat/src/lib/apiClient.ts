@@ -1,5 +1,6 @@
 import type { Project } from "../model/projectCategory";
 import type { Reference } from "../model/references";
+import type { Topics } from "../model/topics";
 import { getBaseServer } from "./server";
 import type { Query } from "../model/query";
 import type { ChatMessage } from "../model/message";
@@ -12,6 +13,18 @@ function createHeaders(jwt: string) {
       Authorization: `Bearer ${jwt}`,
     },
   };
+}
+
+async function processError(response: Response) {
+  if (!response.ok) {
+    const errorData = await response
+      .json()
+      .catch(() => ({ description: `HTTP error! status: ${response.status}` }));
+
+    throw new Error(
+      errorData.description || `HTTP error! status: ${response.status}`,
+    );
+  }
 }
 
 export async function validateToken(token: string) {
@@ -167,15 +180,7 @@ export async function generateSnippet(jwt: string, requestBody: object) {
     },
   );
 
-  if (!response.ok) {
-    const errorData = await response
-      .json()
-      .catch(() => ({ description: `HTTP error! status: ${response.status}` }));
-
-    throw new Error(
-      errorData.description || `HTTP error! status: ${response.status}`,
-    );
-  }
+  await processError(response);
 
   return await response.json();
 }
@@ -202,4 +207,21 @@ export async function deleteProject(jwt: string, project: string, engine: string
   } catch (error: unknown) {
     throw new Error(`Failed to delete project. Error: ${error}`);
   }
+}
+
+export async function fetchTopics(jwt: string, project: Project): Promise<Topics> {
+  const params = new URLSearchParams();
+  params.set("project", project.name);
+  params.set("engine", project.platform);
+  params.set("limit", "12");
+  params.set("add_questions", "false");
+  params.set("entity_type_filter", "category");
+  const response = await fetch(
+    `${getBaseServer()}/protected/project/topics?${params.toString()}`,
+    createHeaders(jwt),
+  );
+
+  await processError(response);
+
+  return await response.json() as Topics;
 }
