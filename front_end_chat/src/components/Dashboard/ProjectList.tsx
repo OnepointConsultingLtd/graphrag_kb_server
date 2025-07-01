@@ -1,7 +1,7 @@
 import { FaLightbulb } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
-import RenderProjectList from "../Dashboard/RenderProjectList";
+import RenderProjectList from "../dashboard/RenderProjectList";
 
 export default function ProjectList() {
   const { projects } = useChatStore(

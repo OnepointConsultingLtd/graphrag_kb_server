@@ -1,9 +1,11 @@
 import Actions from "./Actions";
+import UserProfile from "./UserProfile";
 import CreateProjectModal from "./CreateProjectModal";
-import GenerateSnippetModal from "./GenerateSnippetModal";
 import Header from "./Header";
 import ProjectList from "./ProjectList";
-import UserProfile from "./UserProfile";
+import DeleteConfirmation from "./DeleteConfirmation";
+import GenerateSnippetModal from "./GenerateSnippetModal";
+
 
 export default function Dashboard() {
   return (
@@ -17,6 +19,7 @@ export default function Dashboard() {
 
       <CreateProjectModal />
       <GenerateSnippetModal />
+      <DeleteConfirmation />
     </div>
   );
 }

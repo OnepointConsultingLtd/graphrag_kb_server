@@ -185,6 +185,30 @@ export async function generateSnippet(jwt: string, requestBody: object) {
   return await response.json();
 }
 
+export async function deleteProject(jwt: string, project: string, engine: string) {
+  try {
+    const response = await fetch(
+      `${getBaseServer()}/protected/project/delete_index?project=${project}&engine=${engine}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwt}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to delete project. Error code: ${response.status}. Error: ${response.statusText}`,
+      );
+    }
+    return await response.json();
+  } catch (error: unknown) {
+    throw new Error(`Failed to delete project. Error: ${error}`);
+  }
+}
+
 export async function fetchTopics(jwt: string, project: Project): Promise<Topics> {
   const params = new URLSearchParams();
   params.set("project", project.name);

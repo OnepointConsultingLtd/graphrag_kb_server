@@ -1,14 +1,13 @@
-import { BrowserRouter, Route } from "react-router-dom";
-import { Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
-import PrivateRoute from "./components/PrivateRoute";
-import MarkdownDialogue from "./components/MarkdownDialogue";
-import Dashboard from "./components/Dashboard/Dashboard";
 import FloatingChat from "./FloatingChat";
 import Login from "./Login";
-import ChatContainer from "./components/mainChat/ChatContainer";
-import { AppComponent } from "./lib/appComponents";
 import ChatRoute from "./components/ChatRoute";
+import MarkdownDialogue from "./components/MarkdownDialogue";
+import PrivateRoute from "./components/PrivateRoute";
+import Dashboard from "./components/dashboard/Dashboard";
+import ChatContainer from "./components/main-chat/ChatContainer";
+import { AppComponent } from "./lib/appComponents";
 
 function chooseComponent() {
   const widgetType = window.chatConfig?.widgetType;

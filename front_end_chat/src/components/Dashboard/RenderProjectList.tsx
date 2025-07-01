@@ -7,8 +7,8 @@ import {
   SimpleProject,
   SearchType,
 } from "../../model/projectCategory";
-import ChatConfigDialog from "./ChatConfigDialog";
 import { useEffect } from "react";
+import ChatConfigDialog from "../dashboard/ChatConfigDialog";
 
 // Constants
 const REFRESH_PROJECT_TIMEOUT = 1000 * 60 * 2; // 2 minutes in milliseconds
@@ -80,10 +80,12 @@ export default function RenderProjectList({
   const scheme = colors[colorScheme];
 
   const handleProjectClick = (project: SimpleProject, toggle: boolean) => {
+    if (project.indexing_status === "in_progress") {
+      return;
+    }
     
     const isCurrentlySelected =
       selectionProject === project.name && selectionPlatform === platform;
-    console.log("Project clicked:", isCurrentlySelected);
     setSelectionProjectAndPlatform(project.name, platform, toggle);
     if (isCurrentlySelected && toggle) {
       setSelectedProject(undefined);
@@ -108,14 +110,19 @@ export default function RenderProjectList({
 
           const isSelected =
             selectionProject === project.name && selectionPlatform === platform;
+          const isIndexing = project.indexing_status === "in_progress";
 
           return (
             <div
               key={uniqueId}
-              className={`flex justify-between items-center p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${
+              className={`flex justify-between items-center p-4 rounded-lg transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${
                 isSelected ? scheme.selected : "border-transparent"
+              } ${
+                isIndexing 
+                  ? "cursor-not-allowed opacity-60" 
+                  : "cursor-pointer hover:bg-gray-700"
               }`}
-              onClick={() => handleProjectClick(project, true)}
+              onClick={() => !isIndexing && handleProjectClick(project, true)}
             >
               <div className="flex items-center flex-1">
                 <div
@@ -154,18 +161,21 @@ export default function RenderProjectList({
               </div>
 
               {/* Button to chat */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent triggering the project selection
-                  handleProjectClick(project, false);
-                  setIsChatConfigDialogOpen(true, project);
-                }}
+              {!isIndexing && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering the project selection
+                    handleProjectClick(project, false);
+                    setIsChatConfigDialogOpen(true, project);
+                  }}
+                
                 className="bg-blue-500 px-4 py-2 rounded-md"
               >
                 <a href={`#`} className="!text-white">
                   Start Chat
                 </a>
-              </button>
+                </button>
+              )}
             </div>
           );
         })}

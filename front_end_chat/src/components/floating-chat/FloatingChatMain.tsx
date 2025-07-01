@@ -2,11 +2,11 @@ import { useEffect } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
-import ChatInput from "../mainChat/ChatInput";
-import { NewChatButton } from "../mainChat/Header";
+import ChatInput from "../main-chat/ChatInput";
+import { NewChatButton } from "../main-chat/Header";
 import { ChatType } from "../../lib/chatTypes";
 import { ChatTypeOptions } from "../../types/types";
-import Messages from "../mainChat/Messages";
+import Messages from "../main-chat/Messages";
 
 export default function FloatingChatMain({
   handleFloatingBtn,

@@ -1,7 +1,7 @@
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../context/chatStore";
 import { ChatMessageType } from "../model/message";
-import RenderReactMarkdown from "./mainChat/RenderReactMarkdown";
+import RenderReactMarkdown from "./main-chat/RenderReactMarkdown";
 
 export const MARKDOWN_DIALOGUE_ID = "markdown-dialogue";
 

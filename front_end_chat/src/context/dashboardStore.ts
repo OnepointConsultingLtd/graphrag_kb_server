@@ -22,8 +22,12 @@ export type DashboardState = {
   incremental: boolean;
   file: File | null;
   isSubmitting: boolean;
-  error: string | null;
   uploadSuccessMessage: string | null;
+
+  // Message States
+  success: string | null;
+  error: string | null;
+
 
   // Generate Snippet Modal States
   email: string;
@@ -64,13 +68,16 @@ export type DashboardState = {
   setIncremental: (incremental: boolean) => void;
   setFile: (file: File | null) => void;
   setIsSubmitting: (isSubmitting: boolean) => void;
-  setError: (error: string | null) => void;
   setUploadSuccessMessage: (uploadSuccessMessage: string | null) => void;
   resetCreateProjectForm: () => void;
 
   // Selectors
   getSelectedProjects: () => Project[];
   logout: () => void;
+
+  // Message States
+  setSuccess: (success: string | null) => void;
+  setError: (error: string | null) => void;
 };
 
 export const useDashboardStore = create<DashboardState>()(
@@ -89,8 +96,11 @@ export const useDashboardStore = create<DashboardState>()(
         incremental: false,
         file: null,
         isSubmitting: false,
-        error: null,
         uploadSuccessMessage: null,
+
+        // Message States
+        success: null,
+        error: null,
 
         // Generate Snippet Modal States
         email: "john.doe@gmail.com",
@@ -125,7 +135,12 @@ export const useDashboardStore = create<DashboardState>()(
         setIncremental: (incremental) => set({ incremental }),
         setFile: (file) => set({ file }),
         setIsSubmitting: (isSubmitting) => set({ isSubmitting }),
+
+        // Message States
+        setSuccess: (success) => set({ success }),
         setError: (error) => set({ error }),
+
+
         setUploadSuccessMessage: (uploadSuccessMessage) =>
           set({ uploadSuccessMessage }),
 
@@ -154,11 +169,28 @@ export const useDashboardStore = create<DashboardState>()(
           }));
         },
 
-        openModal: (type) => set({ modalType: type, isModalOpen: true }),
+        openModal: (type) => set({
+          modalType: type,
+          isModalOpen: true,
+          success: null,
+          error: null
+        }),
         openModalWithProject: (type, projectName) =>
-          set({ modalType: type, isModalOpen: true, projectName: projectName }),
+          set({
+            modalType: type,
+            isModalOpen: true,
+            projectName: projectName,
+            success: null,
+            error: null
+          }),
         closeModal: () =>
-          set({ modalType: null, isModalOpen: false, projectName: "" }),
+          set({
+            modalType: null,
+            isModalOpen: false,
+            projectName: "",
+            success: null,
+            error: null
+          }),
 
         // Reset Create Project Form
         resetCreateProjectForm: () =>
@@ -195,8 +227,9 @@ export const useDashboardStore = create<DashboardState>()(
             incremental: false,
             file: null,
             isSubmitting: false,
-            error: null,
             uploadSuccessMessage: null,
+            success: null,
+            error: null,
           }),
       };
     },
