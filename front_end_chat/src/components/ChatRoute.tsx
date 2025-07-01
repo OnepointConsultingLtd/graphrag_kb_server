@@ -1,7 +1,7 @@
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../context/chatStore";
 import Login from "../Login";
-import Dashboard from "./Dashboard/Dashboard";
+import Dashboard from "./dashboard/Dashboard";
 
 export default function ChatRoute({ children }: { children: React.ReactNode }) {
   const { jwt, selectedProject, chatType } = useChatStore(
