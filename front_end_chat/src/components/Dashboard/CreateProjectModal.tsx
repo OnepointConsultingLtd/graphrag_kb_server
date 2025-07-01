@@ -5,8 +5,8 @@ import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import { uploadIndex } from "../../lib/apiClient";
 import { Engine, ModalType } from "../../types/types";
-import RenderLabel from "../dashboard/Form/RenderLabel";
-import Modal from "../dashboard/Modal";
+import RenderLabel from "./Form/RenderLabel";
+import Modal from "./Modal";
 
 export default function CreateProjectModal() {
   const {

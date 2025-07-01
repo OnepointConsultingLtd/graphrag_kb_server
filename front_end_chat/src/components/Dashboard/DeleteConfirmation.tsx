@@ -26,10 +26,11 @@ export default function DeleteConfirmation() {
 		})),
 	);
 	
-	const { selectionProject, selectionPlatform } = useProjectSelectionStore(
+	const { selectionProject, selectionPlatform, setSelectionProject } = useProjectSelectionStore(
 		useShallow((state) => ({
 			selectionProject: state.selectionProject,
 			selectionPlatform: state.selectionPlatform,
+			setSelectionProject: state.setSelectionProject,
 		})),
 	);
 
@@ -54,6 +55,7 @@ export default function DeleteConfirmation() {
 			await refreshProjects();
 			
 			setTimeout(() => {
+				setSelectionProject("");
 				closeModal();
 				setSuccess(null);
 			}, 1500);

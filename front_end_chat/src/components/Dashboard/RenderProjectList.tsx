@@ -8,7 +8,7 @@ import {
   SearchType,
 } from "../../model/projectCategory";
 import { useEffect } from "react";
-import ChatConfigDialog from "../dashboard/ChatConfigDialog";
+import ChatConfigDialog from "./ChatConfigDialog";
 
 // Constants
 const REFRESH_PROJECT_TIMEOUT = 1000 * 60 * 2; // 2 minutes in milliseconds
