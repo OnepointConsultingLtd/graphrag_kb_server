@@ -7,8 +7,8 @@ import { ChatTypeOptions } from "../../types/types";
 import RenderLabel from "./Form/RenderLabel";
 import { useNavigate } from "react-router-dom";
 
-// TODO: Talk to Gil.
-const ChatTypeSelector = () => {
+
+function ChatTypeSelector() {
   const {
     selectionProject,
     selectionPlatform,

@@ -36,25 +36,26 @@ export default function CreateProjectModal() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
     }
   };
 
-  const resetForm = () => {
+  function resetForm() {
     resetCreateProjectForm();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const handleClose = () => {
+  function handleClose() {
     resetForm();
     closeModal();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
+    debugger
     e.preventDefault();
     if (!file || !projectName) {
       setError("Project name and file are required.");
