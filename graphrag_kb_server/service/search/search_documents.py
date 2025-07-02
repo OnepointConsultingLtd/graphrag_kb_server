@@ -33,7 +33,11 @@ def _extract_references(chat_response: ChatResponse) -> list[tuple[str, str]]:
     return document_paths_topics
 
 
-def _create_summarisation_promises(document_paths_topics: list[tuple[str, str]], project_dir:Path, query: DocumentSearchQuery) -> list[Coroutine]:
+def _create_summarisation_promises(
+    document_paths_topics: list[tuple[str, str]],
+    project_dir: Path,
+    query: DocumentSearchQuery,
+) -> list[Coroutine]:
     promises = []
     for document_path, _ in document_paths_topics:
         summarisation_request = SummarisationRequestWithDocumentPath(
@@ -47,7 +51,9 @@ def _create_summarisation_promises(document_paths_topics: list[tuple[str, str]],
     return promises
 
 
-def _combine_summaries(summaries: list[SummarisationResponse], document_paths_topics: list[tuple[str, str]]) -> list[SummarisationResponseWithDocument]:
+def _combine_summaries(
+    summaries: list[SummarisationResponse], document_paths_topics: list[tuple[str, str]]
+) -> list[SummarisationResponseWithDocument]:
     summaries_with_document_paths = []
     for i in range(len(document_paths_topics)):
         summaries_with_document_paths.append(
@@ -65,6 +71,7 @@ def _combine_summaries(summaries: list[SummarisationResponse], document_paths_to
         reverse=True,
     )
     return summaries_with_document_paths
+
 
 async def retrieve_relevant_documents(
     project_dir: Path, query: DocumentSearchQuery, callback: BaseCallback = None

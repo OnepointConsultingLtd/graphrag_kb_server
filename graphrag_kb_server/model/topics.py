@@ -29,5 +29,6 @@ class TopicsRequest(BaseModel):
         default=False, description="Whether to add questions to the topics"
     )
     entity_type_filter: str = Field(
-        default="category", description="The entity type to filter by. Only used for LightRAG"
+        default="category",
+        description="The entity type to filter by. Only used for LightRAG",
     )

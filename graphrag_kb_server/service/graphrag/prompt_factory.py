@@ -1,5 +1,8 @@
 from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.model.rag_parameters import ContextParameters
+from graphrag.query.context_builder.conversation_history import (
+    ConversationHistory,
+)
 
 
 def inject_system_prompt_to_query_params(
@@ -20,3 +23,14 @@ Additional Instructions: {system_prompt}
             context_size=context_params.context_size,
         )
     return context_params
+
+
+def create_conversation_history(
+    query_params: QueryParameters,
+) -> ConversationHistory | None:
+    """
+    Create a conversation history from the query parameters.
+    """
+    if query_params.chat_history and len(query_params.chat_history) > 0:
+        return ConversationHistory.from_list(query_params.chat_history)
+    return None

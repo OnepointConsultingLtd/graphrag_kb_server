@@ -27,11 +27,11 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
             context_params = inject_system_prompt_to_query_params(query_params)
             match search:
                 case Search.GLOBAL:
-                    response = await rag_global(context_params)
+                    response = await rag_global(query_params)
                 case Search.DRIFT:
                     response = await rag_drift(context_params)
                 case _:
-                    response = await rag_local(context_params)
+                    response = await rag_local(query_params)
             chat_response = ChatResponse(
                 question=context_params.query,
                 response=response,

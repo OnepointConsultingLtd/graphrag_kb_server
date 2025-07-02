@@ -16,7 +16,7 @@ from graphrag_kb_server.model.context import Search
 from graphrag_kb_server.model.project import IndexingStatus
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
-from graphrag_kb_server.service.query import rag_local, rag_global
+from graphrag_kb_server.service.query import rag_local_simple
 from graphrag_kb_server.service.query import (
     rag_local_build_context,
     rag_global_build_context,
@@ -189,12 +189,7 @@ async def about(request: web.Request) -> web.Response:
                         )
                         match engine:
                             case Engine.GRAPHRAG:
-                                promise = (
-                                    rag_local
-                                    if search == Search.LOCAL.value
-                                    else rag_global
-                                )
-                                response = await promise(search_params)
+                                response = await rag_local_simple(search_params)
                             case Engine.LIGHTRAG:
                                 query_params = QueryParameters(
                                     format=Format.HTML.value,
@@ -682,6 +677,7 @@ async def project_topics(request: web.Request) -> web.Response:
               status: "error"
               message: "No project found"
     """
+
     async def handle_request(request: web.Request) -> web.Response:
         match match_process_dir(request):
             case Response() as error_response:
@@ -689,12 +685,25 @@ async def project_topics(request: web.Request) -> web.Response:
             case Path() as project_dir:
                 engine = find_engine_from_query(request)
                 limit = request.rel_url.query.get("limit", 20)
-                add_questions = request.rel_url.query.get("add_questions", "false") == "true"
-                entity_type_filter = request.rel_url.query.get("entity_type_filter", "category")
-                topics = generate_topics(TopicsRequest(project_dir=project_dir, engine=engine, limit=limit, add_questions=add_questions, entity_type_filter=entity_type_filter))
+                add_questions = (
+                    request.rel_url.query.get("add_questions", "false") == "true"
+                )
+                entity_type_filter = request.rel_url.query.get(
+                    "entity_type_filter", "category"
+                )
+                topics = generate_topics(
+                    TopicsRequest(
+                        project_dir=project_dir,
+                        engine=engine,
+                        limit=limit,
+                        add_questions=add_questions,
+                        entity_type_filter=entity_type_filter,
+                    )
+                )
                 return web.json_response(topics.model_dump(), headers=CORS_HEADERS)
             case _:
                 return invalid_response("No project found", "No project found")
+
     return await handle_error(handle_request, request=request)
 
 

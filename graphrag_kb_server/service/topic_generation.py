@@ -45,7 +45,9 @@ def _generate_topics_graphrag(topics_request: TopicsRequest) -> Topics:
 def _generate_topics_lightrag(topics_request: TopicsRequest) -> Topics:
     centrality_scores = get_sorted_centrality_scores_as_pd(topics_request.project_dir)
     if topics_request.entity_type_filter != "":
-        centrality_scores = centrality_scores[centrality_scores["entity_type"] == topics_request.entity_type_filter]
+        centrality_scores = centrality_scores[
+            centrality_scores["entity_type"] == topics_request.entity_type_filter
+        ]
     topics = [
         Topic(
             name=row["entity_id"],

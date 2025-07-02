@@ -5,7 +5,7 @@ from graphrag_kb_server.service.query import (
     prepare_vector_store,
     load_project_data,
     build_local_context_builder,
-    rag_local,
+    rag_local_simple,
 )
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.rag_parameters import ContextParameters
@@ -55,5 +55,5 @@ def test_rag_local(project_directory: Path):
         project_dir=project_directory,
         context_size=cfg.local_context_max_tokens,
     )
-    response = asyncio.run(rag_local(context_params))
+    response = asyncio.run(rag_local_simple(context_params))
     assert response is not None, "There is no responses"

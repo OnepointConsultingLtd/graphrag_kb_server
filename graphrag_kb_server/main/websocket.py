@@ -11,7 +11,10 @@ from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.callbacks.callback_support import BaseCallback
-from graphrag_kb_server.service.search.search_documents import retrieve_relevant_documents
+from graphrag_kb_server.service.search.search_documents import (
+    retrieve_relevant_documents,
+)
+
 
 class Command(StrEnum):
     START_SESSION = "start_session"
@@ -39,6 +42,7 @@ async def connect(sid: str, environ):
         to=sid,
     )
 
+
 @sio.event
 async def start_session(sid: str, environ):
     # logger.info(f"Client connected: {sio}")
@@ -58,7 +62,9 @@ async def relevant_documents(sid: str, token: str, project: str, document_query:
         project_dir = find_project_folder(tennant_folder, Engine.LIGHTRAG, project)
         document_search_query = DocumentSearchQuery(**json.loads(document_query))
         callback = WebsocketCallback(sid)
-        response = await retrieve_relevant_documents(project_dir, document_search_query, callback)
+        response = await retrieve_relevant_documents(
+            project_dir, document_search_query, callback
+        )
         await sio.emit(Command.RESPONSE, response.model_dump_json(), to=sid)
     except Exception as e:
         err_msg = f"Errors: {e}. Please try again."

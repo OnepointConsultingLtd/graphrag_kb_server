@@ -10,7 +10,7 @@ from .linkedin_server import routes as linkedin_routes
 
 sio = socketio.AsyncServer(
     async_mode="aiohttp",
-    cors_allowed_origins=websocket_cfg.websocket_cors_allowed_origins
+    cors_allowed_origins=websocket_cfg.websocket_cors_allowed_origins,
 )
 
 all_routes = [tennant_routes, server_routes, pdf_routes, search_routes, linkedin_routes]

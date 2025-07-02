@@ -5,6 +5,11 @@ import json
 import pandas as pd
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
+from graphrag_kb_server.model.rag_parameters import QueryParameters
+from graphrag_kb_server.service.graphrag.prompt_factory import (
+    inject_system_prompt_to_query_params,
+    create_conversation_history,
+)
 
 from graphrag.data_model.entity import Entity
 from graphrag.index.operations.summarize_communities.typing import CommunityReport
@@ -18,6 +23,9 @@ from graphrag.query.indexer_adapters import (
     read_indexer_report_embeddings,
 )
 
+from graphrag.query.context_builder.conversation_history import (
+    ConversationHistory,
+)
 from graphrag.language_model.providers.fnllm.models import OpenAIEmbeddingFNLLM
 from graphrag.query.context_builder.entity_extraction import EntityVectorStoreKey
 from graphrag.vector_stores.lancedb import LanceDBVectorStore
@@ -368,15 +376,32 @@ async def rag_drift(context_parameters: ContextParameters) -> str:
     return "Could not fetch content"
 
 
-async def rag_local(context_parameters: ContextParameters) -> str:
+def __create_search_params(
+    query_params: QueryParameters,
+) -> tuple[ContextParameters, ConversationHistory | None]:
+    context_parameters = inject_system_prompt_to_query_params(query_params)
+    conversation_history = create_conversation_history(query_params)
+    return context_parameters, conversation_history
+
+
+async def rag_local(query_params: QueryParameters) -> str:
+    context_parameters, conversation_history = __create_search_params(query_params)
+    return await rag_local_simple(context_parameters, conversation_history)
+
+
+async def rag_local_simple(
+    context_parameters: ContextParameters,
+    conversation_history: ConversationHistory | None = None,
+) -> str:
     search_engine = prepare_local_search(context_parameters)
-    result = await search_engine.search(context_parameters.query)
+    result = await search_engine.search(context_parameters.query, conversation_history)
     return result.response
 
 
-async def rag_global(context_parameters: ContextParameters) -> str:
+async def rag_global(query_params: QueryParameters) -> str:
+    context_parameters, conversation_history = __create_search_params(query_params)
     search_engine = prepare_global_search(context_parameters)
-    result = await search_engine.search(context_parameters.query)
+    result = await search_engine.search(context_parameters.query, conversation_history)
     return result.response
 
 
