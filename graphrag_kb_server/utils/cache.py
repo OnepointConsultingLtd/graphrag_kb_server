@@ -6,7 +6,7 @@ from typing import TypeVar, Generic, Dict, Any
 from graphrag.query.structured_search.local_search.search import LocalSearch
 
 T = TypeVar("T")
-
+U = TypeVar("U")
 
 class GenericProjectSimpleCache(Generic[T]):
 
@@ -27,6 +27,29 @@ class GenericProjectSimpleCache(Generic[T]):
 
     def set(self, project_dir: Path, value: T):
         self.cache[project_dir.as_posix()] = {
+            "value": value,
+            "timestamp": time.time(),
+        }
+
+
+class GenericSimpleCache(Generic[T, U]):
+
+    def __init__(self, timeout: int = 3600):
+        self.cache: Dict[U, Dict[str, Any]] = {}
+        self.timeout = timeout
+
+    def get(self, key: U) -> T | None:
+        if key in self.cache:
+            entry = self.cache[key]
+            if time.time() - entry["timestamp"] < self.timeout:
+                return entry["value"]
+            else:
+                # Delete entry if it has expired
+                del self.cache[key]
+        return None
+
+    def set(self, key: U, value: T):
+        self.cache[key] = {
             "value": value,
             "timestamp": time.time(),
         }

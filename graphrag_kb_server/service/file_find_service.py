@@ -27,10 +27,7 @@ def create_conversion_map(project_dir: Path) -> dict[str, str]:
         return {}
     conversion_map = {}
     for original_file in original_file_path.glob("**/*"):
-        if (
-            original_file.is_file()
-            and original_file.suffix not in EXCLUDED_EXTENSIONS
-        ):
+        if original_file.is_file() and original_file.suffix not in EXCLUDED_EXTENSIONS:
             copy_path = copy.copy(original_file)
             for suffix in [".txt", FINAL_SUFFIX]:
                 copy_path = copy_path.parent / f"{convert_file_name(copy_path)}{suffix}"

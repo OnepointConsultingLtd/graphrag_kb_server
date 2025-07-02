@@ -280,7 +280,7 @@ async def upload_index(request: web.Request) -> web.Response:
             write_project_file(project_folder, IndexingStatus.IN_PROGRESS)
         except zipfile.BadZipFile:
             write_project_file(project_folder, IndexingStatus.FAILED)
-            logger.error(f"Uploaded file is not a valid zip file")
+            logger.error("Uploaded file is not a valid zip file")
             return
         except Exception as e:
             write_project_file(project_folder, IndexingStatus.FAILED)
@@ -326,7 +326,7 @@ async def upload_index(request: web.Request) -> web.Response:
                 )
                 if engine == Engine.GRAPHRAG or not incremental:
                     clear_rag(project_folder)
-                
+
                 if asynchronous:
                     asyncio.create_task(
                         handle_project_indexing(

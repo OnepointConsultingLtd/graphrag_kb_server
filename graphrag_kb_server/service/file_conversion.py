@@ -8,6 +8,7 @@ from graphrag_kb_server.logger import logger
 
 FINAL_SUFFIX = "_final.txt"
 
+
 async def convert_pdf_to_markdown(local_pdf: Path) -> Path:
     process_result = await convert_single_file(local_pdf)
     if len(process_result.exceptions):
@@ -25,9 +26,9 @@ async def convert_pdf_to_markdown(local_pdf: Path) -> Path:
                     f.unlink(missing_ok=True)
         except Exception:
             logger.error(f"Failed to delete {local_pdf.stem}*.md files")
-        markdown_file.rename(markdown_file.parent / markdown_file.name.replace("_aggregate.md", FINAL_SUFFIX))
+        markdown_file.rename(
+            markdown_file.parent
+            / markdown_file.name.replace("_aggregate.md", FINAL_SUFFIX)
+        )
         return markdown_file
     raise Exception("No file generated")
-
-
-

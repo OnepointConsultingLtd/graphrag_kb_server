@@ -73,7 +73,10 @@ def _extract_graphrag_projects(tennants_dir: Path) -> ProjectListing:
     for f in (tennants_dir / Engine.GRAPHRAG.value).glob("*"):
         if (
             f.is_dir()
-            and (len(list(f.glob("settings.yaml"))) > 0 or len(list(f.glob("project.json"))) > 0)
+            and (
+                len(list(f.glob("settings.yaml"))) > 0
+                or len(list(f.glob("project.json"))) > 0
+            )
             and (input_files_dir := f / "input").exists()
         ):
             add_input_files(f, input_files_dir, projects)
