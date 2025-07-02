@@ -156,7 +156,7 @@ export default function CreateProjectModal() {
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              The zip file with the text files to be uploaded.
+              The zip file with text, markdown or PDF files to be uploaded.
             </p>
           </div>
         </div>
