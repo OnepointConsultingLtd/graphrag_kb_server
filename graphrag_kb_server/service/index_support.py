@@ -7,7 +7,6 @@ import zipfile
 
 from pathlib import Path
 
-
 from graphrag.config.enums import CacheType
 from graphrag.config.logging import enable_logging_with_config
 from graphrag.config.load_config import load_config
@@ -17,6 +16,8 @@ from graphrag.logger.factory import LoggerFactory, LoggerType
 from graphrag.index.validate_config import validate_config_names
 from graphrag.utils.cli import redact
 import graphrag.config.defaults as defs
+from graphrag_kb_server.service.file_conversion import convert_pdf_to_markdown
+from graphrag_kb_server.logger import logger
 
 log = logging.getLogger(__name__)
 
@@ -154,17 +155,22 @@ async def _run_index(
         success("All workflows completed successfully.", True)
 
 
-def unzip_file(upload_folder: Path, zip_file: Path):
+async def unzip_file(upload_folder: Path, zip_file: Path):
     input_folder = upload_folder / "input"
     if not input_folder.exists():
         input_folder.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_file, "r") as zip_ref:
         zip_ref.extractall(input_folder)
-    convert_to_text(input_folder)
+    await convert_to_text(input_folder)
 
 
-def convert_to_text(input_folder: Path):
+async def convert_to_text(input_folder: Path):
     """Convert all markdown files to text files."""
+    for file in input_folder.glob("**/*.pdf"):
+        try:
+            await convert_pdf_to_markdown(file)
+        except Exception:
+            logger.error(f"Failed to convert {file} to markdown")
     for file in input_folder.glob("**/*.md"):
         text = file.read_text(encoding="utf-8")
         file.with_suffix(".txt").write_text(text, encoding="utf-8")

@@ -76,6 +76,7 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
 from graphrag_kb_server.service.file_find_service import find_original_file
 from graphrag_kb_server.service.topic_generation import generate_topics
 from graphrag_kb_server.model.topics import TopicsRequest
+from graphrag_kb_server.logger import logger
 
 routes = web.RouteTableDef()
 
@@ -273,6 +274,19 @@ async def upload_index(request: web.Request) -> web.Response:
     async def handle_project_indexing(
         project_folder: Path, incremental: bool, engine: Engine, saved_files: list[Path]
     ):
+        try:
+            write_project_file(project_folder, IndexingStatus.PREPARING)
+            await unzip_file(project_folder, saved_files[0])
+            write_project_file(project_folder, IndexingStatus.IN_PROGRESS)
+        except zipfile.BadZipFile:
+            write_project_file(project_folder, IndexingStatus.FAILED)
+            logger.error(f"Uploaded file is not a valid zip file")
+            return
+        except Exception as e:
+            write_project_file(project_folder, IndexingStatus.FAILED)
+            logger.error(f"Failed to process uploaded file: {e}")
+            return
+
         match engine:
             case Engine.GRAPHRAG:
                 await acreate_graph_rag(True, project_folder)
@@ -312,23 +326,7 @@ async def upload_index(request: web.Request) -> web.Response:
                 )
                 if engine == Engine.GRAPHRAG or not incremental:
                     clear_rag(project_folder)
-                try:
-                    unzip_file(project_folder, saved_files[0])
-                    write_project_file(project_folder, IndexingStatus.IN_PROGRESS)
-                except zipfile.BadZipFile:
-                    write_project_file(project_folder, IndexingStatus.FAILED)
-                    return web.json_response(
-                        {"error": "Uploaded file is not a valid zip file"},
-                        status=400,
-                        headers=CORS_HEADERS,
-                    )
-                except Exception as e:
-                    write_project_file(project_folder, IndexingStatus.FAILED)
-                    return web.json_response(
-                        {"error": f"Failed to process uploaded file: {e}"},
-                        status=500,
-                        headers=CORS_HEADERS,
-                    )
+                
                 if asynchronous:
                     asyncio.create_task(
                         handle_project_indexing(

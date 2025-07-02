@@ -2,13 +2,10 @@ from pathlib import Path
 from aiohttp import web
 import uuid
 
-from pdf_to_markdown_llm.service.openai_pdf_to_text import (
-    convert_single_file,
-    compact_files,
-)
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.utils.file_support import write_uploaded_file
 from graphrag_kb_server.main.error_handler import handle_error
+from graphrag_kb_server.service.file_conversion import convert_pdf_to_markdown
 
 from graphrag_kb_server.logger import logger
 
@@ -61,22 +58,18 @@ async def convert_single_pdf(request: web.Request) -> web.Response:
             if not pdf_dir.exists():
                 pdf_dir.mkdir(parents=True, exist_ok=True)
             local_pdf: Path = write_uploaded_file(file, pdf_dir / file_name)
-            process_result = await convert_single_file(local_pdf)
-            if len(process_result.exceptions):
-                return web.json_response(
-                    {"error": "Uploaded file failed to process"}, status=500
-                )
-            dict_path = await compact_files([pdf_dir.as_posix()])
-            result_files = list(dict_path.values())
-            if len(result_files) > 0:
-                markdown_file = result_files[0][0]
+            try:
+                markdown_file = await convert_pdf_to_markdown(local_pdf)
                 return web.FileResponse(
                     markdown_file,
                     headers={
                         "CONTENT-DISPOSITION": f'attachment; filename="{markdown_file.name}"'
                     },
                 )
-            return web.json_response({"error": "No file generated"}, status=404)
+            except Exception:
+                return web.json_response(
+                    {"error": "Uploaded file failed to process"}, status=500
+                )
 
     return await handle_error(handle_request, request=request)
 

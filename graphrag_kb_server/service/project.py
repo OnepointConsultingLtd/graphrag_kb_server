@@ -73,7 +73,7 @@ def _extract_graphrag_projects(tennants_dir: Path) -> ProjectListing:
     for f in (tennants_dir / Engine.GRAPHRAG.value).glob("*"):
         if (
             f.is_dir()
-            and len(list(f.glob("settings.yaml"))) > 0
+            and (len(list(f.glob("settings.yaml"))) > 0 or len(list(f.glob("project.json"))) > 0)
             and (input_files_dir := f / "input").exists()
         ):
             add_input_files(f, input_files_dir, projects)
@@ -209,5 +209,7 @@ def write_project_file(project_dir: Path, status: IndexingStatus) -> Project:
         input_files=[f.as_posix() for f in files],
     )
     project_file = project_dir / PROJECT_INFO_FILE
+    if not project_dir.exists():
+        project_dir.mkdir(parents=True, exist_ok=True)
     project_file.write_text(project.model_dump_json())
     return project

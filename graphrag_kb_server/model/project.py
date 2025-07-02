@@ -10,6 +10,7 @@ class GenerationStatus(StrEnum):
 
 class IndexingStatus(StrEnum):
     UNKNOWN = "unknown"
+    PREPARING = "preparing"
     NOT_STARTED = "not_started"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"

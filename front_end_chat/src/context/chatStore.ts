@@ -106,6 +106,12 @@ const useChatStore = create<ChatStore>()(
         }
       }
 
+      // Initialize projects if JWT is available
+      const initialJwt = initJwt();
+      if (initialJwt) {
+        loadInitialProjects(initialJwt);
+      }
+
       return {
         jwt: initJwt(),
         projects: undefined,

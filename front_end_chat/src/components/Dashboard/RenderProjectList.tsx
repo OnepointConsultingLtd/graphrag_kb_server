@@ -9,6 +9,7 @@ import {
 } from "../../model/projectCategory";
 import { useEffect } from "react";
 import ChatConfigDialog from "./ChatConfigDialog";
+import { isProjectNotReady } from "../../lib/projectStatus";
 
 // Constants
 const REFRESH_PROJECT_TIMEOUT = 1000 * 60 * 2; // 2 minutes in milliseconds
@@ -80,7 +81,7 @@ export default function RenderProjectList({
   const scheme = colors[colorScheme];
 
   const handleProjectClick = (project: SimpleProject, toggle: boolean) => {
-    if (project.indexing_status === "in_progress") {
+    if (isProjectNotReady(project)) {
       return;
     }
     
@@ -110,7 +111,7 @@ export default function RenderProjectList({
 
           const isSelected =
             selectionProject === project.name && selectionPlatform === platform;
-          const isIndexing = project.indexing_status === "in_progress";
+          const isIndexing = isProjectNotReady(project);
 
           return (
             <div

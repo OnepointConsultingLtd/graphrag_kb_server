@@ -1,4 +1,5 @@
 import sys
+import asyncio
 from pathlib import Path
 
 from graphrag_kb_server.service.project import (
@@ -26,7 +27,7 @@ if __name__ == "__main__":
     clear_rag(indexed_path)
 
     indexed_path.mkdir(parents=True)
-    unzip_file(indexed_path, zip_file)
+    asyncio.run(unzip_file(indexed_path, zip_file))
 
     logger.debug("Using index cli interface.")
     create_graph_rag(False, indexed_path)

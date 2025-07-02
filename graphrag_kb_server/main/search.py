@@ -18,12 +18,12 @@ if __name__ == "__main__":
     if project_path is None:
         logger.error("Project folder is not specified")
         sys.exit(1)
-    
+
     project_dir = Path(project_path)
     if not project_dir.exists():
         logger.error(f"Project folder {project_path} does not exist")
         sys.exit(1)
-    
+
     context_parameters = ContextParameters(
         query=question,
         project_dir=project_dir,
