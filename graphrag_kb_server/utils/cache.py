@@ -47,6 +47,11 @@ class GenericSimpleCache(Generic[T, U]):
             else:
                 # Delete entry if it has expired
                 del self.cache[key]
+        # Delete expired entries
+        for key in list(self.cache.keys()):
+            entry = self.cache[key]
+            if time.time() - entry["timestamp"] >= self.timeout:
+                del self.cache[key]
         return None
 
     def set(self, key: U, value: T):

@@ -17,7 +17,7 @@ const REFRESH_PROJECT_TIMEOUT = 1000 * 60 * 2; // 2 minutes in milliseconds
 type RenderProjectListProps = {
   title: string;
   projectList: SimpleProject[];
-  colorScheme: "blue" | "green";
+  colorScheme: "blue" | "green" | "yellow";
   platform: string;
 };
 
@@ -36,6 +36,14 @@ const colors = {
     icon: "bg-green-500",
     iconSelected: "text-green-900",
     name: "text-green-400",
+    nameSelected: "text-white",
+  },
+  yellow: {
+    title: "text-yellow-300",
+    selected: "bg-yellow-900 border-yellow-500",
+    icon: "bg-yellow-500",
+    iconSelected: "text-yellow-900",
+    name: "text-yellow-400",
     nameSelected: "text-white",
   },
 };

@@ -27,6 +27,13 @@ export default function ProjectList() {
           platform="lightrag"
         />
 
+        <RenderProjectList
+          title="CAG Projects"
+          projectList={projects?.cag_projects?.projects || []}
+          colorScheme="yellow"
+          platform="cag"
+        />
+
         {/* Show message if no projects found */}
         {(!projects?.graphrag_projects?.projects ||
           projects?.graphrag_projects?.projects.length === 0) &&

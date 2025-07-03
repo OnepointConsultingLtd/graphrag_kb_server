@@ -16,6 +16,7 @@ export default function ChatInput() {
     addChatMessage,
     setIsThinking,
     setInputText,
+    conversationId,
   ] = useChatStore(
     useShallow((state) => [
       state.inputText,
@@ -25,7 +26,8 @@ export default function ChatInput() {
       state.chatMessages,
       state.addChatMessage,
       state.setIsThinking,
-      state.setInputText
+      state.setInputText,
+      state.conversationId,
     ]),
   );
 
@@ -45,6 +47,7 @@ export default function ChatInput() {
         question: inputText,
         project: selectedProject,
         chatHistory: chatMessages,
+        conversationId: conversationId ?? crypto.randomUUID(),
       })
         .then((response: QueryResponse) => {
           console.info("response", response);

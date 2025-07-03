@@ -87,7 +87,7 @@ export function convertChatHistoryToLightragChatHistory(
 }
 
 export async function sendQuery(query: Query) {
-  const { jwt, question, project, chatHistory } = query;
+  const { jwt, question, project, chatHistory, conversationId } = query;
   const params = new URLSearchParams();
   params.set("project", project.name);
   params.set("engine", project.platform);
@@ -108,6 +108,7 @@ export async function sendQuery(query: Query) {
         include_context: true,
         structured_output: true,
         chat_history: convertChatHistoryToLightragChatHistory(chatHistory),
+        conversation_id: conversationId,
       }),
     },
   );

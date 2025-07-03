@@ -55,7 +55,6 @@ export default function CreateProjectModal() {
   };
 
   async function handleSubmit(e: React.FormEvent) {
-    debugger
     e.preventDefault();
     if (!file || !projectName) {
       setError("Project name and file are required.");

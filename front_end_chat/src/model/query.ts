@@ -6,4 +6,5 @@ export type Query = {
   question: string;
   project: Project;
   chatHistory: ChatMessage[];
+  conversationId: string;
 };

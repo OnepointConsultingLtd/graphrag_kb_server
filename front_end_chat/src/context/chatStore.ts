@@ -23,6 +23,7 @@ type ChatStore = {
   chatType: ChatTypeOptions;
   topics: Topics | null,
   inputText: string,
+  conversationId: string | null,
   newProject: () => void;
   setJwt: (jwt: string) => void;
   setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
@@ -45,6 +46,7 @@ type ChatStore = {
   refreshProjects: () => void;
   setTopics: (topics: Topics) => void;
   setInputText: (inputText: string) => void;
+  setConversationId: (conversationId: string) => void;
 };
 
 const THRESHOLD = 50;
@@ -128,6 +130,7 @@ const useChatStore = create<ChatStore>()(
         organisation_name: window.chatConfig?.organisation_name ?? "Onepoint",
         topics: null,
         inputText: "",
+        conversationId: null,
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {
@@ -158,7 +161,7 @@ const useChatStore = create<ChatStore>()(
           }),
         clearChatMessages: () =>
           set(() => {
-            return { chatMessages: [], isThinking: false };
+            return { chatMessages: [], isThinking: false, conversationId: crypto.randomUUID() };
           }),
         // Logout completely
         logout: () =>
@@ -205,7 +208,7 @@ const useChatStore = create<ChatStore>()(
           }),
         setCopiedMessageId: (id: string) => set({ copiedMessageId: id }),
         setSelectedProjectAndChatType: (selectedProject, chatType) =>
-          set({ selectedProject, chatType }),
+          set({ selectedProject, chatType, conversationId: crypto.randomUUID() }),
         setChatType: (chatType: ChatTypeOptions) => set({ chatType }),
         refreshProjects: () =>
           set((state) => {
@@ -214,6 +217,7 @@ const useChatStore = create<ChatStore>()(
           }),
         setTopics: (topics: Topics) => set({ topics }),
         setInputText: (inputText: string) => set({ inputText }),
+        setConversationId: (conversationId: string) => set({ conversationId }),
       };
     },
     {
