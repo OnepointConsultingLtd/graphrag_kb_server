@@ -37,7 +37,7 @@ function ConversationStarter() {
 
   useEffect(() => {
     if (jwt && selectedProject) {
-      fetchTopics(jwt, selectedProject).then(setTopics).catch(console.error);
+      fetchTopics(jwt, selectedProject, chatType === ChatType.FLOATING ? 6 : 12).then(setTopics).catch(console.error);
     }
   }, [jwt, selectedProject, setTopics]);
 

@@ -64,7 +64,9 @@ def _generate_topics_lightrag(topics_request: TopicsRequest) -> Topics:
 
 
 async def _generate_topics_cag(topics_request: TopicsRequest) -> Topics:
-    return await extract_main_topics(topics_request.project_dir)
+    limit = topics_request.limit
+    topics = await extract_main_topics(topics_request.project_dir)
+    return Topics(topics=topics.topics[:limit])
     
 
 

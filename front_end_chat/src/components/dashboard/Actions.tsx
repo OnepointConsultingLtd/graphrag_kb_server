@@ -11,7 +11,6 @@ export default function Actions() {
     useShallow((state) => state.selectionProject),
   );
 
-
   const { selectedProject } = useChatStore(
     useShallow((state) => ({
       selectedProject: state.selectedProject,
@@ -19,7 +18,7 @@ export default function Actions() {
   );
 
   const isActionDisabled = !selectionProject;
-  const isGraphrag = selectedProject?.platform === "graphrag";
+  const isLighrag = selectedProject?.platform === "lightrag";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -41,7 +40,7 @@ export default function Actions() {
 
       <button
         onClick={() => openModalWithProject(ModalType.UPDATE, selectionProject)}
-        disabled={isActionDisabled || isGraphrag}
+        disabled={isActionDisabled || !isLighrag}
         className="btn btn-accent btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50">
         <FaEdit className="mr-2 group-hover:rotate-12 transition-transform" />
         Update Project

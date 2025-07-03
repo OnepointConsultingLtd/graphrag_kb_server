@@ -81,7 +81,7 @@ async def acreate_cag(
     chat = await _create_chat(client, cache)
     CHAT_CACHE.set(cache_key, chat)
     if conversation_id == INITIAL_CONVERSATION_ID:
-        await extract_main_topics(project_dir, chat)
+        await extract_main_topics(project_dir)
     return chat
 
 

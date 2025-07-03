@@ -210,11 +210,11 @@ export async function deleteProject(jwt: string, project: string, engine: string
   }
 }
 
-export async function fetchTopics(jwt: string, project: Project): Promise<Topics> {
+export async function fetchTopics(jwt: string, project: Project, limit: number = 12): Promise<Topics> {
   const params = new URLSearchParams();
   params.set("project", project.name);
   params.set("engine", project.platform);
-  params.set("limit", "12");
+  params.set("limit", `${limit}`);
   params.set("add_questions", "false");
   params.set("entity_type_filter", "category");
   const response = await fetch(

@@ -38,6 +38,7 @@ export type SimpleProject = {
 export type ProjectCategories = {
   graphrag_projects: Projects;
   lightrag_projects: Projects;
+  cag_projects: Projects;
 };
 
 export type SearchType = (typeof SearchType)[keyof typeof SearchType];
