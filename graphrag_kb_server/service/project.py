@@ -54,18 +54,28 @@ def list_projects(tennants_dir: Path) -> EngineProjectListing:
         return []
     graphrag_projects = _extract_graphrag_projects(tennants_dir)
     lightrag_projects = _extract_lightrag_projects(tennants_dir)
+    cag_projects = _extract_cag_projects(tennants_dir)
     return EngineProjectListing(
-        graphrag_projects=graphrag_projects, lightrag_projects=lightrag_projects
+        graphrag_projects=graphrag_projects,
+        lightrag_projects=lightrag_projects,
+        cag_projects=cag_projects,
     )
 
 
-def _extract_lightrag_projects(tennants_dir: Path) -> ProjectListing:
+def _extract_project_listing(tennants_dir: Path, engine: Engine) -> ProjectListing:
     projects = []
-    projects_dir = tennants_dir / Engine.LIGHTRAG.value
-    for f in projects_dir.glob("*"):
+    for f in (tennants_dir / engine.value).glob("*"):
         if f.is_dir() and (input_files_dir := f / "input").exists():
             add_input_files(f, input_files_dir, projects)
     return ProjectListing(projects=projects)
+
+
+def _extract_lightrag_projects(tennants_dir: Path) -> ProjectListing:
+    return _extract_project_listing(tennants_dir, Engine.LIGHTRAG)
+
+
+def _extract_cag_projects(tennants_dir: Path) -> ProjectListing:
+    return _extract_project_listing(tennants_dir, Engine.CAG)
 
 
 def _extract_graphrag_projects(tennants_dir: Path) -> ProjectListing:

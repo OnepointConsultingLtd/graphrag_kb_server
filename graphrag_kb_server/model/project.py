@@ -46,3 +46,4 @@ class EngineProjectListing(BaseModel):
     lightrag_projects: ProjectListing = Field(
         ..., description="The list of LightRAG projects"
     )
+    cag_projects: ProjectListing = Field(..., description="The list of CAG projects")

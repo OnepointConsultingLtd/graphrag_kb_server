@@ -13,6 +13,7 @@ from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.service.graphrag.prompt_factory import (
     inject_system_prompt_to_query_params,
 )
+from graphrag_kb_server.service.cag.cag_support import cag_get_response
 
 
 async def execute_query(query_params: QueryParameters) -> web.Response:
@@ -47,6 +48,16 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
                         text="LightRAG does not support local search",
                         headers=CORS_HEADERS,
                     )
+        case Engine.CAG:
+            text_response = await cag_get_response(
+                query_params.context_params.project_dir,
+                query_params.conversation_id,
+                query_params.context_params.query,
+            )
+            chat_response = ChatResponse(
+                question=context_params.query,
+                response=text_response,
+            )
     match format:
         case Format.HTML:
             return web.Response(

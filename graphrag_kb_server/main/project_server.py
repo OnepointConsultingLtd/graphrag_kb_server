@@ -2,6 +2,7 @@ import zipfile
 import asyncio
 import io
 import re
+import uuid
 from pathlib import Path
 from typing import Optional, Callable, Awaitable
 
@@ -77,6 +78,11 @@ from graphrag_kb_server.service.file_find_service import find_original_file
 from graphrag_kb_server.service.topic_generation import generate_topics
 from graphrag_kb_server.model.topics import TopicsRequest
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.service.cag.cag_support import (
+    acreate_cag,
+    INITIAL_CONVERSATION_ID,
+    cag_get_response,
+)
 
 routes = web.RouteTableDef()
 
@@ -148,7 +154,7 @@ async def about(request: web.Request) -> web.Response:
       - name: search
         in: query
         required: false
-        description: The type of the search (local, global)
+        description: The type of the search (local, global). Only applicable for LightRAG and GraphRAG.
         schema:
           type: string
           enum: [local, global]
@@ -158,7 +164,7 @@ async def about(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag]
+          enum: [graphrag, lightrag, cag]
     responses:
       '200':
         description: Expected response to a valid request
@@ -200,6 +206,10 @@ async def about(request: web.Request) -> web.Response:
                                 )
                                 chat_response = await lightrag_search(query_params)
                                 response = chat_response.response
+                            case Engine.CAG:
+                                response = await cag_get_response(
+                                    project_dir, str(uuid.uuid4()), question
+                                )
                         return web.Response(
                             text=HTML_CONTENT.format(
                                 question=question, response=markdown(response)
@@ -245,7 +255,7 @@ async def upload_index(request: web.Request) -> web.Response:
               engine:
                 type: string
                 description: The type of engine used to run the RAG system
-                enum: [graphrag, lightrag]
+                enum: [graphrag, lightrag, cag]
               incremental:
                 type: boolean
                 default: false
@@ -287,14 +297,21 @@ async def upload_index(request: web.Request) -> web.Response:
             logger.error(f"Failed to process uploaded file: {e}")
             return
 
-        match engine:
-            case Engine.GRAPHRAG:
-                await acreate_graph_rag(True, project_folder)
-            case Engine.LIGHTRAG:
-                await acreate_lightrag(
-                    True, project_folder, incremental, saved_files[0]
-                )
-        write_project_file(project_folder, IndexingStatus.COMPLETED)
+        try:
+            match engine:
+                case Engine.GRAPHRAG:
+                    await acreate_graph_rag(True, project_folder)
+                case Engine.LIGHTRAG:
+                    await acreate_lightrag(
+                        True, project_folder, incremental, saved_files[0]
+                    )
+                case Engine.CAG:
+                    await acreate_cag(project_folder, INITIAL_CONVERSATION_ID)
+            write_project_file(project_folder, IndexingStatus.COMPLETED)
+        except Exception as e:
+            write_project_file(project_folder, IndexingStatus.FAILED)
+            logger.error(f"Failed to process uploaded file: {e}")
+            return
 
     async def handle_request(request: web.Request) -> web.Response:
         saved_files = []
@@ -324,7 +341,7 @@ async def upload_index(request: web.Request) -> web.Response:
                 project_folder: Path = find_project_folder(
                     tennant_folder, engine, sanitized_project_name
                 )
-                if engine == Engine.GRAPHRAG or not incremental:
+                if engine in [Engine.GRAPHRAG, Engine.CAG] or not incremental:
                     clear_rag(project_folder)
 
                 if asynchronous:
@@ -388,7 +405,7 @@ async def query(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag]
+          enum: [graphrag, lightrag, cag]
       - name: question
         in: query
         required: true
@@ -416,6 +433,13 @@ async def query(request: web.Request) -> web.Response:
         schema:
           type: integer
           format: int32
+      - name: conversation_id
+        in: query
+        required: false
+        description: The conversation id. Only for CAG
+        schema:
+          type: string
+          default: 1234567890
     responses:
       '200':
         description: The response to the query in either json, html or markdown format
@@ -443,12 +467,14 @@ async def query(request: web.Request) -> web.Response:
                             request.rel_url, project_dir
                         )
                         engine = find_engine_from_query(request)
+                        conversation_id = request.rel_url.query.get("conversation_id", str(uuid.uuid4()))
                         return await execute_query(
                             QueryParameters(
                                 format=format,
                                 search=search,
                                 engine=engine,
                                 context_params=context_params,
+                                conversation_id=conversation_id,
                             )
                         )
 
@@ -483,7 +509,7 @@ async def chat(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag]
+          enum: [graphrag, lightrag, cag]
     requestBody:
       required: true
       content:
@@ -534,6 +560,10 @@ async def chat(request: web.Request) -> web.Response:
                 type: boolean
                 description: Whether to use structured output.
                 default: false
+              conversation_id:
+                type: string
+                description: The conversation id. Only for CAG
+                default: 1234567890
               chat_history:
                 type: array
                 items:
@@ -575,6 +605,7 @@ async def chat(request: web.Request) -> web.Response:
                             include_context_as_text,
                             structured_output,
                             chat_history,
+                            conversation_id,
                         ) = (
                             body.get("format", Format.JSON.value),
                             body["search"],
@@ -588,6 +619,7 @@ async def chat(request: web.Request) -> web.Response:
                             body.get("include_context_as_text", False),
                             body.get("structured_output", False),
                             body.get("chat_history", []),
+                            body.get("conversation_id", str(uuid.uuid4())),
                         )
                         context_params = ContextParameters(
                             query=question,
@@ -607,6 +639,7 @@ async def chat(request: web.Request) -> web.Response:
                                 include_context_as_text=include_context_as_text,
                                 structured_output=structured_output,
                                 chat_history=chat_history,
+                                conversation_id=conversation_id,
                             )
                         )
 
@@ -641,7 +674,7 @@ async def project_topics(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag]
+          enum: [graphrag, lightrag, cag]
       - name: limit
         in: query
         required: false
@@ -689,7 +722,7 @@ async def project_topics(request: web.Request) -> web.Response:
                 entity_type_filter = request.rel_url.query.get(
                     "entity_type_filter", "category"
                 )
-                topics = generate_topics(
+                topics = await generate_topics(
                     TopicsRequest(
                         project_dir=project_dir,
                         engine=engine,
@@ -923,7 +956,7 @@ async def project_status(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag]
+          enum: [graphrag, lightrag, cag]
       - name: project_name
         in: path
         required: true
@@ -1006,7 +1039,7 @@ async def delete_index(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag]
+          enum: [graphrag, lightrag, cag]
     security:
       - bearerAuth: []
     responses:
@@ -1054,7 +1087,7 @@ async def download_project(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag]
+          enum: [graphrag, lightrag, cag]
       - name: input_only
         in: query
         required: true
@@ -1119,7 +1152,7 @@ async def download_single_file(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag]
+          enum: [graphrag, lightrag, cag]
       - name: file
         in: query
         required: true
@@ -1129,7 +1162,7 @@ async def download_single_file(request: web.Request) -> web.Response:
       - name: summary
         in: query
         required: false
-        description: Whether to include the summary or the file content in the response.
+        description: Whether to include the summary or the file content in the response. LightRAG only.
         schema:
           type: boolean
       - name: original_file

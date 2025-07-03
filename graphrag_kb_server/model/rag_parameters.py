@@ -1,3 +1,4 @@
+import uuid
 from enum import StrEnum
 from pathlib import Path
 from pydantic import BaseModel, Field
@@ -54,6 +55,10 @@ class QueryParameters(BaseModel):
     chat_history: list[dict[str, str]] = Field(
         default=[],
         description="The chat history.",
+    )
+    conversation_id: str = Field(
+        default=str(uuid.uuid4()),
+        description="The conversation id.",
     )
     model_config = {"frozen": True}  # Pydantic v2 config syntax
 

@@ -8,14 +8,17 @@ from graphrag_kb_server.service.lightrag.lightrag_centrality import (
     get_sorted_centrality_scores_as_pd,
 )
 from graphrag_kb_server.service.community_service import prepare_community_extraction
+from graphrag_kb_server.service.cag.cag_support import extract_main_topics
 
 
-def generate_topics(topics_request: TopicsRequest) -> Topics:
+async def generate_topics(topics_request: TopicsRequest) -> Topics:
     match topics_request.engine:
         case Engine.GRAPHRAG:
             return _generate_topics_graphrag(topics_request)
         case Engine.LIGHTRAG:
             return _generate_topics_lightrag(topics_request)
+        case Engine.CAG:
+            return await _generate_topics_cag(topics_request)
         case _:
             raise ValueError(f"Engine {topics_request.engine} not supported")
 
@@ -60,20 +63,27 @@ def _generate_topics_lightrag(topics_request: TopicsRequest) -> Topics:
     return Topics(topics=topics)
 
 
+async def _generate_topics_cag(topics_request: TopicsRequest) -> Topics:
+    return await extract_main_topics(topics_request.project_dir)
+    
+
+
 if __name__ == "__main__":
+
+    import asyncio
 
     def test_lightrag():
         project_dir = Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full")
-        topics = generate_topics(
+        topics = asyncio.run(generate_topics(
             TopicsRequest(project_dir=project_dir, engine=Engine.LIGHTRAG)
-        )
+        ))
         return topics
 
     def test_graphrag():
         project_dir = Path("/var/graphrag/tennants\gil_fernandes/graphrag/dwell")
-        topics = generate_topics(
+        topics = asyncio.run(generate_topics(
             TopicsRequest(project_dir=project_dir, engine=Engine.GRAPHRAG)
-        )
+        ))
         return topics
 
     topics = test_graphrag()

@@ -6,6 +6,7 @@ from graphrag_kb_server.model.web_format import Format
 class Engine(StrEnum):
     GRAPHRAG = "graphrag"
     LIGHTRAG = "lightrag"
+    CAG = "cag"
 
 
 def find_engine(engine: str) -> Engine:
@@ -13,9 +14,11 @@ def find_engine(engine: str) -> Engine:
         return Engine.GRAPHRAG
     elif engine == Engine.LIGHTRAG:
         return Engine.LIGHTRAG
+    elif engine == Engine.CAG:
+        return Engine.CAG
     else:
-        # Return GraphRAG as default
-        return Engine.GRAPHRAG
+        # Return LIGHTRAG as default
+        return Engine.LIGHTRAG
 
 
 def find_engine_from_query(request: Request) -> Engine:

@@ -8,6 +8,7 @@ from graphrag.query.structured_search.local_search.search import LocalSearch
 T = TypeVar("T")
 U = TypeVar("U")
 
+
 class GenericProjectSimpleCache(Generic[T]):
 
     def __init__(self, timeout: int = 3600):
