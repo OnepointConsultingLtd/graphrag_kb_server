@@ -168,7 +168,6 @@ export const useDashboardStore = create<DashboardState>()(
 					}));
 				},
 				openModal: (type) => set(() => {
-					debugger
 					return {
 						modalType: type,
 						isModalOpen: true,

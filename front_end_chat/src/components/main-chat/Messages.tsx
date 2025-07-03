@@ -67,7 +67,7 @@ function ConversationStarter() {
         {!hasTopics && <p>Start a conversation...</p>}
         {hasTopics && <p className="mb-6">Select a topic to start a conversation...</p>}
         {hasTopics && <div 
-          className={`grid lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-${chatType === ChatType.FLOATING ? 1 : 3} grid-cols-${chatType === ChatType.FLOATING ? 1 : 2} gap-2`}>
+          className={`grid grid-cols-2 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-${chatType === ChatType.FLOATING ? 1 : 3} grid-cols-${chatType === ChatType.FLOATING ? 1 : 2} gap-2`}>
           {topics?.topics.map((topic) => (
             <button className="btn btn-primary h-18 tooltip"
               data-tip={chatType === ChatType.FULL_PAGE ? simplifyDescription(topic.description) : undefined}

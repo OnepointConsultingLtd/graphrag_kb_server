@@ -35,7 +35,7 @@ export default function MarkdownDialogue() {
         <RenderReactMarkdown
           message={{
             id: "1",
-            text: markdownDialogueContent,
+            text: markdownDialogueContent.replace(/<!--[\s\S]*?-->/g, ""),
             type: ChatMessageType.AGENT,
             timestamp: new Date(),
           }}

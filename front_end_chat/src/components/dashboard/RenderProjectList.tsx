@@ -1,4 +1,4 @@
-import { FaLightbulb } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaLightbulb } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 import useChatStore from "../../context/chatStore";
@@ -7,7 +7,7 @@ import {
   SimpleProject,
   SearchType,
 } from "../../model/projectCategory";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ChatConfigDialog from "./ChatConfigDialog";
 import { isProjectNotReady } from "../../lib/projectStatus";
 
@@ -46,6 +46,7 @@ export default function RenderProjectList({
   colorScheme,
   platform,
 }: RenderProjectListProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
   const {
     selectionProject,
     selectionPlatform,
@@ -84,7 +85,7 @@ export default function RenderProjectList({
     if (isProjectNotReady(project)) {
       return;
     }
-    
+
     const isCurrentlySelected =
       selectionProject === project.name && selectionPlatform === platform;
     setSelectionProjectAndPlatform(project.name, platform, toggle);
@@ -104,83 +105,95 @@ export default function RenderProjectList({
 
   return (
     <div className="mb-8">
-      <h2 className={`text-xl font-bold ${scheme.title} mb-4`}>{title}</h2>
-      <div className="space-y-2">
-        {projectList.map((project: SimpleProject, index: number) => {
-          const uniqueId = `${colorScheme}_${project.name}_${index}`;
+      <div className="flex justify-between items-center cursor-pointer hover:border-b-2 hover:border-gray-700 pr-8"
+          onClick={() => setIsExpanded(!isExpanded)}
+      
+      >
+        <h2 className={`text-xl font-bold ${scheme.title} mb-4 cursor-pointer hover:underline-offset-2`}
+        >{title}</h2>
+        <button
+          className="text-gray-400 hover:text-gray-300"
+        >
+          {isExpanded ? <FaChevronDown className="text-2xl"/> : <FaChevronUp className="text-2xl"/>}
+        </button>
+      </div>
+      
+      {isExpanded && (
 
-          const isSelected =
-            selectionProject === project.name && selectionPlatform === platform;
-          const isIndexing = isProjectNotReady(project);
+        <div className="space-y-2">
+          {projectList.map((project: SimpleProject, index: number) => {
+            const uniqueId = `${colorScheme}_${project.name}_${index}`;
 
-          return (
-            <div
-              key={uniqueId}
-              className={`flex justify-between items-center p-4 rounded-lg transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${
-                isSelected ? scheme.selected : "border-transparent"
-              } ${
-                isIndexing 
-                  ? "cursor-not-allowed opacity-60" 
-                  : "cursor-pointer hover:bg-gray-700"
-              }`}
-              onClick={() => !isIndexing && handleProjectClick(project, true)}
-            >
-              <div className="flex items-center flex-1">
-                <div
-                  className={`p-3 rounded-full mr-4 ${
-                    isSelected ? "bg-white" : scheme.icon
+            const isSelected =
+              selectionProject === project.name && selectionPlatform === platform;
+            const isIndexing = isProjectNotReady(project);
+
+            return (
+              <div
+                key={uniqueId}
+                className={`flex justify-between items-center p-4 rounded-lg transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${isSelected ? scheme.selected : "border-transparent"
+                  } ${isIndexing
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer hover:bg-gray-700"
                   }`}
-                >
-                  <FaLightbulb
-                    className={isSelected ? scheme.iconSelected : "text-white"}
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3
-                    className={`text-lg font-semibold ${
-                      isSelected ? scheme.nameSelected : scheme.name
-                    }`}
+                onClick={() => !isIndexing && handleProjectClick(project, true)}
+              >
+                <div className="flex items-center flex-1">
+                  <div
+                    className={`p-3 rounded-full mr-4 ${isSelected ? "bg-white" : scheme.icon
+                      }`}
                   >
-                    {project.name}
-                  </h3>
+                    <FaLightbulb
+                      className={isSelected ? scheme.iconSelected : "text-white"}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3
+                      className={`text-lg font-semibold ${isSelected ? scheme.nameSelected : scheme.name
+                        }`}
+                    >
+                      {project.name}
+                    </h3>
 
-                  <div className="lg:flex flex-row gap-2 text-xs text-gray-500">
-                    <div className="lg:w-16">
-                      Files: {project.input_files?.length || 0}
+                    <div className="lg:flex flex-row gap-2 text-xs text-gray-500">
+                      <div className="lg:w-16">
+                        Files: {project.input_files?.length || 0}
+                      </div>
+                      <div className="lg:w-32">
+                        Status: {project.indexing_status}
+                      </div>
+                      <div className="">
+                        Last update:{" "}
+                        {project.updated_timestamp
+                          .toLocaleString()
+                          .replace(/.\d{4,}$/, "")}
+                      </div>
                     </div>
-                    <div className="lg:w-32">
-                      Status: {project.indexing_status}
-                    </div>
-                    <div className="">
-                      Last update:{" "}
-                      {project.updated_timestamp
-                        .toLocaleString()
-                        .replace(/.\d{4,}$/, "")}
-                    </div>
+
                   </div>
                 </div>
-              </div>
 
-              {/* Button to chat */}
-              {!isIndexing && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering the project selection
-                    handleProjectClick(project, false);
-                    setIsChatConfigDialogOpen(true, project);
-                  }}
-                
-                className="bg-blue-500 px-4 py-2 rounded-md"
-              >
-                <a href={`#`} className="!text-white">
-                  Start Chat
-                </a>
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                {/* Button to chat */}
+                {!isIndexing && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering the project selection
+                      handleProjectClick(project, false);
+                      setIsChatConfigDialogOpen(true, project);
+                    }}
+
+                    className="bg-blue-500 px-4 py-2 rounded-md"
+                  >
+                    <a href={`#`} className="!text-white">
+                      Start Chat
+                    </a>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
       {isChatConfigDialogOpen && <ChatConfigDialog />}
     </div>
   );
