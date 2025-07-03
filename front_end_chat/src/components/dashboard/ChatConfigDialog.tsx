@@ -183,10 +183,10 @@ export default function ChatConfigDialog() {
 
         <ChatTypeSelector />
 
-        <SearchTypeSelector
+        {selectedProject?.platform !== Platform.CAG && <SearchTypeSelector
           searchType={searchType}
           setSearchType={setSearchType}
-        />
+        />}
 
         <AdditionalInstructionsInput
           value={additionalPromptInstructions}

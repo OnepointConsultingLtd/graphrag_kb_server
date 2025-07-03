@@ -26,6 +26,7 @@ type ChatStore = {
   inputText: string;
   conversationId: string | null;
   socket: Socket<any, any> | null;
+  useStreaming: boolean;
   newProject: () => void;
   setJwt: (jwt: string) => void;
   setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
@@ -50,6 +51,7 @@ type ChatStore = {
   setTopics: (topics: Topics) => void;
   setInputText: (inputText: string) => void;
   setConversationId: (conversationId: string) => void;
+  setUseStreaming: (useStreaming: boolean) => void;
 };
 
 const THRESHOLD = 50;
@@ -143,6 +145,7 @@ const useChatStore = create<ChatStore>()(
         inputText: "",
         conversationId: null,
         socket: initSocket(),
+        useStreaming: false,
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {
