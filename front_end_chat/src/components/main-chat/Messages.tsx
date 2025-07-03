@@ -6,8 +6,9 @@ import ReferenceDisplay from "../messages/ReferenceDisplay";
 import RenderReactMarkdown from "./RenderReactMarkdown";
 import ThinkingIndicator from "./ThinkingIndicator";
 import { ChatType } from "../../lib/chatTypes";
-import { ChatTypeOptions } from "../../types/types";
+import { ChatTypeOptions } from "../../model/types";
 import { fetchTopics } from "../../lib/apiClient";
+import useWebsocket from "../../hooks/useWebsocket";
 
 function simplifyDescription(description: string) {
   if (!description) {
@@ -17,27 +18,23 @@ function simplifyDescription(description: string) {
 }
 
 function ConversationStarter() {
-  const {
-    jwt,
-    selectedProject,
-    topics,
-    setTopics,
-    chatType,
-    setInputText
-  } = useChatStore(
-    useShallow((state) => ({
-      jwt: state.jwt,
-      selectedProject: state.selectedProject,
-      topics: state.topics,
-      chatType: state.chatType,
-      setTopics: state.setTopics,
-      setInputText: state.setInputText,
-    })),
-  )
+  const { jwt, selectedProject, topics, setTopics, chatType, setInputText } =
+    useChatStore(
+      useShallow((state) => ({
+        jwt: state.jwt,
+        selectedProject: state.selectedProject,
+        topics: state.topics,
+        chatType: state.chatType,
+        setTopics: state.setTopics,
+        setInputText: state.setInputText,
+      })),
+    );
 
   useEffect(() => {
     if (jwt && selectedProject) {
-      fetchTopics(jwt, selectedProject, chatType === ChatType.FLOATING ? 6 : 12).then(setTopics).catch(console.error);
+      fetchTopics(jwt, selectedProject, chatType === ChatType.FLOATING ? 6 : 12)
+        .then(setTopics)
+        .catch(console.error);
     }
   }, [jwt, selectedProject, setTopics]);
 
@@ -65,20 +62,34 @@ function ConversationStarter() {
           <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
         </svg>
         {!hasTopics && <p>Start a conversation...</p>}
-        {hasTopics && <p className="mb-6">Select a topic to start a conversation...</p>}
-        {hasTopics && <div 
-          className={`grid grid-cols-2 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-${chatType === ChatType.FLOATING ? 1 : 3} grid-cols-${chatType === ChatType.FLOATING ? 1 : 2} gap-2`}>
-          {topics?.topics.map((topic) => (
-            <button className="btn btn-primary h-18 tooltip"
-              data-tip={chatType === ChatType.FULL_PAGE ? simplifyDescription(topic.description) : undefined}
-              key={`topic-${topic.name}-${topic.type}`}
-              onClick={() => setInputText(`Tell me more about "${topic.name}"`)}
-            >{topic.name}</button>
-          ))}
-        </div>}
+        {hasTopics && (
+          <p className="mb-6">Select a topic to start a conversation...</p>
+        )}
+        {hasTopics && (
+          <div
+            className={`grid grid-cols-2 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-${chatType === ChatType.FLOATING ? 1 : 3} grid-cols-${chatType === ChatType.FLOATING ? 1 : 2} gap-2`}
+          >
+            {topics?.topics.map((topic) => (
+              <button
+                className="btn btn-primary h-18 tooltip"
+                data-tip={
+                  chatType === ChatType.FULL_PAGE
+                    ? simplifyDescription(topic.description)
+                    : undefined
+                }
+                key={`topic-${topic.name}-${topic.type}`}
+                onClick={() =>
+                  setInputText(`Tell me more about "${topic.name}"`)
+                }
+              >
+                {topic.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-    </div >
-  )
+    </div>
+  );
 }
 
 export default function Messages() {
@@ -102,6 +113,8 @@ export default function Messages() {
     })),
   );
 
+  useWebsocket()
+
   useEffect(() => {
     setChatType(ChatType.FULL_PAGE as ChatTypeOptions);
   }, [setChatType]);
@@ -123,8 +136,9 @@ export default function Messages() {
       <div className="overflow-y-auto">
         <div className="mx-auto">
           <div
-            className={`flex flex-col gap-6 ${isFloating ? "p-1 pt-8" : "p-2 lg:p-6"
-              }`}
+            className={`flex flex-col gap-6 ${
+              isFloating ? "p-1 pt-8" : "p-2 lg:p-6"
+            }`}
           >
             {!chatMessages ||
               (chatMessages.length === 0 && <ConversationStarter />)}
@@ -133,10 +147,11 @@ export default function Messages() {
               return (
                 <div
                   key={message.id}
-                  className={`flex ${message.type === ChatMessageType.USER
-                    ? "justify-end"
-                    : "justify-start"
-                    } animate-slideIn items-start`}
+                  className={`flex ${
+                    message.type === ChatMessageType.USER
+                      ? "justify-end"
+                      : "justify-start"
+                  } animate-slideIn items-start`}
                 >
                   {message.type === ChatMessageType.AGENT && (
                     <div className="flex-shrink-0 hidden lg:block mr-2">
@@ -146,19 +161,21 @@ export default function Messages() {
                     </div>
                   )}
                   <div
-                    className={`text-left ${isFloating ? "p-2" : "p-6"
-                      } relative max-w-full rounded-lg rounded-tr-sm ${message.type === ChatMessageType.USER
+                    className={`text-left ${
+                      isFloating ? "p-2" : "p-6"
+                    } relative max-w-full rounded-lg rounded-tr-sm ${
+                      message.type === ChatMessageType.USER
                         ? isFloating
                           ? "bg-gradient-to-br from-purple-500 to-blue-500 md:max-w-[70%] shadow-lg text-white"
                           : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
                         : isFloating
                           ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
                           : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
-                      }`}
+                    }`}
                   >
                     <RenderReactMarkdown message={message} />
                     {message.references?.length &&
-                      message.references.length > 0 ? (
+                    message.references.length > 0 ? (
                       <ul className="mt-2">
                         {message.references.map((reference) => (
                           <ReferenceDisplay

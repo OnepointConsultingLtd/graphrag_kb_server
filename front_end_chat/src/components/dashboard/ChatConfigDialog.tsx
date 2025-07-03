@@ -3,10 +3,9 @@ import useChatStore from "../../context/chatStore";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 import { ChatType } from "../../lib/chatTypes";
 import { Platform, SearchType } from "../../model/projectCategory";
-import { ChatTypeOptions } from "../../types/types";
+import { ChatTypeOptions } from "../../model/types";
 import RenderLabel from "./Form/RenderLabel";
 import { useNavigate } from "react-router-dom";
-
 
 function ChatTypeSelector() {
   const {
@@ -51,7 +50,7 @@ function ChatTypeSelector() {
       </div>
     </div>
   );
-};
+}
 
 const SearchTypeSelector = ({
   searchType,

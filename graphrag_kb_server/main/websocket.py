@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from enum import StrEnum
 
 from graphrag_kb_server.logger import logger
@@ -14,7 +15,8 @@ from graphrag_kb_server.callbacks.callback_support import BaseCallback
 from graphrag_kb_server.service.search.search_documents import (
     retrieve_relevant_documents,
 )
-
+from graphrag_kb_server.model.rag_parameters import QueryParameters
+from graphrag_kb_server.service.cag.cag_support import cag_get_response_stream
 
 class Command(StrEnum):
     START_SESSION = "start_session"
@@ -22,6 +24,9 @@ class Command(StrEnum):
     RESPONSE = "response"
     BUILD_CONTEXT = "build_context"
     ERROR = "error"
+    STREAM_START = "stream_start"
+    STREAM_TOKEN = "stream_token"
+    STREAM_END = "stream_end"
 
 
 class WebsocketCallback(BaseCallback):
@@ -57,9 +62,7 @@ async def start_session(sid: str, environ):
 async def relevant_documents(sid: str, token: str, project: str, document_query: str):
     try:
         logger.info(f"Document query from {sio}: {document_query}")
-        token_data = await decode_token(token)
-        tennant_folder = cfg.graphrag_root_dir_path / token_data["sub"]
-        project_dir = find_project_folder(tennant_folder, Engine.LIGHTRAG, project)
+        project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
         document_search_query = DocumentSearchQuery(**json.loads(document_query))
         callback = WebsocketCallback(sid)
         response = await retrieve_relevant_documents(
@@ -73,5 +76,34 @@ async def relevant_documents(sid: str, token: str, project: str, document_query:
 
 
 @sio.event
+async def chat_stream(sid: str, token: str, project: str, query_parameters: str):
+    query_params = QueryParameters(**json.loads(query_parameters))
+    match query_params.engine:
+        case Engine.GRAPHRAG:
+            raise ValueError("GraphRAG is not supported for chat streaming")
+        case Engine.LIGHTRAG:
+            raise ValueError("Lightrag is not supported for chat streaming")
+        case Engine.CAG:
+            query_params.context_params.project_dir = await find_project_dir(token, project, Engine.CAG)
+            text_response = await cag_get_response_stream(
+                query_params.context_params.project_dir,
+                query_params.conversation_id,
+                query_params.context_params.query,
+            )
+            await sio.emit(Command.STREAM_START, {"data": "Stream started"}, to=sid)
+            for event in text_response:
+                await sio.emit(Command.STREAM_TOKEN, event.model_dump_json(), to=sid)
+            await sio.emit(Command.STREAM_END, {"data": "Stream ended"}, to=sid)
+        case _:
+            await sio.emit(Command.ERROR, {"message": "Engine not supported"}, to=sid)
+
+@sio.event
 async def disconnect(sid: str):
     logger.info(f"Client disconnected: {sio}")
+
+
+async def find_project_dir(token: str, project: str, engine: Engine) -> Path:
+    token_data = await decode_token(token)
+    tennant_folder = cfg.graphrag_root_dir_path / token_data["sub"]
+    project_dir = find_project_folder(tennant_folder, engine, project)
+    return project_dir

@@ -4,7 +4,7 @@ import { ENGINE_OPTIONS, ENGINES } from "../../constants/engines";
 import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import { uploadIndex } from "../../lib/apiClient";
-import { Engine, ModalType } from "../../types/types";
+import { Engine, ModalType } from "../../model/types";
 import RenderLabel from "./Form/RenderLabel";
 import Modal from "./Modal";
 
@@ -34,7 +34,7 @@ export default function CreateProjectModal() {
     useShallow((state) => ({
       jwt: state.jwt,
       refreshProjects: state.refreshProjects,
-    }))
+    })),
   );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,7 +78,7 @@ export default function CreateProjectModal() {
       await uploadIndex(jwt, formData);
       refreshProjects();
       setUploadSuccessMessage(
-        `Index (${projectName}) uploaded successfully. Please wait for the index to be ready.`
+        `Index (${projectName}) uploaded successfully. Please wait for the index to be ready.`,
       );
       resetForm();
     } catch (err) {
@@ -131,7 +131,7 @@ export default function CreateProjectModal() {
             {ENGINE_OPTIONS.filter((option) =>
               modalType === ModalType.CREATE
                 ? true
-                : option.value === ENGINES.LIGHTRAG
+                : option.value === ENGINES.LIGHTRAG,
             ).map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}

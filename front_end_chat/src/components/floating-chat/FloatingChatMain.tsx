@@ -5,7 +5,7 @@ import useChatStore from "../../context/chatStore";
 import ChatInput from "../main-chat/ChatInput";
 import { NewChatButton } from "../main-chat/Header";
 import { ChatType } from "../../lib/chatTypes";
-import { ChatTypeOptions } from "../../types/types";
+import { ChatTypeOptions } from "../../model/types";
 import Messages from "../main-chat/Messages";
 
 export default function FloatingChatMain({

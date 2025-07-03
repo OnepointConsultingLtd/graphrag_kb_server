@@ -186,7 +186,11 @@ export async function generateSnippet(jwt: string, requestBody: object) {
   return await response.json();
 }
 
-export async function deleteProject(jwt: string, project: string, engine: string) {
+export async function deleteProject(
+  jwt: string,
+  project: string,
+  engine: string,
+) {
   try {
     const response = await fetch(
       `${getBaseServer()}/protected/project/delete_index?project=${project}&engine=${engine}`,
@@ -210,7 +214,11 @@ export async function deleteProject(jwt: string, project: string, engine: string
   }
 }
 
-export async function fetchTopics(jwt: string, project: Project, limit: number = 12): Promise<Topics> {
+export async function fetchTopics(
+  jwt: string,
+  project: Project,
+  limit: number = 12,
+): Promise<Topics> {
   const params = new URLSearchParams();
   params.set("project", project.name);
   params.set("engine", project.platform);
@@ -224,5 +232,5 @@ export async function fetchTopics(jwt: string, project: Project, limit: number =
 
   await processError(response);
 
-  return await response.json() as Topics;
+  return (await response.json()) as Topics;
 }

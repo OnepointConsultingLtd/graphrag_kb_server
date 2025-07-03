@@ -4,9 +4,10 @@ import type { Project, ProjectCategories } from "../model/projectCategory";
 import type { ChatMessage } from "../model/message";
 import { fetchProjects } from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
-import { ChatTypeOptions } from "../types/types";
+import { ChatTypeOptions } from "../model/types";
 import { ChatType } from "../lib/chatTypes";
 import type { Topics } from "../model/topics";
+import { io, type Socket } from "socket.io-client";
 
 type ChatStore = {
   jwt: string;
@@ -21,15 +22,17 @@ type ChatStore = {
   copiedMessageId: string | null;
   messagesEndRef: HTMLDivElement | null;
   chatType: ChatTypeOptions;
-  topics: Topics | null,
-  inputText: string,
-  conversationId: string | null,
+  topics: Topics | null;
+  inputText: string;
+  conversationId: string | null;
+  socket: Socket<any, any> | null;
   newProject: () => void;
   setJwt: (jwt: string) => void;
   setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
   setMarkdownDialogueContent: (content: string) => void;
   logout: () => void;
   addChatMessage: (chatMessage: ChatMessage) => void;
+  appendToLastChatMessage: (token: string) => void;
   clearChatMessages: () => void;
   setProjects: (projects: ProjectCategories) => void;
   setSelectedProject: (project: Project | undefined) => void;
@@ -50,6 +53,14 @@ type ChatStore = {
 };
 
 const THRESHOLD = 50;
+
+function initSocket() {
+  const socket = io(window.chatConfig?.websocketServer, {
+    transports: ["websocket"],
+    autoConnect: true,
+  });
+  return socket;
+}
 
 function initJwt() {
   // Try to extract from location first
@@ -131,6 +142,7 @@ const useChatStore = create<ChatStore>()(
         topics: null,
         inputText: "",
         conversationId: null,
+        socket: initSocket(),
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {
@@ -141,10 +153,10 @@ const useChatStore = create<ChatStore>()(
         setProjects: (projects: ProjectCategories) => set({ projects }),
         setSelectedProject: (project: Project | undefined) =>
           set(() => ({
-              selectedProject: project,
-              inputText: "",
-              topics: null,
-            })),
+            selectedProject: project,
+            inputText: "",
+            topics: null,
+          })),
         setMessagesEndRef: (ref: HTMLDivElement | null) =>
           set({ messagesEndRef: ref }),
 
@@ -159,9 +171,21 @@ const useChatStore = create<ChatStore>()(
               ],
             };
           }),
+        appendToLastChatMessage: (token: string) =>
+          set((state) => {
+            const lastMessage = state.chatMessages.slice(-1)[0];
+            lastMessage.text += token
+            return {
+              chatMessages: [...state.chatMessages.slice(0, -1), lastMessage],
+            };
+          }),
         clearChatMessages: () =>
           set(() => {
-            return { chatMessages: [], isThinking: false, conversationId: crypto.randomUUID() };
+            return {
+              chatMessages: [],
+              isThinking: false,
+              conversationId: crypto.randomUUID(),
+            };
           }),
         // Logout completely
         logout: () =>
@@ -208,7 +232,11 @@ const useChatStore = create<ChatStore>()(
           }),
         setCopiedMessageId: (id: string) => set({ copiedMessageId: id }),
         setSelectedProjectAndChatType: (selectedProject, chatType) =>
-          set({ selectedProject, chatType, conversationId: crypto.randomUUID() }),
+          set({
+            selectedProject,
+            chatType,
+            conversationId: crypto.randomUUID(),
+          }),
         setChatType: (chatType: ChatTypeOptions) => set({ chatType }),
         refreshProjects: () =>
           set((state) => {

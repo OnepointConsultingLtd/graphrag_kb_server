@@ -1,4 +1,4 @@
-import { Engine } from "../types/types";
+import { Engine } from "../model/types";
 
 export const ENGINES = {
   LIGHTRAG: "lightrag" as Engine,

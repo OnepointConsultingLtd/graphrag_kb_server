@@ -3,7 +3,7 @@ import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
-import { ModalType } from "../../types/types";
+import { ModalType } from "../../model/types";
 
 export default function Actions() {
   const { openModal, openModalWithProject } = useDashboardStore();
@@ -33,7 +33,8 @@ export default function Actions() {
       <button
         onClick={() => openModal(ModalType.SNIPPET)}
         disabled={isActionDisabled}
-        className="btn btn-secondary btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50">
+        className="btn btn-secondary btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50"
+      >
         <FaCode className="mr-2 group-hover:animate-pulse" />
         Generate Snippets
       </button>
@@ -41,7 +42,8 @@ export default function Actions() {
       <button
         onClick={() => openModalWithProject(ModalType.UPDATE, selectionProject)}
         disabled={isActionDisabled || !isLighrag}
-        className="btn btn-accent btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50">
+        className="btn btn-accent btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50"
+      >
         <FaEdit className="mr-2 group-hover:rotate-12 transition-transform" />
         Update Project
       </button>

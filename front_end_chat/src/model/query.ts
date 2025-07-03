@@ -1,5 +1,6 @@
 import type { Project } from "./projectCategory";
 import type { ChatMessage } from "./message";
+import type { Engine } from "./types";
 
 export type Query = {
   jwt: string;
@@ -8,3 +9,57 @@ export type Query = {
   chatHistory: ChatMessage[];
   conversationId: string;
 };
+
+// Context Parameters type
+export type ContextParameters = {
+  query: string;
+  projectDir: string; // Using string instead of Path for frontend
+  contextSize: number;
+};
+
+// Chat history message type
+export type ChatHistoryMessage = {
+  role: string;
+  content: string;
+};
+
+// Query Parameters type
+export type QueryParameters = {
+  format: string;
+  search: string;
+  engine: Engine;
+  contextParams: ContextParameters;
+  systemPrompt?: string | null;
+  systemPromptAdditional?: string | null;
+  hlKeywords: string[];
+  llKeywords: string[];
+  includeContext: boolean;
+  includeContextAsText: boolean;
+  structuredOutput: boolean;
+  chatHistory: ChatHistoryMessage[];
+  conversationId: string;
+  stream: boolean;
+};
+
+export function convertQueryToQueryParameters(query: Query): QueryParameters {
+  return {
+    format: "json",
+    search: query.project.search_type,
+    engine: query.project.platform,
+    contextParams: {
+      query: query.question,
+      projectDir: "",
+      contextSize: 8000,
+    },
+    systemPrompt: query.project.additional_prompt_instructions,
+    systemPromptAdditional: "",
+    hlKeywords: [],
+    llKeywords: [],
+    includeContext: false,
+    includeContextAsText: false,
+    structuredOutput: false,
+    chatHistory: [],
+    conversationId: query.conversationId,
+    stream: true,
+  };
+}

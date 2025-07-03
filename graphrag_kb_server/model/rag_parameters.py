@@ -60,6 +60,10 @@ class QueryParameters(BaseModel):
         default=str(uuid.uuid4()),
         description="The conversation id.",
     )
+    stream: bool = Field(
+        default=False,
+        description="Whether to stream the response.",
+    )
     model_config = {"frozen": True}  # Pydantic v2 config syntax
 
 

@@ -13,6 +13,7 @@ declare global {
       project?: Project;
       displayFloatingChatIntro?: boolean;
       baseServer?: string;
+      websocketServer?: string;
       organisation_name?: string;
     };
   }

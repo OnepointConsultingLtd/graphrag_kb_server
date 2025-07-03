@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { SearchType, SimpleProject } from "../model/projectCategory";
-import { ChatTypeOptions } from "../types/types";
+import { ChatTypeOptions } from "../model/types";
 
 type ProjectSelectionStore = {
   selectionPlatform: string;
@@ -14,7 +14,11 @@ type ProjectSelectionStore = {
   setAdditionalPromptInstructions: (
     additionalPromptInstructions: string,
   ) => void;
-  setSelectionProjectAndPlatform: (project: string, platform: string, toggle: boolean) => void;
+  setSelectionProjectAndPlatform: (
+    project: string,
+    platform: string,
+    toggle: boolean,
+  ) => void;
   setIsChatConfigDialogOpen: (
     isOpen: boolean,
     project: SimpleProject | null,
@@ -30,9 +34,11 @@ const useProjectSelectionStore = create<ProjectSelectionStore>((set) => ({
   additionalPromptInstructions: "",
   isChatConfigDialogOpen: false,
   localChatType: null,
-  setSelectionProject: (project: string) => set({ selectionProject: project, searchType: SearchType.LOCAL }),
+  setSelectionProject: (project: string) =>
+    set({ selectionProject: project, searchType: SearchType.LOCAL }),
   setSearchType: (searchType: SearchType) => set({ searchType: searchType }),
-  setAdditionalPromptInstructions: (additionalPromptInstructions: string) => set({ additionalPromptInstructions: additionalPromptInstructions }),
+  setAdditionalPromptInstructions: (additionalPromptInstructions: string) =>
+    set({ additionalPromptInstructions: additionalPromptInstructions }),
 
   setSelectionProjectAndPlatform: (
     selectionProject: string,
@@ -42,7 +48,8 @@ const useProjectSelectionStore = create<ProjectSelectionStore>((set) => ({
     set((state) => {
       if (
         state.selectionPlatform === selectionPlatform &&
-        state.selectionProject === selectionProject && toggle
+        state.selectionProject === selectionProject &&
+        toggle
       ) {
         return {
           selectionPlatform: "",
