@@ -59,14 +59,12 @@ export default function RenderProjectList({
     selectionProject,
     selectionPlatform,
     setSelectionProjectAndPlatform,
-    isChatConfigDialogOpen,
     setIsChatConfigDialogOpen,
   } = useProjectSelectionStore(
     useShallow((state) => ({
       selectionProject: state.selectionProject,
       selectionPlatform: state.selectionPlatform,
       setSelectionProjectAndPlatform: state.setSelectionProjectAndPlatform,
-      isChatConfigDialogOpen: state.isChatConfigDialogOpen,
       setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
     })),
   );
@@ -196,8 +194,10 @@ export default function RenderProjectList({
                   <button
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent triggering the project selection
+                      e.preventDefault();
                       handleProjectClick(project, false);
                       setIsChatConfigDialogOpen(true, project);
+
                     }}
                     className="bg-blue-500 px-4 py-2 rounded-md"
                   >
@@ -211,7 +211,6 @@ export default function RenderProjectList({
           })}
         </div>
       )}
-      {isChatConfigDialogOpen && <ChatConfigDialog />}
     </div>
   );
 }

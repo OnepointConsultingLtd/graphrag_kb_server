@@ -152,6 +152,8 @@ function ActionButtons({ onStartChat }: { onStartChat: () => void }) {
   );
 }
 
+export const CHAT_CONFIG_DIALOG_ID = "chat-config-dialog";
+
 export default function ChatConfigDialog() {
   const navigate = useNavigate();
 
@@ -199,7 +201,7 @@ export default function ChatConfigDialog() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <dialog id={CHAT_CONFIG_DIALOG_ID} className="modal">
       <div
         className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4"
         onClick={(e) => e.stopPropagation()}
@@ -226,6 +228,6 @@ export default function ChatConfigDialog() {
 
         <ActionButtons onStartChat={handleStartChat} />
       </div>
-    </div>
+    </dialog>
   );
 }

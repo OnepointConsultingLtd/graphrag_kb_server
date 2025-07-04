@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { SearchType, SimpleProject } from "../model/projectCategory";
 import { ChatTypeOptions } from "../model/types";
+import { CHAT_CONFIG_DIALOG_ID } from "../components/dashboard/ChatConfigDialog";
+
 
 type ProjectSelectionStore = {
   selectionPlatform: string;
@@ -26,6 +28,15 @@ type ProjectSelectionStore = {
   setLocalChatType: (localChatType: ChatTypeOptions) => void;
   logout: () => void;
 };
+
+
+function toggleChatConfigDialog(isOpen: boolean) {
+  if(isOpen) {
+    (document.getElementById(CHAT_CONFIG_DIALOG_ID) as HTMLDialogElement)?.showModal();
+  } else {
+    (document.getElementById(CHAT_CONFIG_DIALOG_ID) as HTMLDialogElement)?.close();
+  }
+}
 
 const useProjectSelectionStore = create<ProjectSelectionStore>((set) => ({
   selectionPlatform: "",
@@ -69,6 +80,7 @@ const useProjectSelectionStore = create<ProjectSelectionStore>((set) => ({
     project: SimpleProject | null,
   ) =>
     set(() => {
+      toggleChatConfigDialog(isChatConfigDialogOpen);
       if (!project) {
         return {
           isChatConfigDialogOpen,
