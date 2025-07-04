@@ -3,6 +3,7 @@ from typing import Tuple, Union
 import tiktoken
 import json
 import pandas as pd
+from collections.abc import AsyncGenerator
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters
 from graphrag_kb_server.model.rag_parameters import QueryParameters
@@ -384,17 +385,21 @@ def __create_search_params(
     return context_parameters, conversation_history
 
 
-async def rag_local(query_params: QueryParameters) -> str:
+async def rag_local(query_params: QueryParameters, stream: bool = False) -> str | AsyncGenerator[str, None]:
     context_parameters, conversation_history = __create_search_params(query_params)
-    return await rag_local_simple(context_parameters, conversation_history)
+    return await rag_local_simple(context_parameters, conversation_history, stream)
 
 
 async def rag_local_simple(
     context_parameters: ContextParameters,
     conversation_history: ConversationHistory | None = None,
-) -> str:
+    stream: bool = False,
+) -> str | AsyncGenerator[str, None]:
     search_engine = prepare_local_search(context_parameters)
-    result = await search_engine.search(context_parameters.query, conversation_history)
+    if stream:
+        return search_engine.stream_search(context_parameters.query, conversation_history)
+    else:
+        result = await search_engine.search(context_parameters.query, conversation_history)
     return result.response
 
 

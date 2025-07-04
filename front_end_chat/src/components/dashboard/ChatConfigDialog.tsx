@@ -6,6 +6,7 @@ import { Platform, SearchType } from "../../model/projectCategory";
 import { ChatTypeOptions } from "../../model/types";
 import RenderLabel from "./Form/RenderLabel";
 import { useNavigate } from "react-router-dom";
+import { supportsStreaming } from "../../lib/streamingUtils";
 
 function ChatTypeSelector() {
   const {
@@ -212,7 +213,7 @@ export default function ChatConfigDialog() {
 
         <ChatTypeSelector />
 
-        {selectedProject?.platform === Platform.CAG && <StreamingSelector />}
+        {supportsStreaming(selectedProject?.platform) && <StreamingSelector />}
 
         {selectedProject?.platform !== Platform.CAG && (
           <SearchTypeSelector

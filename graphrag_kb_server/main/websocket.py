@@ -2,10 +2,10 @@ import json
 from pathlib import Path
 from enum import StrEnum
 
+from graphrag.callbacks.query_callbacks import QueryCallbacks
+
 from graphrag_kb_server.logger import logger
-from graphrag_kb_server.model.search.search import (
-    DocumentSearchQuery,
-)
+from graphrag_kb_server.model.search.search import DocumentSearchQuery
 from graphrag_kb_server.main import sio
 from graphrag_kb_server.service.jwt_service import decode_token
 from graphrag_kb_server.service.tennant import find_project_folder
@@ -17,6 +17,8 @@ from graphrag_kb_server.service.search.search_documents import (
 )
 from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.service.cag.cag_support import cag_get_response_stream
+from graphrag_kb_server.service.query import rag_local
+from graphrag_kb_server.model.engines import find_engine
 
 class Command(StrEnum):
     START_SESSION = "start_session"
@@ -78,14 +80,19 @@ async def relevant_documents(sid: str, token: str, project: str, document_query:
 @sio.event
 async def chat_stream(sid: str, token: str, project: str, query_parameters: dict):
     try:
+        project_dir = await find_project_dir(token, project, find_engine(query_parameters["engine"]))
+        query_parameters["context_params"]["project_dir"] = project_dir
         query_params = QueryParameters(**query_parameters)
         match query_params.engine:
             case Engine.GRAPHRAG:
-                raise ValueError("GraphRAG is not supported for chat streaming")
+                await sio.emit(Command.STREAM_START, {"data": "Stream started"}, to=sid)
+                generator = await rag_local(query_params, True)
+                async for event in generator:
+                    await sio.emit(Command.STREAM_TOKEN, event, to=sid)
+                await sio.emit(Command.STREAM_END, {"data": "Stream ended"}, to=sid)
             case Engine.LIGHTRAG:
                 raise ValueError("Lightrag is not supported for chat streaming")
             case Engine.CAG:
-                project_dir = await find_project_dir(token, project, Engine.CAG)
                 text_response = await cag_get_response_stream(
                     project_dir,
                     query_params.conversation_id,

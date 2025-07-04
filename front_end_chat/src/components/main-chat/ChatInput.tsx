@@ -5,9 +5,8 @@ import useChatStore from "../../context/chatStore";
 import { sendQuery } from "../../lib/apiClient";
 import { extractSimpleReferences } from "../../lib/referenceExtraction";
 import { ChatMessageTypeOptions, type QueryResponse } from "../../model/message";
-import { WebsocketServerEventOptions } from "../../model/websocket";
-import { Platform } from "../../model/projectCategory";
 import { sendWebsocketQuery } from "../../lib/websocketClient";
+import { supportsStreaming } from "../../lib/streamingUtils";
 
 export default function ChatInput() {
   const [
@@ -56,7 +55,7 @@ export default function ChatInput() {
         chatHistory: chatMessages,
         conversationId: conversationId ?? crypto.randomUUID(),
       }
-      if (useStreaming && selectedProject.platform === Platform.CAG) {
+      if (useStreaming && supportsStreaming(selectedProject.platform)) {
         sendWebsocketQuery(socket, jwt, query)
       } else {
         sendQuery(query)
