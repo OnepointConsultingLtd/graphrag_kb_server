@@ -2,7 +2,7 @@ import { Socket } from "socket.io-client";
 import { Query, convertQueryToQueryParameters } from "../model/query";
 import { WebsocketEvent, WebsocketEventOptions } from "../model/websocket";
 
-export function sendQuery(socket: Socket<any, any>, jwt: string, query: Query) {
+export function sendWebsocketQuery(socket: Socket<any, any> | null, jwt: string, query: Query) {
   safeEmit(
     socket,
     WebsocketEventOptions.CHAT_STREAM,

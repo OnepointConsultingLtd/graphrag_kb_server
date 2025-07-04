@@ -4,7 +4,7 @@ import type { Topics } from "../model/topics";
 import { getBaseServer } from "./server";
 import type { Query } from "../model/query";
 import type { ChatMessage } from "../model/message";
-import { ChatMessageType } from "../model/message";
+import { ChatMessageTypeOptions } from "../model/message";
 
 function createHeaders(jwt: string) {
   return {
@@ -80,7 +80,7 @@ export function convertChatHistoryToLightragChatHistory(
   const maxSize = 10;
   return chatHistory
     .map((message) => ({
-      role: message.type === ChatMessageType.USER ? "user" : "assistant",
+      role: message.type === ChatMessageTypeOptions.USER ? "user" : "assistant",
       content: message.text,
     }))
     .slice(0, maxSize);

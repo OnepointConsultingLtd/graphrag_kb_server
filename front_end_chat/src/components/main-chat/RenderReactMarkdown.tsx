@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 import type { ChatMessage } from "../../model/message";
-import { ChatMessageType } from "../../model/message";
+import { ChatMessageTypeOptions } from "../../model/message";
 import MessageTimestamp from "../messages/MessageTimestamp";
 import CopyButton from "./CopyButton";
 
@@ -43,7 +43,7 @@ export default function RenderReactMarkdown({
             <a
               {...props}
               className={`underline ${
-                message.type === ChatMessageType.USER
+                message.type === ChatMessageTypeOptions.USER
                   ? "text-purple-100 hover:text-white"
                   : "text-purple-500 hover:text-purple-600"
               } transition-colors duration-200`}
@@ -54,7 +54,7 @@ export default function RenderReactMarkdown({
           p: ({ ...props }) => (
             <p
               {...props}
-              className={message.type === ChatMessageType.USER ? "" : `mb-4`}
+              className={message.type === ChatMessageTypeOptions.USER ? "" : `mb-4`}
             />
           ),
           ul: ({ ...props }) => (
@@ -63,8 +63,8 @@ export default function RenderReactMarkdown({
           li: ({ ...props }) => (
             <li
               {...props}
-              className={`break-all ${
-                message.type === ChatMessageType.USER
+              className={`${
+                message.type === ChatMessageTypeOptions.USER
                   ? "text-white"
                   : listItemClassName
               }`}
@@ -79,7 +79,7 @@ export default function RenderReactMarkdown({
       <div className="flex items-center justify-between mt-2 text-xs">
         <div
           className={
-            message.type === ChatMessageType.USER
+            message.type === ChatMessageTypeOptions.USER
               ? "text-purple-100"
               : "text-slate-400"
           }
@@ -94,7 +94,7 @@ export default function RenderReactMarkdown({
         </div>
 
         <CopyButton
-          isUser={message.type === ChatMessageType.USER}
+          isUser={message.type === ChatMessageTypeOptions.USER}
           text={message.text}
           id={message.id}
           onCopy={() => {

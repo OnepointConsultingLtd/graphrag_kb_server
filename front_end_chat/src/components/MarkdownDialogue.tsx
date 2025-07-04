@@ -1,6 +1,6 @@
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../context/chatStore";
-import { ChatMessageType } from "../model/message";
+import { ChatMessageTypeOptions } from "../model/message";
 import RenderReactMarkdown from "./main-chat/RenderReactMarkdown";
 
 export const MARKDOWN_DIALOGUE_ID = "markdown-dialogue";
@@ -36,7 +36,7 @@ export default function MarkdownDialogue() {
           message={{
             id: "1",
             text: markdownDialogueContent.replace(/<!--[\s\S]*?-->/g, ""),
-            type: ChatMessageType.AGENT,
+            type: ChatMessageTypeOptions.AGENT,
             timestamp: new Date(),
           }}
           listItemClassName="text-gray-100"

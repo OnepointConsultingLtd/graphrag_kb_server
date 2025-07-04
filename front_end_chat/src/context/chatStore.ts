@@ -1,13 +1,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Project, ProjectCategories } from "../model/projectCategory";
-import type { ChatMessage } from "../model/message";
+import { type ChatMessage, type ChatMessageType, ChatMessageTypeOptions } from "../model/message";
 import { fetchProjects } from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
 import { ChatTypeOptions } from "../model/types";
 import { ChatType } from "../lib/chatTypes";
 import type { Topics } from "../model/topics";
 import { io, type Socket } from "socket.io-client";
+import { getWebsocketServer } from "../lib/server";
+import { createChatMessage } from "../factory/chatMessageFactory";
 
 type ChatStore = {
   jwt: string;
@@ -57,7 +59,7 @@ type ChatStore = {
 const THRESHOLD = 50;
 
 function initSocket() {
-  const socket = io(window.chatConfig?.websocketServer, {
+  const socket = io(getWebsocketServer(), {
     transports: ["websocket"],
     autoConnect: true,
   });
@@ -177,9 +179,15 @@ const useChatStore = create<ChatStore>()(
         appendToLastChatMessage: (token: string) =>
           set((state) => {
             const lastMessage = state.chatMessages.slice(-1)[0];
-            lastMessage.text += token
+            if(lastMessage.type === ChatMessageTypeOptions.USER) {
+              return {
+                chatMessages: [...state.chatMessages, createChatMessage(token, state.conversationId)],
+                isThinking: false,
+              }
+            }
+            lastMessage.text += token;
             return {
-              chatMessages: [...state.chatMessages.slice(0, -1), lastMessage],
+              chatMessages: [...state.chatMessages.slice(0, -1), lastMessage]
             };
           }),
         clearChatMessages: () =>
@@ -201,6 +209,7 @@ const useChatStore = create<ChatStore>()(
             copiedMessageId: null,
             topics: null,
             inputText: "",
+            useStreaming: false,
           }),
         newProject: () =>
           set({
@@ -239,6 +248,8 @@ const useChatStore = create<ChatStore>()(
             selectedProject,
             chatType,
             conversationId: crypto.randomUUID(),
+            chatMessages: [],
+            isThinking: false,
           }),
         setChatType: (chatType: ChatTypeOptions) => set({ chatType }),
         refreshProjects: () =>
@@ -249,6 +260,7 @@ const useChatStore = create<ChatStore>()(
         setTopics: (topics: Topics) => set({ topics }),
         setInputText: (inputText: string) => set({ inputText }),
         setConversationId: (conversationId: string) => set({ conversationId }),
+        setUseStreaming: (useStreaming: boolean) => set({ useStreaming }),
       };
     },
     {
@@ -260,6 +272,7 @@ const useChatStore = create<ChatStore>()(
         chatMessages: state.chatMessages,
         chatType: state.chatType,
         topics: state.topics,
+        useStreaming: state.useStreaming,
       }),
     },
   ),

@@ -76,26 +76,32 @@ async def relevant_documents(sid: str, token: str, project: str, document_query:
 
 
 @sio.event
-async def chat_stream(sid: str, token: str, project: str, query_parameters: str):
-    query_params = QueryParameters(**json.loads(query_parameters))
-    match query_params.engine:
-        case Engine.GRAPHRAG:
-            raise ValueError("GraphRAG is not supported for chat streaming")
-        case Engine.LIGHTRAG:
-            raise ValueError("Lightrag is not supported for chat streaming")
-        case Engine.CAG:
-            query_params.context_params.project_dir = await find_project_dir(token, project, Engine.CAG)
-            text_response = await cag_get_response_stream(
-                query_params.context_params.project_dir,
-                query_params.conversation_id,
-                query_params.context_params.query,
-            )
-            await sio.emit(Command.STREAM_START, {"data": "Stream started"}, to=sid)
-            for event in text_response:
-                await sio.emit(Command.STREAM_TOKEN, event.model_dump_json(), to=sid)
-            await sio.emit(Command.STREAM_END, {"data": "Stream ended"}, to=sid)
-        case _:
-            await sio.emit(Command.ERROR, {"message": "Engine not supported"}, to=sid)
+async def chat_stream(sid: str, token: str, project: str, query_parameters: dict):
+    try:
+        query_params = QueryParameters(**query_parameters)
+        match query_params.engine:
+            case Engine.GRAPHRAG:
+                raise ValueError("GraphRAG is not supported for chat streaming")
+            case Engine.LIGHTRAG:
+                raise ValueError("Lightrag is not supported for chat streaming")
+            case Engine.CAG:
+                project_dir = await find_project_dir(token, project, Engine.CAG)
+                text_response = await cag_get_response_stream(
+                    project_dir,
+                    query_params.conversation_id,
+                    query_params.context_params.query,
+                )
+                await sio.emit(Command.STREAM_START, {"data": "Stream started"}, to=sid)
+                async for event in text_response:
+                    await sio.emit(Command.STREAM_TOKEN, event.text, to=sid)
+                await sio.emit(Command.STREAM_END, {"data": "Stream ended"}, to=sid)
+            case _:
+                await sio.emit(Command.ERROR, {"message": "Engine not supported"}, to=sid)
+    except Exception as e:
+        err_msg = f"Errors: {e}. Please try again."
+        logger.error(err_msg)
+        await sio.emit(Command.ERROR, {"message": err_msg}, to=sid)
+
 
 @sio.event
 async def disconnect(sid: str):

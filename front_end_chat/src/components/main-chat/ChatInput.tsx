@@ -4,7 +4,10 @@ import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 import { sendQuery } from "../../lib/apiClient";
 import { extractSimpleReferences } from "../../lib/referenceExtraction";
-import { ChatMessageType, type QueryResponse } from "../../model/message";
+import { ChatMessageTypeOptions, type QueryResponse } from "../../model/message";
+import { WebsocketServerEventOptions } from "../../model/websocket";
+import { Platform } from "../../model/projectCategory";
+import { sendWebsocketQuery } from "../../lib/websocketClient";
 
 export default function ChatInput() {
   const [
@@ -13,10 +16,12 @@ export default function ChatInput() {
     isThinking,
     selectedProject,
     chatMessages,
+    conversationId,
+    useStreaming,
+    socket,
     addChatMessage,
     setIsThinking,
     setInputText,
-    conversationId,
   ] = useChatStore(
     useShallow((state) => [
       state.inputText,
@@ -24,10 +29,12 @@ export default function ChatInput() {
       state.isThinking,
       state.selectedProject,
       state.chatMessages,
+      state.conversationId,
+      state.useStreaming,
+      state.socket,
       state.addChatMessage,
       state.setIsThinking,
       state.setInputText,
-      state.conversationId,
     ]),
   );
 
@@ -38,42 +45,47 @@ export default function ChatInput() {
     addChatMessage({
       id: uuidv4(),
       text: inputText,
-      type: ChatMessageType.USER,
+      type: ChatMessageTypeOptions.USER,
       timestamp: new Date(),
     });
     if (selectedProject) {
-      sendQuery({
+      const query = {
         jwt,
         question: inputText,
         project: selectedProject,
         chatHistory: chatMessages,
         conversationId: conversationId ?? crypto.randomUUID(),
-      })
-        .then((response: QueryResponse) => {
-          console.info("response", response);
-          const finalResponse =
-            response?.response?.response ?? response?.response;
-          const references = extractSimpleReferences(response?.response);
-          addChatMessage({
-            id: uuidv4(),
-            text: finalResponse,
-            type: ChatMessageType.AGENT,
-            timestamp: new Date(),
-            references: references,
+      }
+      if (useStreaming && selectedProject.platform === Platform.CAG) {
+        sendWebsocketQuery(socket, jwt, query)
+      } else {
+        sendQuery(query)
+          .then((response: QueryResponse) => {
+            console.info("response", response);
+            const finalResponse =
+              response?.response?.response ?? response?.response;
+            const references = extractSimpleReferences(response?.response);
+            addChatMessage({
+              id: uuidv4(),
+              text: finalResponse,
+              type: ChatMessageTypeOptions.AGENT,
+              timestamp: new Date(),
+              references: references,
+            });
+          })
+          .catch((error) => {
+            console.error("error", error);
+            addChatMessage({
+              id: uuidv4(),
+              text: `An error occurred while processing your request: ${error.message}. Please try again.`,
+              type: ChatMessageTypeOptions.AGENT_ERROR,
+              timestamp: new Date(),
+            });
+          })
+          .finally(() => {
+            setIsThinking(false);
           });
-        })
-        .catch((error) => {
-          console.error("error", error);
-          addChatMessage({
-            id: uuidv4(),
-            text: `An error occurred while processing your request: ${error.message}. Please try again.`,
-            type: ChatMessageType.AGENT_ERROR,
-            timestamp: new Date(),
-          });
-        })
-        .finally(() => {
-          setIsThinking(false);
-        });
+      }
     }
   }
 

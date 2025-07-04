@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
-import { ChatMessageType } from "../../model/message";
+import { ChatMessageTypeOptions } from "../../model/message";
 import ReferenceDisplay from "../messages/ReferenceDisplay";
 import RenderReactMarkdown from "./RenderReactMarkdown";
 import ThinkingIndicator from "./ThinkingIndicator";
@@ -67,7 +67,7 @@ function ConversationStarter() {
         )}
         {hasTopics && (
           <div
-            className={`grid grid-cols-2 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-${chatType === ChatType.FLOATING ? 1 : 3} grid-cols-${chatType === ChatType.FLOATING ? 1 : 2} gap-2`}
+            className={`grid grid-cols-1 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-2 gap-2`}
           >
             {topics?.topics.map((topic) => (
               <button
@@ -113,7 +113,7 @@ export default function Messages() {
     })),
   );
 
-  useWebsocket()
+  useWebsocket();
 
   useEffect(() => {
     setChatType(ChatType.FULL_PAGE as ChatTypeOptions);
@@ -133,7 +133,7 @@ export default function Messages() {
 
   return (
     <div className="flex-1 flex-col">
-      <div className="overflow-y-auto">
+      <div>
         <div className="mx-auto">
           <div
             className={`flex flex-col gap-6 ${
@@ -148,12 +148,12 @@ export default function Messages() {
                 <div
                   key={message.id}
                   className={`flex ${
-                    message.type === ChatMessageType.USER
+                    message.type === ChatMessageTypeOptions.USER
                       ? "justify-end"
                       : "justify-start"
                   } animate-slideIn items-start`}
                 >
-                  {message.type === ChatMessageType.AGENT && (
+                  {message.type === ChatMessageTypeOptions.AGENT && (
                     <div className="flex-shrink-0 hidden lg:block mr-2">
                       <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 border border-blue-300">
                         A
@@ -164,7 +164,7 @@ export default function Messages() {
                     className={`text-left ${
                       isFloating ? "p-2" : "p-6"
                     } relative max-w-full rounded-lg rounded-tr-sm ${
-                      message.type === ChatMessageType.USER
+                      message.type === ChatMessageTypeOptions.USER
                         ? isFloating
                           ? "bg-gradient-to-br from-purple-500 to-blue-500 md:max-w-[70%] shadow-lg text-white"
                           : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
@@ -187,7 +187,7 @@ export default function Messages() {
                     ) : null}
                   </div>
 
-                  {message.type === ChatMessageType.USER && (
+                  {message.type === ChatMessageTypeOptions.USER && (
                     <div className="flex-shrink-0 hidden lg:block ml-2">
                       <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center font-bold text-purple-700 border border-purple-300">
                         U

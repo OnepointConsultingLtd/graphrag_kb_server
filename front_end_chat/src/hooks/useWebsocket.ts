@@ -1,63 +1,61 @@
 import { useEffect } from "react";
 import useChatStore from "../context/chatStore";
-import { ChatMessageType } from "../model/message";
+import { ErrorMessage } from "../model/error";
 import { WebsocketServerEventOptions } from "../model/websocket";
-
-
-function createChatMessage(text: string, conversationId: string | null) {
-    return {
-        id: crypto.randomUUID(),
-        text,
-        type: ChatMessageType.AGENT,
-        timestamp: new Date(),
-        ...(conversationId ? {conversationId: conversationId} : {}),
-        references: [],
-    }
-}
+import { useShallow } from "zustand/react/shallow";
+import { createChatMessage } from "../factory/chatMessageFactory";
 
 export default function useWebsocket() {
-    const { socket, conversationId, appendToLastChatMessage, addChatMessage } = useChatStore();
-    useEffect(() => {
-        function onConnect() {
-            console.info("Connected to websocket");
-        }
+  const { socket, conversationId, appendToLastChatMessage, addChatMessage, setIsThinking, scrollToBottom } =
+    useChatStore(useShallow((state) => ({
+      socket: state.socket,
+      conversationId: state.conversationId,
+      appendToLastChatMessage: state.appendToLastChatMessage,
+      addChatMessage: state.addChatMessage,
+      setIsThinking: state.setIsThinking,
+      scrollToBottom: state.scrollToBottom
+    })));
+  useEffect(() => {
+    function onConnect() {
+      console.info("Connected to websocket");
+    }
 
-        function onDisconnect() {
-            console.info("Disconnected from websocket");
-        }
+    function onDisconnect() {
+      console.info("Disconnected from websocket");
+    }
 
-        function onStreamStart(data: string) {
-            console.info(`Stream started: ${data}`);
-            addChatMessage(createChatMessage("Thinking...", conversationId));
-        }
+    function onStreamStart() {
+      setIsThinking(true);
+    }
 
-        function onStreamToken(token: string) {
-            appendToLastChatMessage(token);
-        }
+    function onStreamToken(token: string) {
+      appendToLastChatMessage(token);
+    }
 
-        function onStreamEnd(data: string) {
-            console.info(`Stream ended: ${data}`);
-        }
+    function onStreamEnd(data: string) {
+      console.info(`Stream ended: ${data}`);
+      scrollToBottom();
+    }
 
-        function onError(error: string) {
-            console.error(`Error: ${error}`);
-            addChatMessage(createChatMessage(`Error: ${error}`, conversationId));
-        }
+    function onError(error: ErrorMessage) {
+      console.error(`Error: ${error.message}`);
+      addChatMessage(createChatMessage(`Error: ${error.message}`, conversationId));
+    }
 
-        socket?.on(WebsocketServerEventOptions.CONNECT, onConnect);
-        socket?.on(WebsocketServerEventOptions.DISCONNECT, onDisconnect);
-        socket?.on(WebsocketServerEventOptions.STREAM_START, onStreamStart);
-        socket?.on(WebsocketServerEventOptions.STREAM_TOKEN, onStreamToken);
-        socket?.on(WebsocketServerEventOptions.STREAM_END, onStreamEnd);
-        socket?.on(WebsocketServerEventOptions.ERROR, onError);
+    socket?.on(WebsocketServerEventOptions.CONNECT, onConnect);
+    socket?.on(WebsocketServerEventOptions.DISCONNECT, onDisconnect);
+    socket?.on(WebsocketServerEventOptions.STREAM_START, onStreamStart);
+    socket?.on(WebsocketServerEventOptions.STREAM_TOKEN, onStreamToken);
+    socket?.on(WebsocketServerEventOptions.STREAM_END, onStreamEnd);
+    socket?.on(WebsocketServerEventOptions.ERROR, onError);
 
-        return () => {
-            socket?.off(WebsocketServerEventOptions.CONNECT, onConnect);
-            socket?.off(WebsocketServerEventOptions.DISCONNECT, onDisconnect);
-            socket?.off(WebsocketServerEventOptions.STREAM_START, onStreamStart);
-            socket?.off(WebsocketServerEventOptions.STREAM_TOKEN, onStreamToken);
-            socket?.off(WebsocketServerEventOptions.STREAM_END, onStreamEnd);
-            socket?.off(WebsocketServerEventOptions.ERROR, onError);
-        }
-    }, [socket, conversationId, appendToLastChatMessage, addChatMessage]);
+    return () => {
+      socket?.off(WebsocketServerEventOptions.CONNECT, onConnect);
+      socket?.off(WebsocketServerEventOptions.DISCONNECT, onDisconnect);
+      socket?.off(WebsocketServerEventOptions.STREAM_START, onStreamStart);
+      socket?.off(WebsocketServerEventOptions.STREAM_TOKEN, onStreamToken);
+      socket?.off(WebsocketServerEventOptions.STREAM_END, onStreamEnd);
+      socket?.off(WebsocketServerEventOptions.ERROR, onError);
+    };
+  }, [socket, conversationId, appendToLastChatMessage, addChatMessage]);
 }

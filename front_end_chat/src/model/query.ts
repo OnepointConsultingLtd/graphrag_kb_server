@@ -13,8 +13,8 @@ export type Query = {
 // Context Parameters type
 export type ContextParameters = {
   query: string;
-  projectDir: string; // Using string instead of Path for frontend
-  contextSize: number;
+  project_dir: string; // Using string instead of Path for frontend
+  context_size: number;
 };
 
 // Chat history message type
@@ -28,7 +28,7 @@ export type QueryParameters = {
   format: string;
   search: string;
   engine: Engine;
-  contextParams: ContextParameters;
+  context_params: ContextParameters;
   systemPrompt?: string | null;
   systemPromptAdditional?: string | null;
   hlKeywords: string[];
@@ -46,10 +46,10 @@ export function convertQueryToQueryParameters(query: Query): QueryParameters {
     format: "json",
     search: query.project.search_type,
     engine: query.project.platform,
-    contextParams: {
+    context_params: {
       query: query.question,
-      projectDir: "",
-      contextSize: 8000,
+      project_dir: "",
+      context_size: 8000,
     },
     systemPrompt: query.project.additional_prompt_instructions,
     systemPromptAdditional: "",

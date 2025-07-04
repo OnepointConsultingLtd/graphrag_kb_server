@@ -17,14 +17,14 @@ export type ServerMessage = {
   messageType: MessageType;
 };
 
-export const ChatMessageType = {
+export const ChatMessageTypeOptions = {
   USER: "USER",
   AGENT: "AGENT",
   AGENT_ERROR: "AGENT_ERROR",
 } as const;
 
 export type ChatMessageType =
-  (typeof ChatMessageType)[keyof typeof ChatMessageType];
+  (typeof ChatMessageTypeOptions)[keyof typeof ChatMessageTypeOptions];
 
 export type ChatMessage = {
   id: string;

@@ -52,53 +52,80 @@ function ChatTypeSelector() {
   );
 }
 
-const SearchTypeSelector = ({
+function StreamingSelector() {
+  const { useStreaming, setUseStreaming } = useChatStore(
+    useShallow((state) => ({
+      useStreaming: state.useStreaming,
+      setUseStreaming: state.setUseStreaming,
+    })),
+  );
+
+  return (
+    <div className="mb-6">
+      <label className="block text-sm font-medium text-gray-300 mb-2" htmlFor="streaming">
+        Streaming
+      </label>
+      <input
+        type="checkbox"
+        id="streaming"
+        checked={useStreaming}
+        onChange={() => setUseStreaming(!useStreaming)}
+      />
+    </div>
+  );
+}
+
+function SearchTypeSelector({
   searchType,
   setSearchType,
 }: {
   searchType: SearchType;
   setSearchType: (value: SearchType) => void;
-}) => (
-  <div className="mb-6">
-    <label className="block text-sm font-medium text-gray-300 mb-2">
-      Search Type
-    </label>
-    <select
-      className="select select-primary w-full"
-      value={searchType}
-      onChange={(e) => setSearchType(e.target.value as SearchType)}
-    >
-      {Object.values(SearchType).map((value, index) => (
-        <option key={`${index}-${value}`} value={value}>
-          {value}
-        </option>
-      ))}
-    </select>
-  </div>
-);
+}) {
+  return (
+    <div className="mb-6">
+      <label className="block text-sm font-medium text-gray-300 mb-2">
+        Search Type
+      </label>
+      <select
+        className="select select-primary w-full"
+        value={searchType}
+        onChange={(e) => setSearchType(e.target.value as SearchType)}
+      >
+        {Object.values(SearchType).map((value, index) => (
+          <option key={`${index}-${value}`} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
-const AdditionalInstructionsInput = ({
+function AdditionalInstructionsInput({
   value,
   onChange,
 }: {
   value: string;
   onChange: (value: string) => void;
-}) => (
-  <div className="flex flex-col gap-1 cursor-auto">
-    <RenderLabel label="Additional Instructions" />
-    <span className="text-sm text-gray-400 mb-2">
-      Example: "Please talk like Mark Zuckerberg."
-    </span>
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="textarea textarea-bordered w-full bg-gray-700"
-      placeholder="Enter any additional instructions for the chat..."
-    />
-  </div>
-);
+}) {
+  return (
+    <div className="flex flex-col gap-1 cursor-auto">
+      <RenderLabel label="Additional Instructions" />
+      <span className="text-sm text-gray-400 mb-2">
+        Example: "Please talk like Mark Zuckerberg."
+      </span>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="textarea textarea-bordered w-full bg-gray-700"
+        placeholder="Enter any additional instructions for the chat..."
+      />
+    </div>
+  );
+}
 
-const ActionButtons = ({ onStartChat }: { onStartChat: () => void }) => {
+function ActionButtons({ onStartChat }: { onStartChat: () => void }) {
   const { setIsChatConfigDialogOpen, localChatType } = useProjectSelectionStore(
     useShallow((state) => ({
       setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
@@ -123,7 +150,7 @@ const ActionButtons = ({ onStartChat }: { onStartChat: () => void }) => {
       </button>
     </div>
   );
-};
+}
 
 export default function ChatConfigDialog() {
   const navigate = useNavigate();
@@ -183,10 +210,14 @@ export default function ChatConfigDialog() {
 
         <ChatTypeSelector />
 
-        {selectedProject?.platform !== Platform.CAG && <SearchTypeSelector
-          searchType={searchType}
-          setSearchType={setSearchType}
-        />}
+        {selectedProject?.platform === Platform.CAG && <StreamingSelector />}
+
+        {selectedProject?.platform !== Platform.CAG && (
+          <SearchTypeSelector
+            searchType={searchType}
+            setSearchType={setSearchType}
+          />
+        )}
 
         <AdditionalInstructionsInput
           value={additionalPromptInstructions}
