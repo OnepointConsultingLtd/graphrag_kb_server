@@ -117,7 +117,7 @@ export default function ChatInput() {
                 setInputText(e.target.value)
               }
               placeholder="Type your message here..."
-              className="w-full bg-gray-900 p-4 pr-24 overflow-hidden transition-all duration-300 border-2 
+              className="w-full bg-gray-900 p-4 pr-24 lg:pr-4 overflow-hidden transition-all duration-300 border-2 
                                 shadow-sm outline-none resize-none rounded-xl border-sky-100 
                                 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isThinking}

@@ -18,6 +18,7 @@ from graphrag.utils.cli import redact
 import graphrag.config.defaults as defs
 from graphrag_kb_server.service.file_conversion import convert_pdf_to_markdown
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.service.file_find_service import ORIGINAL_INPUT_FOLDER, INPUT_FOLDER
 
 log = logging.getLogger(__name__)
 
@@ -156,11 +157,13 @@ async def _run_index(
 
 
 async def unzip_file(upload_folder: Path, zip_file: Path):
-    input_folder = upload_folder / "input"
-    if not input_folder.exists():
-        input_folder.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(zip_file, "r") as zip_ref:
-        zip_ref.extractall(input_folder)
+    input_folder = upload_folder / INPUT_FOLDER
+    original_folder = upload_folder / ORIGINAL_INPUT_FOLDER
+    for target_folder in [input_folder, original_folder]:
+        if not target_folder.exists():
+            target_folder.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(zip_file, "r") as zip_ref:
+            zip_ref.extractall(target_folder)
     await convert_to_text(input_folder)
 
 

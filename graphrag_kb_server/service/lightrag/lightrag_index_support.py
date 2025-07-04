@@ -46,10 +46,20 @@ async def acreate_lightrag(
 async def lightrag_index(rag: LightRAG, files_to_index: list[Path]):
     count = len(files_to_index)
     assert count > 0, "No files to index"
+    tolerance = 3
     for i, file in enumerate(files_to_index):
-        await rag.ainsert(file.read_text(encoding="utf-8"), file_paths=file.as_posix())
-        logger.info("########################################################")
-        logger.info(f"Indexed {i+1}/{count} files: {file}")
-        logger.info("########################################################")
+        try:
+            await rag.ainsert(file.read_text(encoding="utf-8"), file_paths=file.as_posix())
+            logger.info("########################################################")
+            logger.info(f"Indexed {i+1}/{count} files: {file}")
+            logger.info("########################################################")
+        except Exception as e:
+            logger.error(f"Error indexing file {file}: {e}")
+            logger.exception(e)
+            if tolerance > 0:
+                tolerance -= 1
+                logger.info(f"Tolerance reduced to {tolerance} times")
+            else:
+                raise e
 
     logger.info(f"Indexed {count} files")

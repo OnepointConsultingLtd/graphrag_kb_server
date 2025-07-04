@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Project, ProjectCategories } from "../model/projectCategory";
-import { type ChatMessage, type ChatMessageType, ChatMessageTypeOptions } from "../model/message";
+import { type ChatMessage, ChatMessageTypeOptions } from "../model/message";
 import { fetchProjects } from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
 import { ChatTypeOptions } from "../model/types";
@@ -29,6 +29,7 @@ type ChatStore = {
   conversationId: string | null;
   socket: Socket<any, any> | null;
   useStreaming: boolean;
+  conversationTopicsNumber: number
   newProject: () => void;
   setJwt: (jwt: string) => void;
   setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
@@ -54,6 +55,7 @@ type ChatStore = {
   setInputText: (inputText: string) => void;
   setConversationId: (conversationId: string) => void;
   setUseStreaming: (useStreaming: boolean) => void;
+  setConversationTopicsNumber: (conversationTopicsNumber: number) => void;
 };
 
 const THRESHOLD = 50;
@@ -148,6 +150,7 @@ const useChatStore = create<ChatStore>()(
         conversationId: null,
         socket: initSocket(),
         useStreaming: false,
+        conversationTopicsNumber: 6,
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {
@@ -250,6 +253,7 @@ const useChatStore = create<ChatStore>()(
             conversationId: crypto.randomUUID(),
             chatMessages: [],
             isThinking: false,
+            conversationTopicsNumber: chatType === ChatType.FLOATING ? 6 : 12,
           }),
         setChatType: (chatType: ChatTypeOptions) => set({ chatType }),
         refreshProjects: () =>
@@ -257,10 +261,13 @@ const useChatStore = create<ChatStore>()(
             loadInitialProjects(state.jwt);
             return { ...state };
           }),
-        setTopics: (topics: Topics) => set({ topics }),
+        setTopics: (topics: Topics) => set(() => {
+          return { topics, conversationTopicsNumber: topics?.topics?.length ?? 0 }
+        }),
         setInputText: (inputText: string) => set({ inputText }),
         setConversationId: (conversationId: string) => set({ conversationId }),
         setUseStreaming: (useStreaming: boolean) => set({ useStreaming }),
+        setConversationTopicsNumber: (conversationTopicsNumber: number) => set({ conversationTopicsNumber }),
       };
     },
     {

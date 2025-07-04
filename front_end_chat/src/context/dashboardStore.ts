@@ -201,6 +201,7 @@ export const useDashboardStore = create<DashboardState>()(
             incremental: false,
             file: null,
             error: null,
+            uploadSuccessMessage: null,
           }),
 
         getSelectedProjects: () => {

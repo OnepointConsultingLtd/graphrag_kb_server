@@ -41,6 +41,7 @@ class Snippet(BaseModel):
     jwt: str = Field(..., description="The JWT token")
     project: Project = Field(..., description="The project")
     base_server: str = Field(..., description="The base server")
+    websocket_server: str = Field(..., description="The websocket server")
     css_path: str = Field(..., description="The path to the CSS file")
     script_path: str = Field(..., description="The path to the script file")
     organisation_name: str = Field(default="", description="The organisation name")

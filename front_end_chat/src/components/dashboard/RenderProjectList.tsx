@@ -8,7 +8,6 @@ import {
   SearchType,
 } from "../../model/projectCategory";
 import { useEffect, useState } from "react";
-import ChatConfigDialog from "./ChatConfigDialog";
 import { isProjectNotReady } from "../../lib/projectStatus";
 
 // Constants

@@ -45,7 +45,7 @@ def create_conversion_map(project_dir: Path) -> dict[str, str]:
 
 def find_original_file(project_dir: Path, file_path: Path) -> Path | None:
     conversion_map = file_conversion_cache.get(project_dir)
-    if conversion_map is None:
+    if not conversion_map:
         conversion_map = create_conversion_map(project_dir)
         file_conversion_cache.set(project_dir, conversion_map)
 

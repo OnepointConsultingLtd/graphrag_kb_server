@@ -17,26 +17,30 @@ function simplifyDescription(description: string) {
   return description.split("<SEP>")[0].split(".")[0].substring(0, 200) + " ...";
 }
 
-function ConversationStarter() {
-  const { jwt, selectedProject, topics, setTopics, chatType, setInputText } =
+const INCREMENT_TOPICS_NUMBER = 4;
+
+function ConversationTopics() {
+  const { jwt, selectedProject, topics, conversationTopicsNumber, setTopics, chatType, setInputText, setConversationTopicsNumber } =
     useChatStore(
       useShallow((state) => ({
         jwt: state.jwt,
         selectedProject: state.selectedProject,
         topics: state.topics,
+        conversationTopicsNumber: state.conversationTopicsNumber,
         chatType: state.chatType,
         setTopics: state.setTopics,
         setInputText: state.setInputText,
+        setConversationTopicsNumber: state.setConversationTopicsNumber,
       })),
     );
 
   useEffect(() => {
     if (jwt && selectedProject) {
-      fetchTopics(jwt, selectedProject, chatType === ChatType.FLOATING ? 6 : 12)
+      fetchTopics(jwt, selectedProject, conversationTopicsNumber)
         .then(setTopics)
         .catch(console.error);
     }
-  }, [jwt, selectedProject, setTopics]);
+  }, [jwt, selectedProject, setTopics, conversationTopicsNumber]);
 
   if (!selectedProject) {
     return null;
@@ -87,6 +91,14 @@ function ConversationStarter() {
             ))}
           </div>
         )}
+        {hasTopics && <div className="flex flex-row gap-2 justify-end mt-2">
+            {conversationTopicsNumber > INCREMENT_TOPICS_NUMBER && <button className="btn btn-secondary" onClick={() => setConversationTopicsNumber(conversationTopicsNumber - INCREMENT_TOPICS_NUMBER)}>
+              -
+            </button>}
+            <button className="btn btn-success" onClick={() => setConversationTopicsNumber(conversationTopicsNumber + INCREMENT_TOPICS_NUMBER)}>
+              +
+            </button>
+        </div>}
       </div>
     </div>
   );
@@ -141,7 +153,7 @@ export default function Messages() {
             }`}
           >
             {!chatMessages ||
-              (chatMessages.length === 0 && <ConversationStarter />)}
+              (chatMessages.length === 0 && <ConversationTopics />)}
             {chatMessages.map((message) => {
               console.log("message", message);
               return (

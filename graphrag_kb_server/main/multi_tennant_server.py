@@ -616,6 +616,7 @@ async def create_snippet(request: web.Request) -> web.Response:
                 css_path="",
                 script_path="",
                 base_server=cfg.server_base_url,
+                websocket_server=cfg.server_base_url.replace("http", "ws"),
                 organisation_name=body.get("organisation_name", ""),
             )
             inject_scripts_path(snippet)
