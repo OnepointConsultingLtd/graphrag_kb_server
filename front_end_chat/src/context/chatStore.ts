@@ -30,6 +30,7 @@ type ChatStore = {
   socket: Socket<any, any> | null;
   useStreaming: boolean;
   conversationTopicsNumber: number
+  showTopics: boolean;
   newProject: () => void;
   setJwt: (jwt: string) => void;
   setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
@@ -56,6 +57,7 @@ type ChatStore = {
   setConversationId: (conversationId: string) => void;
   setUseStreaming: (useStreaming: boolean) => void;
   setConversationTopicsNumber: (conversationTopicsNumber: number) => void;
+  setShowTopics: (showTopics: boolean) => void;
 };
 
 const THRESHOLD = 50;
@@ -151,6 +153,7 @@ const useChatStore = create<ChatStore>()(
         socket: initSocket(),
         useStreaming: false,
         conversationTopicsNumber: 6,
+        showTopics: false,
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {
@@ -177,6 +180,7 @@ const useChatStore = create<ChatStore>()(
                 ),
                 message,
               ],
+              showTopics: false,
             };
           }),
         appendToLastChatMessage: (token: string) =>
@@ -186,11 +190,13 @@ const useChatStore = create<ChatStore>()(
               return {
                 chatMessages: [...state.chatMessages, createChatMessage(token, state.conversationId)],
                 isThinking: false,
+                showTopics: false,
               }
             }
             lastMessage.text += token;
             return {
-              chatMessages: [...state.chatMessages.slice(0, -1), lastMessage]
+              chatMessages: [...state.chatMessages.slice(0, -1), lastMessage],
+              showTopics: false,
             };
           }),
         clearChatMessages: () =>
@@ -199,6 +205,7 @@ const useChatStore = create<ChatStore>()(
               chatMessages: [],
               isThinking: false,
               conversationId: crypto.randomUUID(),
+              showTopics: true,
             };
           }),
         // Logout completely
@@ -213,6 +220,7 @@ const useChatStore = create<ChatStore>()(
             topics: null,
             inputText: "",
             useStreaming: false,
+            showTopics: false,
           }),
         newProject: () =>
           set({
@@ -220,6 +228,7 @@ const useChatStore = create<ChatStore>()(
             copiedMessageId: null,
             selectedProject: undefined,
             chatType: null,
+            showTopics: false,
           }),
         initializeProjects: async () => {
           const jwt = get().jwt;
@@ -254,6 +263,7 @@ const useChatStore = create<ChatStore>()(
             chatMessages: [],
             isThinking: false,
             conversationTopicsNumber: chatType === ChatType.FLOATING ? 6 : 12,
+            showTopics: true,
           }),
         setChatType: (chatType: ChatTypeOptions) => set({ chatType }),
         refreshProjects: () =>
@@ -268,6 +278,7 @@ const useChatStore = create<ChatStore>()(
         setConversationId: (conversationId: string) => set({ conversationId }),
         setUseStreaming: (useStreaming: boolean) => set({ useStreaming }),
         setConversationTopicsNumber: (conversationTopicsNumber: number) => set({ conversationTopicsNumber }),
+        setShowTopics: (showTopics: boolean) => set({ showTopics }),
       };
     },
     {
