@@ -153,7 +153,7 @@ const useChatStore = create<ChatStore>()(
         socket: initSocket(),
         useStreaming: false,
         conversationTopicsNumber: 6,
-        showTopics: false,
+        showTopics: true,
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {

@@ -7,6 +7,7 @@ import { extractSimpleReferences } from "../../lib/referenceExtraction";
 import { ChatMessageTypeOptions, type QueryResponse } from "../../model/message";
 import { sendWebsocketQuery } from "../../lib/websocketClient";
 import { supportsStreaming } from "../../lib/streamingUtils";
+import Send from "../icons/Send";
 
 export default function ChatInput() {
   const [
@@ -107,8 +108,8 @@ export default function ChatInput() {
 
   return (
     <div className="sticky bottom-0">
-      <div className="mx-auto w-full py-2 lg:py-4">
-        <div className="flex flex-col gap-2 mx-4">
+      <div className="mx-auto w-full py-2 lg:py-3">
+        <div className="flex flex-col gap-2 mx-0">
           <form onSubmit={onSubmit} className="relative">
             <textarea
               id="chat-input"
@@ -117,7 +118,7 @@ export default function ChatInput() {
                 setInputText(e.target.value)
               }
               placeholder="Type your message here..."
-              className="w-full bg-gray-900 p-4 pr-24 lg:pr-4 overflow-hidden transition-all duration-300 border-2 
+              className="w-full bg-gray-900 p-4 pr-14 lg:pr-4 overflow-hidden transition-all duration-300 border-2 
                                 shadow-sm outline-none resize-none rounded-xl border-sky-100 
                                 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isThinking}
@@ -134,12 +135,12 @@ export default function ChatInput() {
             <button
               type="submit"
               disabled={isThinking || inputText.trim() === ""}
-              className="absolute lg:hidden right-4 bottom-4 bg-white px-4 hover:bg-gray-200 text-blue-500 p-2 rounded-lg cursor-pointer flex items-center gap-2"
+              className="btn absolute lg:hidden right-3 bottom-4 bg-white px-2 hover:bg-gray-200 text-blue-500 p-2 rounded-lg cursor-pointer flex items-center gap-2"
               aria-label={
                 isThinking ? "Processing your message" : "Send message"
               }
             >
-              Send
+              <Send />
             </button>
           </form>
         </div>

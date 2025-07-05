@@ -11,9 +11,9 @@ export default function ButtonWrapper({
 }) {
   return (
     <div className="flex justify-start">
-      <button onClick={onClick} className="btn btn-primary">
+      <button onClick={onClick} className="btn btn-primary !flex">
         {children}
-        <span className="font-medium md:!block !hidden">{name}</span>
+        <span className="font-medium md:!block !hidden text-white">{name}</span>
       </button>
     </div>
   );

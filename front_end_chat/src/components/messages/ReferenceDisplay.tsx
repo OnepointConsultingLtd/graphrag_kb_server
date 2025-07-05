@@ -93,7 +93,7 @@ export default function ReferenceDisplay({
       </a>
       <a
         href={reference.url}
-        className="mt-1.5 ml-1"
+        className="mt-1.5 ml-1 document-icon"
         target="_blank"
         rel="noopener noreferrer"
         onClick={openOriginal}
