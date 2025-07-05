@@ -10,6 +10,7 @@ import type { Topics } from "../model/topics";
 import { io, type Socket } from "socket.io-client";
 import { getWebsocketServer } from "../lib/server";
 import { createChatMessage } from "../factory/chatMessageFactory";
+import { SCROLL_TO_BOTTOM_ID } from "../constants/scroll";
 
 type ChatStore = {
   jwt: string;
@@ -22,7 +23,6 @@ type ChatStore = {
   selectedProject?: Project | undefined;
   organisation_name: string;
   copiedMessageId: string | null;
-  messagesEndRef: HTMLDivElement | null;
   chatType: ChatTypeOptions;
   topics: Topics | null;
   inputText: string;
@@ -43,7 +43,6 @@ type ChatStore = {
   setSelectedProject: (project: Project | undefined) => void;
   initializeProjects: () => Promise<void>;
   setIsThinking: (isThinking: boolean) => void;
-  setMessagesEndRef: (ref: HTMLDivElement | null) => void;
   scrollToBottom: () => void;
   setCopiedMessageId: (id: string) => void;
   setSelectedProjectAndChatType: (
@@ -168,9 +167,6 @@ const useChatStore = create<ChatStore>()(
             inputText: "",
             topics: null,
           })),
-        setMessagesEndRef: (ref: HTMLDivElement | null) =>
-          set({ messagesEndRef: ref }),
-
         addChatMessage: (message: ChatMessage) =>
           set((state) => {
             return {
@@ -238,10 +234,10 @@ const useChatStore = create<ChatStore>()(
           }
         },
         scrollToBottom: () => {
-          const messagesEndRef = get().messagesEndRef;
-          if (messagesEndRef) {
-            messagesEndRef.scrollIntoView({ behavior: "smooth" });
-          }
+          document.getElementById(SCROLL_TO_BOTTOM_ID)?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",     // options: 'start', 'center', 'end', 'nearest'
+          });
         },
         setIsThinking: (isThinking: boolean) => set({ isThinking }),
         setIsMarkdownDialogueOpen: (isOpen: boolean) =>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 import { ChatMessageTypeOptions } from "../../model/message";
@@ -10,6 +10,7 @@ import { ChatTypeOptions } from "../../model/types";
 import { fetchTopics } from "../../lib/apiClient";
 import useWebsocket from "../../hooks/useWebsocket";
 import { Topic } from "../../model/topics";
+import { SCROLL_TO_BOTTOM_ID } from "../../constants/scroll";
 
 function simplifyDescription(description: string) {
   if (!description) {
@@ -67,6 +68,8 @@ function JokerButton() {
 
 const INCREMENT_TOPICS_NUMBER = 4;
 
+const INCREMENT_TOPICS_BUTTON_ID = "increment-topics-button";
+
 function ConversationTopics() {
   const { jwt, selectedProject, topics, conversationTopicsNumber, setTopics, chatType, setInputText, setConversationTopicsNumber, showTopics, scrollToBottom } =
     useChatStore(
@@ -88,6 +91,12 @@ function ConversationTopics() {
     if (jwt && selectedProject) {
       fetchTopics(jwt, selectedProject, conversationTopicsNumber)
         .then(setTopics)
+        .then(() => {
+          document.getElementById(INCREMENT_TOPICS_BUTTON_ID)?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",     // options: 'start', 'center', 'end', 'nearest'
+          });
+        })
         .catch(console.error);
     }
   }, [jwt, selectedProject, setTopics, conversationTopicsNumber]);
@@ -155,7 +164,7 @@ function ConversationTopics() {
         )}
         {(hasTopics || showTopics) && <div className="flex flex-row gap-2 justify-between mt-2">
           <div className="flex flex-row gap-2">
-            <button className="btn btn-success" 
+            <button className="btn btn-success" id={INCREMENT_TOPICS_BUTTON_ID}
               onClick={() => setConversationTopicsNumber(conversationTopicsNumber + INCREMENT_TOPICS_NUMBER)}
               title="Display more topics">
               +
@@ -210,23 +219,19 @@ export function TopicSwitcher() {
 
 
 export default function Messages() {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const {
     chatMessages,
     chatType,
     setChatType,
     isThinking,
     scrollToBottom,
-
-    setMessagesEndRef,
   } = useChatStore(
     useShallow((state) => ({
       chatMessages: state.chatMessages,
       chatType: state.chatType,
       setChatType: state.setChatType,
       isThinking: state.isThinking,
-      scrollToBottom: state.scrollToBottom,
-      setMessagesEndRef: state.setMessagesEndRef,
+      scrollToBottom: state.scrollToBottom
     })),
   );
 
@@ -237,8 +242,8 @@ export default function Messages() {
   }, [setChatType]);
 
   useEffect(() => {
-    setMessagesEndRef(messagesEndRef.current);
-  }, [setMessagesEndRef]);
+    scrollToBottom();
+  }, [scrollToBottom]);
 
   useEffect(() => {
     if (isThinking) {
@@ -265,6 +270,7 @@ export default function Messages() {
                     : "justify-start"
                     } animate-slideIn items-start`}
                 >
+                  {index === chatMessages.length - 1 && <div id={SCROLL_TO_BOTTOM_ID} />}
                   {message.type === ChatMessageTypeOptions.AGENT && (
                     <div className="flex-shrink-0 hidden lg:block mr-2">
                       <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 border border-blue-300">
@@ -304,7 +310,6 @@ export default function Messages() {
                       </div>
                     </div>
                   )}
-                  {index === chatMessages.length - 1 && <div ref={messagesEndRef} className="h-0" />}
                 </div>
               );
             })}
