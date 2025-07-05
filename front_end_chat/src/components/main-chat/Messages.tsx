@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 import { ChatMessageTypeOptions } from "../../model/message";
@@ -19,7 +19,7 @@ function simplifyDescription(description: string) {
 }
 
 function topicQuestionTemplate(topic: Topic) {
-  return `Tell me more about this topic: "${topic.name}"`;
+  return `Tell me more about this topic: ${topic.name}`;
 }
 
 function JokerButton() {
