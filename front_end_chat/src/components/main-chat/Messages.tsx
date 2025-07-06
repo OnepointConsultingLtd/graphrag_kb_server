@@ -155,7 +155,7 @@ function ConversationTopics() {
         )}
         {(hasTopics || showTopics) && (
           <div
-            className={`grid grid-cols-1 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-2 w-full gap-2`}
+            className={`grid overflow-x-hidden grid-cols-1 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-2 w-full gap-2`}
           >
             {topics?.topics.map((topic) => (
               <button
