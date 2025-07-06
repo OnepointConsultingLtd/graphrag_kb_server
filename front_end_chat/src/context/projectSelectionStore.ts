@@ -3,7 +3,6 @@ import { SearchType, SimpleProject } from "../model/projectCategory";
 import { ChatTypeOptions } from "../model/types";
 import { CHAT_CONFIG_DIALOG_ID } from "../components/dashboard/ChatConfigDialog";
 
-
 type ProjectSelectionStore = {
   selectionPlatform: string;
   selectionProject: string;
@@ -29,12 +28,15 @@ type ProjectSelectionStore = {
   logout: () => void;
 };
 
-
 function toggleChatConfigDialog(isOpen: boolean) {
-  if(isOpen) {
-    (document.getElementById(CHAT_CONFIG_DIALOG_ID) as HTMLDialogElement)?.showModal();
+  if (isOpen) {
+    (
+      document.getElementById(CHAT_CONFIG_DIALOG_ID) as HTMLDialogElement
+    )?.showModal();
   } else {
-    (document.getElementById(CHAT_CONFIG_DIALOG_ID) as HTMLDialogElement)?.close();
+    (
+      document.getElementById(CHAT_CONFIG_DIALOG_ID) as HTMLDialogElement
+    )?.close();
   }
 }
 

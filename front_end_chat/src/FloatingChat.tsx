@@ -20,7 +20,6 @@ const FloatingChat = () => {
 
   return (
     <div className="!w-full max-w-full bg-gradient-to-br ">
-
       <div className="relative z-10 w-full !max-w-full">
         {/* Hero Section */}
         {displayFloatingChatIntro && (

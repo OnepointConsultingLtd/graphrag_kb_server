@@ -4,7 +4,10 @@ import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 import { sendQuery } from "../../lib/apiClient";
 import { extractSimpleReferences } from "../../lib/referenceExtraction";
-import { ChatMessageTypeOptions, type QueryResponse } from "../../model/message";
+import {
+  ChatMessageTypeOptions,
+  type QueryResponse,
+} from "../../model/message";
 import { sendWebsocketQuery } from "../../lib/websocketClient";
 import { supportsStreaming } from "../../lib/streamingUtils";
 import Send from "../icons/Send";
@@ -55,9 +58,9 @@ export default function ChatInput() {
         project: selectedProject,
         chatHistory: chatMessages,
         conversationId: conversationId ?? crypto.randomUUID(),
-      }
+      };
       if (useStreaming && supportsStreaming(selectedProject.platform)) {
-        sendWebsocketQuery(socket, jwt, query)
+        sendWebsocketQuery(socket, jwt, query);
       } else {
         sendQuery(query)
           .then((response: QueryResponse) => {

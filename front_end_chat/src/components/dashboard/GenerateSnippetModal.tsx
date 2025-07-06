@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FaCopy } from "react-icons/fa";
+import AceEditor from "react-ace";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
@@ -8,6 +9,13 @@ import RenderLabel from "./Form/RenderLabel";
 import Modal from "./Modal";
 import SelectSearchEngine from "./SelectSearchEngine";
 import { generateSnippet } from "../../lib/apiClient";
+
+// Import ace editor modes and themes
+import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/mode-html";
+import "ace-builds/src-noconflict/mode-css";
+import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/ext-language_tools";
 
 export default function GenerateSnippetModal() {
   const {
@@ -41,7 +49,7 @@ export default function GenerateSnippetModal() {
       isSnippetSubmitting: state.isSnippetSubmitting,
       setIsSnippetSubmitting: state.setIsSnippetSubmitting,
       setGeneratedSnippet: state.setGeneratedSnippet,
-    })),
+    }))
   );
 
   const [widgetType, setWidgetType] = useState<string>("FLOATING_CHAT");
@@ -50,7 +58,7 @@ export default function GenerateSnippetModal() {
     useShallow((state) => ({
       jwt: state.jwt,
       organisation_name: state.organisation_name,
-    })),
+    }))
   );
 
   const {
@@ -66,7 +74,7 @@ export default function GenerateSnippetModal() {
       selectionPlatform: state.selectionPlatform,
       additionalPromptInstructions: state.additionalPromptInstructions,
       setAdditionalPromptInstructions: state.setAdditionalPromptInstructions,
-    })),
+    }))
   );
 
   const resetForm = () => {
@@ -213,19 +221,36 @@ export default function GenerateSnippetModal() {
 
         {/* Generated Snippet */}
         {generatedSnippet && (
-          <div className="space-y-2">
-            <h4 className="font-semibold">Generated Snippet:</h4>
-            <div className="relative bg-gray-900 rounded-lg p-4 font-mono text-sm">
+          <div className="space-y-2 relative">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">Generated Snippet: </h4>
               <button
                 type="button"
                 onClick={handleCopyToClipboard}
-                className="absolute top-2 right-2 btn btn-xs btn-ghost"
+                className=" top-2 right-2 btn btn-xs btn-ghost"
               >
                 <FaCopy />
               </button>
-              <pre className="overflow-x-auto">
-                <code className="whitespace-pre-wrap">{generatedSnippet}</code>
-              </pre>
+            </div>
+            <div className="relative bg-gray-900 rounded-lg p-4 font-mono text-sm">
+              <AceEditor
+                mode="html"
+                theme="monokai"
+                value={generatedSnippet}
+                readOnly={true}
+                width="100%"
+                height="300px"
+                showPrintMargin={false}
+                showGutter={true}
+                highlightActiveLine={false}
+                setOptions={{
+                  enableBasicAutocompletion: false,
+                  enableLiveAutocompletion: false,
+                  enableSnippets: false,
+                  showLineNumbers: true,
+                  tabSize: 2,
+                }}
+              />
             </div>
           </div>
         )}

@@ -29,7 +29,7 @@ type ChatStore = {
   conversationId: string | null;
   socket: Socket<any, any> | null;
   useStreaming: boolean;
-  conversationTopicsNumber: number
+  conversationTopicsNumber: number;
   showTopics: boolean;
   newProject: () => void;
   setJwt: (jwt: string) => void;
@@ -182,12 +182,15 @@ const useChatStore = create<ChatStore>()(
         appendToLastChatMessage: (token: string) =>
           set((state) => {
             const lastMessage = state.chatMessages.slice(-1)[0];
-            if(lastMessage.type === ChatMessageTypeOptions.USER) {
+            if (lastMessage.type === ChatMessageTypeOptions.USER) {
               return {
-                chatMessages: [...state.chatMessages, createChatMessage(token, state.conversationId)],
+                chatMessages: [
+                  ...state.chatMessages,
+                  createChatMessage(token, state.conversationId),
+                ],
                 isThinking: false,
                 showTopics: false,
-              }
+              };
             }
             lastMessage.text += token;
             return {
@@ -236,7 +239,7 @@ const useChatStore = create<ChatStore>()(
         scrollToBottom: () => {
           document.getElementById(SCROLL_TO_BOTTOM_ID)?.scrollIntoView({
             behavior: "smooth",
-            block: "start",     // options: 'start', 'center', 'end', 'nearest'
+            block: "start", // options: 'start', 'center', 'end', 'nearest'
           });
         },
         setIsThinking: (isThinking: boolean) => set({ isThinking }),
@@ -267,13 +270,18 @@ const useChatStore = create<ChatStore>()(
             loadInitialProjects(state.jwt);
             return { ...state };
           }),
-        setTopics: (topics: Topics) => set(() => {
-          return { topics, conversationTopicsNumber: topics?.topics?.length ?? 0 }
-        }),
+        setTopics: (topics: Topics) =>
+          set(() => {
+            return {
+              topics,
+              conversationTopicsNumber: topics?.topics?.length ?? 0,
+            };
+          }),
         setInputText: (inputText: string) => set({ inputText }),
         setConversationId: (conversationId: string) => set({ conversationId }),
         setUseStreaming: (useStreaming: boolean) => set({ useStreaming }),
-        setConversationTopicsNumber: (conversationTopicsNumber: number) => set({ conversationTopicsNumber }),
+        setConversationTopicsNumber: (conversationTopicsNumber: number) =>
+          set({ conversationTopicsNumber }),
         setShowTopics: (showTopics: boolean) => set({ showTopics }),
       };
     },
