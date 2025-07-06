@@ -16,6 +16,7 @@ class SearchType(StrEnum):
 class Platform(StrEnum):
     LIGHTRAG = "lightrag"
     GRAPHRAG = "graphrag"
+    CAG = "cag"
 
 
 class Project(BaseModel):

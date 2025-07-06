@@ -141,7 +141,7 @@ export default function RenderProjectList({
             return (
               <div
                 key={uniqueId}
-                className={`flex justify-between items-center p-4 rounded-lg transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${
+                className={`md:flex justify-between items-center p-4 rounded-lg transition-colors duration-200 border-b border-gray-700 last:border-b-0 ${
                   isSelected ? scheme.selected : "border-transparent"
                 } ${
                   isIndexing
@@ -198,7 +198,7 @@ export default function RenderProjectList({
                       setIsChatConfigDialogOpen(true, project);
 
                     }}
-                    className="bg-blue-500 px-4 py-2 rounded-md"
+                    className="bg-blue-500 px-4 py-2 rounded-md w-full md:w-auto m-4 md:m-0"
                   >
                     <a href={`#`} className="!text-white">
                       Start Chat

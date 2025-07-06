@@ -71,7 +71,7 @@ const INCREMENT_TOPICS_NUMBER = 4;
 const INCREMENT_TOPICS_BUTTON_ID = "increment-topics-button";
 
 function ConversationTopics() {
-  const { jwt, selectedProject, topics, conversationTopicsNumber, setTopics, chatType, setInputText, setConversationTopicsNumber, showTopics, scrollToBottom } =
+  const { jwt, selectedProject, topics, conversationTopicsNumber, setTopics, chatType, setInputText, setConversationTopicsNumber, showTopics } =
     useChatStore(
       useShallow((state) => ({
         jwt: state.jwt,
@@ -83,7 +83,6 @@ function ConversationTopics() {
         setInputText: state.setInputText,
         setConversationTopicsNumber: state.setConversationTopicsNumber,
         showTopics: state.showTopics,
-        scrollToBottom: state.scrollToBottom,
       })),
     );
 
@@ -100,12 +99,6 @@ function ConversationTopics() {
         .catch(console.error);
     }
   }, [jwt, selectedProject, setTopics, conversationTopicsNumber]);
-
-  useEffect(() => {
-    if(showTopics) {
-      scrollToBottom();
-    }
-  }, [showTopics, scrollToBottom]);
 
   if (!selectedProject) {
     return null;
@@ -156,6 +149,7 @@ function ConversationTopics() {
                 onClick={() =>
                   setInputText(topicQuestionTemplate(topic))
                 }
+                title={isFloating? topic.description : ""}
               >
                 {topic.name}
               </button>

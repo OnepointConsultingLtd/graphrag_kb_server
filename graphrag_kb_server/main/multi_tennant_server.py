@@ -19,6 +19,7 @@ from graphrag_kb_server.service.snippet_generation_service import (
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import admin_cfg, jwt_cfg, cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
+from graphrag_kb_server.service.generate_url_service import generate_direct_url
 
 
 UNAUTHORIZED = 401
@@ -473,6 +474,20 @@ async def _generate_jwt_token(email: str, sub: str) -> JWTToken | Error:
     return jwt_token
 
 
+async def _generate_jwt_token_from_email(body: dict, request: web.Request) -> str | web.Response:
+    # Generate a new JWT token
+    email = body["email"]
+    sub = request["token_data"]["sub"] # Comes from the authentication token handled by the auth_middleware
+    jwt_token: JWTToken | Error = await _generate_jwt_token(email, sub)
+    if isinstance(jwt_token, JWTToken):
+        return jwt_token.token
+    else:
+        return invalid_response(
+            "Failed to generate JWT token",
+            "Failed to generate JWT token",
+            headers=CORS_HEADERS,
+        )
+
 @routes.options("/protected/snippet/generate_snippet")
 async def create_snippet_options(request: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
@@ -590,17 +605,10 @@ async def create_snippet(request: web.Request) -> web.Response:
             jwt_token = body.get("jwt", None)
             if jwt_token is None or jwt_token.strip() == "":
                 # Generate a new JWT token
-                email = body["email"]
-                sub = request["token_data"]["sub"]
-                jwt_token: JWTToken | Error = await _generate_jwt_token(email, sub)
-                if isinstance(jwt_token, JWTToken):
-                    jwt_token = jwt_token.token
-                else:
-                    return invalid_response(
-                        "Failed to generate JWT token",
-                        "Failed to generate JWT token",
-                        headers=CORS_HEADERS,
-                    )
+                jwt_token = await _generate_jwt_token_from_email(body, request)
+                if isinstance(jwt_token, web.Response):
+                    #
+                    return jwt_token
             timestamp = (
                 datetime.now(timezone.utc)
                 .isoformat(timespec="milliseconds")
@@ -629,6 +637,125 @@ async def create_snippet(request: web.Request) -> web.Response:
                 "Invalid request body",
                 "Make sure you specify the email, widget type, and root element id.",
                 headers=CORS_HEADERS,
+            )
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.options("/protected/url/generate_direct_url")
+async def create_snippet_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.post("/protected/url/generate_direct_url")
+async def create_snippet(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: used to create a snippet for a chat experience.
+    tags:
+      - tennant
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              chat_type:
+                type: string
+                description: The type of chat to be used
+                enum:
+                  - FLOATING_CHAT
+                  - CHAT
+              email:
+                type: string
+                description: The email
+                default: "john.doe@graphrag.com"
+              project:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the project
+                  search_type:
+                    type: string
+                    description: The type of search to be used
+                    enum:
+                      - local
+                      - global
+                      - all
+                  platform:
+                    type: string
+                    description: The platform to be used
+                    enum:
+                      - lightrag
+                      - graphrag
+                      - cag
+                  additional_prompt_instructions:
+                    type: string
+                    description: The additional prompt instructions
+                    default: "You are a helpful assistant."
+                required:
+                  - name
+                  - search_type
+                  - platform
+                  - additional_prompt_instructions
+            required:
+              - chat_type
+              - project
+    responses:
+      '200':
+        description: Expected response to a valid request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: The URL to be used
+      '400':
+        description: Expected response when the data is invalid
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - error_code
+                - error
+                - folder_name
+              properties:
+                error_code:
+                  type: integer
+                  description: The error code
+                error:
+                  type: string
+                  description: The error name
+                description:
+                  type: string
+                  description: The description of the error
+      '401':
+        description: Unauthorized
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        body = await request.json()
+        if "chat_type" in body and "project" in body:
+            chat_type = body["chat_type"]
+            project = {**body["project"], "updated_timestamp": datetime.now(timezone.utc).isoformat()}
+            jwt_token = await _generate_jwt_token_from_email(body, request)
+            if isinstance(jwt_token, web.Response):
+                # If the JWT token is invalid, return the error response
+                return jwt_token
+            url = generate_direct_url(chat_type, Project(**project), jwt_token)
+            return web.json_response({"url": url}, headers=CORS_HEADERS)
+        else:
+            return invalid_response(
+                "Invalid request body",
+                "Make sure you specify the chat type and project.",
             )
 
     return await handle_error(handle_request, request=request)

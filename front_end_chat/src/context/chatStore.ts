@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Project, ProjectCategories } from "../model/projectCategory";
+import type { Platform, Project, ProjectCategories, SearchType } from "../model/projectCategory";
 import { type ChatMessage, ChatMessageTypeOptions } from "../model/message";
 import { fetchProjects } from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
@@ -11,6 +11,7 @@ import { io, type Socket } from "socket.io-client";
 import { getWebsocketServer } from "../lib/server";
 import { createChatMessage } from "../factory/chatMessageFactory";
 import { SCROLL_TO_BOTTOM_ID } from "../constants/scroll";
+import { getDisplayFloatingChatIntro, getOrganisationName, getParameter, getParameterFromUrl } from "../lib/parameters";
 
 type ChatStore = {
   jwt: string;
@@ -71,32 +72,31 @@ function initSocket() {
 
 function initJwt() {
   // Try to extract from location first
-  const urlParams = new URLSearchParams(window.location.search);
-  let jwt = urlParams.get("token");
-  if (jwt) {
-    return jwt;
-  }
-  if (window.chatConfig?.jwt) {
-    return window.chatConfig.jwt;
-  }
-  // Try to extract from localStorage
-  const chatStore = localStorage.getItem("chat-store");
-  if (!chatStore) {
-    return "";
-  }
-  jwt = JSON.parse(chatStore).state.jwt;
-  if (jwt) {
-    return jwt;
-  }
-  return "";
+  return getParameter("token");
 }
 
-function initProject() {
-  const project = window.chatConfig?.project;
-  if (project) {
-    return project;
+function initChatType(): ChatTypeOptions {
+  const chatType = getParameterFromUrl("chat_type");
+  return chatType as ChatTypeOptions;
+}
+
+function initProject(): Project | undefined {
+  const projectName = getParameterFromUrl("project");
+  const platform = getParameterFromUrl("platform");
+  const search_type = getParameterFromUrl("search_type");
+  const additional_prompt_instructions = getParameterFromUrl("additional_prompt_instructions") ?? "";
+  if(!projectName || !platform || !search_type) {
+    return undefined;
   }
-  return undefined;
+  const project = {
+    name: projectName,
+    updated_timestamp: new Date(),
+    input_files: [],
+    search_type: search_type as SearchType,
+    platform: platform as Platform,
+    additional_prompt_instructions
+  }
+  return project as Project;
 }
 
 function openMarkdownDialogue(open: boolean) {
@@ -138,14 +138,13 @@ const useChatStore = create<ChatStore>()(
         selectedProject: initProject(),
         chatMessages: [],
         isThinking: false,
-        displayFloatingChatIntro:
-          window.chatConfig?.displayFloatingChatIntro ?? false,
+        displayFloatingChatIntro: getDisplayFloatingChatIntro(),
         isMarkdownDialogueOpen: false,
         markdownDialogueContent: "",
         copiedMessageId: null,
         messagesEndRef: null,
-        chatType: ChatType.FULL_PAGE as ChatTypeOptions,
-        organisation_name: window.chatConfig?.organisation_name ?? "Onepoint",
+        chatType: initChatType(),
+        organisation_name: getOrganisationName(),
         topics: null,
         inputText: "",
         conversationId: null,
@@ -280,11 +279,9 @@ const useChatStore = create<ChatStore>()(
     {
       name: "chat-store",
       partialize: (state) => ({
-        jwt: state.jwt,
         projects: state.projects,
         selectedProject: state.selectedProject,
         chatMessages: state.chatMessages,
-        chatType: state.chatType,
         topics: state.topics,
         useStreaming: state.useStreaming,
       }),
