@@ -49,12 +49,12 @@ h2 {
 
 /* Firefox */
 .chat-box {
-  scrollbar-width: thin;                      /* Make it thin */
-  scrollbar-color: #999 transparent;          /* Thumb + track colors */
+  scrollbar-width: thin; /* Make it thin */
+  scrollbar-color: #999 transparent; /* Thumb + track colors */
 }
 
 /* Chrome, Edge, Safari */
 .chat-box::-webkit-scrollbar {
-  width: 4px;                /* vertical scrollbar width */
-  height: 4px;               /* horizontal scrollbar height */
+  width: 4px; /* vertical scrollbar width */
+  height: 4px; /* horizontal scrollbar height */
 }

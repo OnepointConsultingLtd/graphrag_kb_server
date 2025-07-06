@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Platform, Project, ProjectCategories, SearchType } from "../model/projectCategory";
+import type {
+  Platform,
+  Project,
+  ProjectCategories,
+  SearchType,
+} from "../model/projectCategory";
 import { type ChatMessage, ChatMessageTypeOptions } from "../model/message";
 import { fetchProjects } from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
@@ -11,7 +16,13 @@ import { io, type Socket } from "socket.io-client";
 import { getWebsocketServer } from "../lib/server";
 import { createChatMessage } from "../factory/chatMessageFactory";
 import { SCROLL_TO_BOTTOM_ID } from "../constants/scroll";
-import { getDisplayFloatingChatIntro, getOrganisationName, getParameter, getParameterFromUrl } from "../lib/parameters";
+import {
+  getDisplayFloatingChatIntro,
+  getOrganisationName,
+  getParameter,
+  getParameterFromUrl,
+} from "../lib/parameters";
+import { showCloseModal } from "../lib/dialog";
 
 type ChatStore = {
   jwt: string;
@@ -30,7 +41,7 @@ type ChatStore = {
   conversationId: string | null;
   socket: Socket<any, any> | null;
   useStreaming: boolean;
-  conversationTopicsNumber: number
+  conversationTopicsNumber: number;
   showTopics: boolean;
   newProject: () => void;
   setJwt: (jwt: string) => void;
@@ -84,8 +95,9 @@ function initProject(): Project | undefined {
   const projectName = getParameterFromUrl("project");
   const platform = getParameterFromUrl("platform");
   const search_type = getParameterFromUrl("search_type");
-  const additional_prompt_instructions = getParameterFromUrl("additional_prompt_instructions") ?? "";
-  if(!projectName || !platform || !search_type) {
+  const additional_prompt_instructions =
+    getParameterFromUrl("additional_prompt_instructions") ?? "";
+  if (!projectName || !platform || !search_type) {
     return undefined;
   }
   const project = {
@@ -94,21 +106,13 @@ function initProject(): Project | undefined {
     input_files: [],
     search_type: search_type as SearchType,
     platform: platform as Platform,
-    additional_prompt_instructions
-  }
+    additional_prompt_instructions,
+  };
   return project as Project;
 }
 
 function openMarkdownDialogue(open: boolean) {
-  if (open) {
-    (
-      document.getElementById(MARKDOWN_DIALOGUE_ID) as HTMLDialogElement
-    )?.showModal();
-  } else {
-    (
-      document.getElementById(MARKDOWN_DIALOGUE_ID) as HTMLDialogElement
-    )?.close();
-  }
+  showCloseModal(open, MARKDOWN_DIALOGUE_ID);
 }
 
 const useChatStore = create<ChatStore>()(
@@ -181,12 +185,15 @@ const useChatStore = create<ChatStore>()(
         appendToLastChatMessage: (token: string) =>
           set((state) => {
             const lastMessage = state.chatMessages.slice(-1)[0];
-            if(lastMessage.type === ChatMessageTypeOptions.USER) {
+            if (lastMessage.type === ChatMessageTypeOptions.USER) {
               return {
-                chatMessages: [...state.chatMessages, createChatMessage(token, state.conversationId)],
+                chatMessages: [
+                  ...state.chatMessages,
+                  createChatMessage(token, state.conversationId),
+                ],
                 isThinking: false,
                 showTopics: false,
-              }
+              };
             }
             lastMessage.text += token;
             return {
@@ -235,7 +242,7 @@ const useChatStore = create<ChatStore>()(
         scrollToBottom: () => {
           document.getElementById(SCROLL_TO_BOTTOM_ID)?.scrollIntoView({
             behavior: "smooth",
-            block: "start",     // options: 'start', 'center', 'end', 'nearest'
+            block: "start", // options: 'start', 'center', 'end', 'nearest'
           });
         },
         setIsThinking: (isThinking: boolean) => set({ isThinking }),
@@ -266,13 +273,18 @@ const useChatStore = create<ChatStore>()(
             loadInitialProjects(state.jwt);
             return { ...state };
           }),
-        setTopics: (topics: Topics) => set(() => {
-          return { topics, conversationTopicsNumber: topics?.topics?.length ?? 0 }
-        }),
+        setTopics: (topics: Topics) =>
+          set(() => {
+            return {
+              topics,
+              conversationTopicsNumber: topics?.topics?.length ?? 0,
+            };
+          }),
         setInputText: (inputText: string) => set({ inputText }),
         setConversationId: (conversationId: string) => set({ conversationId }),
         setUseStreaming: (useStreaming: boolean) => set({ useStreaming }),
-        setConversationTopicsNumber: (conversationTopicsNumber: number) => set({ conversationTopicsNumber }),
+        setConversationTopicsNumber: (conversationTopicsNumber: number) =>
+          set({ conversationTopicsNumber }),
         setShowTopics: (showTopics: boolean) => set({ showTopics }),
       };
     },

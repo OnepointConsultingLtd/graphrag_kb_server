@@ -6,15 +6,23 @@ import { useShallow } from "zustand/react/shallow";
 import { createChatMessage } from "../factory/chatMessageFactory";
 
 export default function useWebsocket() {
-  const { socket, conversationId, appendToLastChatMessage, addChatMessage, setIsThinking, scrollToBottom } =
-    useChatStore(useShallow((state) => ({
+  const {
+    socket,
+    conversationId,
+    appendToLastChatMessage,
+    addChatMessage,
+    setIsThinking,
+    scrollToBottom,
+  } = useChatStore(
+    useShallow((state) => ({
       socket: state.socket,
       conversationId: state.conversationId,
       appendToLastChatMessage: state.appendToLastChatMessage,
       addChatMessage: state.addChatMessage,
       setIsThinking: state.setIsThinking,
-      scrollToBottom: state.scrollToBottom
-    })));
+      scrollToBottom: state.scrollToBottom,
+    })),
+  );
   useEffect(() => {
     function onConnect() {
       console.info("Connected to websocket");
@@ -39,7 +47,9 @@ export default function useWebsocket() {
 
     function onError(error: ErrorMessage) {
       console.error(`Error: ${error.message}`);
-      addChatMessage(createChatMessage(`Error: ${error.message}`, conversationId));
+      addChatMessage(
+        createChatMessage(`Error: ${error.message}`, conversationId),
+      );
     }
 
     socket?.on(WebsocketServerEventOptions.CONNECT, onConnect);

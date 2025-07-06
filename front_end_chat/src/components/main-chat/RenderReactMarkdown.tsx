@@ -54,7 +54,9 @@ export default function RenderReactMarkdown({
           p: ({ ...props }) => (
             <p
               {...props}
-              className={message.type === ChatMessageTypeOptions.USER ? "" : `mb-4`}
+              className={
+                message.type === ChatMessageTypeOptions.USER ? "" : `mb-4`
+              }
             />
           ),
           ul: ({ ...props }) => (

@@ -63,7 +63,10 @@ function StreamingSelector() {
 
   return (
     <div className="mb-6">
-      <label className="block text-sm font-medium text-gray-300 mb-2" htmlFor="streaming">
+      <label
+        className="block text-sm font-medium text-gray-300 mb-2"
+        htmlFor="streaming"
+      >
         Streaming
       </label>
       <input

@@ -196,7 +196,6 @@ export default function RenderProjectList({
                       e.preventDefault();
                       handleProjectClick(project, false);
                       setIsChatConfigDialogOpen(true, project);
-
                     }}
                     className="bg-blue-500 px-4 py-2 rounded-md w-full md:w-auto m-4 md:m-0"
                   >

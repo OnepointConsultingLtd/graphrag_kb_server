@@ -1,20 +1,21 @@
-import React, { useState } from "react";
+import React from "react";
 import { FaCopy } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 import RenderLabel from "./Form/RenderLabel";
-import Modal from "./Modal";
 import SelectSearchEngine from "./SelectSearchEngine";
 import { generateSnippet } from "../../lib/apiClient";
+import FieldEmail from "./Form/FieldEmail";
+import FieldWidgetType from "./Form/FieldWidgetType";
+
+export const GENERATE_SNIPPET_MODAL_ID = "generate-snippet-modal";
 
 export default function GenerateSnippetModal() {
   const {
-    modalType,
     closeModal,
     email,
-    setEmail,
     rootElementId,
     setRootElementId,
     organisationName,
@@ -25,9 +26,9 @@ export default function GenerateSnippetModal() {
     isSnippetSubmitting,
     setIsSnippetSubmitting,
     setGeneratedSnippet,
+    widgetType,
   } = useDashboardStore(
     useShallow((state) => ({
-      modalType: state.modalType,
       closeModal: state.closeModal,
       email: state.email,
       setEmail: state.setEmail,
@@ -41,10 +42,9 @@ export default function GenerateSnippetModal() {
       isSnippetSubmitting: state.isSnippetSubmitting,
       setIsSnippetSubmitting: state.setIsSnippetSubmitting,
       setGeneratedSnippet: state.setGeneratedSnippet,
+      widgetType: state.widgetType,
     })),
   );
-
-  const [widgetType, setWidgetType] = useState<string>("FLOATING_CHAT");
 
   const { jwt, organisation_name } = useChatStore(
     useShallow((state) => ({
@@ -127,20 +127,11 @@ export default function GenerateSnippetModal() {
   };
 
   return (
-    <Modal isOpen={modalType === "snippet"} title="Generate Snippet">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <dialog id={GENERATE_SNIPPET_MODAL_ID} title="Generate Snippet" className="modal">
+      <form onSubmit={handleSubmit} className="space-y-4 bg-gray-800 rounded-lg p-6 w-full max-w-lg mx-4">
         {/* Form Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <RenderLabel label="Email" />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input input-primary w-full bg-gray-700"
-              required
-            />
-          </div>
+          <FieldEmail />
           <div>
             <RenderLabel label="Organisation" />
             <input
@@ -151,17 +142,7 @@ export default function GenerateSnippetModal() {
               required
             />
           </div>
-          <div>
-            <RenderLabel label="Widget Type" />
-            <select
-              value={widgetType}
-              onChange={(e) => setWidgetType(e.target.value)}
-              className="select select-primary  w-full bg-gray-700"
-            >
-              <option>FLOATING_CHAT</option>
-              <option>CHAT</option>
-            </select>
-          </div>
+          <FieldWidgetType />
           <div>
             <RenderLabel label="Search Type" />
             <SelectSearchEngine />
@@ -252,6 +233,6 @@ export default function GenerateSnippetModal() {
           </button>
         </div>
       </form>
-    </Modal>
+    </dialog>
   );
 }
