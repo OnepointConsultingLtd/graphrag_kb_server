@@ -29,7 +29,7 @@ function JokerButton() {
       topics: state.topics,
       setInputText: state.setInputText,
       chatType: state.chatType,
-    })),
+    }))
   );
 
   function hasTopics() {
@@ -90,7 +90,6 @@ function ConversationTopics() {
     setInputText,
     setConversationTopicsNumber,
     showTopics,
-    scrollToBottom,
   } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
@@ -102,8 +101,7 @@ function ConversationTopics() {
       setInputText: state.setInputText,
       setConversationTopicsNumber: state.setConversationTopicsNumber,
       showTopics: state.showTopics,
-      scrollToBottom: state.scrollToBottom,
-    })),
+    }))
   );
 
   useEffect(() => {
@@ -119,12 +117,6 @@ function ConversationTopics() {
         .catch(console.error);
     }
   }, [jwt, selectedProject, setTopics, conversationTopicsNumber]);
-
-  useEffect(() => {
-    if (showTopics) {
-      scrollToBottom();
-    }
-  }, [showTopics, scrollToBottom]);
 
   if (!selectedProject) {
     return null;
@@ -175,6 +167,7 @@ function ConversationTopics() {
                 }
                 key={`topic-${topic.name}-${topic.type}`}
                 onClick={() => setInputText(topicQuestionTemplate(topic))}
+                title={isFloating ? topic.description : ""}
               >
                 {topic.name}
               </button>
@@ -189,7 +182,7 @@ function ConversationTopics() {
                 id={INCREMENT_TOPICS_BUTTON_ID}
                 onClick={() =>
                   setConversationTopicsNumber(
-                    conversationTopicsNumber + INCREMENT_TOPICS_NUMBER,
+                    conversationTopicsNumber + INCREMENT_TOPICS_NUMBER
                   )
                 }
                 title="Display more topics"
@@ -201,7 +194,7 @@ function ConversationTopics() {
                   className="btn btn-secondary"
                   onClick={() =>
                     setConversationTopicsNumber(
-                      conversationTopicsNumber - INCREMENT_TOPICS_NUMBER,
+                      conversationTopicsNumber - INCREMENT_TOPICS_NUMBER
                     )
                   }
                   title="Display less topics"
@@ -227,7 +220,7 @@ export function TopicSwitcher() {
         chatType: state.chatType,
         isThinking: state.isThinking,
         setShowTopics: state.setShowTopics,
-      })),
+      }))
     );
 
   if (isThinking || chatMessages.length === 0) {
@@ -268,7 +261,7 @@ export default function Messages() {
         setChatType: state.setChatType,
         isThinking: state.isThinking,
         scrollToBottom: state.scrollToBottom,
-      })),
+      }))
     );
 
   useWebsocket();

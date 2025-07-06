@@ -5,6 +5,7 @@ import { getBaseServer } from "./server";
 import type { Query } from "../model/query";
 import type { ChatMessage } from "../model/message";
 import { ChatMessageTypeOptions } from "../model/message";
+import { GenerateDirectUrlRequest } from "../model/generateDirectUrl";
 
 function createHeaders(jwt: string) {
   return {
@@ -169,17 +170,23 @@ export async function uploadIndex(jwt: string, formData: FormData) {
 }
 
 export async function generateSnippet(jwt: string, requestBody: object) {
-  const response = await fetch(
-    `${getBaseServer()}/protected/snippet/generate_snippet`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${jwt}`,
-      },
-      body: JSON.stringify(requestBody),
-    },
+  return await createPostBodyRequest(
+    jwt,
+    requestBody,
+    "/protected/snippet/generate_snippet",
   );
+}
+
+async function createPostBodyRequest(
+  jwt: string,
+  requestBody: object,
+  targetUrl: string,
+) {
+  const response = await fetch(`${getBaseServer()}${targetUrl}`, {
+    method: "POST",
+    ...createHeaders(jwt),
+    body: JSON.stringify(requestBody),
+  });
 
   await processError(response);
 
@@ -196,10 +203,7 @@ export async function deleteProject(
       `${getBaseServer()}/protected/project/delete_index?project=${project}&engine=${engine}`,
       {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${jwt}`,
-        },
+        ...createHeaders(jwt),
       },
     );
 
@@ -233,4 +237,15 @@ export async function fetchTopics(
   await processError(response);
 
   return (await response.json()) as Topics;
+}
+
+export async function generateDirectUrl(
+  jwt: string,
+  requestBody: GenerateDirectUrlRequest,
+) {
+  return await createPostBodyRequest(
+    jwt,
+    requestBody,
+    "/protected/url/generate_direct_url",
+  );
 }

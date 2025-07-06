@@ -8,6 +8,12 @@ import {
 import { ENGINES } from "../constants/engines";
 import { UserData } from "../model/userData";
 import { persist } from "zustand/middleware";
+import { GENERATE_SNIPPET_MODAL_ID } from "../components/dashboard/GenerateSnippetModal";
+import { showCloseModal } from "../lib/dialog";
+
+function openSnippetModalDialogue(open: boolean) {
+  showCloseModal(open, GENERATE_SNIPPET_MODAL_ID);
+}
 
 export type DashboardState = {
   userData: UserData | null;
@@ -167,6 +173,7 @@ export const useDashboardStore = create<DashboardState>()(
         },
         openModal: (type) =>
           set(() => {
+            openSnippetModalDialogue(type === ModalType.SNIPPET);
             return {
               modalType: type,
               isModalOpen: true,
@@ -185,12 +192,15 @@ export const useDashboardStore = create<DashboardState>()(
             error: null,
           }),
         closeModal: () =>
-          set({
-            modalType: null,
-            isModalOpen: false,
-            projectName: "",
-            success: null,
-            error: null,
+          set(() => {
+            openSnippetModalDialogue(false);
+            return {
+              modalType: null,
+              isModalOpen: false,
+              projectName: "",
+              success: null,
+              error: null,
+            }
           }),
 
         // Reset Create Project Form
