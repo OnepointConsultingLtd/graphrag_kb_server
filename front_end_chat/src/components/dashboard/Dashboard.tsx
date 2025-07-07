@@ -6,6 +6,7 @@ import ProjectList from "./ProjectList";
 import DeleteConfirmation from "./DeleteConfirmation";
 import GenerateSnippetModal from "./GenerateSnippetModal";
 import ChatConfigDialog from "./ChatConfigDialog";
+import GenerateURLModal from "./GenerateURLModal";
 
 export default function Dashboard() {
   return (
@@ -20,6 +21,7 @@ export default function Dashboard() {
       <ChatConfigDialog />
       <CreateProjectModal />
       <GenerateSnippetModal />
+      <GenerateURLModal />
       <DeleteConfirmation />
     </div>
   );

@@ -30,6 +30,7 @@ export type ApiProjectsResponse = {
 export enum ModalType {
   CREATE = "create",
   SNIPPET = "snippet",
+  URL = "url",
   DELETE = "delete",
   UPDATE = "update",
 }

@@ -90,7 +90,6 @@ export default function RenderProjectList({
     if (isProjectNotReady(project)) {
       return;
     }
-
     const isCurrentlySelected =
       selectionProject === project.name && selectionPlatform === platform;
     setSelectionProjectAndPlatform(project.name, platform, toggle);

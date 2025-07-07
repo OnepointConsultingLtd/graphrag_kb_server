@@ -9,7 +9,6 @@ export const Platform = {
 export const SearchType = {
   LOCAL: "local",
   GLOBAL: "global",
-  DRIFT: "drift",
   ALL: "all",
   NAIVE: "naive",
 } as const;

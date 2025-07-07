@@ -10,9 +10,14 @@ import { UserData } from "../model/userData";
 import { persist } from "zustand/middleware";
 import { GENERATE_SNIPPET_MODAL_ID } from "../components/dashboard/GenerateSnippetModal";
 import { showCloseModal } from "../lib/dialog";
+import { GENERATE_URL_MODAL_ID } from "../components/dashboard/GenerateURLModal";
 
 function openSnippetModalDialogue(open: boolean) {
   showCloseModal(open, GENERATE_SNIPPET_MODAL_ID);
+}
+
+function toggleGenerateUrlDialog(isOpen: boolean) {
+  showCloseModal(isOpen, GENERATE_URL_MODAL_ID);
 }
 
 export type DashboardState = {
@@ -44,6 +49,11 @@ export type DashboardState = {
   isSnippetSubmitting: boolean;
   snippetError: string | null;
   generatedSnippet: string | null;
+  generateUrlDialogOpen: boolean;
+  snippetModalDialogueOpen: boolean;
+  isGenerateUrlSubmitting: boolean;
+  generateUrl: string | null;
+  generateUrlError: string | null;
   setUserData: (userData: UserData | null) => void;
   setEmail: (email: string) => void;
   setWidgetType: (widgetType: string) => void;
@@ -83,6 +93,13 @@ export type DashboardState = {
   // Message States
   setSuccess: (success: string | null) => void;
   setError: (error: string | null) => void;
+
+  // Generate URL Modal States
+  setSnippetModalDialogueOpen: (snippetModalDialogueOpen: boolean) => void;
+  setGenerateUrlDialogOpen: (generateUrlDialogOpen: boolean) => void;
+  setIsGenerateUrlSubmitting: (isGenerateUrlSubmitting: boolean) => void;
+  setGenerateUrl: (generateUrl: string | null) => void;
+  setGenerateUrlError: (generateUrlError: string | null) => void;
 };
 
 export const useDashboardStore = create<DashboardState>()(
@@ -117,6 +134,11 @@ export const useDashboardStore = create<DashboardState>()(
         isSnippetSubmitting: false,
         snippetError: null,
         generatedSnippet: null,
+        generateUrlDialogOpen: false,
+        snippetModalDialogueOpen: false,
+        isGenerateUrlSubmitting: false,
+        generateUrl: null,
+        generateUrlError: null,
         setUserData: (userData: UserData | null) =>
           set(() => ({ userData, email: userData?.email ?? "" })),
         setEmail: (email: string) => set({ email }),
@@ -173,7 +195,6 @@ export const useDashboardStore = create<DashboardState>()(
         },
         openModal: (type) =>
           set(() => {
-            openSnippetModalDialogue(type === ModalType.SNIPPET);
             return {
               modalType: type,
               isModalOpen: true,
@@ -193,7 +214,6 @@ export const useDashboardStore = create<DashboardState>()(
           }),
         closeModal: () =>
           set(() => {
-            openSnippetModalDialogue(false);
             return {
               modalType: null,
               isModalOpen: false,
@@ -243,6 +263,21 @@ export const useDashboardStore = create<DashboardState>()(
             success: null,
             error: null,
           }),
+        setSnippetModalDialogueOpen: (snippetModalDialogueOpen: boolean) =>
+          set(() => {
+            openSnippetModalDialogue(snippetModalDialogueOpen);
+            return { snippetModalDialogueOpen };
+          }),
+        setGenerateUrlDialogOpen: (generateUrlDialogOpen: boolean) =>
+          set(() => { 
+            toggleGenerateUrlDialog(generateUrlDialogOpen);
+            return { generateUrlDialogOpen };
+          }),
+        setIsGenerateUrlSubmitting: (isGenerateUrlSubmitting: boolean) =>
+          set({ isGenerateUrlSubmitting }),
+        setGenerateUrl: (generateUrl: string | null) => set({ generateUrl }),
+        setGenerateUrlError: (generateUrlError: string | null) =>
+          set({ generateUrlError }),
       };
     },
     {

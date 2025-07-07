@@ -7,6 +7,8 @@ import { ChatTypeOptions } from "../../model/types";
 import RenderLabel from "./Form/RenderLabel";
 import { useNavigate } from "react-router-dom";
 import { supportsStreaming } from "../../lib/streamingUtils";
+import ModalTitle from "./ModalTitle";
+import ModalParent from "./ModalParent";
 
 function ChatTypeSelector() {
   const {
@@ -205,14 +207,11 @@ export default function ChatConfigDialog() {
   }
 
   return (
-    <dialog id={CHAT_CONFIG_DIALOG_ID} className="modal">
+    <ModalParent id={CHAT_CONFIG_DIALOG_ID}>
       <div
-        className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-white mb-4">
-          Configure Chat for {selectionProject}
-        </h2>
+        <ModalTitle title={`Configure Chat for ${selectionProject}`} />
 
         <ChatTypeSelector />
 
@@ -232,6 +231,6 @@ export default function ChatConfigDialog() {
 
         <ActionButtons onStartChat={handleStartChat} />
       </div>
-    </dialog>
+    </ModalParent>
   );
 }

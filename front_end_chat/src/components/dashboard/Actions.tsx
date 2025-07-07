@@ -6,7 +6,7 @@ import useProjectSelectionStore from "../../context/projectSelectionStore";
 import { ModalType } from "../../model/types";
 
 export default function Actions() {
-  const { openModal, openModalWithProject } = useDashboardStore();
+  const { openModal, openModalWithProject, setSnippetModalDialogueOpen, setGenerateUrlDialogOpen } = useDashboardStore();
   const selectionProject = useProjectSelectionStore(
     useShallow((state) => state.selectionProject),
   );
@@ -31,12 +31,21 @@ export default function Actions() {
       </button>
 
       <button
-        onClick={() => openModal(ModalType.SNIPPET)}
+        onClick={() => setSnippetModalDialogueOpen(true)}
         disabled={isActionDisabled}
         className="btn btn-secondary btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50"
       >
         <FaCode className="mr-2 group-hover:animate-pulse" />
         Generate Snippets
+      </button>
+
+      <button
+        onClick={() => setGenerateUrlDialogOpen(true)}
+        disabled={isActionDisabled}
+        className="btn btn-secondary btn-lg w-full group hover:scale-105 transition-transform disabled:opacity-50"
+      >
+        <FaCode className="mr-2 group-hover:animate-pulse" />
+        Generate URL
       </button>
 
       <button

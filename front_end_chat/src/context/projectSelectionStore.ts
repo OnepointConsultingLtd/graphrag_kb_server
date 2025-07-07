@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { SearchType, SimpleProject } from "../model/projectCategory";
 import { ChatTypeOptions } from "../model/types";
 import { CHAT_CONFIG_DIALOG_ID } from "../components/dashboard/ChatConfigDialog";
+import { showCloseModal } from "../lib/dialog";
 
 type ProjectSelectionStore = {
   selectionPlatform: string;
@@ -29,15 +30,7 @@ type ProjectSelectionStore = {
 };
 
 function toggleChatConfigDialog(isOpen: boolean) {
-  if (isOpen) {
-    (
-      document.getElementById(CHAT_CONFIG_DIALOG_ID) as HTMLDialogElement
-    )?.showModal();
-  } else {
-    (
-      document.getElementById(CHAT_CONFIG_DIALOG_ID) as HTMLDialogElement
-    )?.close();
-  }
+  showCloseModal(isOpen, CHAT_CONFIG_DIALOG_ID);
 }
 
 const useProjectSelectionStore = create<ProjectSelectionStore>((set) => ({

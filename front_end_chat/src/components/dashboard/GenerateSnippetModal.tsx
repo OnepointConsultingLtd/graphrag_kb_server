@@ -6,12 +6,11 @@ import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 import RenderLabel from "./Form/RenderLabel";
-import SelectSearchEngine from "./SelectSearchEngine";
 import { generateSnippet } from "../../lib/apiClient";
 import FieldEmail from "./Form/FieldEmail";
 import FieldWidgetType from "./Form/FieldWidgetType";
-
-export const GENERATE_SNIPPET_MODAL_ID = "generate-snippet-modal";
+import ModalTitle from "./ModalTitle";
+import FieldSearchType from "./Form/FieldSearchType";
 
 // Import ace editor modes and themes
 import "ace-builds/src-noconflict/mode-javascript";
@@ -19,10 +18,16 @@ import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-css";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
+import RenderProjectPlatform from "./Form/RenderProjectPlatform";
+import FieldAdditionalInstructions from "./Form/FieldAdditionalInstructions";
+import ModalParent from "./ModalParent";
+import CopyToClipboard from "../buttons/CopyToClipboard";
+
+export const GENERATE_SNIPPET_MODAL_ID = "generate-snippet-modal";
+
 
 export default function GenerateSnippetModal() {
   const {
-    closeModal,
     email,
     rootElementId,
     setRootElementId,
@@ -35,9 +40,9 @@ export default function GenerateSnippetModal() {
     setIsSnippetSubmitting,
     setGeneratedSnippet,
     widgetType,
+    setSnippetModalDialogueOpen,
   } = useDashboardStore(
     useShallow((state) => ({
-      closeModal: state.closeModal,
       email: state.email,
       setEmail: state.setEmail,
       setRootElementId: state.setRootElementId,
@@ -51,6 +56,7 @@ export default function GenerateSnippetModal() {
       setIsSnippetSubmitting: state.setIsSnippetSubmitting,
       setGeneratedSnippet: state.setGeneratedSnippet,
       widgetType: state.widgetType,
+      setSnippetModalDialogueOpen: state.setSnippetModalDialogueOpen,
     }))
   );
 
@@ -66,7 +72,6 @@ export default function GenerateSnippetModal() {
     searchType,
     selectionPlatform,
     additionalPromptInstructions,
-    setAdditionalPromptInstructions,
   } = useProjectSelectionStore(
     useShallow((state) => ({
       selectionProject: state.selectionProject,
@@ -84,7 +89,11 @@ export default function GenerateSnippetModal() {
 
   const handleClose = () => {
     resetForm();
-    closeModal();
+    setSnippetModalDialogueOpen(false);
+  };
+
+  const handleReset = () => {
+    resetForm();
   };
 
   const handleCopyToClipboard = () => {
@@ -135,15 +144,12 @@ export default function GenerateSnippetModal() {
   };
 
   return (
-    <dialog
-      id={GENERATE_SNIPPET_MODAL_ID}
-      title="Generate Snippet"
-      className="modal"
-    >
+    <ModalParent id={GENERATE_SNIPPET_MODAL_ID}>
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 bg-gray-800 rounded-lg p-6 w-full max-w-lg mx-4 overflow-y-scroll h-screen"
       >
+        <ModalTitle title="Generate Snippet" />
+
         {/* Form Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FieldEmail />
@@ -158,10 +164,7 @@ export default function GenerateSnippetModal() {
             />
           </div>
           <FieldWidgetType />
-          <div>
-            <RenderLabel label="Search Type" />
-            <SelectSearchEngine />
-          </div>
+          <FieldSearchType />
         </div>
 
         {/* Root Element ID */}
@@ -175,31 +178,12 @@ export default function GenerateSnippetModal() {
           />
         </div>
 
-        {/* Project */}
-        <div>
-          <RenderLabel label="Project" />
-          <p className="text-gray-400 ">{selectionProject}</p>
-        </div>
+        <div className="grid grid-cols-1 gap-2 mt-2">
+          {/* Project */}
+          <RenderProjectPlatform />
 
-        {/* Platform */}
-        <div>
-          <RenderLabel label="Platform" />
-          <p className="text-gray-400 ">{selectionPlatform}</p>
-        </div>
-
-        {/* Additional Instructions */}
-        <div>
-          <RenderLabel label="Additional Instructions" />
-          <textarea
-            name="additionalPromptInstructions"
-            id="additionalPromptInstructions"
-            value={additionalPromptInstructions}
-            placeholder="Enter additional instructions"
-            onChange={(e) => setAdditionalPromptInstructions(e.target.value)}
-            className="textarea textarea-primary w-full bg-gray-700 text-gray-400 min-h-[100px]"
-          >
-            {additionalPromptInstructions || "No additional instructions"}
-          </textarea>
+          {/* Additional Instructions */}
+          <FieldAdditionalInstructions />
         </div>
 
         {/* Error */}
@@ -212,13 +196,7 @@ export default function GenerateSnippetModal() {
           <div className="space-y-2 relative">
             <div className="flex justify-between items-center">
               <h4 className="font-semibold">Generated Snippet: </h4>
-              <button
-                type="button"
-                onClick={handleCopyToClipboard}
-                className=" top-2 right-2 btn btn-xs btn-ghost"
-              >
-                <FaCopy />
-              </button>
+              <CopyToClipboard handleCopyToClipboard={handleCopyToClipboard} />
             </div>
             <div className="relative bg-gray-900 rounded-lg p-4 font-mono text-sm">
               <AceEditor
@@ -253,6 +231,14 @@ export default function GenerateSnippetModal() {
             Close
           </button>
           <button
+            type="button"
+            onClick={() => handleReset()}
+            className="btn btn-error"
+            disabled={!generatedSnippet}
+          >
+            Reset
+          </button>
+          <button
             type="submit"
             className="btn btn-secondary"
             disabled={isSnippetSubmitting || !selectionProject}
@@ -265,6 +251,6 @@ export default function GenerateSnippetModal() {
           </button>
         </div>
       </form>
-    </dialog>
+    </ModalParent>
   );
 }
