@@ -17,7 +17,7 @@ export default function Modal({ title, children, isOpen }: ModalProps) {
     <dialog open className="modal modal-open">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 bg-opacity-30 z-0"
+        className="fixed inset-0 bg-black bg-opacity-30 z-0"
         onClick={closeModal}
       />
       {/* Modal Content */}

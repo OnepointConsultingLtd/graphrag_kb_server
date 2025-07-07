@@ -19,6 +19,8 @@ import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-css";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
+import Modal from "./Modal";
+import { ModalType } from "../../model/types";
 
 export default function GenerateSnippetModal() {
   const {
@@ -35,6 +37,8 @@ export default function GenerateSnippetModal() {
     setIsSnippetSubmitting,
     setGeneratedSnippet,
     widgetType,
+    isModalOpen,
+    modalType,
   } = useDashboardStore(
     useShallow((state) => ({
       closeModal: state.closeModal,
@@ -51,6 +55,8 @@ export default function GenerateSnippetModal() {
       setIsSnippetSubmitting: state.setIsSnippetSubmitting,
       setGeneratedSnippet: state.setGeneratedSnippet,
       widgetType: state.widgetType,
+      isModalOpen: state.isModalOpen,
+      modalType: state.modalType,
     }))
   );
 
@@ -135,15 +141,14 @@ export default function GenerateSnippetModal() {
   };
 
   return (
-    <dialog
-      id={GENERATE_SNIPPET_MODAL_ID}
+    <Modal
       title="Generate Snippet"
-      className="modal"
+      isOpen={
+        (isModalOpen && modalType === ModalType.SNIPPET) ||
+        modalType === ModalType.SNIPPET
+      }
     >
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 bg-gray-800 rounded-lg p-6 w-full max-w-lg mx-4 overflow-y-scroll h-screen"
-      >
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Form Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FieldEmail />
@@ -265,6 +270,6 @@ export default function GenerateSnippetModal() {
           </button>
         </div>
       </form>
-    </dialog>
+    </Modal>
   );
 }

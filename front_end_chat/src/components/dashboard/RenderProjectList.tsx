@@ -1,14 +1,15 @@
+import { useEffect } from "react";
 import { FaChevronDown, FaChevronUp, FaLightbulb } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
-import useProjectSelectionStore from "../../context/projectSelectionStore";
 import useChatStore from "../../context/chatStore";
+import { useDashboardStore } from "../../context/dashboardStore";
+import useProjectSelectionStore from "../../context/projectSelectionStore";
+import { isProjectNotReady } from "../../lib/projectStatus";
 import {
   Platform,
-  SimpleProject,
   SearchType,
+  SimpleProject,
 } from "../../model/projectCategory";
-import { useEffect, useState } from "react";
-import { isProjectNotReady } from "../../lib/projectStatus";
 
 // Constants
 const REFRESH_PROJECT_TIMEOUT = 1000 * 60 * 2; // 2 minutes in milliseconds
@@ -53,7 +54,6 @@ export default function RenderProjectList({
   colorScheme,
   platform,
 }: RenderProjectListProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
   const {
     selectionProject,
     selectionPlatform,
@@ -65,14 +65,21 @@ export default function RenderProjectList({
       selectionPlatform: state.selectionPlatform,
       setSelectionProjectAndPlatform: state.setSelectionProjectAndPlatform,
       setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
-    })),
+    }))
+  );
+
+  const { expandedSections, setExpandedSection } = useDashboardStore(
+    useShallow((state) => ({
+      expandedSections: state.expandedSections,
+      setExpandedSection: state.setExpandedSection,
+    }))
   );
 
   const { setSelectedProject, refreshProjects } = useChatStore(
     useShallow((state) => ({
       setSelectedProject: state.setSelectedProject,
       refreshProjects: state.refreshProjects,
-    })),
+    }))
   );
 
   useEffect(() => {
@@ -85,6 +92,7 @@ export default function RenderProjectList({
   if (!projectList || projectList.length === 0) return null;
 
   const scheme = colors[colorScheme];
+  const isExpanded = expandedSections[platform] ?? true; // Default to expanded
 
   const handleProjectClick = (project: SimpleProject, toggle: boolean) => {
     if (isProjectNotReady(project)) {
@@ -108,11 +116,12 @@ export default function RenderProjectList({
     }
   };
 
+  console.log("isExpanded for", platform, isExpanded);
   return (
     <div className="mb-8">
       <div
         className="flex justify-between items-center cursor-pointer hover:border-b-2 hover:border-gray-700 pr-8"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => setExpandedSection(platform, !isExpanded)}
       >
         <h2
           className={`text-xl font-bold ${scheme.title} mb-4 cursor-pointer hover:underline-offset-2`}
