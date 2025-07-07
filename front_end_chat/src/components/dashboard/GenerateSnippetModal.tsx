@@ -1,5 +1,4 @@
 import React from "react";
-import { FaCopy } from "react-icons/fa";
 import AceEditor from "react-ace";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";

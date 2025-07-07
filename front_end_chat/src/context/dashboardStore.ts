@@ -54,6 +54,7 @@ export type DashboardState = {
   isGenerateUrlSubmitting: boolean;
   generateUrl: string | null;
   generateUrlError: string | null;
+  expandedSections: Record<string, boolean>;
   setUserData: (userData: UserData | null) => void;
   setEmail: (email: string) => void;
   setWidgetType: (widgetType: string) => void;
@@ -66,6 +67,7 @@ export type DashboardState = {
   setIsSnippetSubmitting: (isSnippetSubmitting: boolean) => void;
   setSnippetError: (snippetError: string | null) => void;
   setGeneratedSnippet: (generatedSnippet: string | null) => void;
+  setExpandedSection: (platform: string, isExpanded: boolean) => void;
 
   // Actions
   addProject: (projectName: string, engine: Engine) => void;
@@ -139,6 +141,7 @@ export const useDashboardStore = create<DashboardState>()(
         isGenerateUrlSubmitting: false,
         generateUrl: null,
         generateUrlError: null,
+        expandedSections: {},
         setUserData: (userData: UserData | null) =>
           set(() => ({ userData, email: userData?.email ?? "" })),
         setEmail: (email: string) => set({ email }),
@@ -155,6 +158,8 @@ export const useDashboardStore = create<DashboardState>()(
         setSnippetError: (snippetError: string | null) => set({ snippetError }),
         setGeneratedSnippet: (generatedSnippet: string | null) =>
           set({ generatedSnippet }),
+        setExpandedSection: (platform: string, isExpanded: boolean) =>
+          set({ expandedSections: { ...get().expandedSections, [platform]: isExpanded } }),
 
         // Create Project Modal Actions
         setProjectName: (name) => set({ projectName: name }),
@@ -262,6 +267,7 @@ export const useDashboardStore = create<DashboardState>()(
             uploadSuccessMessage: null,
             success: null,
             error: null,
+            expandedSections: {},
           }),
         setSnippetModalDialogueOpen: (snippetModalDialogueOpen: boolean) =>
           set(() => {
@@ -282,12 +288,13 @@ export const useDashboardStore = create<DashboardState>()(
     },
     {
       name: "dashboard-store",
-      partialize: (state) => ({
+      partialize: (state: DashboardState) => ({
         userData: state.userData,
         projects: state.projects,
         selectedProjects: state.selectedProjects,
         isModalOpen: state.isModalOpen,
         modalType: state.modalType,
+        expandedSections: state.expandedSections,
       }),
     },
   ),

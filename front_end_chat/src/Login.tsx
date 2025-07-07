@@ -53,7 +53,7 @@ export default function Login() {
         {/* Logo/Branding */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">
-            Onepoint GraphRAG System
+            Onepoint AI Engine
           </h1>
           <p className="text-gray-400">Knowledge Base Dashboard</p>
         </div>

@@ -118,6 +118,7 @@ export default function GenerateURLModal() {
             <a href={generateUrl} target="_blank" rel="noopener noreferrer" className="text-white">Link to chat</a>
             <CopyToClipboard handleCopyToClipboard={handleCopyToClipboard} />
           </div>}
+          {generateUrl && <textarea value={generateUrl} className="textarea textarea-primary w-full bg-gray-700 mt-4 h-36" />}
           <div className="modal-action mt-6">
             <button
               type="button"

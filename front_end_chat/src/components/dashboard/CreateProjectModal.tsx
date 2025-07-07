@@ -80,7 +80,6 @@ export default function CreateProjectModal() {
       setUploadSuccessMessage(
         `Index (${projectName}) uploaded successfully. Please wait for the index to be ready.`,
       );
-      resetForm();
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -191,6 +190,14 @@ export default function CreateProjectModal() {
             disabled={isSubmitting}
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => resetForm()}
+            className="btn btn-error"
+            disabled={isSubmitting}
+          >
+            Reset
           </button>
           <button
             type="submit"
