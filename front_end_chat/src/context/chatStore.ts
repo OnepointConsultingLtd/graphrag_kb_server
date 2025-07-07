@@ -24,6 +24,10 @@ import {
 } from "../lib/parameters";
 import { showCloseModal } from "../lib/dialog";
 
+if(getParameterFromUrl("token")) {
+  localStorage.removeItem("chat-store");
+}
+
 type ChatStore = {
   jwt: string;
   projects?: ProjectCategories;
@@ -292,6 +296,7 @@ const useChatStore = create<ChatStore>()(
     {
       name: "chat-store",
       partialize: (state) => ({
+        jwt: state.jwt,
         projects: state.projects,
         selectedProject: state.selectedProject,
         chatMessages: state.chatMessages,

@@ -60,6 +60,10 @@ export default function GenerateURLModal() {
     }))
   );
 
+  function handleClose() {
+    setGenerateUrlDialogOpen(false);
+    handleReset()
+  }
 
   function handleReset() {
     setGenerateUrl(null);
@@ -122,7 +126,7 @@ export default function GenerateURLModal() {
           <div className="modal-action mt-6">
             <button
               type="button"
-              onClick={() => setGenerateUrlDialogOpen(false)}
+              onClick={handleClose}
               className="btn btn-ghost"
               disabled={isGenerateUrlSubmitting}
             >
