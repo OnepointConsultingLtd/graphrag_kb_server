@@ -1,5 +1,6 @@
 import React from "react";
 import { FaCopy } from "react-icons/fa";
+import AceEditor from "react-ace";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
@@ -11,6 +12,13 @@ import FieldEmail from "./Form/FieldEmail";
 import FieldWidgetType from "./Form/FieldWidgetType";
 
 export const GENERATE_SNIPPET_MODAL_ID = "generate-snippet-modal";
+
+// Import ace editor modes and themes
+import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/mode-html";
+import "ace-builds/src-noconflict/mode-css";
+import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/ext-language_tools";
 
 export default function GenerateSnippetModal() {
   const {
@@ -43,14 +51,14 @@ export default function GenerateSnippetModal() {
       setIsSnippetSubmitting: state.setIsSnippetSubmitting,
       setGeneratedSnippet: state.setGeneratedSnippet,
       widgetType: state.widgetType,
-    })),
+    }))
   );
 
   const { jwt, organisation_name } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
       organisation_name: state.organisation_name,
-    })),
+    }))
   );
 
   const {
@@ -66,7 +74,7 @@ export default function GenerateSnippetModal() {
       selectionPlatform: state.selectionPlatform,
       additionalPromptInstructions: state.additionalPromptInstructions,
       setAdditionalPromptInstructions: state.setAdditionalPromptInstructions,
-    })),
+    }))
   );
 
   const resetForm = () => {
@@ -127,8 +135,15 @@ export default function GenerateSnippetModal() {
   };
 
   return (
-    <dialog id={GENERATE_SNIPPET_MODAL_ID} title="Generate Snippet" className="modal">
-      <form onSubmit={handleSubmit} className="space-y-4 bg-gray-800 rounded-lg p-6 w-full max-w-lg mx-4">
+    <dialog
+      id={GENERATE_SNIPPET_MODAL_ID}
+      title="Generate Snippet"
+      className="modal"
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 bg-gray-800 rounded-lg p-6 w-full max-w-lg mx-4 overflow-y-scroll h-screen"
+      >
         {/* Form Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FieldEmail />
@@ -194,19 +209,36 @@ export default function GenerateSnippetModal() {
 
         {/* Generated Snippet */}
         {generatedSnippet && (
-          <div className="space-y-2">
-            <h4 className="font-semibold">Generated Snippet:</h4>
-            <div className="relative bg-gray-900 rounded-lg p-4 font-mono text-sm">
+          <div className="space-y-2 relative">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">Generated Snippet: </h4>
               <button
                 type="button"
                 onClick={handleCopyToClipboard}
-                className="absolute top-2 right-2 btn btn-xs btn-ghost"
+                className=" top-2 right-2 btn btn-xs btn-ghost"
               >
                 <FaCopy />
               </button>
-              <pre className="overflow-x-auto">
-                <code className="whitespace-pre-wrap">{generatedSnippet}</code>
-              </pre>
+            </div>
+            <div className="relative bg-gray-900 rounded-lg p-4 font-mono text-sm">
+              <AceEditor
+                mode="html"
+                theme="monokai"
+                value={generatedSnippet}
+                readOnly={true}
+                width="100%"
+                height="300px"
+                showPrintMargin={false}
+                showGutter={true}
+                highlightActiveLine={false}
+                setOptions={{
+                  enableBasicAutocompletion: false,
+                  enableLiveAutocompletion: false,
+                  enableSnippets: false,
+                  showLineNumbers: true,
+                  tabSize: 2,
+                }}
+              />
             </div>
           </div>
         )}

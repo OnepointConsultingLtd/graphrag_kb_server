@@ -29,7 +29,7 @@ function JokerButton() {
       topics: state.topics,
       setInputText: state.setInputText,
       chatType: state.chatType,
-    })),
+    }))
   );
 
   function hasTopics() {
@@ -101,7 +101,7 @@ function ConversationTopics() {
       setInputText: state.setInputText,
       setConversationTopicsNumber: state.setConversationTopicsNumber,
       showTopics: state.showTopics,
-    })),
+    }))
   );
 
   useEffect(() => {
@@ -155,7 +155,7 @@ function ConversationTopics() {
         )}
         {(hasTopics || showTopics) && (
           <div
-            className={`grid grid-cols-1 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-2 w-full gap-2`}
+            className={`grid overflow-x-hidden grid-cols-1 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-2 w-full gap-2`}
           >
             {topics?.topics.map((topic) => (
               <button
@@ -182,7 +182,7 @@ function ConversationTopics() {
                 id={INCREMENT_TOPICS_BUTTON_ID}
                 onClick={() =>
                   setConversationTopicsNumber(
-                    conversationTopicsNumber + INCREMENT_TOPICS_NUMBER,
+                    conversationTopicsNumber + INCREMENT_TOPICS_NUMBER
                   )
                 }
                 title="Display more topics"
@@ -194,7 +194,7 @@ function ConversationTopics() {
                   className="btn btn-secondary"
                   onClick={() =>
                     setConversationTopicsNumber(
-                      conversationTopicsNumber - INCREMENT_TOPICS_NUMBER,
+                      conversationTopicsNumber - INCREMENT_TOPICS_NUMBER
                     )
                   }
                   title="Display less topics"
@@ -220,7 +220,7 @@ export function TopicSwitcher() {
         chatType: state.chatType,
         isThinking: state.isThinking,
         setShowTopics: state.setShowTopics,
-      })),
+      }))
     );
 
   if (isThinking || chatMessages.length === 0) {
@@ -261,7 +261,7 @@ export default function Messages() {
         setChatType: state.setChatType,
         isThinking: state.isThinking,
         scrollToBottom: state.scrollToBottom,
-      })),
+      }))
     );
 
   useWebsocket();
