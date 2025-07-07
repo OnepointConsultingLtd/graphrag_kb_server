@@ -6,6 +6,7 @@ import { MdNewLabel } from "react-icons/md";
 import ButtonWrapper from "../buttons/ButtonWrapper";
 import { useNavigate } from "react-router-dom";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
+import { getParameterFromUrl } from "../../lib/parameters";
 
 export function NewChatButton() {
   const clearChatMessages = useChatStore(
@@ -38,6 +39,10 @@ export function NewProject() {
     navigate("/dashboard");
   };
 
+  if(getParameterFromUrl("token")) {
+    return null;
+  }
+
   return (
     <ButtonWrapper onClick={handleNewProject} name="Switch Project">
       <MdNewLabel className="text-2xl" />
@@ -61,6 +66,10 @@ function LogoutButton() {
     logoutProjectSelection();
     navigate("/login");
   };
+
+  if(getParameterFromUrl("token")) {
+    return null;
+  }
 
   return (
     <ButtonWrapper onClick={handleLogout} name="Logout">

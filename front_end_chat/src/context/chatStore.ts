@@ -108,6 +108,7 @@ function initProject(): Project | undefined {
     platform: platform as Platform,
     additional_prompt_instructions,
   };
+  console.info("project", project);
   return project as Project;
 }
 
