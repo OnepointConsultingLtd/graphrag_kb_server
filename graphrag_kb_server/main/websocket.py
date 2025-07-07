@@ -17,7 +17,7 @@ from graphrag_kb_server.service.search.search_documents import (
 )
 from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.service.cag.cag_support import cag_get_response_stream
-from graphrag_kb_server.service.query import rag_local
+from graphrag_kb_server.service.graphrag.query import rag_local
 from graphrag_kb_server.model.engines import find_engine
 
 class Command(StrEnum):

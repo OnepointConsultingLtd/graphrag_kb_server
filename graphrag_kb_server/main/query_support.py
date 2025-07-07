@@ -5,7 +5,7 @@ from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.model.context import Search
-from graphrag_kb_server.service.query import rag_local, rag_global, rag_drift
+from graphrag_kb_server.service.graphrag.query import rag_local, rag_global, rag_drift
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.simple_template import HTML_CONTENT

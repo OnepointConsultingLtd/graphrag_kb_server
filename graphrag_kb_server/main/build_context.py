@@ -1,6 +1,6 @@
 import sys
 
-from graphrag_kb_server.service.query import rag_local_build_context
+from graphrag_kb_server.service.graphrag.query import rag_local_build_context
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg
 

@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import networkx as nx
 
-from graphrag_kb_server.service.query import (
+from graphrag_kb_server.service.graphrag.query import (
     COMMUNITY_REPORT_TABLE,
     COMMUNITY_TABLE,
     ENTITY_TABLE,

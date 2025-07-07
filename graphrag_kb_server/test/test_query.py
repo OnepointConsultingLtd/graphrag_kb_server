@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from pathlib import Path
-from graphrag_kb_server.service.query import (
+from graphrag_kb_server.service.graphrag.query import (
     prepare_vector_store,
     load_project_data,
     build_local_context_builder,

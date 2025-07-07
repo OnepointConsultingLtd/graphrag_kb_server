@@ -17,8 +17,8 @@ from graphrag_kb_server.model.context import Search
 from graphrag_kb_server.model.project import IndexingStatus
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
-from graphrag_kb_server.service.query import rag_local_simple
-from graphrag_kb_server.service.query import (
+from graphrag_kb_server.service.graphrag.query import rag_local_simple
+from graphrag_kb_server.service.graphrag.query import (
     rag_local_build_context,
     rag_global_build_context,
     rag_combined_context,

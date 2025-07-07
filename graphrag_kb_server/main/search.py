@@ -2,7 +2,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from graphrag_kb_server.service.query import rag_local_simple
+from graphrag_kb_server.service.graphrag.query import rag_local_simple
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.rag_parameters import ContextParameters
