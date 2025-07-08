@@ -16,7 +16,7 @@ function simplifyDescription(description: string) {
   if (!description) {
     return "";
   }
-  return description.split("<SEP>")[0].split(".")[0].substring(0, 200) + " ...";
+  return description.split("<SEP>")[0].split(".")[0].substring(0, 100) + " ...";
 }
 
 function topicQuestionTemplate(topic: Topic) {
@@ -155,22 +155,21 @@ function ConversationTopics() {
         )}
         {(hasTopics || showTopics) && (
           <div
-            className={`grid overflow-x-hidden grid-cols-1 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-2 w-full gap-2`}
+            className={`grid overflow-x-hidden grid-cols-1 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-2 w-full gap-3`}
           >
-            {topics?.topics.map((topic) => (
-              <button
-                className={`btn btn-primary h-18 ${!isFloating ? "tooltip" : ""}`}
-                data-tip={
-                  !isFloating
-                    ? simplifyDescription(topic.description)
-                    : undefined
-                }
+            {topics?.topics.filter((topic) => topic.type).map((topic) => (
+              <div
+                className={`flex flex-col items-left justify-top text-left cursor-pointer bg-[var(--color-primary)] hover:bg-[var(--color-accent-content)] p-2 rounded-lg`}
                 key={`topic-${topic.name}-${topic.type}`}
                 onClick={() => setInputText(topicQuestionTemplate(topic))}
                 title={isFloating ? topic.description : ""}
               >
-                {topic.name}
-              </button>
+                <div className="flex flex-row justify-between gap-2">
+                  <div className="text-white font-bold">{topic.name}</div>
+                  {!isFloating &&<div className="text-white">{topic.type}</div>}
+                </div>
+                <div className="w-full text-white text-sm">{simplifyDescription(topic.description)}</div>
+              </div>
             ))}
           </div>
         )}
