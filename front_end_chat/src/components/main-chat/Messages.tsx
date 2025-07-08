@@ -159,7 +159,7 @@ function ConversationTopics() {
           >
             {topics?.topics.map((topic) => (
               <button
-                className={`btn btn-primary h-18 ${!isFloating ? "tooltip" : ""}`}
+                className={`btn btn-primary h-auto p-3 ${!isFloating ? "tooltip" : ""}`}
                 data-tip={
                   !isFloating
                     ? simplifyDescription(topic.description)
