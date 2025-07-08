@@ -1,16 +1,16 @@
 import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { SCROLL_TO_BOTTOM_ID } from "../../constants/scroll";
 import useChatStore from "../../context/chatStore";
+import useWebsocket from "../../hooks/useWebsocket";
+import { fetchTopics } from "../../lib/apiClient";
+import { ChatType } from "../../lib/chatTypes";
 import { ChatMessageTypeOptions } from "../../model/message";
+import { Topic } from "../../model/topics";
+import { ChatTypeOptions } from "../../model/types";
 import ReferenceDisplay from "../messages/ReferenceDisplay";
 import RenderReactMarkdown from "./RenderReactMarkdown";
 import ThinkingIndicator from "./ThinkingIndicator";
-import { ChatType } from "../../lib/chatTypes";
-import { ChatTypeOptions } from "../../model/types";
-import { fetchTopics } from "../../lib/apiClient";
-import useWebsocket from "../../hooks/useWebsocket";
-import { Topic } from "../../model/topics";
-import { SCROLL_TO_BOTTOM_ID } from "../../constants/scroll";
 
 function simplifyDescription(description: string) {
   if (!description) {
@@ -212,16 +212,27 @@ function ConversationTopics() {
 }
 
 export function TopicSwitcher() {
-  const { showTopics, chatMessages, chatType, isThinking, setShowTopics } =
-    useChatStore(
-      useShallow((state) => ({
-        showTopics: state.showTopics,
-        chatMessages: state.chatMessages,
-        chatType: state.chatType,
-        isThinking: state.isThinking,
-        setShowTopics: state.setShowTopics,
-      }))
-    );
+  const {
+    showTopics,
+    chatMessages,
+    chatType,
+    isThinking,
+    setShowTopics,
+    scrollToBottom,
+  } = useChatStore(
+    useShallow((state) => ({
+      showTopics: state.showTopics,
+      chatMessages: state.chatMessages,
+      chatType: state.chatType,
+      isThinking: state.isThinking,
+      setShowTopics: state.setShowTopics,
+      scrollToBottom: state.scrollToBottom,
+    }))
+  );
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [showTopics, scrollToBottom]);
 
   if (isThinking || chatMessages.length === 0) {
     return null;
@@ -291,7 +302,7 @@ export default function Messages() {
               isFloating ? "p-1 pt-8" : "p-2 lg:p-6"
             }`}
           >
-            {chatMessages.map((message, index) => {
+            {chatMessages.map((message) => {
               return (
                 <div
                   key={message.id}
@@ -301,9 +312,6 @@ export default function Messages() {
                       : "justify-start"
                   } animate-slideIn items-start`}
                 >
-                  {index === chatMessages.length - 1 && (
-                    <div id={SCROLL_TO_BOTTOM_ID} />
-                  )}
                   {message.type === ChatMessageTypeOptions.AGENT && (
                     <div className="flex-shrink-0 hidden lg:block mr-2">
                       <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 border border-blue-300">
@@ -350,6 +358,7 @@ export default function Messages() {
             })}
             <ConversationTopics />
             <TopicSwitcher />
+            <div id={SCROLL_TO_BOTTOM_ID} />
             {/* Thinking Indicator */}
             {isThinking && <ThinkingIndicator />}
           </div>

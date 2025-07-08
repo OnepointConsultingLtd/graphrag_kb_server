@@ -11,7 +11,7 @@ const FloatingChat = () => {
   const { displayFloatingChatIntro } = useChatStore(
     useShallow((state) => ({
       displayFloatingChatIntro: state.displayFloatingChatIntro,
-    })),
+    }))
   );
 
   const handleFloatingBtn = () => {
@@ -28,7 +28,7 @@ const FloatingChat = () => {
 
         {/* Floating Chat */}
         {isFloatingOpen ? (
-          <div className="sm:fixed bottom-10 right-8 z-50">
+          <div className="fixed inset-0 sm:inset-auto sm:bottom-10 sm:right-8 z-50">
             <MarkdownDialogue />
             <FloatingChatMain handleFloatingBtn={handleFloatingBtn} />
           </div>
