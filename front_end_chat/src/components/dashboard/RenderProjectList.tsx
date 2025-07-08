@@ -115,7 +115,6 @@ export default function RenderProjectList({
     }
   };
 
-  console.log("isExpanded for", platform, isExpanded);
   return (
     <div className="mb-8">
       <div
