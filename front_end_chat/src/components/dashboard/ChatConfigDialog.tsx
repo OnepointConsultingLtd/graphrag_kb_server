@@ -1,14 +1,14 @@
+import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
 import { ChatType } from "../../lib/chatTypes";
+import { supportsStreaming } from "../../lib/streamingUtils";
 import { Platform, SearchType } from "../../model/projectCategory";
 import { ChatTypeOptions } from "../../model/types";
 import RenderLabel from "./Form/RenderLabel";
-import { useNavigate } from "react-router-dom";
-import { supportsStreaming } from "../../lib/streamingUtils";
-import ModalTitle from "./ModalTitle";
 import ModalParent from "./ModalParent";
+import ModalTitle from "./ModalTitle";
 
 function ChatTypeSelector() {
   const {
@@ -22,7 +22,7 @@ function ChatTypeSelector() {
       selectionPlatform: state.selectionPlatform,
       localChatType: state.localChatType,
       setLocalChatType: state.setLocalChatType,
-    })),
+    }))
   );
 
   return (
@@ -60,7 +60,7 @@ function StreamingSelector() {
     useShallow((state) => ({
       useStreaming: state.useStreaming,
       setUseStreaming: state.setUseStreaming,
-    })),
+    }))
   );
 
   return (
@@ -136,7 +136,7 @@ function ActionButtons({ onStartChat }: { onStartChat: () => void }) {
     useShallow((state) => ({
       setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
       localChatType: state.localChatType,
-    })),
+    }))
   );
 
   return (
@@ -167,7 +167,7 @@ export default function ChatConfigDialog() {
     useShallow((state) => ({
       selectedProject: state.selectedProject,
       setSelectedProjectAndChatType: state.setSelectedProjectAndChatType,
-    })),
+    }))
   );
 
   const {
@@ -185,7 +185,7 @@ export default function ChatConfigDialog() {
       setSearchType: state.setSearchType,
       selectionProject: state.selectionProject,
       localChatType: state.localChatType,
-    })),
+    }))
   );
 
   function handleStartChat() {
@@ -198,7 +198,7 @@ export default function ChatConfigDialog() {
         platform: selectedProject?.platform as Platform,
         additional_prompt_instructions: additionalPromptInstructions,
       },
-      localChatType,
+      localChatType
     );
 
     const targetPath =
@@ -208,9 +208,7 @@ export default function ChatConfigDialog() {
 
   return (
     <ModalParent id={CHAT_CONFIG_DIALOG_ID}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div onClick={(e) => e.stopPropagation()}>
         <ModalTitle title={`Configure Chat for ${selectionProject}`} />
 
         <ChatTypeSelector />

@@ -54,7 +54,7 @@ export default function FloatingChatMain({
 
           {/* Close chat */}
           <button
-            className="flex justify-center py-3 cursor-pointer group absolute top-4 mx-auto right-4 left-4 w-fit"
+            className="flex justify-center py-3 cursor-pointer group absolute top-8 lg:top-4 mx-auto right-4 left-4 w-fit"
             onClick={handleFloatingBtn}
           >
             <IoIosArrowDown className="text-4xl font-bold" />
