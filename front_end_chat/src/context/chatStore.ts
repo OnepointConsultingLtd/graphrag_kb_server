@@ -25,7 +25,7 @@ import {
 import { showCloseModal } from "../lib/dialog";
 import { INCREMENT_TOPICS_BUTTON_ID } from "../components/main-chat/Messages";
 
-if(getParameterFromUrl("token")) {
+if (getParameterFromUrl("token")) {
   localStorage.removeItem("chat-store");
 }
 
@@ -93,28 +93,40 @@ function initJwt() {
 
 function initChatType(): ChatTypeOptions {
   const chatType = getParameterFromUrl("chat_type");
-  return chatType as ChatTypeOptions;
+  if (chatType) {
+    return chatType as ChatTypeOptions;
+  }
+  const widgetType = window.chatConfig?.widgetType;
+  if (widgetType) {
+    return (widgetType === "FLOATING_CHAT" ? ChatType.FLOATING : ChatType.FULL_PAGE) as ChatTypeOptions;
+  }
+  return null;
 }
 
 function initProject(): Project | undefined {
+
   const projectName = getParameterFromUrl("project");
   const platform = getParameterFromUrl("platform");
   const search_type = getParameterFromUrl("search_type");
   const additional_prompt_instructions =
     getParameterFromUrl("additional_prompt_instructions") ?? "";
-  if (!projectName || !platform || !search_type) {
-    return undefined;
+  if (projectName && platform && search_type) {
+    const project = {
+      name: projectName,
+      updated_timestamp: new Date(),
+      input_files: [],
+      search_type: search_type as SearchType,
+      platform: platform as Platform,
+      additional_prompt_instructions,
+    };
+    console.info("project", project);
+    return project as Project;
   }
-  const project = {
-    name: projectName,
-    updated_timestamp: new Date(),
-    input_files: [],
-    search_type: search_type as SearchType,
-    platform: platform as Platform,
-    additional_prompt_instructions,
-  };
-  console.info("project", project);
-  return project as Project;
+  const project = window.chatConfig?.project;
+  if (project) {
+    return project as Project;
+  }
+  return undefined;
 }
 
 function openMarkdownDialogue(open: boolean) {
@@ -292,11 +304,13 @@ const useChatStore = create<ChatStore>()(
         setConversationTopicsNumber: (conversationTopicsNumber: number) =>
           set({ conversationTopicsNumber }),
         setShowTopics: (showTopics: boolean) => set(() => {
-          if(showTopics) {
-            document.getElementById(INCREMENT_TOPICS_BUTTON_ID)?.scrollIntoView({
-              behavior: "smooth",
-              block: "start", // options: 'start', 'center', 'end', 'nearest'
-            });
+          if (showTopics) {
+            setTimeout(() => {
+              document.getElementById(INCREMENT_TOPICS_BUTTON_ID)?.scrollIntoView({
+                behavior: "smooth",
+                block: "start", // options: 'start', 'center', 'end', 'nearest'
+              });
+            }, 500);
           }
           return { showTopics }
         }),

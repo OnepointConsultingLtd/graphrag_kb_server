@@ -12,6 +12,7 @@ export function getParameterFromUrl(name: string) {
 
 export function getParameter(name: string): string {
   // Try to extract from location first
+  console.info("AI Engine: getParameter", name);
   let value = getParameterFromUrl(name);
   if (value) {
     return value;

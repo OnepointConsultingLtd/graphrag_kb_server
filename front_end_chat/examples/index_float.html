@@ -1,37 +1,31 @@
 <html>
-  <head>
-    <title>Test Chat</title>
-  </head>
 
-  <body>
-    <script>
-      window.chatConfig = {
-        widgetType: "FLOATING_CHAT",
-        rootElementId: "lmo_chat",
-        jwt: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnaWxfZmVybmFuZGVzIiwibmFtZSI6IkdpbCBGZXJuYW5kZXMiLCJpYXQiOjE3NDY2OTQ5MzksImVtYWlsIjoiZ2lsLmZlcm5hbmRlc0BvbmVwb2ludGx0ZC5jb20ifQ.tVCq9G_ZV0I154GjSuelCYaffwlukUcxuFJLZmW00L6BMVUn-iWp-ajGpdy437QVeKtaluRVE_v48FhxDQGq2Q",
-        baseServer: "http://localhost:9999",
-        websocketServer: "ws://localhost:9999",
-        project: {
-          name: "learn_meditation_online",
-          updated_timestamp: "2025-07-04T16:35:36.965Z",
-          input_files: [],
-          search_type: "local",
-          platform: "lightrag",
-          additional_prompt_instructions: "",
-        },
-        organisationName: "Brahma Kumaris",
-      };
-    </script>
-    <script
-      type="module"
-      crossorigin
-      src="http://localhost:9999/assets/index-fixed.js"
-    ></script>
-    <link
-      rel="stylesheet"
-      crossorigin
-      href="http://localhost:9999/assets/index-fixed.css"
-    />
-    <div id="lmo_chat"></div>
-  </body>
+<head>
+  <title>Test Chat</title>
+</head>
+
+<body>
+  <script>
+    window.chatConfig = {
+      widgetType: "FLOATING_CHAT",
+      rootElementId: "root",
+      token: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnaWxfZmVybmFuZGVzIiwibmFtZSI6IkdpbCBGZXJuYW5kZXMiLCJpYXQiOjE3NDY2OTQ5MzksImVtYWlsIjoiZ2lsLmZlcm5hbmRlc0BvbmVwb2ludGx0ZC5jb20ifQ.tVCq9G_ZV0I154GjSuelCYaffwlukUcxuFJLZmW00L6BMVUn-iWp-ajGpdy437QVeKtaluRVE_v48FhxDQGq2Q",
+      baseServer: "http://localhost:9999",
+      websocketServer: "ws://localhost:9999",
+      project: {
+        name: "lmo",
+        updated_timestamp: "2025-07-08T14:55:43.461Z",
+        input_files: [],
+        search_type: "local",
+        platform: "graphrag",
+        additional_prompt_instructions: ""
+      },
+      organisationName: "My Organisation"
+    };
+  </script>
+  <script type="module" crossorigin src="http://localhost:9999/assets/index-fixed.js"></script>
+  <link rel="stylesheet" crossorigin href="http://localhost:9999/assets/index-fixed.css">
+  <div id="root"></div>
+</body>
+
 </html>

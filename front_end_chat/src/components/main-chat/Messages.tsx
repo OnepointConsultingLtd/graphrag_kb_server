@@ -296,7 +296,7 @@ export default function Messages() {
               isFloating ? "p-1 pt-8" : "p-2 lg:p-6"
             }`}
           >
-            {chatMessages.map((message) => {
+            {chatMessages.map((message, index) => {
               return (
                 <div
                   key={message.id}
@@ -326,6 +326,7 @@ export default function Messages() {
                           : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
                     }`}
                   >
+                    {index === chatMessages.length - 1 && <div id={SCROLL_TO_BOTTOM_ID} />}
                     <RenderReactMarkdown message={message} />
                     {message.references?.length &&
                     message.references.length > 0 ? (
@@ -352,7 +353,6 @@ export default function Messages() {
             })}
             <ConversationTopics />
             <TopicSwitcher />
-            <div id={SCROLL_TO_BOTTOM_ID} />
             {/* Thinking Indicator */}
             {isThinking && <ThinkingIndicator />}
           </div>
