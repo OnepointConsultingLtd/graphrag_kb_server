@@ -41,7 +41,9 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
             match search:
                 case Search.GLOBAL | Search.LOCAL | Search.ALL | Search.NAIVE:
                     if search == Search.ALL:
-                        query_params = query_params.model_copy(update={"search": "hybrid"})
+                        query_params = query_params.model_copy(
+                            update={"search": "hybrid"}
+                        )
                     chat_response = await lightrag_search(query_params)
                 case _:
                     raise web.HTTPBadRequest(

@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 from enum import StrEnum
 
-from graphrag.callbacks.query_callbacks import QueryCallbacks
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.search.search import DocumentSearchQuery
@@ -19,6 +18,7 @@ from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.service.cag.cag_support import cag_get_response_stream
 from graphrag_kb_server.service.graphrag.query import rag_local
 from graphrag_kb_server.model.engines import find_engine
+
 
 class Command(StrEnum):
     START_SESSION = "start_session"
@@ -80,7 +80,9 @@ async def relevant_documents(sid: str, token: str, project: str, document_query:
 @sio.event
 async def chat_stream(sid: str, token: str, project: str, query_parameters: dict):
     try:
-        project_dir = await find_project_dir(token, project, find_engine(query_parameters["engine"]))
+        project_dir = await find_project_dir(
+            token, project, find_engine(query_parameters["engine"])
+        )
         query_parameters["context_params"]["project_dir"] = project_dir
         query_params = QueryParameters(**query_parameters)
         match query_params.engine:
@@ -103,7 +105,9 @@ async def chat_stream(sid: str, token: str, project: str, query_parameters: dict
                     await sio.emit(Command.STREAM_TOKEN, event.text, to=sid)
                 await sio.emit(Command.STREAM_END, {"data": "Stream ended"}, to=sid)
             case _:
-                await sio.emit(Command.ERROR, {"message": "Engine not supported"}, to=sid)
+                await sio.emit(
+                    Command.ERROR, {"message": "Engine not supported"}, to=sid
+                )
     except Exception as e:
         err_msg = f"Errors: {e}. Please try again."
         logger.error(err_msg)

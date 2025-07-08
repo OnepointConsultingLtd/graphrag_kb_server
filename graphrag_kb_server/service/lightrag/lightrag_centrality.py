@@ -10,6 +10,7 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     create_network_from_project_dir,
     networkx_to_rustworkx,
 )
+from graphrag_kb_server.model.node_centrality import NodeCentrality
 
 # Full day cache
 lightrag_cache = PersistentSimpleCache[pd.DataFrame]("lightrag_centrality")
@@ -17,7 +18,7 @@ lightrag_cache = PersistentSimpleCache[pd.DataFrame]("lightrag_centrality")
 
 def get_sorted_centrality_scores(
     project_dir: Path,
-) -> list[tuple[str, str, str, str, float]]:
+) -> list[NodeCentrality]:
     G = create_network_from_project_dir(project_dir)
     rw_graph = networkx_to_rustworkx(G)
     centrality = rx.betweenness_centrality(rw_graph)

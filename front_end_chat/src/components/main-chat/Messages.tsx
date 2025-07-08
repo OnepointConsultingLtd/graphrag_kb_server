@@ -174,7 +174,7 @@ function ConversationTopics() {
             ))}
           </div>
         )}
-        {(hasTopics || showTopics) && (
+        {(hasTopics && showTopics) && (
           <div className="flex flex-row gap-2 justify-between mt-2">
             <div className="flex flex-row gap-2">
               <button

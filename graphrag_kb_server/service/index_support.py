@@ -18,7 +18,10 @@ from graphrag.utils.cli import redact
 import graphrag.config.defaults as defs
 from graphrag_kb_server.service.file_conversion import convert_pdf_to_markdown
 from graphrag_kb_server.logger import logger
-from graphrag_kb_server.service.file_find_service import ORIGINAL_INPUT_FOLDER, INPUT_FOLDER
+from graphrag_kb_server.service.file_find_service import (
+    ORIGINAL_INPUT_FOLDER,
+    INPUT_FOLDER,
+)
 
 log = logging.getLogger(__name__)
 

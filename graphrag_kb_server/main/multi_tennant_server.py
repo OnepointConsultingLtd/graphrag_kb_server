@@ -474,10 +474,14 @@ async def _generate_jwt_token(email: str, sub: str) -> JWTToken | Error:
     return jwt_token
 
 
-async def _generate_jwt_token_from_email(body: dict, request: web.Request) -> str | web.Response:
+async def _generate_jwt_token_from_email(
+    body: dict, request: web.Request
+) -> str | web.Response:
     # Generate a new JWT token
     email = body["email"]
-    sub = request["token_data"]["sub"] # Comes from the authentication token handled by the auth_middleware
+    sub = request["token_data"][
+        "sub"
+    ]  # Comes from the authentication token handled by the auth_middleware
     jwt_token: JWTToken | Error = await _generate_jwt_token(email, sub)
     if isinstance(jwt_token, JWTToken):
         return jwt_token.token
@@ -487,6 +491,7 @@ async def _generate_jwt_token_from_email(body: dict, request: web.Request) -> st
             "Failed to generate JWT token",
             headers=CORS_HEADERS,
         )
+
 
 @routes.options("/protected/snippet/generate_snippet")
 async def create_snippet_options(request: web.Request) -> web.Response:
@@ -643,12 +648,12 @@ async def create_snippet(request: web.Request) -> web.Response:
 
 
 @routes.options("/protected/url/generate_direct_url")
-async def create_snippet_options(_: web.Request) -> web.Response:
+async def generate_direct_url_options(_: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 
 @routes.post("/protected/url/generate_direct_url")
-async def create_snippet(request: web.Request) -> web.Response:
+async def generate_direct_url_post(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
@@ -745,7 +750,10 @@ async def create_snippet(request: web.Request) -> web.Response:
         body = await request.json()
         if "chat_type" in body and "project" in body:
             chat_type = body["chat_type"]
-            project = {**body["project"], "updated_timestamp": datetime.now(timezone.utc).isoformat()}
+            project = {
+                **body["project"],
+                "updated_timestamp": datetime.now(timezone.utc).isoformat(),
+            }
             jwt_token = await _generate_jwt_token_from_email(body, request)
             if isinstance(jwt_token, web.Response):
                 # If the JWT token is invalid, return the error response

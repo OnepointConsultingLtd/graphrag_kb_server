@@ -467,7 +467,9 @@ async def query(request: web.Request) -> web.Response:
                             request.rel_url, project_dir
                         )
                         engine = find_engine_from_query(request)
-                        conversation_id = request.rel_url.query.get("conversation_id", str(uuid.uuid4()))
+                        conversation_id = request.rel_url.query.get(
+                            "conversation_id", str(uuid.uuid4())
+                        )
                         return await execute_query(
                             QueryParameters(
                                 format=format,

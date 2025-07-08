@@ -7,7 +7,9 @@ from graphrag_kb_server.model.topics import Topics, Topic, TopicsRequest
 from graphrag_kb_server.service.lightrag.lightrag_centrality import (
     get_sorted_centrality_scores_as_pd,
 )
-from graphrag_kb_server.service.community_service import prepare_community_extraction
+from graphrag_kb_server.service.graphrag.entity_centrality import (
+    get_entity_centrality_as_pd,
+)
 from graphrag_kb_server.service.cag.cag_support import extract_main_topics
 
 
@@ -32,12 +34,12 @@ TOP_LEVEL: Final[int] = 0
 
 
 def _generate_topics_graphrag(topics_request: TopicsRequest) -> Topics:
-    df = prepare_community_extraction(topics_request.project_dir, [TOP_LEVEL])
+    df = get_entity_centrality_as_pd(topics_request.project_dir)
     topics = [
         Topic(
-            name=row["title_y"],
-            description=row["summary"],
-            type=row["title_y"],
+            name=row["entity_id"],
+            description=row["description"],
+            type=row["entity_type"],
             questions=[],
         )
         for row in _generate_rows(df, topics_request.limit)
@@ -67,7 +69,6 @@ async def _generate_topics_cag(topics_request: TopicsRequest) -> Topics:
     limit = topics_request.limit
     topics = await extract_main_topics(topics_request.project_dir)
     return Topics(topics=topics.topics[:limit])
-    
 
 
 if __name__ == "__main__":
@@ -76,16 +77,20 @@ if __name__ == "__main__":
 
     def test_lightrag():
         project_dir = Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full")
-        topics = asyncio.run(generate_topics(
-            TopicsRequest(project_dir=project_dir, engine=Engine.LIGHTRAG)
-        ))
+        topics = asyncio.run(
+            generate_topics(
+                TopicsRequest(project_dir=project_dir, engine=Engine.LIGHTRAG)
+            )
+        )
         return topics
 
     def test_graphrag():
         project_dir = Path("/var/graphrag/tennants\gil_fernandes/graphrag/dwell")
-        topics = asyncio.run(generate_topics(
-            TopicsRequest(project_dir=project_dir, engine=Engine.GRAPHRAG)
-        ))
+        topics = asyncio.run(
+            generate_topics(
+                TopicsRequest(project_dir=project_dir, engine=Engine.GRAPHRAG)
+            )
+        )
         return topics
 
     topics = test_graphrag()

@@ -49,7 +49,9 @@ async def lightrag_index(rag: LightRAG, files_to_index: list[Path]):
     tolerance = 3
     for i, file in enumerate(files_to_index):
         try:
-            await rag.ainsert(file.read_text(encoding="utf-8"), file_paths=file.as_posix())
+            await rag.ainsert(
+                file.read_text(encoding="utf-8"), file_paths=file.as_posix()
+            )
             logger.info("########################################################")
             logger.info(f"Indexed {i+1}/{count} files: {file}")
             logger.info("########################################################")

@@ -13,6 +13,24 @@ def generate_direct_url(chat_type: WidgetType, project: Project, jwt_token: str)
 
 
 if __name__ == "__main__":
-    from graphrag_kb_server.model.snippet import WidgetType, Project, Platform, SearchType
+    from graphrag_kb_server.model.snippet import (
+        WidgetType,
+        Project,
+        Platform,
+        SearchType,
+    )
     import datetime
-    print(generate_direct_url(WidgetType.FLOATING_CHAT, Project(name="test", platform=Platform.LIGHTRAG, search_type=SearchType.LOCAL, additional_prompt_instructions="", updated_timestamp=datetime.datetime.now().isoformat()), "test"))
+
+    print(
+        generate_direct_url(
+            WidgetType.FLOATING_CHAT,
+            Project(
+                name="test",
+                platform=Platform.LIGHTRAG,
+                search_type=SearchType.LOCAL,
+                additional_prompt_instructions="",
+                updated_timestamp=datetime.datetime.now().isoformat(),
+            ),
+            "test",
+        )
+    )
