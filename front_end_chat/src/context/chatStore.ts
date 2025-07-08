@@ -23,6 +23,7 @@ import {
   getParameterFromUrl,
 } from "../lib/parameters";
 import { showCloseModal } from "../lib/dialog";
+import { INCREMENT_TOPICS_BUTTON_ID } from "../components/main-chat/Messages";
 
 if(getParameterFromUrl("token")) {
   localStorage.removeItem("chat-store");
@@ -290,7 +291,15 @@ const useChatStore = create<ChatStore>()(
         setUseStreaming: (useStreaming: boolean) => set({ useStreaming }),
         setConversationTopicsNumber: (conversationTopicsNumber: number) =>
           set({ conversationTopicsNumber }),
-        setShowTopics: (showTopics: boolean) => set({ showTopics }),
+        setShowTopics: (showTopics: boolean) => set(() => {
+          if(showTopics) {
+            document.getElementById(INCREMENT_TOPICS_BUTTON_ID)?.scrollIntoView({
+              behavior: "smooth",
+              block: "start", // options: 'start', 'center', 'end', 'nearest'
+            });
+          }
+          return { showTopics }
+        }),
       };
     },
     {

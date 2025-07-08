@@ -70,7 +70,7 @@ function JokerButton() {
 
 const INCREMENT_TOPICS_NUMBER = 4;
 
-const INCREMENT_TOPICS_BUTTON_ID = "increment-topics-button";
+export const INCREMENT_TOPICS_BUTTON_ID = "increment-topics-button";
 
 function ConversationTopics() {
   const {
