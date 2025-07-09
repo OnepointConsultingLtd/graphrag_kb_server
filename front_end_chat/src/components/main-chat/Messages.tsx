@@ -63,7 +63,7 @@ function JokerButton() {
       title={`${isFloating ? "Click for random topic" : ""}`}
       onClick={handleClick}
     >
-      <GiCardJoker className="text-7xl" />
+      <GiCardJoker className="h-12 w-12" />
     </button>
   );
 }

@@ -28,5 +28,6 @@ def create_snippet() -> tuple[str, str, Snippet]:
             ),
             css_path="/assets/index-BP7tuhB6.css",
             script_path="/assets/index-DwkZlIms.js",
+            streaming="true",
         ),
     )

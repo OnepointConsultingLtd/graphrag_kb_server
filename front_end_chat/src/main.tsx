@@ -9,7 +9,7 @@ declare global {
     chatConfig: {
       widgetType: string;
       rootElementId: string;
-      jwt?: string;
+      token?: string;
       project?: Project;
       displayFloatingChatIntro?: boolean;
       baseServer?: string;

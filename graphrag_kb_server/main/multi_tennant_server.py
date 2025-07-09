@@ -537,6 +537,10 @@ async def create_snippet(request: web.Request) -> web.Response:
                 type: string
                 description: The name of the organisation
                 default: "My Organisation"
+              streaming:
+                type: string
+                description: The streaming. One of true of false.
+                default: "false"
               project:
                 type: object
                 properties:
@@ -631,6 +635,7 @@ async def create_snippet(request: web.Request) -> web.Response:
                 base_server=cfg.server_base_url,
                 websocket_server=cfg.server_base_url.replace("http", "ws"),
                 organisation_name=body.get("organisation_name", ""),
+                streaming=body.get("streaming", ""),
             )
             inject_scripts_path(snippet)
             generated_snippet = generate_snippet(snippet)
@@ -679,6 +684,10 @@ async def generate_direct_url_post(request: web.Request) -> web.Response:
                 type: string
                 description: The email
                 default: "john.doe@graphrag.com"
+              streaming:
+                type: string
+                description: The streaming. One of true of false.
+                default: "false"
               project:
                 type: object
                 properties:
@@ -750,6 +759,7 @@ async def generate_direct_url_post(request: web.Request) -> web.Response:
         body = await request.json()
         if "chat_type" in body and "project" in body:
             chat_type = body["chat_type"]
+            streaming = body.get("streaming", "false")
             project = {
                 **body["project"],
                 "updated_timestamp": datetime.now(timezone.utc).isoformat(),
@@ -758,7 +768,7 @@ async def generate_direct_url_post(request: web.Request) -> web.Response:
             if isinstance(jwt_token, web.Response):
                 # If the JWT token is invalid, return the error response
                 return jwt_token
-            url = generate_direct_url(chat_type, Project(**project), jwt_token)
+            url = generate_direct_url(chat_type, Project(**project), jwt_token, streaming == "true")
             return web.json_response({"url": url}, headers=CORS_HEADERS)
         else:
             return invalid_response(

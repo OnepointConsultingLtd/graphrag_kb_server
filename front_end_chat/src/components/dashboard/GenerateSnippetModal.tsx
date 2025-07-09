@@ -125,6 +125,7 @@ export default function GenerateSnippetModal() {
         platform: selectionPlatform,
         additional_prompt_instructions: additionalPromptInstructions,
       },
+      streaming: "true", // TODO: make this dynamic
     };
 
     try {

@@ -46,3 +46,4 @@ class Snippet(BaseModel):
     css_path: str = Field(..., description="The path to the CSS file")
     script_path: str = Field(..., description="The path to the script file")
     organisation_name: str = Field(default="", description="The organisation name")
+    streaming: str = Field(default="", description="The streaming")

@@ -17,8 +17,9 @@ def test_generate_direct_url():
             updated_timestamp=datetime.datetime.now().isoformat(),
         ),
         "test",
+        True,
     )
     assert (
         url
-        == f"{cfg.server_base_url}/floating-chat?project=test&platform=lightrag&search_type=local&token=test&chat_type=floating-chat"
+        == f"{cfg.server_base_url}/floating-chat?project=test&platform=lightrag&search_type=local&token=test&chat_type=floating-chat&streaming=true"
     )

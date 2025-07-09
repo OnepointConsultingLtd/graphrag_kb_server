@@ -133,6 +133,14 @@ function openMarkdownDialogue(open: boolean) {
   showCloseModal(open, MARKDOWN_DIALOGUE_ID);
 }
 
+function initStreaming(): boolean {
+  const streaming = getParameter("streaming");
+  if (streaming) {
+    return streaming === "true";
+  }
+  return false;
+}
+
 const useChatStore = create<ChatStore>()(
   persist(
     (set, get) => {
@@ -171,7 +179,7 @@ const useChatStore = create<ChatStore>()(
         inputText: "",
         conversationId: null,
         socket: initSocket(),
-        useStreaming: false,
+        useStreaming: initStreaming(),
         conversationTopicsNumber: 6,
         showTopics: true,
         setJwt: (jwt: string) =>
