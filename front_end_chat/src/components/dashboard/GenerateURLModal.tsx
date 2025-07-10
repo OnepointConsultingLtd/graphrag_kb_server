@@ -12,11 +12,15 @@ import useChatStore from "../../context/chatStore";
 import { generateDirectUrl } from "../../lib/apiClient";
 import { Platform } from "../../model/projectCategory";
 import CopyToClipboard from "../buttons/CopyToClipboard";
-
-
+import { StreamingSelector } from "./StreamingSelector";
 export const GENERATE_URL_MODAL_ID = "generate-url-modal";
 
 export default function GenerateURLModal() {
+  const { useStreaming } = useChatStore(
+    useShallow((state) => ({
+      useStreaming: state.useStreaming,
+    }))
+  );
   const {
     email,
     widgetType,
@@ -44,14 +48,14 @@ export default function GenerateURLModal() {
     selectionProject,
     searchType,
     selectionPlatform,
-    additionalPromptInstructions
+    additionalPromptInstructions,
   } = useProjectSelectionStore(
     useShallow((state) => ({
       selectionProject: state.selectionProject,
       searchType: state.searchType,
       selectionPlatform: state.selectionPlatform,
       additionalPromptInstructions: state.additionalPromptInstructions,
-    })),
+    }))
   );
 
   const { jwt } = useChatStore(
@@ -62,13 +66,13 @@ export default function GenerateURLModal() {
 
   function handleClose() {
     setGenerateUrlDialogOpen(false);
-    handleReset()
+    handleReset();
   }
 
   function handleReset() {
     setGenerateUrl(null);
     setGenerateUrlError(null);
-  };
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -84,6 +88,7 @@ export default function GenerateURLModal() {
         updated_timestamp: new Date(),
         input_files: [],
       },
+      streaming: String(useStreaming),
     })
       .then((response) => {
         setGenerateUrl(response.url);
@@ -114,15 +119,32 @@ export default function GenerateURLModal() {
           <div className="grid grid-cols-1 gap-2 mt-4">
             <FieldSearchType />
             <RenderProjectPlatform />
+            <StreamingSelector />
             <FieldAdditionalInstructions />
           </div>
           {isGenerateUrlSubmitting && <div>Loading ...</div>}
-          {generateUrlError && <div className="alert alert-error mt-4">{generateUrlError}</div>}
-          {generateUrl && <div className="alert alert-success mt-4 overflow-hidden whitespace-nowrap text-ellipsis flex justify-between">
-            <a href={generateUrl} target="_blank" rel="noopener noreferrer" className="text-white">Link to chat</a>
-            <CopyToClipboard handleCopyToClipboard={handleCopyToClipboard} />
-          </div>}
-          {generateUrl && <textarea value={generateUrl} className="textarea textarea-primary w-full bg-gray-700 mt-4 h-36" />}
+          {generateUrlError && (
+            <div className="alert alert-error mt-4">{generateUrlError}</div>
+          )}
+          {generateUrl && (
+            <div className="alert alert-success mt-4 overflow-hidden whitespace-nowrap text-ellipsis flex justify-between">
+              <a
+                href={generateUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white"
+              >
+                Link to chat
+              </a>
+              <CopyToClipboard handleCopyToClipboard={handleCopyToClipboard} />
+            </div>
+          )}
+          {generateUrl && (
+            <textarea
+              value={generateUrl}
+              className="textarea textarea-primary w-full bg-gray-700 mt-4 h-36"
+            />
+          )}
           <div className="modal-action mt-6">
             <button
               type="button"
