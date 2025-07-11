@@ -4,26 +4,26 @@ import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
-import RenderLabel from "./Form/RenderLabel";
 import { generateSnippet } from "../../lib/apiClient";
 import FieldEmail from "./Form/FieldEmail";
-import FieldWidgetType from "./Form/FieldWidgetType";
-import ModalTitle from "./ModalTitle";
 import FieldSearchType from "./Form/FieldSearchType";
+import FieldWidgetType from "./Form/FieldWidgetType";
+import RenderLabel from "./Form/RenderLabel";
+import ModalTitle from "./ModalTitle";
 
 // Import ace editor modes and themes
-import "ace-builds/src-noconflict/mode-javascript";
-import "ace-builds/src-noconflict/mode-html";
-import "ace-builds/src-noconflict/mode-css";
-import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
-import RenderProjectPlatform from "./Form/RenderProjectPlatform";
-import FieldAdditionalInstructions from "./Form/FieldAdditionalInstructions";
-import ModalParent from "./ModalParent";
+import "ace-builds/src-noconflict/mode-css";
+import "ace-builds/src-noconflict/mode-html";
+import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/theme-monokai";
 import CopyToClipboard from "../buttons/CopyToClipboard";
+import FieldAdditionalInstructions from "./Form/FieldAdditionalInstructions";
+import RenderProjectPlatform from "./Form/RenderProjectPlatform";
+import ModalParent from "./ModalParent";
+import { StreamingSelector } from "./StreamingSelector";
 
 export const GENERATE_SNIPPET_MODAL_ID = "generate-snippet-modal";
-
 
 export default function GenerateSnippetModal() {
   const {
@@ -59,10 +59,11 @@ export default function GenerateSnippetModal() {
     }))
   );
 
-  const { jwt, organisation_name } = useChatStore(
+  const { jwt, organisation_name, useStreaming } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
       organisation_name: state.organisation_name,
+      useStreaming: state.useStreaming,
     }))
   );
 
@@ -125,7 +126,7 @@ export default function GenerateSnippetModal() {
         platform: selectionPlatform,
         additional_prompt_instructions: additionalPromptInstructions,
       },
-      streaming: "true", // TODO: make this dynamic
+      streaming: String(useStreaming),
     };
 
     try {
@@ -145,9 +146,7 @@ export default function GenerateSnippetModal() {
 
   return (
     <ModalParent id={GENERATE_SNIPPET_MODAL_ID}>
-      <form
-        onSubmit={handleSubmit}
-      >
+      <form onSubmit={handleSubmit}>
         <ModalTitle title="Generate Snippet" />
 
         {/* Form Fields */}
@@ -177,6 +176,8 @@ export default function GenerateSnippetModal() {
             className="input input-primary w-full bg-gray-700"
           />
         </div>
+
+        <StreamingSelector />
 
         <div className="grid grid-cols-1 gap-2 mt-2">
           {/* Project */}
