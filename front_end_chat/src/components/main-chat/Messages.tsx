@@ -12,13 +12,8 @@ import { ChatTypeOptions } from "../../model/types";
 import ReferenceDisplay from "../messages/ReferenceDisplay";
 import RenderReactMarkdown from "./RenderReactMarkdown";
 import ThinkingIndicator from "./ThinkingIndicator";
-
-function simplifyDescription(description: string) {
-  if (!description) {
-    return "";
-  }
-  return description.split("<SEP>")[0].split(".")[0].substring(0, 100) + " ...";
-}
+import { ButtonLayout } from "../buttons/ButtonLayout";
+import TopicButtons from "../buttons/TopicButtons";
 
 export function topicQuestionTemplate(topic: Topic) {
   return `Tell me more about this topic: ${topic.name}`;
@@ -72,6 +67,53 @@ const INCREMENT_TOPICS_NUMBER = 4;
 
 export const INCREMENT_TOPICS_BUTTON_ID = "increment-topics-button";
 
+function ConversationTopicCommandButtons() {
+
+  const {
+    conversationTopicsNumber,
+    setConversationTopicsNumber,
+  } = useChatStore(
+    useShallow((state) => ({
+      conversationTopicsNumber: state.conversationTopicsNumber,
+      setConversationTopicsNumber: state.setConversationTopicsNumber,
+    }))
+  );
+
+  return (
+    <div className="flex flex-row gap-2 justify-between mt-2">
+      <div className="flex flex-row gap-2">
+        {conversationTopicsNumber > INCREMENT_TOPICS_NUMBER && (
+          <button
+            className="btn btn-secondary"
+            onClick={() =>
+              setConversationTopicsNumber(
+                conversationTopicsNumber - INCREMENT_TOPICS_NUMBER
+              )
+            }
+            title="Display less topics"
+          >
+            -
+          </button>
+        )}
+
+        <button
+          className="btn btn-success"
+          id={INCREMENT_TOPICS_BUTTON_ID}
+          onClick={() =>
+            setConversationTopicsNumber(
+              conversationTopicsNumber + INCREMENT_TOPICS_NUMBER
+            )
+          }
+          title="Display more topics"
+        >
+          +
+        </button>
+      </div>
+      <JokerButton />
+    </div>
+  )
+}
+
 function ConversationTopics() {
   const {
     jwt,
@@ -80,10 +122,7 @@ function ConversationTopics() {
     conversationTopicsNumber,
     chatType,
     showTopics,
-    selectedTopic,
     setTopics,
-    setSelectedTopic,
-    setConversationTopicsNumber,
   } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
@@ -96,7 +135,6 @@ function ConversationTopics() {
       setSelectedTopic: state.setSelectedTopic,
       setTopics: state.setTopics,
       setInputText: state.setInputText,
-      setConversationTopicsNumber: state.setConversationTopicsNumber,
     }))
   );
 
@@ -150,58 +188,11 @@ function ConversationTopics() {
           <p className="mb-6">Select a topic for a conversation...</p>
         )}
         {(hasTopics || showTopics) && (
-          <div
-            className={`grid overflow-x-hidden grid-cols-1 lg:grid-cols-${chatType === ChatType.FLOATING ? 2 : 4} md:grid-cols-2 w-full gap-3`}
-          >
-            {topics?.topics.filter((topic) => topic.type).map((topic) => (
-              <div
-                className={`flex flex-col items-left justify-top text-left cursor-pointer hover:bg-[var(--color-accent-content)] p-2 rounded-lg ${selectedTopic?.name === topic.name ? "bg-[var(--color-secondary)]" : "bg-[var(--color-primary)]"}`}
-                key={`topic-${topic.name}-${topic.type}`}
-                onClick={() => setSelectedTopic(topic)}
-                title={isFloating ? topic.description : ""}
-              >
-                <div className="flex flex-row justify-between gap-2">
-                  <div className="text-white font-bold">{topic.name}</div>
-                  {!isFloating &&<div className="text-white">{topic.type}</div>}
-                </div>
-                <div className="w-full text-white text-sm">{simplifyDescription(topic.description)}</div>
-              </div>
-            ))}
-          </div>
+          <ButtonLayout>
+            <TopicButtons topics={topics} related={false} />
+          </ButtonLayout>
         )}
-        {(hasTopics && showTopics) && (
-          <div className="flex flex-row gap-2 justify-between mt-2">
-            <div className="flex flex-row gap-2">
-              {conversationTopicsNumber > INCREMENT_TOPICS_NUMBER && (
-                <button
-                  className="btn btn-secondary"
-                  onClick={() =>
-                    setConversationTopicsNumber(
-                      conversationTopicsNumber - INCREMENT_TOPICS_NUMBER
-                    )
-                  }
-                  title="Display less topics"
-                >
-                  -
-                </button>
-              )}
-
-              <button
-                className="btn btn-success"
-                id={INCREMENT_TOPICS_BUTTON_ID}
-                onClick={() =>
-                  setConversationTopicsNumber(
-                    conversationTopicsNumber + INCREMENT_TOPICS_NUMBER
-                  )
-                }
-                title="Display more topics"
-              >
-                +
-              </button>
-            </div>
-            <JokerButton />
-          </div>
-        )}
+        {(hasTopics && showTopics) && <ConversationTopicCommandButtons />}
       </div>
     </div>
   );
@@ -260,7 +251,7 @@ export function TopicSwitcher() {
 }
 
 export default function Messages() {
-  const { chatMessages, chatType, setChatType, isThinking, scrollToBottom } =
+  const { chatMessages, chatType, setChatType, isThinking, scrollToBottom, relatedTopics } =
     useChatStore(
       useShallow((state) => ({
         chatMessages: state.chatMessages,
@@ -269,6 +260,7 @@ export default function Messages() {
         setChatType: state.setChatType,
         isThinking: state.isThinking,
         scrollToBottom: state.scrollToBottom,
+        relatedTopics: state.relatedTopics,
       }))
     );
 
@@ -295,19 +287,17 @@ export default function Messages() {
       <div>
         <div className="mx-auto">
           <div
-            className={`flex flex-col gap-6 ${
-              isFloating ? "p-1 pt-8" : "p-2 lg:p-6"
-            }`}
+            className={`flex flex-col gap-6 ${isFloating ? "p-1 pt-8" : "p-2 lg:p-6"
+              }`}
           >
             {chatMessages.map((message, index) => {
               return (
                 <div
                   key={message.id}
-                  className={`flex ${
-                    message.type === ChatMessageTypeOptions.USER
-                      ? "justify-end"
-                      : "justify-start"
-                  } animate-slideIn items-start`}
+                  className={`flex ${message.type === ChatMessageTypeOptions.USER
+                    ? "justify-end"
+                    : "justify-start"
+                    } animate-slideIn items-start`}
                 >
                   {message.type === ChatMessageTypeOptions.AGENT && (
                     <div className="flex-shrink-0 hidden lg:block mr-2">
@@ -317,22 +307,20 @@ export default function Messages() {
                     </div>
                   )}
                   <div
-                    className={`text-left ${
-                      isFloating ? "p-2" : "p-6"
-                    } relative max-w-full rounded-lg rounded-tr-sm ${
-                      message.type === ChatMessageTypeOptions.USER
+                    className={`text-left ${isFloating ? "p-2" : "p-6"
+                      } relative max-w-full rounded-lg rounded-tr-sm ${message.type === ChatMessageTypeOptions.USER
                         ? isFloating
                           ? "bg-gradient-to-br from-purple-500 to-blue-500 md:max-w-[70%] shadow-lg text-white"
                           : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
                         : isFloating
                           ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
                           : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
-                    }`}
+                      }`}
                   >
                     {index === chatMessages.length - 1 && <div id={SCROLL_TO_BOTTOM_ID} />}
                     <RenderReactMarkdown message={message} />
                     {message.references?.length &&
-                    message.references.length > 0 ? (
+                      message.references.length > 0 ? (
                       <ul className="mt-2">
                         {message.references.map((reference) => (
                           <ReferenceDisplay
@@ -356,6 +344,12 @@ export default function Messages() {
             })}
             <ConversationTopics />
             <TopicSwitcher />
+            {relatedTopics && <>
+              <h3 className="text-lg font-bold">Related Topics</h3>
+              <ButtonLayout>
+                <TopicButtons topics={relatedTopics} related={true} />
+              </ButtonLayout>
+            </>}
             {/* Thinking Indicator */}
             {isThinking && <ThinkingIndicator />}
           </div>

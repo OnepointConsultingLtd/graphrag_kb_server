@@ -6,8 +6,9 @@ import type {
   ProjectCategories,
   SearchType,
 } from "../model/projectCategory";
+import { ENGINES } from "../constants/engines";
 import { type ChatMessage, ChatMessageTypeOptions } from "../model/message";
-import { fetchProjects } from "../lib/apiClient";
+import { fetchProjects, fetchRelatedTopics } from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
 import { ChatTypeOptions } from "../model/types";
 import { ChatType } from "../lib/chatTypes";
@@ -44,6 +45,7 @@ type ChatStore = {
   topics: Topics | null;
   inputText: string;
   selectedTopic: Topic | null;
+  relatedTopics: Topics | null;
   conversationId: string | null;
   socket: Socket<any, any> | null;
   useStreaming: boolean;
@@ -185,6 +187,7 @@ const useChatStore = create<ChatStore>()(
         useStreaming: initStreaming(),
         conversationTopicsNumber: 6,
         showTopics: true,
+        relatedTopics: null,
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {
@@ -198,9 +201,21 @@ const useChatStore = create<ChatStore>()(
             selectedProject: project,
             inputText: "",
             topics: null,
+            relatedTopics: null,
           })),
         addChatMessage: (message: ChatMessage) =>
           set((state) => {
+            if(state.selectedTopic && message.text.toLowerCase().includes(state.selectedTopic.name.toLowerCase()) && message.type === ChatMessageTypeOptions.AGENT 
+              && state.selectedProject?.platform !== ENGINES.CAG && state.selectedProject) {
+              fetchRelatedTopics(state.jwt, state.selectedProject, 8, state.selectedTopic.name)
+              .then((relatedTopics) => {
+                set({ relatedTopics });
+              })
+              .catch((error) => {
+                console.error("Error fetching related topics:", error);
+                set({ relatedTopics: null });
+              });
+            }
             return {
               chatMessages: [
                 ...state.chatMessages.slice(
@@ -209,6 +224,7 @@ const useChatStore = create<ChatStore>()(
                 message,
               ],
               showTopics: false,
+              relatedTopics: null,
             };
           }),
         appendToLastChatMessage: (token: string) =>
@@ -237,6 +253,8 @@ const useChatStore = create<ChatStore>()(
               isThinking: false,
               conversationId: crypto.randomUUID(),
               showTopics: true,
+              relatedTopics: null,
+              selectedTopic: null,
             };
           }),
         // Logout completely
@@ -252,6 +270,8 @@ const useChatStore = create<ChatStore>()(
             inputText: "",
             useStreaming: false,
             showTopics: false,
+            relatedTopics: null,
+            selectedTopic: null,
           }),
         newProject: () =>
           set({
@@ -260,6 +280,7 @@ const useChatStore = create<ChatStore>()(
             selectedProject: undefined,
             chatType: null,
             showTopics: false,
+            relatedTopics: null,
           }),
         initializeProjects: async () => {
           const jwt = get().jwt;
@@ -309,7 +330,9 @@ const useChatStore = create<ChatStore>()(
               conversationTopicsNumber: topics?.topics?.length ?? 0,
             };
           }),
-        setInputText: (inputText: string) => set({ inputText }),
+        setInputText: (inputText: string) => set((_) => { 
+          return { inputText } 
+        }),
         setSelectedTopic: (topic: Topic) => set((state) => {
           const selected = state.selectedTopic?.name === topic.name
           return {
@@ -343,6 +366,7 @@ const useChatStore = create<ChatStore>()(
         chatMessages: state.chatMessages,
         topics: state.topics,
         useStreaming: state.useStreaming,
+        relatedTopics: state.relatedTopics,
       }),
     },
   ),

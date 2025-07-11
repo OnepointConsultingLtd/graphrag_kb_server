@@ -218,16 +218,21 @@ export async function deleteProject(
   }
 }
 
-export async function fetchTopics(
-  jwt: string,
-  project: Project,
-  limit: number = 12,
-): Promise<Topics> {
+function topicRequestFactory(project: Project, limit: number = 12) {
   const params = new URLSearchParams();
   params.set("project", project.name);
   params.set("engine", project.platform);
   params.set("limit", `${limit}`);
   params.set("add_questions", "false");
+  return params;
+}
+
+export async function fetchTopics(
+  jwt: string,
+  project: Project,
+  limit: number = 12,
+): Promise<Topics> {
+  const params = topicRequestFactory(project, limit);
   params.set("entity_type_filter", "category");
   const response = await fetch(
     `${getBaseServer()}/protected/project/topics?${params.toString()}`,
@@ -248,4 +253,20 @@ export async function generateDirectUrl(
     requestBody,
     "/protected/url/generate_direct_url",
   );
+}
+
+export async function fetchRelatedTopics(
+  jwt: string,
+  project: Project,
+  limit: number = 12,
+  source: string,
+) {
+  const params = topicRequestFactory(project, limit);
+  params.set("source", source);
+  const response = await fetch(
+    `${getBaseServer()}/protected/project/related_topics?${params.toString()}`,
+    createHeaders(jwt),
+  );
+  await processError(response);
+  return (await response.json()) as Topics;
 }

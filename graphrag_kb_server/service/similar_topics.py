@@ -100,6 +100,7 @@ def get_sorted_related_entities_simple_rerank(
         if related_entities is None:
             return None
         similarity_topics_results.append(related_entities)
+    similarity_topics_results = similarity_topics_results[:request.k]
     return rerank_similarity_topics(similarity_topics_results)
 
 
