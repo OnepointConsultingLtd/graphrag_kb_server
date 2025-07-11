@@ -1,5 +1,6 @@
 from pathlib import Path
 import random
+import asyncio
 from collections import Counter
 
 import networkx as nx
@@ -13,6 +14,7 @@ from graphrag_kb_server.service.similar_topics import (
 )
 from graphrag_kb_server.model.topics import SimilarityTopicsRequest
 
+# Alternative but
 def get_sorted_related_entities(
         project_dir: Path,
         source: str,

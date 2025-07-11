@@ -6,6 +6,7 @@ from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.error_handler import invalid_response
 from graphrag_kb_server.model.engines import find_engine_from_query
 from graphrag_kb_server.service.tennant import find_project_folder
+from graphrag_kb_server.model.engines import Engine
 
 
 def extract_tennant_folder(request: web.Request) -> Path | Response:
@@ -37,3 +38,9 @@ def handle_project_folder(
             f"There is no project folder {project}",
         )
     return project_dir
+
+
+def extract_engine_limit(request: web.Request) -> tuple[Engine, int]:
+    engine = find_engine_from_query(request)
+    limit = request.rel_url.query.get("limit", 8)
+    return engine, limit

@@ -11,7 +11,7 @@ import { fetchProjects } from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
 import { ChatTypeOptions } from "../model/types";
 import { ChatType } from "../lib/chatTypes";
-import type { Topics } from "../model/topics";
+import type { Topic, Topics } from "../model/topics";
 import { io, type Socket } from "socket.io-client";
 import { getWebsocketServer } from "../lib/server";
 import { createChatMessage } from "../factory/chatMessageFactory";
@@ -23,7 +23,7 @@ import {
   getParameterFromUrl,
 } from "../lib/parameters";
 import { showCloseModal } from "../lib/dialog";
-import { INCREMENT_TOPICS_BUTTON_ID } from "../components/main-chat/Messages";
+import { INCREMENT_TOPICS_BUTTON_ID, topicQuestionTemplate } from "../components/main-chat/Messages";
 
 if (getParameterFromUrl("token")) {
   localStorage.removeItem("chat-store");
@@ -43,6 +43,7 @@ type ChatStore = {
   chatType: ChatTypeOptions;
   topics: Topics | null;
   inputText: string;
+  selectedTopic: Topic | null;
   conversationId: string | null;
   socket: Socket<any, any> | null;
   useStreaming: boolean;
@@ -70,6 +71,7 @@ type ChatStore = {
   refreshProjects: () => void;
   setTopics: (topics: Topics) => void;
   setInputText: (inputText: string) => void;
+  setSelectedTopic: (topic: Topic) => void;
   setConversationId: (conversationId: string) => void;
   setUseStreaming: (useStreaming: boolean) => void;
   setConversationTopicsNumber: (conversationTopicsNumber: number) => void;
@@ -177,6 +179,7 @@ const useChatStore = create<ChatStore>()(
         organisation_name: getOrganisationName(),
         topics: null,
         inputText: "",
+        selectedTopic: null,
         conversationId: null,
         socket: initSocket(),
         useStreaming: initStreaming(),
@@ -307,6 +310,13 @@ const useChatStore = create<ChatStore>()(
             };
           }),
         setInputText: (inputText: string) => set({ inputText }),
+        setSelectedTopic: (topic: Topic) => set((state) => {
+          const selected = state.selectedTopic?.name === topic.name
+          return {
+            selectedTopic: selected ? null : topic,
+            inputText: selected ? "" : topicQuestionTemplate(topic),
+          }
+        }),
         setConversationId: (conversationId: string) => set({ conversationId }),
         setUseStreaming: (useStreaming: boolean) => set({ useStreaming }),
         setConversationTopicsNumber: (conversationTopicsNumber: number) =>

@@ -20,7 +20,7 @@ function simplifyDescription(description: string) {
   return description.split("<SEP>")[0].split(".")[0].substring(0, 100) + " ...";
 }
 
-function topicQuestionTemplate(topic: Topic) {
+export function topicQuestionTemplate(topic: Topic) {
   return `Tell me more about this topic: ${topic.name}`;
 }
 
@@ -78,11 +78,12 @@ function ConversationTopics() {
     selectedProject,
     topics,
     conversationTopicsNumber,
-    setTopics,
     chatType,
-    setInputText,
-    setConversationTopicsNumber,
     showTopics,
+    selectedTopic,
+    setTopics,
+    setSelectedTopic,
+    setConversationTopicsNumber,
   } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
@@ -90,10 +91,12 @@ function ConversationTopics() {
       topics: state.topics,
       conversationTopicsNumber: state.conversationTopicsNumber,
       chatType: state.chatType,
+      selectedTopic: state.selectedTopic,
+      showTopics: state.showTopics,
+      setSelectedTopic: state.setSelectedTopic,
       setTopics: state.setTopics,
       setInputText: state.setInputText,
       setConversationTopicsNumber: state.setConversationTopicsNumber,
-      showTopics: state.showTopics,
     }))
   );
 
@@ -152,9 +155,9 @@ function ConversationTopics() {
           >
             {topics?.topics.filter((topic) => topic.type).map((topic) => (
               <div
-                className={`flex flex-col items-left justify-top text-left cursor-pointer bg-[var(--color-primary)] hover:bg-[var(--color-accent-content)] p-2 rounded-lg`}
+                className={`flex flex-col items-left justify-top text-left cursor-pointer hover:bg-[var(--color-accent-content)] p-2 rounded-lg ${selectedTopic?.name === topic.name ? "bg-[var(--color-secondary)]" : "bg-[var(--color-primary)]"}`}
                 key={`topic-${topic.name}-${topic.type}`}
-                onClick={() => setInputText(topicQuestionTemplate(topic))}
+                onClick={() => setSelectedTopic(topic)}
                 title={isFloating ? topic.description : ""}
               >
                 <div className="flex flex-row justify-between gap-2">

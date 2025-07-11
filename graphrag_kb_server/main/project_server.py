@@ -15,6 +15,7 @@ from aiohttp.web import Response
 from graphrag_kb_server.model.rag_parameters import ContextParameters, QueryParameters
 from graphrag_kb_server.model.context import Search
 from graphrag_kb_server.model.project import IndexingStatus
+from graphrag_kb_server.model.topics import SimilarityTopics, SimilarityTopicsRequest
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.service.graphrag.query import rag_local_simple
@@ -83,6 +84,9 @@ from graphrag_kb_server.service.cag.cag_support import (
     INITIAL_CONVERSATION_ID,
     cag_get_response,
 )
+from graphrag_kb_server.main.project_request_functions import extract_engine_limit
+from graphrag_kb_server.service.graphrag.related_topics import get_related_topics_graphrag
+from graphrag_kb_server.service.lightrag.lightrag_related_topics import get_related_topics_lightrag
 
 routes = web.RouteTableDef()
 
@@ -716,8 +720,7 @@ async def project_topics(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                engine = find_engine_from_query(request)
-                limit = request.rel_url.query.get("limit", 20)
+                engine, limit = extract_engine_limit(request)
                 add_questions = (
                     request.rel_url.query.get("add_questions", "false") == "true"
                 )
@@ -738,6 +741,135 @@ async def project_topics(request: web.Request) -> web.Response:
                 return invalid_response("No project found", "No project found")
 
     return await handle_error(handle_request, request=request)
+
+
+@routes.options("/protected/project/related_topics")
+async def project_related_topics_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.get("/protected/project/related_topics")
+async def project_topics(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns the related topics of a project
+    tags:
+      - project
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag, cag]
+      - name: source
+        in: query
+        required: true
+        description: The source entity to find related entities for
+        schema:
+          type: string
+      - name: samples
+        in: query
+        required: false
+        description: The number of random walk samples to perform
+        schema:
+          type: integer
+          format: int32
+          default: 50000
+      - name: path_length
+        in: query
+        required: false
+        description: The length of each random walk path
+        schema:
+          type: integer
+          format: int32
+          default: 5
+      - name: restart_prob
+        in: query
+        required: false
+        description: The probability of restarting the random walk at the source node
+        schema:
+          type: number
+          default: 0.15   
+      - name: runs
+        in: query
+        required: false
+        description: The number of independent runs to average results
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: limit
+        in: query
+        required: false
+        description: The number of topics to return
+        schema:
+          type: integer
+          format: int32
+          default: 8
+    responses:
+      '200':
+        description: Expected response to a valid request
+      '400':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No project found"
+    """
+
+    def get_related_topics(engine: Engine, similarity_topics: SimilarityTopicsRequest) -> SimilarityTopics | None:
+        match engine:
+            case Engine.GRAPHRAG:
+                return get_related_topics_graphrag(similarity_topics)
+            case Engine.LIGHTRAG:
+                return get_related_topics_lightrag(similarity_topics)
+            case _:
+                # No implementation for CAG yet
+                return None
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                engine, limit = extract_engine_limit(request)
+                source = request.rel_url.query.get("source", "AI")
+                samples = request.rel_url.query.get("samples", 50000)
+                path_length = request.rel_url.query.get("path_length", 5)
+                restart_prob = request.rel_url.query.get("restart_prob", 0.15)
+                runs = request.rel_url.query.get("runs", 10)
+                similarity_topics = SimilarityTopicsRequest(
+                    project_dir=project_dir,
+                    source=source,
+                    samples=samples,
+                    engine=engine,
+                    path_length=path_length,
+                    restart_prob=restart_prob,
+                    k=limit,
+                    runs=runs,
+                )
+                # Run the CPU-intensive work in a thread pool
+                topics = await asyncio.to_thread(get_related_topics, engine, similarity_topics)
+                if topics is None:
+                    return invalid_response("No topics found", "No topics found", headers=CORS_HEADERS)
+                return web.json_response(topics.model_dump(), headers=CORS_HEADERS)
+            case _:
+                return invalid_response("No project found", "No project found", headers=CORS_HEADERS)
+
+    return await handle_error(handle_request, request=request)
+
 
 
 @routes.get("/protected/project/context")
