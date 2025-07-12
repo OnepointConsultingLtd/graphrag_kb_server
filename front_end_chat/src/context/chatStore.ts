@@ -46,6 +46,7 @@ type ChatStore = {
   inputText: string;
   selectedTopic: Topic | null;
   relatedTopics: Topics | null;
+  loadingRelatedTopics: boolean;
   conversationId: string | null;
   socket: Socket<any, any> | null;
   useStreaming: boolean;
@@ -160,6 +161,27 @@ const useChatStore = create<ChatStore>()(
         }
       }
 
+      function loadRelatedTopics(message: ChatMessage) {
+        const state = get();
+        if (state.selectedTopic && message.text.toLowerCase().includes(state.selectedTopic.name.toLowerCase()) && message.type === ChatMessageTypeOptions.AGENT
+          && state.selectedProject?.platform !== ENGINES.CAG && state.selectedProject) {
+          set({ loadingRelatedTopics: true });
+          fetchRelatedTopics(state.jwt, state.selectedProject, 8, state.selectedTopic.name)
+            .then((relatedTopics) => {
+              set({ relatedTopics });
+            })
+            .catch((error) => {
+              console.error("Error fetching related topics:", error);
+              set({ relatedTopics: null });
+            })
+            .finally(() => {
+              set({ loadingRelatedTopics: false });
+            });
+        } else {
+          set({ relatedTopics: null });
+        }
+      }
+
       // Initialize projects if JWT is available
       const initialJwt = initJwt();
       if (initialJwt) {
@@ -182,6 +204,7 @@ const useChatStore = create<ChatStore>()(
         topics: null,
         inputText: "",
         selectedTopic: null,
+        loadingRelatedTopics: false,
         conversationId: null,
         socket: initSocket(),
         useStreaming: initStreaming(),
@@ -205,17 +228,7 @@ const useChatStore = create<ChatStore>()(
           })),
         addChatMessage: (message: ChatMessage) =>
           set((state) => {
-            if(state.selectedTopic && message.text.toLowerCase().includes(state.selectedTopic.name.toLowerCase()) && message.type === ChatMessageTypeOptions.AGENT 
-              && state.selectedProject?.platform !== ENGINES.CAG && state.selectedProject) {
-              fetchRelatedTopics(state.jwt, state.selectedProject, 8, state.selectedTopic.name)
-              .then((relatedTopics) => {
-                set({ relatedTopics });
-              })
-              .catch((error) => {
-                console.error("Error fetching related topics:", error);
-                set({ relatedTopics: null });
-              });
-            }
+            loadRelatedTopics(message);
             return {
               chatMessages: [
                 ...state.chatMessages.slice(
@@ -281,6 +294,8 @@ const useChatStore = create<ChatStore>()(
             chatType: null,
             showTopics: false,
             relatedTopics: null,
+            selectedTopic: null,
+            inputText: "",
           }),
         initializeProjects: async () => {
           const jwt = get().jwt;
@@ -330,8 +345,8 @@ const useChatStore = create<ChatStore>()(
               conversationTopicsNumber: topics?.topics?.length ?? 0,
             };
           }),
-        setInputText: (inputText: string) => set((_) => { 
-          return { inputText } 
+        setInputText: (inputText: string) => set((_) => {
+          return { inputText }
         }),
         setSelectedTopic: (topic: Topic) => set((state) => {
           const selected = state.selectedTopic?.name === topic.name

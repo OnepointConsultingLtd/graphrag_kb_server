@@ -251,7 +251,7 @@ export function TopicSwitcher() {
 }
 
 export default function Messages() {
-  const { chatMessages, chatType, setChatType, isThinking, scrollToBottom, relatedTopics } =
+  const { chatMessages, chatType, setChatType, isThinking, scrollToBottom, relatedTopics, loadingRelatedTopics } =
     useChatStore(
       useShallow((state) => ({
         chatMessages: state.chatMessages,
@@ -261,6 +261,7 @@ export default function Messages() {
         isThinking: state.isThinking,
         scrollToBottom: state.scrollToBottom,
         relatedTopics: state.relatedTopics,
+        loadingRelatedTopics: state.loadingRelatedTopics,
       }))
     );
 
@@ -344,8 +345,9 @@ export default function Messages() {
             })}
             <ConversationTopics />
             <TopicSwitcher />
-            {relatedTopics && <>
-              <h3 className="text-lg font-bold">Related Topics</h3>
+            {loadingRelatedTopics && <div className="skeleton h-32 w-full"></div>}
+            {relatedTopics && !loadingRelatedTopics && <>
+              <h3 className={`text-lg font-bold ${isFloating ? "text-gray-500" : ""}`}>Related Topics</h3>
               <ButtonLayout>
                 <TopicButtons topics={relatedTopics} related={true} />
               </ButtonLayout>

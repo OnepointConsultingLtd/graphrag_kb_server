@@ -28,7 +28,7 @@ export default function TopicButtons({ topics, related }: { topics: Topics | nul
         <>
             {topics?.topics?.filter((topic) => topic.type).map((topic) => (
                 <div
-                    className={`flex flex-col items-left justify-top text-left cursor-pointer hover:bg-[var(--color-accent-content)] focus:bg-[var(--color-secondary)] p-2 rounded-lg ${selectedTopic?.name === topic.name ? "bg-[var(--color-secondary)]" : related ? "bg-[var(--color-info-content)]" : "bg-[var(--color-primary)]"}`}
+                    className={`flex flex-col items-left justify-top text-left cursor-pointer hover:bg-[var(--color-secondary)] focus:bg-[var(--color-secondary)] active:bg-[var(--color-secondary)] p-2 rounded-lg ${selectedTopic?.name === topic.name ? "bg-[var(--color-secondary)]" : related ? "bg-[var(--color-info-content)]" : "bg-[var(--color-primary)]"}`}
                     key={`topic-${topic.name}-${topic.type}`}
                     onClick={() => setSelectedTopic(topic)}
                     title={isFloating ? topic.description : ""}
