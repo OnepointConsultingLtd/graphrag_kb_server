@@ -217,10 +217,6 @@ export function TopicSwitcher() {
     }))
   );
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [showTopics, scrollToBottom]);
-
   if (isThinking || chatMessages.length === 0) {
     return null;
   }

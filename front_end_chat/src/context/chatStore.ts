@@ -24,7 +24,7 @@ import {
   getParameterFromUrl,
 } from "../lib/parameters";
 import { showCloseModal } from "../lib/dialog";
-import { INCREMENT_TOPICS_BUTTON_ID, topicQuestionTemplate } from "../components/main-chat/Messages";
+import { topicQuestionTemplate } from "../components/main-chat/Messages";
 
 if (getParameterFromUrl("token")) {
   localStorage.removeItem("chat-store");
@@ -79,6 +79,7 @@ type ChatStore = {
   setUseStreaming: (useStreaming: boolean) => void;
   setConversationTopicsNumber: (conversationTopicsNumber: number) => void;
   setShowTopics: (showTopics: boolean) => void;
+  streamEnded: () => void;
 };
 
 const THRESHOLD = 50;
@@ -360,15 +361,15 @@ const useChatStore = create<ChatStore>()(
         setConversationTopicsNumber: (conversationTopicsNumber: number) =>
           set({ conversationTopicsNumber }),
         setShowTopics: (showTopics: boolean) => set(() => {
-          if (showTopics) {
-            setTimeout(() => {
-              document.getElementById(INCREMENT_TOPICS_BUTTON_ID)?.scrollIntoView({
-                behavior: "smooth",
-                block: "start", // options: 'start', 'center', 'end', 'nearest'
-              });
-            }, 500);
-          }
           return { showTopics }
+        }),
+        streamEnded: () => set(() => {
+          const state = get()
+          state.scrollToBottom();
+          if (state.chatMessages.length > 0) {
+            loadRelatedTopics(state.chatMessages.slice(-1)[0]);
+          }
+          return { isThinking: false }
         }),
       };
     },

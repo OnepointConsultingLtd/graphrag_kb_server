@@ -12,7 +12,7 @@ export default function useWebsocket() {
     appendToLastChatMessage,
     addChatMessage,
     setIsThinking,
-    scrollToBottom,
+    streamEnded,
   } = useChatStore(
     useShallow((state) => ({
       socket: state.socket,
@@ -20,7 +20,7 @@ export default function useWebsocket() {
       appendToLastChatMessage: state.appendToLastChatMessage,
       addChatMessage: state.addChatMessage,
       setIsThinking: state.setIsThinking,
-      scrollToBottom: state.scrollToBottom,
+      streamEnded: state.streamEnded,
     })),
   );
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function useWebsocket() {
 
     function onStreamEnd(data: string) {
       console.info(`Stream ended: ${data}`);
-      scrollToBottom();
+      streamEnded();
     }
 
     function onError(error: ErrorMessage) {
