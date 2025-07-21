@@ -100,11 +100,11 @@ def get_sorted_related_entities_simple_rerank(
         if related_entities is None:
             return None
         similarity_topics_results.append(related_entities)
-    similarity_topics_results = similarity_topics_results[:request.k]
-    return rerank_similarity_topics(similarity_topics_results)
+    similarity_topics_results = similarity_topics_results
+    return rerank_similarity_topics(similarity_topics_results, request.k)
 
 
-def rerank_similarity_topics(similarity_topics: list[SimilarityTopics]) -> SimilarityTopics | None:
+def rerank_similarity_topics(similarity_topics: list[SimilarityTopics], limit: int) -> SimilarityTopics | None:
     topic_points = {}
     for st in similarity_topics:
         if st is None:
@@ -115,5 +115,6 @@ def rerank_similarity_topics(similarity_topics: list[SimilarityTopics]) -> Simil
             else:
                 topic_points[topic.name] = (topic, topic_points[topic.name][1] + topic.probability)
     topic_points = sorted(topic_points.items(), key=lambda x: x[1][1], reverse=True)
+    topic_points = topic_points[:limit]
     return SimilarityTopics(topics=[tp[1][0] for tp in topic_points])
 
