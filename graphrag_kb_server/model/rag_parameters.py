@@ -65,6 +65,10 @@ class QueryParameters(BaseModel):
         description="Whether to stream the response.",
     )
     model_config = {"frozen": True}  # Pydantic v2 config syntax
+    keywords: bool = Field(
+        default=False,
+        description="Whether to append the keywords to the context.",
+    )
 
 
 def convert_to_lightrag_query_params(

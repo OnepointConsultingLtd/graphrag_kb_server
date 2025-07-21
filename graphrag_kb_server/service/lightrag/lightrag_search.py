@@ -156,6 +156,8 @@ In case of a coloquial question or non context related sentence you can respond 
             text_units_context=(
                 text_units_context if query_params.include_context else None
             ),
+            hl_keywords=hl_keywords if query_params.keywords else None,
+            ll_keywords=ll_keywords if query_params.keywords else None,
         )
     return ChatResponse(
         question=query,

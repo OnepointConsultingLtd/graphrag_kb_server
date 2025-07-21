@@ -922,6 +922,13 @@ async def context(request: web.Request) -> web.Response:
         schema:
           type: integer
           format: int32
+      - name: keywords
+        in: query
+        required: false
+        description: If true appends the keywords to the context. Only for LightRAG
+        schema:
+          type: boolean
+          default: false
     responses:
       '200':
         description: Expected response to a valid request
@@ -1005,6 +1012,7 @@ async def context(request: web.Request) -> web.Response:
                     case Engine.LIGHTRAG:
                         match search:
                             case Search.GLOBAL | Search.LOCAL | Search.ALL:
+                                keywords = request.rel_url.query.get("keywords", "false") == "true"
                                 actual_search = (
                                     search if search != Search.ALL else "hybrid"
                                 )
@@ -1013,13 +1021,21 @@ async def context(request: web.Request) -> web.Response:
                                     search=actual_search,
                                     engine=Engine.LIGHTRAG.value,
                                     context_params=context_params,
+                                    keywords=keywords,
                                 )
                                 context_builder_result = await lightrag_search(
                                     query_params,
                                     True,
                                 )
+                                extra_context = {
+                                    "hl_keywords": context_builder_result.hl_keywords,
+                                    "ll_keywords": context_builder_result.ll_keywords,
+                                } if keywords else {}
                                 return web.json_response(
-                                    {"context_text": context_builder_result.context}
+                                    {
+                                        "context_text": context_builder_result.context,
+                                        **extra_context
+                                    }
                                 )
                             case _:
                                 raise web.HTTPBadRequest(

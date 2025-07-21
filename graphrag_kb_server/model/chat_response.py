@@ -17,3 +17,11 @@ class ChatResponse(BaseModel):
         default=None,
         description="The text units context used to generate the response.",
     )
+    hl_keywords: list[str] | None = Field(
+        default=None,
+        description="The hl_keywords used to generate the response.",
+    )
+    ll_keywords: list[str] | None = Field(
+        default=None,
+        description="The ll_keywords used to generate the response.",
+    )
