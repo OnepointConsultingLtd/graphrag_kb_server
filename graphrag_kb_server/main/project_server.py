@@ -748,7 +748,7 @@ async def project_related_topics_options(_: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 
-@routes.get("/protected/project/related_topics")
+@routes.post("/protected/project/related_topics")
 async def project_topics(request: web.Request) -> web.Response:
     """
     Optional route description
@@ -772,51 +772,45 @@ async def project_topics(request: web.Request) -> web.Response:
         schema:
           type: string
           enum: [graphrag, lightrag, cag]
-      - name: source
-        in: query
-        required: true
-        description: The source entity to find related entities for
-        schema:
-          type: string
-      - name: samples
-        in: query
-        required: false
-        description: The number of random walk samples to perform
-        schema:
-          type: integer
-          format: int32
-          default: 50000
-      - name: path_length
-        in: query
-        required: false
-        description: The length of each random walk path
-        schema:
-          type: integer
-          format: int32
-          default: 5
-      - name: restart_prob
-        in: query
-        required: false
-        description: The probability of restarting the random walk at the source node
-        schema:
-          type: number
-          default: 0.15   
-      - name: runs
-        in: query
-        required: false
-        description: The number of independent runs to average results
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: limit
-        in: query
-        required: false
-        description: The number of topics to return
-        schema:
-          type: integer
-          format: int32
-          default: 8
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - source
+            properties:
+              source:
+                type: string
+                description: The source entity to find related entities for
+              text:
+                type: string
+                description: The text to find related entities for
+              samples:
+                type: integer
+                format: int32
+                default: 50000
+                description: The number of random walk samples to perform
+              path_length:
+                type: integer
+                format: int32
+                default: 5
+                description: The length of each random walk path
+              restart_prob:
+                type: number
+                default: 0.15
+                description: The probability of restarting the random walk at the source node
+              runs:
+                type: integer
+                format: int32
+                default: 10
+                description: The number of independent runs to average results
+              limit:
+                type: integer
+                format: int32
+                default: 8
+                description: The number of topics to return
     responses:
       '200':
         description: Expected response to a valid request
@@ -829,12 +823,12 @@ async def project_topics(request: web.Request) -> web.Response:
               message: "No project found"
     """
 
-    def get_related_topics(engine: Engine, similarity_topics: SimilarityTopicsRequest) -> SimilarityTopics | None:
+    async def get_related_topics(engine: Engine, similarity_topics: SimilarityTopicsRequest) -> SimilarityTopics | None:
         match engine:
             case Engine.GRAPHRAG:
                 return get_related_topics_graphrag(similarity_topics)
             case Engine.LIGHTRAG:
-                return get_related_topics_lightrag(similarity_topics)
+                return await get_related_topics_lightrag(similarity_topics)
             case _:
                 # No implementation for CAG yet
                 return None
@@ -844,27 +838,38 @@ async def project_topics(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                engine, limit = extract_engine_limit(request)
-                source = request.rel_url.query.get("source", "AI")
-                samples = request.rel_url.query.get("samples", 50000)
-                path_length = request.rel_url.query.get("path_length", 5)
-                restart_prob = request.rel_url.query.get("restart_prob", 0.15)
-                runs = request.rel_url.query.get("runs", 10)
-                similarity_topics = SimilarityTopicsRequest(
-                    project_dir=project_dir,
-                    source=source,
-                    samples=samples,
-                    engine=engine,
-                    path_length=path_length,
-                    restart_prob=restart_prob,
-                    k=limit,
-                    runs=runs,
-                )
-                # Run the CPU-intensive work in a thread pool
-                topics = await asyncio.to_thread(get_related_topics, engine, similarity_topics)
-                if topics is None:
-                    return invalid_response("No topics found", "No topics found", headers=CORS_HEADERS)
-                return web.json_response(topics.model_dump(), headers=CORS_HEADERS)
+                try:
+                    body = await request.json()
+                    source = body.get("source", "AI")
+                    text = body.get("text", "")
+                    samples = body.get("samples", 50000)
+                    path_length = body.get("path_length", 5)
+                    restart_prob = body.get("restart_prob", 0.15)
+                    runs = body.get("runs", 10)
+                    limit = body.get("limit", 8)
+                    
+                    engine = find_engine_from_query(request)
+                    
+                    similarity_topics = SimilarityTopicsRequest(
+                        project_dir=project_dir,
+                        source=source,
+                        text=text,
+                        samples=samples,
+                        engine=engine,
+                        path_length=path_length,
+                        restart_prob=restart_prob,
+                        k=limit,
+                        runs=runs,
+                    )
+                    # Run the CPU-intensive work in a thread pool
+                    topics = await get_related_topics(engine, similarity_topics)
+                    if topics is None:
+                        return invalid_response("No topics found", "No topics found", headers=CORS_HEADERS)
+                    return web.json_response(topics.model_dump(), headers=CORS_HEADERS)
+                except ValueError as e:
+                    return invalid_response("Invalid engine value", str(e))
+                except Exception as e:
+                    return invalid_response("Invalid request body", str(e))
             case _:
                 return invalid_response("No project found", "No project found", headers=CORS_HEADERS)
 

@@ -45,6 +45,7 @@ class TopicsRequest(BaseModel):
 class SimilarityTopicsRequest(BaseModel):
     project_dir: Path = Field(..., description="The project directory")
     source: str = Field(..., description="The source entity to find related entities for")
+    text: str = Field(..., description="The text to find related entities for")
     samples: int = Field(default=50000, description="Number of random walk samples to perform")
     path_length: int = Field(default=5, description="Length of each random walk path")
     k: int = Field(default=8, description="Number of top related entities to return")

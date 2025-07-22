@@ -261,11 +261,25 @@ export async function fetchRelatedTopics(
   limit: number = 12,
   source: string,
 ) {
-  const params = topicRequestFactory(project, limit);
-  params.set("source", source);
+  const params = new URLSearchParams();
+  params.set("project", project.name);
+  params.set("engine", project.platform);
+  const requestBody = {
+    source: source,
+    limit: limit,
+    samples: 50000,
+    path_length: 5,
+    restart_prob: 0.15,
+    runs: 10,
+  };
+  
   const response = await fetch(
     `${getBaseServer()}/protected/project/related_topics?${params.toString()}`,
-    createHeaders(jwt),
+    {
+      method: "POST",
+      ...createHeaders(jwt),
+      body: JSON.stringify(requestBody),
+    },
   );
   await processError(response);
   return (await response.json()) as Topics;

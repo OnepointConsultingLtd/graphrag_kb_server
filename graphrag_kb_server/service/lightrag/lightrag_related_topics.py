@@ -13,6 +13,8 @@ from graphrag_kb_server.service.similar_topics import (
     get_sorted_related_entities_simple_rerank
 )
 from graphrag_kb_server.model.topics import SimilarityTopicsRequest
+from graphrag_kb_server.service.lightrag.lightrag_search import extract_keywords_only_lightrag
+from lightrag.base import QueryParam
 
 # Alternative but
 def get_sorted_related_entities(
@@ -30,7 +32,14 @@ def get_sorted_related_entities(
     return SimilarityTopics(topics=[SimilarityTopic(name=st[0]["entity_id"], description=st[0]["description"], type=st[0]["entity_type"], questions=[], probability=st[1]) for st in similarity_topics])
 
 
-def get_related_topics_lightrag(request: SimilarityTopicsRequest) -> SimilarityTopics | None:
+async def get_related_topics_lightrag(request: SimilarityTopicsRequest) -> SimilarityTopics | None:
+    if request.text:
+        hl_keywords, ll_keywords = await extract_keywords_only_lightrag(request.text, QueryParam(mode="hybrid"), request.project_dir)
+        new_keyword = hl_keywords[0] if len(hl_keywords) > 0 else ll_keywords[0] if len(ll_keywords) > 0 else None
+        if new_keyword is None:
+            return None
+        args = {**request.model_dump(), "source": new_keyword}
+        request = SimilarityTopicsRequest(**args)
     G = create_network_from_project_dir(request.project_dir)
     if not request.source in G.nodes():
         return None

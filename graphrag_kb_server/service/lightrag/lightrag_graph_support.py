@@ -13,6 +13,7 @@ from graphrag_kb_server.model.graph import CommunityReport
 
 
 def create_network_from_project_dir(project_dir: Path) -> nx.classes.graph.Graph:
+    # TODO: cache this
     graph_file = project_dir / "lightrag" / "graph_chunk_entity_relation.graphml"
     assert graph_file.exists(), f"Graph file {graph_file} does not exist"
     G = nx.read_graphml(graph_file)
