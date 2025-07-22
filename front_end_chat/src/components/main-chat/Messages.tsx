@@ -205,7 +205,6 @@ export function TopicSwitcher() {
     chatType,
     isThinking,
     setShowTopics,
-    scrollToBottom,
   } = useChatStore(
     useShallow((state) => ({
       showTopics: state.showTopics,
@@ -213,7 +212,6 @@ export function TopicSwitcher() {
       chatType: state.chatType,
       isThinking: state.isThinking,
       setShowTopics: state.setShowTopics,
-      scrollToBottom: state.scrollToBottom,
     }))
   );
 
