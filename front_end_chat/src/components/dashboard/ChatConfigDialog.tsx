@@ -23,7 +23,7 @@ function ChatTypeSelector() {
       selectionPlatform: state.selectionPlatform,
       localChatType: state.localChatType,
       setLocalChatType: state.setLocalChatType,
-    }))
+    })),
   );
 
   return (
@@ -111,7 +111,7 @@ function ActionButtons({ onStartChat }: { onStartChat: () => void }) {
     useShallow((state) => ({
       setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
       localChatType: state.localChatType,
-    }))
+    })),
   );
 
   return (
@@ -142,7 +142,7 @@ export default function ChatConfigDialog() {
     useShallow((state) => ({
       selectedProject: state.selectedProject,
       setSelectedProjectAndChatType: state.setSelectedProjectAndChatType,
-    }))
+    })),
   );
 
   const {
@@ -160,7 +160,7 @@ export default function ChatConfigDialog() {
       setSearchType: state.setSearchType,
       selectionProject: state.selectionProject,
       localChatType: state.localChatType,
-    }))
+    })),
   );
 
   function handleStartChat() {
@@ -173,7 +173,7 @@ export default function ChatConfigDialog() {
         platform: selectedProject?.platform as Platform,
         additional_prompt_instructions: additionalPromptInstructions,
       },
-      localChatType
+      localChatType,
     );
 
     const targetPath =

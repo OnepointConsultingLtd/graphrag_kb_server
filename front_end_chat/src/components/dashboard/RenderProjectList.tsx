@@ -65,21 +65,21 @@ export default function RenderProjectList({
       selectionPlatform: state.selectionPlatform,
       setSelectionProjectAndPlatform: state.setSelectionProjectAndPlatform,
       setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
-    }))
+    })),
   );
 
   const { expandedSections, setExpandedSection } = useDashboardStore(
     useShallow((state) => ({
       expandedSections: state.expandedSections,
       setExpandedSection: state.setExpandedSection,
-    }))
+    })),
   );
 
   const { setSelectedProject, refreshProjects } = useChatStore(
     useShallow((state) => ({
       setSelectedProject: state.setSelectedProject,
       refreshProjects: state.refreshProjects,
-    }))
+    })),
   );
 
   useEffect(() => {

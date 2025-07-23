@@ -104,13 +104,14 @@ function initChatType(): ChatTypeOptions {
   }
   const widgetType = window.chatConfig?.widgetType;
   if (widgetType) {
-    return (widgetType === "FLOATING_CHAT" ? ChatType.FLOATING : ChatType.FULL_PAGE) as ChatTypeOptions;
+    return (
+      widgetType === "FLOATING_CHAT" ? ChatType.FLOATING : ChatType.FULL_PAGE
+    ) as ChatTypeOptions;
   }
   return null;
 }
 
 function initProject(): Project | undefined {
-
   const projectName = getParameterFromUrl("project");
   const platform = getParameterFromUrl("platform");
   const search_type = getParameterFromUrl("search_type");
@@ -163,11 +164,26 @@ const useChatStore = create<ChatStore>()(
       }
 
       function loadRelatedTopics(message: ChatMessage) {
+        const isAgentMessage = message.type === ChatMessageTypeOptions.AGENT
+        if(!isAgentMessage) {
+          return;
+        }
         const state = get();
-        if (state.selectedTopic && message.text.toLowerCase().includes(state.selectedTopic.name.toLowerCase()) && message.type === ChatMessageTypeOptions.AGENT
-          && state.selectedProject?.platform !== ENGINES.CAG && state.selectedProject) {
+        const text = state.chatMessages.slice(-1)[0].text;
+        const selectedTopic = state.selectedTopic?.name ?? "";
+        if (
+          state.selectedProject &&
+          state.selectedProject?.platform !== ENGINES.CAG &&
+          (text || selectedTopic)
+        ) {
           set({ loadingRelatedTopics: true });
-          fetchRelatedTopics(state.jwt, state.selectedProject, 8, state.selectedTopic.name)
+          fetchRelatedTopics(
+            state.jwt,
+            state.selectedProject,
+            8,
+            selectedTopic,
+            text,
+          )
             .then((relatedTopics) => {
               set({ relatedTopics });
             })
@@ -176,10 +192,10 @@ const useChatStore = create<ChatStore>()(
               set({ relatedTopics: null });
             })
             .finally(() => {
-              set({ loadingRelatedTopics: false });
+              set({ loadingRelatedTopics: false, selectedTopic: null });
             });
         } else {
-          set({ relatedTopics: null });
+          set({ relatedTopics: null, selectedTopic: null });
         }
       }
 
@@ -346,31 +362,35 @@ const useChatStore = create<ChatStore>()(
               conversationTopicsNumber: topics?.topics?.length ?? 0,
             };
           }),
-        setInputText: (inputText: string) => set((_) => {
-          return { inputText }
-        }),
-        setSelectedTopic: (topic: Topic) => set((state) => {
-          const selected = state.selectedTopic?.name === topic.name
-          return {
-            selectedTopic: selected ? null : topic,
-            inputText: selected ? "" : topicQuestionTemplate(topic),
-          }
-        }),
+        setInputText: (inputText: string) =>
+          set((_) => {
+            return { inputText };
+          }),
+        setSelectedTopic: (topic: Topic) =>
+          set((state) => {
+            const selected = state.selectedTopic?.name === topic.name;
+            return {
+              selectedTopic: selected ? null : topic,
+              inputText: selected ? "" : topicQuestionTemplate(topic),
+            };
+          }),
         setConversationId: (conversationId: string) => set({ conversationId }),
         setUseStreaming: (useStreaming: boolean) => set({ useStreaming }),
         setConversationTopicsNumber: (conversationTopicsNumber: number) =>
           set({ conversationTopicsNumber }),
-        setShowTopics: (showTopics: boolean) => set(() => {
-          return { showTopics }
-        }),
-        streamEnded: () => set(() => {
-          const state = get()
-          state.scrollToBottom();
-          if (state.chatMessages.length > 0) {
-            loadRelatedTopics(state.chatMessages.slice(-1)[0]);
-          }
-          return { isThinking: false }
-        }),
+        setShowTopics: (showTopics: boolean) =>
+          set(() => {
+            return { showTopics };
+          }),
+        streamEnded: () =>
+          set(() => {
+            const state = get();
+            state.scrollToBottom();
+            if (state.chatMessages.length > 0) {
+              loadRelatedTopics(state.chatMessages.slice(-1)[0]);
+            }
+            return { isThinking: false };
+          }),
       };
     },
     {

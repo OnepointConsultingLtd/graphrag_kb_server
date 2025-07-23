@@ -25,7 +25,7 @@ function JokerButton() {
       topics: state.topics,
       setInputText: state.setInputText,
       chatType: state.chatType,
-    }))
+    })),
   );
 
   function hasTopics() {
@@ -68,16 +68,13 @@ const INCREMENT_TOPICS_NUMBER = 4;
 export const INCREMENT_TOPICS_BUTTON_ID = "increment-topics-button";
 
 function ConversationTopicCommandButtons() {
-
-  const {
-    conversationTopicsNumber,
-    setConversationTopicsNumber,
-  } = useChatStore(
-    useShallow((state) => ({
-      conversationTopicsNumber: state.conversationTopicsNumber,
-      setConversationTopicsNumber: state.setConversationTopicsNumber,
-    }))
-  );
+  const { conversationTopicsNumber, setConversationTopicsNumber } =
+    useChatStore(
+      useShallow((state) => ({
+        conversationTopicsNumber: state.conversationTopicsNumber,
+        setConversationTopicsNumber: state.setConversationTopicsNumber,
+      })),
+    );
 
   return (
     <div className="flex flex-row gap-2 justify-between mt-2">
@@ -87,7 +84,7 @@ function ConversationTopicCommandButtons() {
             className="btn btn-secondary"
             onClick={() =>
               setConversationTopicsNumber(
-                conversationTopicsNumber - INCREMENT_TOPICS_NUMBER
+                conversationTopicsNumber - INCREMENT_TOPICS_NUMBER,
               )
             }
             title="Display less topics"
@@ -101,7 +98,7 @@ function ConversationTopicCommandButtons() {
           id={INCREMENT_TOPICS_BUTTON_ID}
           onClick={() =>
             setConversationTopicsNumber(
-              conversationTopicsNumber + INCREMENT_TOPICS_NUMBER
+              conversationTopicsNumber + INCREMENT_TOPICS_NUMBER,
             )
           }
           title="Display more topics"
@@ -111,7 +108,7 @@ function ConversationTopicCommandButtons() {
       </div>
       <JokerButton />
     </div>
-  )
+  );
 }
 
 function ConversationTopics() {
@@ -135,7 +132,7 @@ function ConversationTopics() {
       setSelectedTopic: state.setSelectedTopic,
       setTopics: state.setTopics,
       setInputText: state.setInputText,
-    }))
+    })),
   );
 
   useEffect(() => {
@@ -192,28 +189,23 @@ function ConversationTopics() {
             <TopicButtons topics={topics} related={false} />
           </ButtonLayout>
         )}
-        {(hasTopics && showTopics) && <ConversationTopicCommandButtons />}
+        {hasTopics && showTopics && <ConversationTopicCommandButtons />}
       </div>
     </div>
   );
 }
 
 export function TopicSwitcher() {
-  const {
-    showTopics,
-    chatMessages,
-    chatType,
-    isThinking,
-    setShowTopics,
-  } = useChatStore(
-    useShallow((state) => ({
-      showTopics: state.showTopics,
-      chatMessages: state.chatMessages,
-      chatType: state.chatType,
-      isThinking: state.isThinking,
-      setShowTopics: state.setShowTopics,
-    }))
-  );
+  const { showTopics, chatMessages, chatType, isThinking, setShowTopics } =
+    useChatStore(
+      useShallow((state) => ({
+        showTopics: state.showTopics,
+        chatMessages: state.chatMessages,
+        chatType: state.chatType,
+        isThinking: state.isThinking,
+        setShowTopics: state.setShowTopics,
+      })),
+    );
 
   if (isThinking || chatMessages.length === 0) {
     return null;
@@ -245,19 +237,26 @@ export function TopicSwitcher() {
 }
 
 export default function Messages() {
-  const { chatMessages, chatType, setChatType, isThinking, scrollToBottom, relatedTopics, loadingRelatedTopics } =
-    useChatStore(
-      useShallow((state) => ({
-        chatMessages: state.chatMessages,
-        chatType: state.chatType,
-        showTopics: state.showTopics,
-        setChatType: state.setChatType,
-        isThinking: state.isThinking,
-        scrollToBottom: state.scrollToBottom,
-        relatedTopics: state.relatedTopics,
-        loadingRelatedTopics: state.loadingRelatedTopics,
-      }))
-    );
+  const {
+    chatMessages,
+    chatType,
+    setChatType,
+    isThinking,
+    scrollToBottom,
+    relatedTopics,
+    loadingRelatedTopics,
+  } = useChatStore(
+    useShallow((state) => ({
+      chatMessages: state.chatMessages,
+      chatType: state.chatType,
+      showTopics: state.showTopics,
+      setChatType: state.setChatType,
+      isThinking: state.isThinking,
+      scrollToBottom: state.scrollToBottom,
+      relatedTopics: state.relatedTopics,
+      loadingRelatedTopics: state.loadingRelatedTopics,
+    })),
+  );
 
   useWebsocket();
 
@@ -282,17 +281,19 @@ export default function Messages() {
       <div>
         <div className="mx-auto">
           <div
-            className={`flex flex-col gap-6 ${isFloating ? "p-1 pt-8" : "p-2 lg:p-6"
-              }`}
+            className={`flex flex-col gap-6 ${
+              isFloating ? "p-1 pt-8" : "p-2 lg:p-6"
+            }`}
           >
             {chatMessages.map((message, index) => {
               return (
                 <div
                   key={message.id}
-                  className={`flex ${message.type === ChatMessageTypeOptions.USER
-                    ? "justify-end"
-                    : "justify-start"
-                    } animate-slideIn items-start`}
+                  className={`flex ${
+                    message.type === ChatMessageTypeOptions.USER
+                      ? "justify-end"
+                      : "justify-start"
+                  } animate-slideIn items-start`}
                 >
                   {message.type === ChatMessageTypeOptions.AGENT && (
                     <div className="flex-shrink-0 hidden lg:block mr-2">
@@ -302,20 +303,24 @@ export default function Messages() {
                     </div>
                   )}
                   <div
-                    className={`text-left ${isFloating ? "p-2" : "p-6"
-                      } relative max-w-full rounded-lg rounded-tr-sm ${message.type === ChatMessageTypeOptions.USER
+                    className={`text-left ${
+                      isFloating ? "p-2" : "p-6"
+                    } relative max-w-full rounded-lg rounded-tr-sm ${
+                      message.type === ChatMessageTypeOptions.USER
                         ? isFloating
                           ? "bg-gradient-to-br from-purple-500 to-blue-500 md:max-w-[70%] shadow-lg text-white"
                           : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
                         : isFloating
                           ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
                           : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
-                      }`}
+                    }`}
                   >
-                    {index === chatMessages.length - 1 && <div id={SCROLL_TO_BOTTOM_ID} />}
+                    {index === chatMessages.length - 1 && (
+                      <div id={SCROLL_TO_BOTTOM_ID} />
+                    )}
                     <RenderReactMarkdown message={message} />
                     {message.references?.length &&
-                      message.references.length > 0 ? (
+                    message.references.length > 0 ? (
                       <ul className="mt-2">
                         {message.references.map((reference) => (
                           <ReferenceDisplay
@@ -339,13 +344,21 @@ export default function Messages() {
             })}
             <ConversationTopics />
             <TopicSwitcher />
-            {loadingRelatedTopics && <div className="skeleton h-32 w-full"></div>}
-            {relatedTopics && !loadingRelatedTopics && <>
-              <h3 className={`text-lg font-bold ${isFloating ? "text-gray-500" : ""}`}>Related Topics</h3>
-              <ButtonLayout>
-                <TopicButtons topics={relatedTopics} related={true} />
-              </ButtonLayout>
-            </>}
+            {loadingRelatedTopics && (
+              <div className="skeleton h-32 w-full"></div>
+            )}
+            {relatedTopics && !loadingRelatedTopics && (
+              <>
+                <h3
+                  className={`text-lg font-bold ${isFloating ? "text-gray-500" : ""}`}
+                >
+                  Related Topics
+                </h3>
+                <ButtonLayout>
+                  <TopicButtons topics={relatedTopics} related={true} />
+                </ButtonLayout>
+              </>
+            )}
             {/* Thinking Indicator */}
             {isThinking && <ThinkingIndicator />}
           </div>

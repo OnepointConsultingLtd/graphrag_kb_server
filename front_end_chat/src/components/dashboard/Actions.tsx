@@ -6,7 +6,12 @@ import useProjectSelectionStore from "../../context/projectSelectionStore";
 import { ModalType } from "../../model/types";
 
 export default function Actions() {
-  const { openModal, openModalWithProject, setSnippetModalDialogueOpen, setGenerateUrlDialogOpen } = useDashboardStore();
+  const {
+    openModal,
+    openModalWithProject,
+    setSnippetModalDialogueOpen,
+    setGenerateUrlDialogOpen,
+  } = useDashboardStore();
   const selectionProject = useProjectSelectionStore(
     useShallow((state) => state.selectionProject),
   );

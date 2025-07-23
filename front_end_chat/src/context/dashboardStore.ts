@@ -159,7 +159,12 @@ export const useDashboardStore = create<DashboardState>()(
         setGeneratedSnippet: (generatedSnippet: string | null) =>
           set({ generatedSnippet }),
         setExpandedSection: (platform: string, isExpanded: boolean) =>
-          set({ expandedSections: { ...get().expandedSections, [platform]: isExpanded } }),
+          set({
+            expandedSections: {
+              ...get().expandedSections,
+              [platform]: isExpanded,
+            },
+          }),
 
         // Create Project Modal Actions
         setProjectName: (name) => set({ projectName: name }),
@@ -225,7 +230,7 @@ export const useDashboardStore = create<DashboardState>()(
               projectName: "",
               success: null,
               error: null,
-            }
+            };
           }),
 
         // Reset Create Project Form
@@ -275,7 +280,7 @@ export const useDashboardStore = create<DashboardState>()(
             return { snippetModalDialogueOpen };
           }),
         setGenerateUrlDialogOpen: (generateUrlDialogOpen: boolean) =>
-          set(() => { 
+          set(() => {
             toggleGenerateUrlDialog(generateUrlDialogOpen);
             return { generateUrlDialogOpen };
           }),

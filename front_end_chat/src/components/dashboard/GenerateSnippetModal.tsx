@@ -56,7 +56,7 @@ export default function GenerateSnippetModal() {
       setGeneratedSnippet: state.setGeneratedSnippet,
       widgetType: state.widgetType,
       setSnippetModalDialogueOpen: state.setSnippetModalDialogueOpen,
-    }))
+    })),
   );
 
   const { jwt, organisation_name, useStreaming } = useChatStore(
@@ -64,7 +64,7 @@ export default function GenerateSnippetModal() {
       jwt: state.jwt,
       organisation_name: state.organisation_name,
       useStreaming: state.useStreaming,
-    }))
+    })),
   );
 
   const {
@@ -79,7 +79,7 @@ export default function GenerateSnippetModal() {
       selectionPlatform: state.selectionPlatform,
       additionalPromptInstructions: state.additionalPromptInstructions,
       setAdditionalPromptInstructions: state.setAdditionalPromptInstructions,
-    }))
+    })),
   );
 
   const resetForm = () => {

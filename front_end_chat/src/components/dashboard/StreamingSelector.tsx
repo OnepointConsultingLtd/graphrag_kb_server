@@ -6,14 +6,14 @@ export function StreamingSelector() {
   const { selectionPlatform } = useProjectSelectionStore(
     useShallow((state) => ({
       selectionPlatform: state.selectionPlatform,
-    }))
+    })),
   );
 
   const { useStreaming, setUseStreaming } = useChatStore(
     useShallow((state) => ({
       useStreaming: state.useStreaming,
       setUseStreaming: state.setUseStreaming,
-    }))
+    })),
   );
 
   if (selectionPlatform === "lightrag") {

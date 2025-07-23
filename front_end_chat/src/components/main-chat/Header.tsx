@@ -39,7 +39,7 @@ export function NewProject() {
     navigate("/dashboard");
   };
 
-  if(getParameterFromUrl("token")) {
+  if (getParameterFromUrl("token")) {
     return null;
   }
 
@@ -67,7 +67,7 @@ function LogoutButton() {
     navigate("/login");
   };
 
-  if(getParameterFromUrl("token")) {
+  if (getParameterFromUrl("token")) {
     return null;
   }
 

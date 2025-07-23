@@ -19,7 +19,7 @@ export default function GenerateURLModal() {
   const { useStreaming } = useChatStore(
     useShallow((state) => ({
       useStreaming: state.useStreaming,
-    }))
+    })),
   );
   const {
     email,
@@ -42,7 +42,7 @@ export default function GenerateURLModal() {
       setIsGenerateUrlSubmitting: state.setIsGenerateUrlSubmitting,
       setGenerateUrl: state.setGenerateUrl,
       setGenerateUrlError: state.setGenerateUrlError,
-    }))
+    })),
   );
   const {
     selectionProject,
@@ -55,13 +55,13 @@ export default function GenerateURLModal() {
       searchType: state.searchType,
       selectionPlatform: state.selectionPlatform,
       additionalPromptInstructions: state.additionalPromptInstructions,
-    }))
+    })),
   );
 
   const { jwt } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
-    }))
+    })),
   );
 
   function handleClose() {

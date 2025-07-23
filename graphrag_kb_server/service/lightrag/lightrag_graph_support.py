@@ -10,13 +10,20 @@ import rustworkx as rx
 
 from graphrag_kb_server.model.community import Community
 from graphrag_kb_server.model.graph import CommunityReport
+from graphrag_kb_server.utils.cache import GenericSimpleCache
+
+
+graph_cache = GenericSimpleCache[nx.classes.graph.Graph, Path]()
 
 
 def create_network_from_project_dir(project_dir: Path) -> nx.classes.graph.Graph:
-    # TODO: cache this
+    graph = graph_cache.get(project_dir)
+    if graph is not None:
+        return graph
     graph_file = project_dir / "lightrag" / "graph_chunk_entity_relation.graphml"
     assert graph_file.exists(), f"Graph file {graph_file} does not exist"
     G = nx.read_graphml(graph_file)
+    graph_cache.set(project_dir, G)
     return G
 
 
