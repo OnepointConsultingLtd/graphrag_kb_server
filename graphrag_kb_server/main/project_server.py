@@ -76,7 +76,10 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     find_community_lightrag,
 )
 from graphrag_kb_server.service.file_find_service import find_original_file
-from graphrag_kb_server.service.topic_generation import generate_topics
+from graphrag_kb_server.service.topic_generation import (
+    generate_topics,
+    convert_topics_to_pandas,
+)
 from graphrag_kb_server.model.topics import TopicsRequest
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.cag.cag_support import (
@@ -85,8 +88,12 @@ from graphrag_kb_server.service.cag.cag_support import (
     cag_get_response,
 )
 from graphrag_kb_server.main.project_request_functions import extract_engine_limit
-from graphrag_kb_server.service.graphrag.related_topics import get_related_topics_graphrag
-from graphrag_kb_server.service.lightrag.lightrag_related_topics import get_related_topics_lightrag
+from graphrag_kb_server.service.graphrag.related_topics import (
+    get_related_topics_graphrag,
+)
+from graphrag_kb_server.service.lightrag.lightrag_related_topics import (
+    get_related_topics_lightrag,
+)
 
 routes = web.RouteTableDef()
 
@@ -703,6 +710,14 @@ async def project_topics(request: web.Request) -> web.Response:
         schema:
           type: string
           default: category
+      - name: format
+        in: query
+        required: false
+        description: The format of the output (json, csv)
+        schema:
+          type: string
+          enum: [json, csv]
+          default: json
     responses:
       '200':
         description: Expected response to a valid request
@@ -736,7 +751,23 @@ async def project_topics(request: web.Request) -> web.Response:
                         entity_type_filter=entity_type_filter,
                     )
                 )
-                return web.json_response(topics.model_dump(), headers=CORS_HEADERS)
+                format = request.rel_url.query.get("format", Format.JSON.value)
+                match format:
+                    case Format.JSON:
+                        return web.json_response(
+                            topics.model_dump(), headers=CORS_HEADERS
+                        )
+                    case Format.CSV:
+                        df = convert_topics_to_pandas(topics)
+                        return web.Response(
+                            text=df.to_csv(index=False),
+                            headers={
+                                **CORS_HEADERS,
+                                "CONTENT-DISPOSITION": f'attachment; filename="{project_dir.name}_topics.csv"',
+                            },
+                        )
+                    case _:
+                        return invalid_response("Invalid format", "Invalid format")
             case _:
                 return invalid_response("No project found", "No project found")
 
@@ -749,7 +780,7 @@ async def project_related_topics_options(_: web.Request) -> web.Response:
 
 
 @routes.post("/protected/project/related_topics")
-async def project_topics(request: web.Request) -> web.Response:
+async def project_related_topics(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
@@ -823,7 +854,9 @@ async def project_topics(request: web.Request) -> web.Response:
               message: "No project found"
     """
 
-    async def get_related_topics(engine: Engine, similarity_topics: SimilarityTopicsRequest) -> SimilarityTopics | None:
+    async def get_related_topics(
+        engine: Engine, similarity_topics: SimilarityTopicsRequest
+    ) -> SimilarityTopics | None:
         match engine:
             case Engine.GRAPHRAG:
                 return get_related_topics_graphrag(similarity_topics)
@@ -847,9 +880,9 @@ async def project_topics(request: web.Request) -> web.Response:
                     restart_prob = body.get("restart_prob", 0.15)
                     runs = body.get("runs", 10)
                     limit = body.get("limit", 8)
-                    
+
                     engine = find_engine_from_query(request)
-                    
+
                     similarity_topics = SimilarityTopicsRequest(
                         project_dir=project_dir,
                         source=source,
@@ -864,17 +897,20 @@ async def project_topics(request: web.Request) -> web.Response:
                     # Run the CPU-intensive work in a thread pool
                     topics = await get_related_topics(engine, similarity_topics)
                     if topics is None:
-                        return invalid_response("No topics found", "No topics found", headers=CORS_HEADERS)
+                        return invalid_response(
+                            "No topics found", "No topics found", headers=CORS_HEADERS
+                        )
                     return web.json_response(topics.model_dump(), headers=CORS_HEADERS)
                 except ValueError as e:
                     return invalid_response("Invalid engine value", str(e))
                 except Exception as e:
                     return invalid_response("Invalid request body", str(e))
             case _:
-                return invalid_response("No project found", "No project found", headers=CORS_HEADERS)
+                return invalid_response(
+                    "No project found", "No project found", headers=CORS_HEADERS
+                )
 
     return await handle_error(handle_request, request=request)
-
 
 
 @routes.get("/protected/project/context")
@@ -1017,7 +1053,10 @@ async def context(request: web.Request) -> web.Response:
                     case Engine.LIGHTRAG:
                         match search:
                             case Search.GLOBAL | Search.LOCAL | Search.ALL:
-                                keywords = request.rel_url.query.get("keywords", "false") == "true"
+                                keywords = (
+                                    request.rel_url.query.get("keywords", "false")
+                                    == "true"
+                                )
                                 actual_search = (
                                     search if search != Search.ALL else "hybrid"
                                 )
@@ -1032,14 +1071,18 @@ async def context(request: web.Request) -> web.Response:
                                     query_params,
                                     True,
                                 )
-                                extra_context = {
-                                    "hl_keywords": context_builder_result.hl_keywords,
-                                    "ll_keywords": context_builder_result.ll_keywords,
-                                } if keywords else {}
+                                extra_context = (
+                                    {
+                                        "hl_keywords": context_builder_result.hl_keywords,
+                                        "ll_keywords": context_builder_result.ll_keywords,
+                                    }
+                                    if keywords
+                                    else {}
+                                )
                                 return web.json_response(
                                     {
                                         "context_text": context_builder_result.context,
-                                        **extra_context
+                                        **extra_context,
                                     }
                                 )
                             case _:

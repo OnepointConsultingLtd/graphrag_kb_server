@@ -20,7 +20,9 @@ class Topics(BaseModel):
 
 
 class SimilarityTopic(Topic):
-    probability: float = Field(..., description="The probability that the path is reached on a random walk")
+    probability: float = Field(
+        ..., description="The probability that the path is reached on a random walk"
+    )
 
 
 class SimilarityTopics(BaseModel):
@@ -44,11 +46,19 @@ class TopicsRequest(BaseModel):
 
 class SimilarityTopicsRequest(BaseModel):
     project_dir: Path = Field(..., description="The project directory")
-    source: str = Field(..., description="The source entity to find related entities for")
+    source: str = Field(
+        ..., description="The source entity to find related entities for"
+    )
     text: str = Field(..., description="The text to find related entities for")
-    samples: int = Field(default=50000, description="Number of random walk samples to perform")
+    samples: int = Field(
+        default=50000, description="Number of random walk samples to perform"
+    )
     path_length: int = Field(default=5, description="Length of each random walk path")
     k: int = Field(default=8, description="Number of top related entities to return")
-    restart_prob: float = Field(default=0.15, description="Probability of restarting walk at source node")
-    runs: int = Field(default=10, description="Number of independent runs to average results")
+    restart_prob: float = Field(
+        default=0.15, description="Probability of restarting walk at source node"
+    )
+    runs: int = Field(
+        default=10, description="Number of independent runs to average results"
+    )
     engine: Engine = Field(default=Engine.LIGHTRAG, description="The engine to use")

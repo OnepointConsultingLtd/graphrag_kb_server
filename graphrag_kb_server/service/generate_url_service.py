@@ -2,7 +2,9 @@ from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.snippet import WidgetType, Project, Platform
 
 
-def generate_direct_url(chat_type: WidgetType, project: Project, jwt_token: str, streaming: bool) -> str:
+def generate_direct_url(
+    chat_type: WidgetType, project: Project, jwt_token: str, streaming: bool
+) -> str:
     path = ""
     match chat_type:
         case WidgetType.FLOATING_CHAT:

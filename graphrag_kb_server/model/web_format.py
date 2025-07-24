@@ -5,3 +5,4 @@ class Format(StrEnum):
     HTML = "html"
     JSON = "json"
     MARKDOWN = "markdown"
+    CSV = "csv"

@@ -25,6 +25,12 @@ async def generate_topics(topics_request: TopicsRequest) -> Topics:
             raise ValueError(f"Engine {topics_request.engine} not supported")
 
 
+def convert_topics_to_pandas(topics: Topics) -> pd.DataFrame:
+    df = pd.DataFrame([topic.model_dump() for topic in topics.topics])
+    df.columns = ["name", "description", "type", "questions"]
+    return df
+
+
 def _generate_rows(df: pd.DataFrame, limit: int) -> Generator[pd.Series, None, None]:
     for _, row in df[:limit].iterrows():
         yield row
@@ -94,9 +100,5 @@ if __name__ == "__main__":
         return topics
 
     topics = test_graphrag()
-    for topic in topics.topics:
-        print(topic.name)
-        print(topic.description)
-        print(topic.type)
-        print(topic.questions)
-        print("-" * 100)
+    df = convert_topics_to_pandas(topics)
+    print(df)

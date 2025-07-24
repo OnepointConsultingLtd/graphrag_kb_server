@@ -44,5 +44,3 @@ def read_graphrag_project(project_dir: Path) -> nx.Graph:
     for s, t in zip(relationship_df["source"], relationship_df["target"]):
         G.add_edge(s, t)
     return G
-
-

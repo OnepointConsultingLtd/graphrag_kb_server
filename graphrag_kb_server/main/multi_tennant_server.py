@@ -768,7 +768,9 @@ async def generate_direct_url_post(request: web.Request) -> web.Response:
             if isinstance(jwt_token, web.Response):
                 # If the JWT token is invalid, return the error response
                 return jwt_token
-            url = generate_direct_url(chat_type, Project(**project), jwt_token, streaming == "true")
+            url = generate_direct_url(
+                chat_type, Project(**project), jwt_token, streaming == "true"
+            )
             return web.json_response({"url": url}, headers=CORS_HEADERS)
         else:
             return invalid_response(

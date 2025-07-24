@@ -76,13 +76,13 @@ Response:"""
 
 
 async def extract_keywords_only_lightrag(
-    text: str,
-    param: QueryParam,
-    project_folder: Path
+    text: str, param: QueryParam, project_folder: Path
 ) -> tuple[list[str], list[str]]:
     rag: LightRAG = await initialize_rag(project_folder)
     global_config = asdict(rag)
-    return await extract_keywords_only(text, param, global_config, rag.llm_response_cache)
+    return await extract_keywords_only(
+        text, param, global_config, rag.llm_response_cache
+    )
 
 
 async def lightrag_search(

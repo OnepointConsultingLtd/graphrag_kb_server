@@ -1,15 +1,8 @@
 from pathlib import Path
 import pandas as pd
 
-import networkx as nx
 import rustworkx as rx
 
-from graphrag_kb_server.service.graphrag.query import (
-    ENTITY_TABLE,
-    RELATIONSHIP_TABLE,
-    TEXT_UNIT_TABLE,
-    DOCUMENTS_TABLE,
-)
 from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     networkx_to_rustworkx,
 )
