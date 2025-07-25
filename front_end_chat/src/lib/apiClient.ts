@@ -286,3 +286,21 @@ export async function fetchRelatedTopics(
   await processError(response);
   return (await response.json()) as Topics;
 }
+
+export async function downloadTopics(jwt: string, project: Project) {
+  const params = new URLSearchParams();
+  params.set("project", project.name);
+  params.set("engine", project.platform);
+  params.set("format", "csv");
+  params.set("limit", "100000");
+  const response = await fetch(
+    `${getBaseServer()}/protected/project/topics?${params.toString()}`,
+    createHeaders(jwt),
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Failed to download topics. Error code: ${response.status}. Error: ${response.statusText}`,
+    );
+  }
+  return await response.blob();
+}

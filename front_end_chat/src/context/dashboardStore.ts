@@ -55,6 +55,7 @@ export type DashboardState = {
   generateUrl: string | null;
   generateUrlError: string | null;
   expandedSections: Record<string, boolean>;
+  downloadingTopics: boolean;
   setUserData: (userData: UserData | null) => void;
   setEmail: (email: string) => void;
   setWidgetType: (widgetType: string) => void;
@@ -102,6 +103,9 @@ export type DashboardState = {
   setIsGenerateUrlSubmitting: (isGenerateUrlSubmitting: boolean) => void;
   setGenerateUrl: (generateUrl: string | null) => void;
   setGenerateUrlError: (generateUrlError: string | null) => void;
+
+  // Download Topics
+  setDownloadingTopics: (downloadingTopics: boolean) => void;
 };
 
 export const useDashboardStore = create<DashboardState>()(
@@ -142,6 +146,7 @@ export const useDashboardStore = create<DashboardState>()(
         generateUrl: null,
         generateUrlError: null,
         expandedSections: {},
+        downloadingTopics: false,
         setUserData: (userData: UserData | null) =>
           set(() => ({ userData, email: userData?.email ?? "" })),
         setEmail: (email: string) => set({ email }),
@@ -273,6 +278,7 @@ export const useDashboardStore = create<DashboardState>()(
             success: null,
             error: null,
             expandedSections: {},
+            downloadingTopics: false,
           }),
         setSnippetModalDialogueOpen: (snippetModalDialogueOpen: boolean) =>
           set(() => {
@@ -289,6 +295,8 @@ export const useDashboardStore = create<DashboardState>()(
         setGenerateUrl: (generateUrl: string | null) => set({ generateUrl }),
         setGenerateUrlError: (generateUrlError: string | null) =>
           set({ generateUrlError }),
+        setDownloadingTopics: (downloadingTopics: boolean) =>
+          set({ downloadingTopics }),
       };
     },
     {
