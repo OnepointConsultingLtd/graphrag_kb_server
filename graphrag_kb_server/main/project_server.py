@@ -740,7 +740,7 @@ async def project_topics(request: web.Request) -> web.Response:
                     request.rel_url.query.get("add_questions", "false") == "true"
                 )
                 entity_type_filter = request.rel_url.query.get(
-                    "entity_type_filter", "category"
+                    "entity_type_filter", ""
                 )
                 topics = await generate_topics(
                     TopicsRequest(
