@@ -898,7 +898,7 @@ async def project_related_topics(request: web.Request) -> web.Response:
                     topics = await get_related_topics(engine, similarity_topics)
                     if topics is None:
                         return invalid_response(
-                            "No topics found", "No topics found", headers=CORS_HEADERS
+                            "No topics found", "No topics found", status=404, headers=CORS_HEADERS
                         )
                     return web.json_response(topics.model_dump(), headers=CORS_HEADERS)
                 except ValueError as e:
