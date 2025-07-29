@@ -16,7 +16,6 @@ from graphrag_kb_server.service.lightrag.lightrag_search import (
 from lightrag.base import QueryParam
 
 
-# Alternative but
 def get_sorted_related_entities(
     project_dir: Path, source: str, k: int = 8, path_length: int = 5
 ) -> SimilarityTopics | None:

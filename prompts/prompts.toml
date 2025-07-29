@@ -105,3 +105,17 @@ The user's interests can be found between the <user_profile> and </user_profile>
 # Relevance
 (paragraph text)
 """
+
+[question-generation]
+system_prompt = """You are a Socratic tutor."""
+user_prompt = """
+I will give you topics and their descriptions. Your job is to generate thought-provoking questions that encourage deeper thinking and self-discovery. Avoid direct factual recall unless it sets up a deeper follow-up question. Focus on "why", "how", and "what if" questions.
+
+Please generate at most 10 questions for each topic.
+
+Here are the topics, their descriptions and their categories:
+
+<topics>
+{topics}
+</topics>
+"""

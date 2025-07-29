@@ -14,9 +14,30 @@ class Topic(BaseModel):
     type: str = Field(..., description="The type of th topic")
     questions: list[str] = Field(default=[], description="The questions of the topic")
 
+    def markdown(self) -> str:
+        return f"""
+# {self.name}
+
+## Type: {self.type}
+
+## Description:
+{self.description}
+"""
+
 
 class Topics(BaseModel):
     topics: list[Topic] = Field(..., description="The topics of the project")
+
+
+class TopicQuestion(BaseModel):
+    name: str = Field(..., description="The name of the topic")
+    questions: list[str] = Field(default=[], description="The questions of the topic")
+
+
+class TopicQuestions(BaseModel):
+    topic_questions: list[TopicQuestion] = Field(
+        default=[], description="The questions of the topic"
+    )
 
 
 class SimilarityTopic(Topic):

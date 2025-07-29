@@ -739,9 +739,7 @@ async def project_topics(request: web.Request) -> web.Response:
                 add_questions = (
                     request.rel_url.query.get("add_questions", "false") == "true"
                 )
-                entity_type_filter = request.rel_url.query.get(
-                    "entity_type_filter", ""
-                )
+                entity_type_filter = request.rel_url.query.get("entity_type_filter", "")
                 topics = await generate_topics(
                     TopicsRequest(
                         project_dir=project_dir,
@@ -906,9 +904,7 @@ async def project_related_topics(request: web.Request) -> web.Response:
                 except Exception as e:
                     return invalid_response("Invalid request body", str(e))
             case _:
-                return invalid_response(
-                    "No project found", "No project found", headers=CORS_HEADERS
-                )
+                return invalid_response("No project found", "No project found")
 
     return await handle_error(handle_request, request=request)
 
