@@ -4,10 +4,12 @@ from graphrag_kb_server.service.question_generation_service import generate_ques
 
 
 def test_generate_questions():
-    
+
     topics = Topics(
         topics=[
-            Topic(name="AI", description="""AI (Artificial Intelligence) is a dominant and rapidly advancing field of computer science and technology focused on creating intelligent machines and systems capable of performing tasks that typically require human intelligence, replicating or improving human cognitive function, and mimicking human actions. Celebrating its 70th anniversary, AI is a broad field encompassing various technologies, including machine learning (ML), symbolic AI, generative AI, rule-based AI, general-purpose AI, narrow domain AI tools like ChatGPT and Large Language Models (LLMs), deep learning, decision intelligence, knowledge graphs, and neuro-symbolic AI, with a long and rich history and diverse techniques. AI encompasses both symbolic and sub-symbolic approaches, including machine learning and neural networks, and is evolving towards neuro-symbolic AI for explainability and trust.
+            Topic(
+                name="AI",
+                description="""AI (Artificial Intelligence) is a dominant and rapidly advancing field of computer science and technology focused on creating intelligent machines and systems capable of performing tasks that typically require human intelligence, replicating or improving human cognitive function, and mimicking human actions. Celebrating its 70th anniversary, AI is a broad field encompassing various technologies, including machine learning (ML), symbolic AI, generative AI, rule-based AI, general-purpose AI, narrow domain AI tools like ChatGPT and Large Language Models (LLMs), deep learning, decision intelligence, knowledge graphs, and neuro-symbolic AI, with a long and rich history and diverse techniques. AI encompasses both symbolic and sub-symbolic approaches, including machine learning and neural networks, and is evolving towards neuro-symbolic AI for explainability and trust.
 
 AI encompasses sensing, thinking, acting, and learning capabilities, thriving on raw source data to uncover hidden insights, analyze data, and extract valuable insights, driving critical, high-value decisions based on complex data and solving problems related to unstructured data. It is used to automate tasks, improve customer service, optimize business processes, identify, onboard, service, and secure new business customers. AI is used to crunch statistics and reveal insights about various markets, interpret data and anticipate future needs, and predict maintenance needs based on sound recognition. It can calculate the likelihood of resolving issues and provide real-time updates and options to customers during a crisis. AI is also used to make sense of data without cleaning it.
 
@@ -86,8 +88,12 @@ AI was used as a tool in various stages of the productive sprint but was found l
 AI is used as a tool to improve efficiency and effectiveness in various tasks, including retail returns processing.
 
 AI is used to collect data from purchasers' past history and other users with similar sizing to provide size recommendations.
-""", type="category"),
-            Topic(name="Be Informed", description="""Be Informed is an internationally operating, independent software vendor and a leading provider of intelligent compliance solutions, specializing in dynamic/intelligent processes. They are recognized as a market leader in Dynamic/Adaptive Case Management. Be Informed offers a disruptive, next-generation Business Process Platform that utilizes semantic technology to model and execute business processes, policies, and regulations. Their platform is designed to enable organizations to design, manage, and analyze all aspects of their business, automate business processes, improve flexibility and responsiveness, and enhance customer experience. It allows businesses to create models that can be directly implemented, tested, and adjusted, emphasizing business agility and the use of a single business language. The technology is described as 'cool', 'elegant' and 'potentially disruptive'.
+""",
+                type="category",
+            ),
+            Topic(
+                name="Be Informed",
+                description="""Be Informed is an internationally operating, independent software vendor and a leading provider of intelligent compliance solutions, specializing in dynamic/intelligent processes. They are recognized as a market leader in Dynamic/Adaptive Case Management. Be Informed offers a disruptive, next-generation Business Process Platform that utilizes semantic technology to model and execute business processes, policies, and regulations. Their platform is designed to enable organizations to design, manage, and analyze all aspects of their business, automate business processes, improve flexibility and responsiveness, and enhance customer experience. It allows businesses to create models that can be directly implemented, tested, and adjusted, emphasizing business agility and the use of a single business language. The technology is described as 'cool', 'elegant' and 'potentially disruptive'.
 
 Be Informed focuses on model-driven development and customer involvement, offering a direct model-driven platform and using one business language to change the process paradigm. Their platform supports all aspects of the policy lifecycle and provides an ecosystem for sharing and reuse. It offers a single environment where business knowledge resides in a single model, allowing for high productivity and automated decision making. The platform enables the capturing of ideas, requirements, scenarios, activities, and business rules in models, allowing for rapid business prototyping and quick validation of business ideas. It embeds compliance into business processes, turning it from a burden into an advantage. The platform supports administrative processes with a focus on dynamic case management, connecting legacy systems and automating compliance tracking. It integrates with existing systems using services, messages, or files, focusing on complex knowledge work and process automation. Be Informed is also recognized as best in class for Dynamic Case Management.
 
@@ -116,7 +122,9 @@ Be Informed captures process by focusing on the constraints. Be Informed designe
 Be Informed is a system that allows users to create immediately executable applications without code generation or intermediate steps. It separates knowledge from the flow of business processes, using a non-linear approach with activities constrained by conditions.
 
 Be Informed is an integrated business platform built from the ground up as one integrated stack, allowing business users to define all aspects of their business in one integrated semantic model.
-""", type="organization"),
+""",
+                type="organization",
+            ),
         ]
     )
     topic_questions = asyncio.run(generate_questions(topics))

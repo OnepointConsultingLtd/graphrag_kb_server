@@ -33,6 +33,9 @@ from graphrag_kb_server.service.project import (
     single_project_status,
 )
 from graphrag_kb_server.service.zip_service import zip_input
+from graphrag_kb_server.service.question_generation_service import (
+    generate_questions_from_topics,
+)
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.main.project_request_functions import (
@@ -768,6 +771,101 @@ async def project_topics(request: web.Request) -> web.Response:
                         return invalid_response("Invalid format", "Invalid format")
             case _:
                 return invalid_response("No project found", "No project found")
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.options("/protected/project/questions")
+async def project_questions_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.get("/protected/project/questions")
+async def project_questions(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns generated questions for a project based on the most popular topics
+    tags:
+      - project
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system
+        schema:
+          type: string
+          enum: [graphrag, lightrag, cag]
+      - name: topic_limit
+        in: query
+        required: false
+        description: The number of topics from which to generate questions
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: entity_type_filter
+        in: query
+        required: false
+        description: The entity type to filter by. Only used for LightRAG
+        schema:
+          type: string
+          default: category
+      - name: format
+        in: query
+        required: false
+        description: The format of the output (json, csv)
+        schema:
+          type: string
+          enum: [json, csv]
+          default: json
+    responses:
+      '200':
+        description: Expected response to a valid request
+      '400':
+        description: Bad Request - No project found.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No project found"
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                engine, limit = extract_engine_limit(request, "topic_limit")
+                entity_type_filter = request.rel_url.query.get("entity_type_filter", "")
+                topic_questions = await generate_questions_from_topics(
+                    project_dir, engine, limit, entity_type_filter
+                )
+                format = request.rel_url.query.get("format", Format.JSON.value)
+                match format:
+                    case Format.JSON:
+                        return web.json_response(
+                            topic_questions.model_dump(), headers=CORS_HEADERS
+                        )
+                    case Format.CSV:
+                        df = convert_topics_to_pandas(topic_questions)
+                        return web.Response(
+                            text=df.to_csv(index=False),
+                            headers={
+                                **CORS_HEADERS,
+                                "CONTENT-DISPOSITION": f'attachment; filename="{project_dir.name}_questions.csv"',
+                            },
+                        )
+                    case _:
+                        return invalid_response("Invalid format", "Invalid format")
 
     return await handle_error(handle_request, request=request)
 

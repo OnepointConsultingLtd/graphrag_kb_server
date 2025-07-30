@@ -40,7 +40,9 @@ def handle_project_folder(
     return project_dir
 
 
-def extract_engine_limit(request: web.Request) -> tuple[Engine, int]:
+def extract_engine_limit(
+    request: web.Request, limit_name: str = "limit"
+) -> tuple[Engine, int]:
     engine = find_engine_from_query(request)
-    limit = request.rel_url.query.get("limit", 8)
+    limit = request.rel_url.query.get(limit_name, 8)
     return engine, limit
