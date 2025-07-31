@@ -76,11 +76,16 @@ async def auth_middleware(request: web.Request, handler):
                 )
 
         permissions = token_dict.get("permissions", ["read", "write"])
+        allowed_post_paths = [
+            "/protected/project/chat",
+            "/protected/search",
+            "/protected/project/questions",
+            "/protected/project/related_topics"
+        ]
         if (
             request.method in ["POST", "PATCH", "DELETE"]
             and "write" not in permissions
-            and not request_path.startswith("/protected/project/chat")
-            and not request_path.startswith("/protected/search")
+            and not any([request_path.startswith(path) for path in allowed_post_paths])
         ):
             return web.json_response(
                 {

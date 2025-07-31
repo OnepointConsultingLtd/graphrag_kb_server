@@ -34,6 +34,10 @@ class DocumentSearchQuery(BaseModel):
         ...,
         description="The output of the expanded entities with the highlevel and lowlevel keywords used to search for documents",
     )
+    max_filepath_depth: int = Field(
+        default=20,
+        description="The maximum depth of the file path to include in the context.",
+    )
 
 
 class SummarisationResponse(BaseModel):

@@ -4,9 +4,7 @@ from typing import AsyncIterator
 from functools import partial
 import json
 import os
-
 import numpy as np
-
 
 from lightrag import LightRAG, QueryParam
 
@@ -134,6 +132,7 @@ In case of a coloquial question or non context related sentence you can respond 
             global_config,
             hashing_kv=rag.llm_response_cache,
             chunks_vdb=rag.chunks_vdb,
+            max_filepath_depth=query_params.max_filepath_depth,
         )
         response = await extended_kg_query(
             query,
@@ -176,6 +175,10 @@ In case of a coloquial question or non context related sentence you can respond 
     )
 
 
+def _shorten_file_path(context_obj: dict, max_depth: int = 20) -> str:
+    return [{**e, "file_path": "<SEP>".join(e["file_path"].split("<SEP>")[:max_depth])} for e in context_obj]
+
+
 # Copied from LightRAG
 # from lightrag.operate import kg_query
 async def prepare_context(
@@ -188,6 +191,7 @@ async def prepare_context(
     global_config: dict[str, str],
     hashing_kv: BaseKVStorage | None = None,
     chunks_vdb: BaseVectorStorage = None,
+    max_filepath_depth: int = 20,
 ) -> tuple[str, str, np.ndarray | None, int, int, list[dict], list[dict], list[dict]]:
 
     # Handle cache
@@ -242,6 +246,10 @@ async def prepare_context(
             chunks_vdb,
         )
     )
+
+    entities_context = _shorten_file_path(entities_context, max_filepath_depth)
+    relations_context = _shorten_file_path(relations_context, max_filepath_depth)
+    
     context = _build_context_str(
         entities_context, relations_context, text_units_context
     )

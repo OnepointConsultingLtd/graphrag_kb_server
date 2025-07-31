@@ -21,6 +21,7 @@ from graphrag_kb_server.model.search.search import (
 )
 from graphrag_kb_server.service.google_ai_client import structured_completion
 from graphrag_kb_server.callbacks.callback_support import BaseCallback
+from graphrag_kb_server.logger import logger
 
 DOCUMENT_PATHS_LIMIT = 10
 
@@ -87,16 +88,22 @@ async def retrieve_relevant_documents(
         A list of summarization responses with document paths
     """
     if callback is not None:
-        await callback.callback("🔥 Preparing answer...")
+        await callback.callback("Preparing answer...")
+        logger.info(f"Preparing answer...")
     chat_response = await search_documents(project_dir, query)
     if callback is not None:
         await callback.callback(chat_response.response["response"])
+        logger.info(f"Answer prepared: {chat_response.response['response']}")
     document_paths_topics = _extract_references(chat_response)
     if callback is not None:
         await callback.callback(f"Extracted {len(document_paths_topics)} references")
+        logger.info(f"Extracted {len(document_paths_topics)} references")
     promises = _create_summarisation_promises(document_paths_topics, project_dir, query)
+    logger.info(f"_create_summarisation_promises")
     summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
+    logger.info(f"Summaries created: {summaries}")
     summaries_with_document_paths = _combine_summaries(summaries, document_paths_topics)
+    logger.info(f"Summaries combined: {summaries_with_document_paths}")
     response = chat_response.response["response"]
     return SearchResults(
         documents=summaries_with_document_paths,
@@ -191,6 +198,7 @@ def generate_query(
         include_context=True,
         include_context_as_text=False,
         structured_output=True,
+        max_filepath_depth=query.max_filepath_depth,
     )
     return query_params
 

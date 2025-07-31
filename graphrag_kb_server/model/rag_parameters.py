@@ -69,6 +69,10 @@ class QueryParameters(BaseModel):
         default=False,
         description="Whether to append the keywords to the context.",
     )
+    max_filepath_depth: int = Field(
+        default=100,
+        description="The maximum length of the file path to include in the context.",
+    )
 
 
 def convert_to_lightrag_query_params(

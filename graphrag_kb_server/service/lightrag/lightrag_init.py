@@ -56,7 +56,8 @@ async def gemini_model_func(
     combined_prompt += f"user: {prompt}"
 
     # 3. Call the Gemini model
-    config_dict = {"max_output_tokens": 10000, "temperature": 0, "top_k": 10}
+    config_dict = {"max_output_tokens": 65000, "temperature": 0, "top_k": 8}
+
     structured_output = "structured_output" in kwargs and kwargs["structured_output"]
     if structured_output:
         config_dict["response_schema"] = ResponseSchema
