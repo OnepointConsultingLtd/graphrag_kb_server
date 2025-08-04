@@ -63,6 +63,9 @@ class TopicsRequest(BaseModel):
         default="category",
         description="The entity type to filter by. Only used for LightRAG",
     )
+    topics: list[str] = Field(
+        default=[], description="The topics for which questions should be generated"
+    )
 
 
 class SimilarityTopicsRequest(BaseModel):
@@ -83,3 +86,11 @@ class SimilarityTopicsRequest(BaseModel):
         default=10, description="Number of independent runs to average results"
     )
     engine: Engine = Field(default=Engine.LIGHTRAG, description="The engine to use")
+
+
+class QuestionsQuery(BaseModel):
+    project_dir: Path = Field(..., description="The project directory")
+    engine: Engine = Field(..., description="The engine to use")
+    limit: int = Field(..., description="The number of topics to generate")
+    entity_type_filter: str = Field(..., description="The entity type to filter by")
+    topics_str: str = Field(..., description="The topics filter, separated by semi-colons")

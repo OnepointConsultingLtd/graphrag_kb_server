@@ -83,7 +83,7 @@ from graphrag_kb_server.service.topic_generation import (
     generate_topics,
     convert_topics_to_pandas,
 )
-from graphrag_kb_server.model.topics import TopicsRequest
+from graphrag_kb_server.model.topics import TopicsRequest, QuestionsQuery
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.cag.cag_support import (
     acreate_cag,
@@ -804,6 +804,13 @@ async def project_questions(request: web.Request) -> web.Response:
         schema:
           type: string
           enum: [graphrag, lightrag, cag]
+      - name: topics
+        in: query
+        required: false
+        description: The topics filter. Expects the topic names separated by semi-colons.
+        schema:
+          type: string
+          default: ""
       - name: topic_limit
         in: query
         required: false
@@ -846,8 +853,15 @@ async def project_questions(request: web.Request) -> web.Response:
             case Path() as project_dir:
                 engine, limit = extract_engine_limit(request, "topic_limit")
                 entity_type_filter = request.rel_url.query.get("entity_type_filter", "")
+                topics_str = request.rel_url.query.get("topics", "")
                 topic_questions = await generate_questions_from_topics(
-                    project_dir, engine, limit, entity_type_filter
+                    QuestionsQuery(
+                        project_dir=project_dir,
+                        engine=engine,
+                        limit=limit,
+                        entity_type_filter=entity_type_filter,
+                        topics_str=topics_str,
+                    )
                 )
                 format = request.rel_url.query.get("format", Format.JSON.value)
                 match format:
