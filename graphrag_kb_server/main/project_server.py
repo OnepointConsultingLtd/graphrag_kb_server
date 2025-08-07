@@ -780,7 +780,7 @@ async def project_questions_options(_: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 
-@routes.get("/protected/project/questions")
+@routes.post("/protected/project/questions")
 async def project_questions(request: web.Request) -> web.Response:
     """
     Optional route description
@@ -804,36 +804,37 @@ async def project_questions(request: web.Request) -> web.Response:
         schema:
           type: string
           enum: [graphrag, lightrag, cag]
-      - name: topics
-        in: query
-        required: false
-        description: The topics filter. Expects the topic names separated by semi-colons.
-        schema:
-          type: string
-          default: ""
-      - name: topic_limit
-        in: query
-        required: false
-        description: The number of topics from which to generate questions
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: entity_type_filter
-        in: query
-        required: false
-        description: The entity type to filter by. Only used for LightRAG
-        schema:
-          type: string
-          default: category
-      - name: format
-        in: query
-        required: false
-        description: The format of the output (json, csv)
-        schema:
-          type: string
-          enum: [json, csv]
-          default: json
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              topics:
+                type: array
+                items:
+                  type: string
+                description: The topics filter
+                default: []
+              text:
+                type: string
+                description: The text to generate questions for
+                default: ""
+              topic_limit:
+                type: integer
+                format: int32
+                description: The number of topics from which to generate questions
+                default: 10
+              entity_type_filter:
+                type: string
+                description: The entity type to filter by. Only used for LightRAG
+                default: category
+              format:
+                type: string
+                description: The format of the output (json, csv)
+                enum: [json, csv]
+                default: json
     responses:
       '200':
         description: Expected response to a valid request
@@ -851,16 +852,20 @@ async def project_questions(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                engine, limit = extract_engine_limit(request, "topic_limit")
-                entity_type_filter = request.rel_url.query.get("entity_type_filter", "")
-                topics_str = request.rel_url.query.get("topics", "")
+                body = request["data"]["body"]
+                engine = find_engine_from_query(request)
+                limit = body.get("topic_limit", 10)
+                entity_type_filter = body.get("entity_type_filter", "category")
+                topics = body.get("topics", "")
+                text = body.get("text", "")
                 topic_questions = await generate_questions_from_topics(
                     QuestionsQuery(
                         project_dir=project_dir,
                         engine=engine,
                         limit=limit,
                         entity_type_filter=entity_type_filter,
-                        topics_str=topics_str,
+                        topics=topics,
+                        text=text,
                     )
                 )
                 format = request.rel_url.query.get("format", Format.JSON.value)

@@ -93,4 +93,5 @@ class QuestionsQuery(BaseModel):
     engine: Engine = Field(..., description="The engine to use")
     limit: int = Field(..., description="The number of topics to generate")
     entity_type_filter: str = Field(..., description="The entity type to filter by")
-    topics_str: str = Field(..., description="The topics filter, separated by semi-colons")
+    topics: list[str] = Field(..., description="The topics filter list")
+    text: str = Field(default="", description="The text to generate questions for")

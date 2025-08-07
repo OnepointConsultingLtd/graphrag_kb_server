@@ -176,7 +176,10 @@ In case of a coloquial question or non context related sentence you can respond 
 
 
 def _shorten_file_path(context_obj: dict, max_depth: int = 20) -> str:
-    return [{**e, "file_path": "<SEP>".join(e["file_path"].split("<SEP>")[:max_depth])} for e in context_obj]
+    return [
+        {**e, "file_path": "<SEP>".join(e["file_path"].split("<SEP>")[:max_depth])}
+        for e in context_obj
+    ]
 
 
 # Copied from LightRAG
@@ -249,7 +252,7 @@ async def prepare_context(
 
     entities_context = _shorten_file_path(entities_context, max_filepath_depth)
     relations_context = _shorten_file_path(relations_context, max_filepath_depth)
-    
+
     context = _build_context_str(
         entities_context, relations_context, text_units_context
     )

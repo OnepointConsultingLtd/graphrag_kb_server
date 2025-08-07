@@ -42,16 +42,27 @@ def get_sorted_related_entities(
     )
 
 
+async def get_keywords_from_text(
+    text: str, project_dir: Path, G: nx.Graph | None = None
+) -> list[str]:
+    if G is None:
+        G = create_network_from_project_dir(project_dir)
+    hl_keywords, ll_keywords = await extract_keywords_only_lightrag(
+        text, QueryParam(mode="hybrid"), project_dir
+    )
+    all_keywords = [*hl_keywords, *ll_keywords]
+    # Convert nodes to a set for O(1) lookup instead of O(n) for each keyword
+    nodes_set = set(G.nodes())
+    existing_keywords = [k for k in all_keywords if k in nodes_set]
+    return existing_keywords
+
+
 async def get_related_topics_lightrag(
     request: SimilarityTopicsRequest,
 ) -> SimilarityTopics | None:
     G = create_network_from_project_dir(request.project_dir)
     if not request.source and request.text:
-        hl_keywords, ll_keywords = await extract_keywords_only_lightrag(
-            request.text, QueryParam(mode="hybrid"), request.project_dir
-        )
-        all_keywords = [*hl_keywords, *ll_keywords]
-        existing_keywords = [k for k in all_keywords if k in G.nodes()]
+        existing_keywords = await get_keywords_from_text(request.text, request.project_dir, G)
         if len(existing_keywords) > 0:
             args = {**request.model_dump(), "source": existing_keywords[0]}
             request = SimilarityTopicsRequest(**args)

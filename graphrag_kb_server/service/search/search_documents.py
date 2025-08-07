@@ -89,7 +89,7 @@ async def retrieve_relevant_documents(
     """
     if callback is not None:
         await callback.callback("Preparing answer...")
-        logger.info(f"Preparing answer...")
+        logger.info("Preparing answer...")
     chat_response = await search_documents(project_dir, query)
     if callback is not None:
         await callback.callback(chat_response.response["response"])
@@ -99,7 +99,7 @@ async def retrieve_relevant_documents(
         await callback.callback(f"Extracted {len(document_paths_topics)} references")
         logger.info(f"Extracted {len(document_paths_topics)} references")
     promises = _create_summarisation_promises(document_paths_topics, project_dir, query)
-    logger.info(f"_create_summarisation_promises")
+    logger.info("_create_summarisation_promises")
     summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
     logger.info(f"Summaries created: {summaries}")
     summaries_with_document_paths = _combine_summaries(summaries, document_paths_topics)

@@ -61,11 +61,19 @@ async def start_session(sid: str, environ):
 
 
 @sio.event
-async def relevant_documents(sid: str, token: str, project: str, document_query: str, max_filepath_depth: int = 20):
+async def relevant_documents(
+    sid: str,
+    token: str,
+    project: str,
+    document_query: str,
+    max_filepath_depth: int = 20,
+):
     try:
         logger.info(f"Document query from {sio}: {document_query}")
         project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
-        document_search_query = DocumentSearchQuery(**json.loads(document_query), max_filepath_depth=max_filepath_depth)
+        document_search_query = DocumentSearchQuery(
+            **json.loads(document_query), max_filepath_depth=max_filepath_depth
+        )
         callback = WebsocketCallback(sid)
         response = await retrieve_relevant_documents(
             project_dir, document_search_query, callback

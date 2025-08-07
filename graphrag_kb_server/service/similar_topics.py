@@ -1,6 +1,5 @@
 import random
 from collections import Counter
-import numpy as np
 import networkx as nx
 from graphrag_kb_server.model.topics import (
     SimilarityTopics,
@@ -8,33 +7,6 @@ from graphrag_kb_server.model.topics import (
     SimilarityTopicsRequest,
 )
 from graphrag_kb_server.model.engines import Engine
-
-
-def _prepare_graph_for_numba(
-    G: nx.Graph, source: str
-) -> tuple[np.ndarray, dict, dict, int]:
-    """
-    Prepare NetworkX graph for Numba processing.
-
-    Returns:
-        (adjacency_matrix, node_to_index, index_to_node, source_index)
-    """
-    # Create node mappings
-    nodes = list(G.nodes())
-    node_to_index = {node: i for i, node in enumerate(nodes)}
-    index_to_node = {i: node for i, node in enumerate(nodes)}
-
-    # Create adjacency matrix
-    n = len(nodes)
-    adjacency_matrix = np.zeros((n, n), dtype=np.int32)
-
-    for u, v in G.edges():
-        i, j = node_to_index[u], node_to_index[v]
-        adjacency_matrix[i][j] = 1
-        adjacency_matrix[j][i] = 1  # Undirected graph
-
-    source_index = node_to_index[source]
-    return adjacency_matrix, node_to_index, index_to_node, source_index
 
 
 def convert_to_similarity_topics(
