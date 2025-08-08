@@ -921,7 +921,7 @@ wheels = [
 
 [[package]]
 name = "graphrag"
-version = "2.3.0"
+version = "2.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -945,7 +945,6 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
-    { name = "rich" },
     { name = "spacy" },
     { name = "textblob" },
     { name = "tiktoken" },
@@ -954,9 +953,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "umap-learn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/59/ac57b6e249f1db21bdd1fc0bf610a846bf5c49b9fd64ff5a605481c3492e/graphrag-2.3.0.tar.gz", hash = "sha256:bae8e20100bc544a0ea4d8168a6085000e50e797eff68c4e8d307ff37b344e6a", size = 212293 }
+sdist = { url = "https://files.pythonhosted.org/packages/1b/ef/157f7b0acd819683ca7ebf27b9cd093b8e568861b27a487b28ca0c116d8c/graphrag-2.4.0.tar.gz", hash = "sha256:c3716cb4872505e7f2af18979130d68a319058673cbdea590c61e4b21c463470", size = 211273 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/97/1364b2bb4154ba78a961df7d520585c150278642c83809e5b6847311aeb5/graphrag-2.3.0-py3-none-any.whl", hash = "sha256:5c470c35931889747b9ed7d5feed0ec8dc8fc37f174b1ae4e02b6c901e8ff123", size = 373042 },
+    { url = "https://files.pythonhosted.org/packages/55/68/6bb923d821fa8156d3b4e990c9d2e8fa1944915758a63a8ba58d6d16e742/graphrag-2.4.0-py3-none-any.whl", hash = "sha256:79614c248d241441c00ba5411dd100ec62a557395c9cc5dc459b6ba49d15fc40", size = 369396 },
 ]
 
 [[package]]
@@ -996,7 +995,7 @@ requires-dist = [
     { name = "aiohttp-swagger3", specifier = ">=0.10.0" },
     { name = "aiohttp-test-utils", specifier = ">=0.5.0,<0.6" },
     { name = "google-genai", specifier = ">=1.13.0" },
-    { name = "graphrag", specifier = ">=2.3.0,<3" },
+    { name = "graphrag", specifier = ">=2.4.0,<3" },
     { name = "lightrag-hku", extras = ["api"], specifier = ">=1.3.8" },
     { name = "linkedin-api", specifier = ">=2.3.1" },
     { name = "markdown", specifier = "~=3.7" },
@@ -2879,7 +2878,7 @@ wheels = [
 
 [[package]]
 name = "typer"
-version = "0.15.1"
+version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2887,9 +2886,9 @@ dependencies = [
     { name = "shellingham" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cb/ce/dca7b219718afd37a0068f4f2530a727c2b74a8b6e8e0c0080a4c0de4fcd/typer-0.15.1.tar.gz", hash = "sha256:a0588c0a7fa68a1978a069818657778f86abe6ff5ea6abf472f940a08bfe4f0a", size = 99789 }
+sdist = { url = "https://files.pythonhosted.org/packages/c5/8c/7d682431efca5fd290017663ea4588bf6f2c6aad085c7f108c5dbc316e70/typer-0.16.0.tar.gz", hash = "sha256:af377ffaee1dbe37ae9440cb4e8f11686ea5ce4e9bae01b84ae7c63b87f1dd3b", size = 102625 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/cc/0a838ba5ca64dc832aa43f727bd586309846b0ffb2ce52422543e6075e8a/typer-0.15.1-py3-none-any.whl", hash = "sha256:7994fb7b8155b64d3402518560648446072864beefd44aa2dc36972a5972e847", size = 44908 },
+    { url = "https://files.pythonhosted.org/packages/76/42/3efaf858001d2c2913de7f354563e3a3a2f0decae3efe98427125a8f441e/typer-0.16.0-py3-none-any.whl", hash = "sha256:1f79bed11d4d02d4310e3c1b7ba594183bcedb0ac73b27a9e5f28f6fb5b98855", size = 46317 },
 ]
 
 [[package]]

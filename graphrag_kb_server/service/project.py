@@ -12,7 +12,6 @@ from graphrag.index.typing.pipeline_run_result import PipelineRunResult
 
 from graphrag.cli.index import index_cli
 from graphrag.cli.initialize import initialize_project_at
-from graphrag.logger.factory import LoggerType
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
@@ -178,11 +177,9 @@ def _prepare_graph_rag(kb_path: Union[Path, None]) -> Path:
 def prepare_index_args(root_dir: Path):
     return {
         "root_dir": root_dir,
-        "verbose": cfg.index_verbose,
         "resume": None,
         "memprofile": False,
         "cache": True,
-        "logger": LoggerType.RICH,
         "config_filepath": None,
         "dry_run": False,
         "skip_validation": False,

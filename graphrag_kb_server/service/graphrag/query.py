@@ -307,23 +307,6 @@ async def prepare_rag_drift(context_parameters: ContextParameters) -> SearchResu
     return result
 
 
-def rag_local_build_context(
-    context_parameters: ContextParameters,
-) -> ContextResult:
-
-    project_dir = context_parameters.project_dir
-    search_engine = local_search_mixed_context_cache.get(project_dir)
-    if not search_engine:
-        search_engine = prepare_local_search(context_parameters)
-        local_search_mixed_context_cache.set(project_dir, search_engine)
-    context_builder_result = search_engine.context_builder.build_context(
-        query=context_parameters.query,
-        conversation_history=None,
-        **search_engine.context_builder_params,
-    )
-    return create_context_result(context_builder_result, Search.LOCAL)
-
-
 def prepare_global_search(context_parameters: ContextParameters) -> GlobalSearch:
     context_builder = build_global_context_builder(context_parameters.project_dir)
 
@@ -407,6 +390,31 @@ async def rag_local_simple(
             context_parameters.query, conversation_history
         )
     return result.response
+
+
+def rag_local_context_builder_result(context_parameters: ContextParameters,) -> ContextBuilderResult:
+    project_dir = context_parameters.project_dir
+    search_engine = local_search_mixed_context_cache.get(project_dir)
+    if not search_engine:
+        search_engine = prepare_local_search(context_parameters)
+        local_search_mixed_context_cache.set(project_dir, search_engine)
+    return search_engine.context_builder.build_context(
+        query=context_parameters.query,
+        conversation_history=None,
+        **search_engine.context_builder_params,
+    )
+
+
+def rag_local_build_context(
+    context_parameters: ContextParameters,
+) -> ContextResult:
+    context_builder_result = rag_local_context_builder_result(context_parameters)
+    return create_context_result(context_builder_result, Search.LOCAL)
+
+
+def rag_local_entities(context_parameters: ContextParameters) -> list[str]:
+    context_builder_result = rag_local_context_builder_result(context_parameters)
+    return context_builder_result.context_records["entities"][["entity"]].to_dict(orient="records")
 
 
 async def rag_global(query_params: QueryParameters) -> str:

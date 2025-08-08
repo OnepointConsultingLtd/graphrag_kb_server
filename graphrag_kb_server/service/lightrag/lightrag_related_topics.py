@@ -62,7 +62,9 @@ async def get_related_topics_lightrag(
 ) -> SimilarityTopics | None:
     G = create_network_from_project_dir(request.project_dir)
     if not request.source and request.text:
-        existing_keywords = await get_keywords_from_text(request.text, request.project_dir, G)
+        existing_keywords = await get_keywords_from_text(
+            request.text, request.project_dir, G
+        )
         if len(existing_keywords) > 0:
             args = {**request.model_dump(), "source": existing_keywords[0]}
             request = SimilarityTopicsRequest(**args)

@@ -11,8 +11,11 @@ from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.service.topic_generation import generate_topics
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.utils.cache import GenericSimpleCache
-from graphrag_kb_server.service.lightrag.lightrag_related_topics import get_keywords_from_text
-
+from graphrag_kb_server.service.lightrag.lightrag_related_topics import (
+    get_keywords_from_text,
+)
+from graphrag_kb_server.service.graphrag.query import rag_local_entities
+from graphrag_kb_server.model.rag_parameters import ContextParameters
 
 question_generation_cache = GenericSimpleCache[str, TopicQuestions]()
 
@@ -24,19 +27,28 @@ async def generate_questions_from_topics(
     engine: Engine = questions_query.engine
     limit: int = questions_query.limit
     entity_type_filter: str = questions_query.entity_type_filter
-    topics: str = questions_query.topics
+    topics: list[str] = questions_query.topics
     cache_key = f"{project_dir.as_posix()}_{engine.value}_{limit}_{entity_type_filter}_{";".join(topics)}"
     cached_questions = question_generation_cache.get(cache_key)
     if cached_questions is not None:
         return cached_questions
-    else:
-        topics = []
-    if len(topics) == 0 and questions_query.text and len(questions_query.text.strip()) > 0:
+    if (
+        len(topics) == 0
+        and questions_query.text
+        and len(questions_query.text.strip()) > 0
+    ):
         match engine:
             case Engine.LIGHTRAG:
-                topics = await get_keywords_from_text(questions_query.text, project_dir, None)
+                topics = await get_keywords_from_text(
+                    questions_query.text, project_dir, None
+                )
+            case Engine.GRAPHRAG:
+                topics = rag_local_entities(ContextParameters(query=questions_query.text, project_dir=project_dir))
+                topics = [t["entity"] for t in topics[:limit]]
             case _:
-                raise ValueError(f"Engine {engine} not supported for text-based question generation")
+                raise ValueError(
+                    f"Engine {engine} not supported for text-based question generation"
+                )
 
     topics = await generate_topics(
         TopicsRequest(
