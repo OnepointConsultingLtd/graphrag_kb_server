@@ -106,60 +106,23 @@ function AdditionalInstructionsInput({
   );
 }
 
-function ActionButtons({ onStartChat }: { onStartChat: () => void }) {
-  const { setIsChatConfigDialogOpen, localChatType } = useProjectSelectionStore(
+function ActionButtons() {
+  const navigate = useNavigate();
+
+  const { setIsChatConfigDialogOpen, localChatType, searchType, selectionProject, additionalPromptInstructions } = useProjectSelectionStore(
     useShallow((state) => ({
-      setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
       localChatType: state.localChatType,
+      selectionProject: state.selectionProject,
+      searchType: state.searchType,
+      additionalPromptInstructions: state.additionalPromptInstructions,
+      setIsChatConfigDialogOpen: state.setIsChatConfigDialogOpen,
     })),
   );
-
-  return (
-    <div className="flex space-x-3 mt-6">
-      <button
-        onClick={() => setIsChatConfigDialogOpen(false, null)}
-        className="flex-1 cursor-pointer bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
-      >
-        Cancel
-      </button>
-      <button
-        onClick={onStartChat}
-        className="flex-1 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={!localChatType}
-      >
-        Start Chat
-      </button>
-    </div>
-  );
-}
-
-export const CHAT_CONFIG_DIALOG_ID = "chat-config-dialog";
-
-export default function ChatConfigDialog() {
-  const navigate = useNavigate();
 
   const { selectedProject, setSelectedProjectAndChatType } = useChatStore(
     useShallow((state) => ({
       selectedProject: state.selectedProject,
       setSelectedProjectAndChatType: state.setSelectedProjectAndChatType,
-    })),
-  );
-
-  const {
-    additionalPromptInstructions,
-    setAdditionalPromptInstructions,
-    searchType,
-    setSearchType,
-    selectionProject,
-    localChatType,
-  } = useProjectSelectionStore(
-    useShallow((state) => ({
-      additionalPromptInstructions: state.additionalPromptInstructions,
-      setAdditionalPromptInstructions: state.setAdditionalPromptInstructions,
-      searchType: state.searchType,
-      setSearchType: state.setSearchType,
-      selectionProject: state.selectionProject,
-      localChatType: state.localChatType,
     })),
   );
 
@@ -182,6 +145,51 @@ export default function ChatConfigDialog() {
   }
 
   return (
+    <div className="flex space-x-3 mt-6">
+      <button
+        onClick={() => setIsChatConfigDialogOpen(false, null)}
+        className="flex-1 cursor-pointer bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
+      >
+        Cancel
+      </button>
+      <button
+        onClick={handleStartChat}
+        className="flex-1 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!localChatType}
+      >
+        Start Chat
+      </button>
+    </div>
+  );
+}
+
+export const CHAT_CONFIG_DIALOG_ID = "chat-config-dialog";
+
+export default function ChatConfigDialog() {
+
+  const { selectedProject } = useChatStore(
+    useShallow((state) => ({
+      selectedProject: state.selectedProject,
+    })),
+  );
+
+  const {
+    additionalPromptInstructions,
+    setAdditionalPromptInstructions,
+    searchType,
+    setSearchType,
+    selectionProject,
+  } = useProjectSelectionStore(
+    useShallow((state) => ({
+      additionalPromptInstructions: state.additionalPromptInstructions,
+      setAdditionalPromptInstructions: state.setAdditionalPromptInstructions,
+      searchType: state.searchType,
+      setSearchType: state.setSearchType,
+      selectionProject: state.selectionProject,
+    })),
+  );
+
+  return (
     <ModalParent id={CHAT_CONFIG_DIALOG_ID}>
       <div onClick={(e) => e.stopPropagation()}>
         <ModalTitle title={`Configure Chat for ${selectionProject}`} />
@@ -202,7 +210,7 @@ export default function ChatConfigDialog() {
           onChange={setAdditionalPromptInstructions}
         />
 
-        <ActionButtons onStartChat={handleStartChat} />
+        <ActionButtons />
       </div>
     </ModalParent>
   );

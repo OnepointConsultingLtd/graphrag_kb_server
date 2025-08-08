@@ -3,6 +3,7 @@ export type Topic = {
   description: string;
   type: string;
   questions: string[];
+  showDescription?: boolean;
 };
 
 export type Topics = {

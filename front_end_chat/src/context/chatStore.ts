@@ -73,6 +73,7 @@ type ChatStore = {
   setChatType: (chatType: ChatTypeOptions) => void;
   refreshProjects: () => void;
   setTopics: (topics: Topics) => void;
+  injectTopicDescription: (index: number, related: boolean) => void;
   setInputText: (inputText: string) => void;
   setSelectedTopic: (topic: Topic) => void;
   setConversationId: (conversationId: string) => void;
@@ -165,7 +166,7 @@ const useChatStore = create<ChatStore>()(
 
       function loadRelatedTopics(message: ChatMessage) {
         const isAgentMessage = message.type === ChatMessageTypeOptions.AGENT
-        if(!isAgentMessage) {
+        if (!isAgentMessage) {
           return;
         }
         const state = get();
@@ -304,15 +305,17 @@ const useChatStore = create<ChatStore>()(
             selectedTopic: null,
           }),
         newProject: () =>
-          set({
-            chatMessages: [],
-            copiedMessageId: null,
-            selectedProject: undefined,
-            chatType: null,
-            showTopics: false,
-            relatedTopics: null,
-            selectedTopic: null,
-            inputText: "",
+          set(() => {
+            return {
+              chatMessages: [],
+              copiedMessageId: null,
+              selectedProject: undefined,
+              chatType: null,
+              showTopics: false,
+              relatedTopics: null,
+              selectedTopic: null,
+              inputText: "",
+            }
           }),
         initializeProjects: async () => {
           const jwt = get().jwt;
@@ -357,10 +360,20 @@ const useChatStore = create<ChatStore>()(
           }),
         setTopics: (topics: Topics) =>
           set(() => {
+            const filteredTopics = topics?.topics?.filter((topic) => topic.type);
             return {
-              topics,
+              topics: { topics: filteredTopics },
               conversationTopicsNumber: topics?.topics?.length ?? 0,
             };
+          }),
+        injectTopicDescription: (index: number, related: boolean) =>
+          set((state) => {
+            const currentTopics = related ? state.relatedTopics?.topics : state.topics?.topics
+            if (!currentTopics) {
+              return related ? { relatedTopics: { topics: [] } } : { topics: { topics: [] } };
+            }
+            const newTopics = currentTopics.filter((topic) => topic.type).map((topic, i) => ({...topic, showDescription: i === index ? (topic.showDescription ? false : true) : false }))
+            return related ? { relatedTopics: { topics: newTopics } } : { topics: { topics: newTopics } };
           }),
         setInputText: (inputText: string) =>
           set((_) => {
