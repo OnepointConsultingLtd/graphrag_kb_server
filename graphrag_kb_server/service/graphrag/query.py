@@ -392,7 +392,9 @@ async def rag_local_simple(
     return result.response
 
 
-def rag_local_context_builder_result(context_parameters: ContextParameters,) -> ContextBuilderResult:
+def rag_local_context_builder_result(
+    context_parameters: ContextParameters,
+) -> ContextBuilderResult:
     project_dir = context_parameters.project_dir
     search_engine = local_search_mixed_context_cache.get(project_dir)
     if not search_engine:
@@ -414,7 +416,9 @@ def rag_local_build_context(
 
 def rag_local_entities(context_parameters: ContextParameters) -> list[str]:
     context_builder_result = rag_local_context_builder_result(context_parameters)
-    return context_builder_result.context_records["entities"][["entity"]].to_dict(orient="records")
+    return context_builder_result.context_records["entities"][["entity"]].to_dict(
+        orient="records"
+    )
 
 
 async def rag_global(query_params: QueryParameters) -> str:

@@ -43,7 +43,11 @@ async def generate_questions_from_topics(
                     questions_query.text, project_dir, None
                 )
             case Engine.GRAPHRAG:
-                topics = rag_local_entities(ContextParameters(query=questions_query.text, project_dir=project_dir))
+                topics = rag_local_entities(
+                    ContextParameters(
+                        query=questions_query.text, project_dir=project_dir
+                    )
+                )
                 topics = [t["entity"] for t in topics[:limit]]
             case _:
                 raise ValueError(
