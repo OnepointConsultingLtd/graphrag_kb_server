@@ -1,14 +1,15 @@
 #!/bin/bash
 
+alias uv=/home/ubuntu/.local/bin/uv
 source .venv/bin/activate
 uv sync
 
 # Build GraphRAG front end
-cd front_end
-cp server_prod.js server.ts
-yarn
-yarn build
-cd ..
+# cd front_end
+# cp server_prod.js server.ts
+# yarn
+# yarn build
+# cd ..
 
 # Build front end chat
 # nvm use v22.12.0
