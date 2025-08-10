@@ -67,7 +67,8 @@ export default function TopicButtons({
                   </div>
                 </div>
                 <div className="flex flex-row justify-between mt-1">
-                  {isDescription ? <MdExpandLess className="cursor-pointer" fill="white" color="white" onClick={() => injectTopicDescription(index, related)} /> : <MdExpandMore className="cursor-pointer" fill="white" color="white" onClick={() => injectTopicDescription(index, related)} />}
+                  {isDescription ? <MdExpandLess className="cursor-pointer" fill="white" color="white" onClick={() => injectTopicDescription(index, related)} title="Hide description" /> : 
+                    <MdExpandMore className="cursor-pointer" fill="white" color="white" onClick={() => injectTopicDescription(index, related)} title="Show description" />}
                 </div>
             </div>
 
