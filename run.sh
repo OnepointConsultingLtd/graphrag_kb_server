@@ -1,8 +1,9 @@
 #!/bin/bash
 
-alias uv=/home/ubuntu/.local/bin/uv
+cd /home/ubuntu/projects/graphrag_kb_server_chat_ui
+
 source .venv/bin/activate
-uv sync
+/home/ubuntu/.local/bin/uv sync
 
 # Build GraphRAG front end
 # cd front_end
@@ -20,5 +21,5 @@ uv sync
 # cd ..
 
 cd "$(dirname "$0")"
-uv sync
-uv run ./graphrag_kb_server/main/webapp.py
+/home/ubuntu/.local/bin/uv sync
+/home/ubuntu/.local/bin/uv run ./graphrag_kb_server/main/webapp.py
