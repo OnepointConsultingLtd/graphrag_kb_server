@@ -57,7 +57,7 @@ export default function ChatInput() {
         question: inputText,
         project: selectedProject,
         chatHistory: chatMessages,
-        conversationId: conversationId ?? crypto.randomUUID(),
+        conversationId: conversationId ?? uuidv4(),
       };
       if (useStreaming && supportsStreaming(selectedProject.platform)) {
         sendWebsocketQuery(socket, jwt, query);
