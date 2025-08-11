@@ -126,6 +126,12 @@ async def read_admin_token(request: web.Request) -> web.Response:
         description: The email used to generate the admin token
         schema:
           type: string
+      - name: password
+        in: query
+        required: true
+        description: The password used to generate the admin token
+        schema:
+          type: string
     responses:
       '200':
         description: Returns the admin token if the name and email are correct.
@@ -163,7 +169,8 @@ async def read_admin_token(request: web.Request) -> web.Response:
     query = request.rel_url.query
     name = query.get("name", "")
     email = query.get("email", "")
-    if name == jwt_cfg.admin_token_name and email == jwt_cfg.admin_token_email:
+    password = query.get("password", "")
+    if name == jwt_cfg.admin_token_name and email == jwt_cfg.admin_token_email and password == jwt_cfg.admin_token_password:
         return web.json_response({"token": jwt_cfg.admin_jwt}, headers=CORS_HEADERS)
     else:
         return invalid_response(

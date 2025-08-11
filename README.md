@@ -254,6 +254,7 @@ When you start the container, please define these variables:
 ```
 ADMIN_TOKEN_NAME
 ADMIN_TOKEN_EMAIL
+ADMIN_TOKEN_PASSWORD
 OPENAI_API_KEY
 GEMINI_API_KEY
 SERVER_BASE_URL

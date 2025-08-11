@@ -110,7 +110,11 @@ class JWTConfig:
     timedelta_minutes = int(timedelta_minutes)
     admin_jwt: str = ""
     admin_token_name = os.getenv("ADMIN_TOKEN_NAME")
+    assert admin_token_name is not None, "Cannot find admin token name"
     admin_token_email = os.getenv("ADMIN_TOKEN_EMAIL")
+    assert admin_token_email is not None, "Cannot find admin token email"
+    admin_token_password = os.getenv("ADMIN_TOKEN_PASSWORD")
+    assert admin_token_password is not None, "Cannot find admin token password"
 
 
 cfg = Config()
