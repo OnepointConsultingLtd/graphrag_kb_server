@@ -25,6 +25,7 @@ import {
 } from "../lib/parameters";
 import { showCloseModal } from "../lib/dialog";
 import { topicQuestionTemplate } from "../components/main-chat/Messages";
+import { v4 as uuidv4 } from "uuid";
 
 if (getParameterFromUrl("token")) {
   localStorage.removeItem("chat-store");
@@ -282,7 +283,7 @@ const useChatStore = create<ChatStore>()(
             return {
               chatMessages: [],
               isThinking: false,
-              conversationId: crypto.randomUUID(),
+              conversationId: uuidv4(),
               showTopics: true,
               relatedTopics: null,
               selectedTopic: null,
@@ -346,7 +347,7 @@ const useChatStore = create<ChatStore>()(
           set({
             selectedProject,
             chatType,
-            conversationId: crypto.randomUUID(),
+            conversationId: uuidv4(),
             chatMessages: [],
             isThinking: false,
             conversationTopicsNumber: chatType === ChatType.FLOATING ? 6 : 12,
