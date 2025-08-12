@@ -28,7 +28,7 @@ async def generate_questions_from_topics(
     limit: int = questions_query.limit
     entity_type_filter: str = questions_query.entity_type_filter
     topics: list[str] = questions_query.topics
-    cache_key = f"{project_dir.as_posix()}_{engine.value}_{limit}_{entity_type_filter}_{";".join(topics)}"
+    cache_key = f"{project_dir.as_posix()}_{engine.value}_{limit}_{entity_type_filter}_{";".join(topics)}_{questions_query.text}"
     cached_questions = question_generation_cache.get(cache_key)
     if cached_questions is not None:
         return cached_questions
