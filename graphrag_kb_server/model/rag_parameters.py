@@ -70,7 +70,7 @@ class QueryParameters(BaseModel):
         description="Whether to append the keywords to the context.",
     )
     max_filepath_depth: int = Field(
-        default=100,
+        default=50,
         description="The maximum length of the file path to include in the context.",
     )
 
