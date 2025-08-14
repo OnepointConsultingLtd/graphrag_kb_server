@@ -6,7 +6,6 @@ import random
 from linkedin_api import Linkedin
 from linkedin_api.cookie_repository import LinkedinSessionExpired
 
-from cachetools import TTLCache, cached
 from graphrag_kb_server.config import linkedin_cfg
 from graphrag_kb_server.model.linkedin.profile import (
     Profile,
@@ -15,12 +14,16 @@ from graphrag_kb_server.model.linkedin.profile import (
     Skill,
 )
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.utils.cache import GenericSimpleCache
 
 
-_cache = TTLCache(maxsize=200, ttl=60 * 60 * 4)  # 3 hours
+_cache = GenericSimpleCache[str, dict](timeout=60 * 60 * 1)  # 1 hour
 
 
 def _extract_profile_dict(profile: str) -> dict | None:
+    profile_dict = _cache.get(profile)
+    if profile_dict is not None:
+        return profile_dict
     cred_index = random.randint(0, len(linkedin_cfg.linkedin_credentials_list) - 1)
     user, password = linkedin_cfg.linkedin_credentials_list[cred_index]
     try:
@@ -35,7 +38,11 @@ def _extract_profile_dict(profile: str) -> dict | None:
     except Exception as e:
         logger.error(f"Error extracting profile {profile}: {e}")
         return None
-    return api.get_profile(profile)
+    profile_dict = api.get_profile(profile)
+    if profile_dict is None:
+        return None
+    _cache.set(profile, profile_dict)
+    return profile_dict
 
 
 def profile_to_file(profile: str, target: Path) -> Path:
@@ -44,7 +51,6 @@ def profile_to_file(profile: str, target: Path) -> Path:
     return target
 
 
-@cached(cache=_cache)
 def extract_profile(profile: str) -> Profile | None:
     profile_data: dict = _extract_profile_dict(profile)
     if profile_data is None or len(profile_data) == 0:
