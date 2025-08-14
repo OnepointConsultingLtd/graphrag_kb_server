@@ -59,16 +59,14 @@ async def linkedin_profile(request: web.Request) -> web.Response:
             return invalid_response(
                 "No profile id",
                 "Please specify a profile id.",
-                status=400,
-                headers=CORS_HEADERS,
+                status=400
             )
         profile = extract_profile(profile_id)
         if profile is None:
             return invalid_response(
                 "Cannot find profile",
                 "Please specify another profile id.",
-                status=404,
-                headers=CORS_HEADERS,
+                status=404
             )
         return web.Response(
             text=profile.model_dump_json(),

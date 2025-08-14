@@ -90,6 +90,13 @@ class Config:
     server_base_url = os.getenv("SERVER_BASE_URL")
     assert server_base_url is not None, "Please specify the server base URL"
 
+    bright_data_mcp_api_token = os.getenv("BRIGHT_DATA_MCP_API_TOKEN")
+    assert (
+        bright_data_mcp_api_token is not None
+    ), "Please specify the Bright Data MCP API token"
+    browser_zone = os.getenv("BROWSER_ZONE")
+    assert browser_zone is not None, "Please specify the browser zone"
+
 
 class WebsocketConfig:
     websocket_server = os.getenv("SERVER")
