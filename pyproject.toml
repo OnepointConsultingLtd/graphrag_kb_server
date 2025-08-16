@@ -24,6 +24,7 @@ dependencies = [
     "rustworkx>=0.16.0",
     "tomli>=2.2.1",
     "linkedin-api>=2.3.1",
+    "asyncer>=0.0.8",
 ]
 
 [project.scripts]

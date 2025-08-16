@@ -1,6 +1,8 @@
 from aiohttp import web
 import json
 
+from asyncer import asyncify
+
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.service.linkedin.profile_service import extract_profile
@@ -85,7 +87,7 @@ async def linkedin_profile(request: web.Request) -> web.Response:
                     )
                 profile_json = json.dumps(profile)
             case "web_scraping":
-                profile = extract_profile(profile_id)
+                profile = await asyncify(extract_profile)(profile_id)
                 if profile is None:
                     return invalid_response(
                         "Cannot find profile",

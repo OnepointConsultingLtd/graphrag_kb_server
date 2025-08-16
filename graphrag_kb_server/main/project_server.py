@@ -11,6 +11,7 @@ from aiohttp import web
 from yarl import URL
 from markdown import markdown
 from aiohttp.web import Response
+from asyncer import asyncify
 
 from graphrag_kb_server.model.rag_parameters import ContextParameters, QueryParameters
 from graphrag_kb_server.model.context import Search
@@ -974,7 +975,7 @@ async def project_related_topics(request: web.Request) -> web.Response:
     ) -> SimilarityTopics | None:
         match engine:
             case Engine.GRAPHRAG:
-                return get_related_topics_graphrag(similarity_topics)
+                return await asyncify(get_related_topics_graphrag)(similarity_topics)
             case Engine.LIGHTRAG:
                 return await get_related_topics_lightrag(similarity_topics)
             case _:
