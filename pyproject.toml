@@ -25,6 +25,7 @@ dependencies = [
     "tomli>=2.2.1",
     "linkedin-api>=2.3.1",
     "asyncer>=0.0.8",
+    "weasyprint>=66.0",
 ]
 
 [project.scripts]

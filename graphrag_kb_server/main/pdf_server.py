@@ -6,6 +6,7 @@ from graphrag_kb_server.config import cfg
 from graphrag_kb_server.utils.file_support import write_uploaded_file
 from graphrag_kb_server.main.error_handler import handle_error
 from graphrag_kb_server.service.file_conversion import convert_pdf_to_markdown
+from graphrag_kb_server.service.html_to_pdf import async_convert_html_to_pdf
 
 from graphrag_kb_server.logger import logger
 
@@ -73,5 +74,59 @@ async def convert_single_pdf(request: web.Request) -> web.Response:
 
     return await handle_error(handle_request, request=request)
 
+
+@routes.post("/protected/pdf/generate")
+async def generate_pdf(request: web.Request) -> web.Response:
+    """
+    Convert single PDF
+    ---
+    summary: Generates PDFs from html
+    tags:
+      - utils
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              html:
+                type: string
+                description: The HTML to be converted
+                default: "<html><body><h1>Test</h1><p style='font-weight: bold'>The Damerau–Levenshtein distance differs from the classical Levenshtein distance by including transpositions among its allowable operations in addition to the three classical single-character edit operations (insertions, deletions and substitutions).</p></body></html>"
+    responses:
+      "200":
+        description: A PDF file with the content of the html
+        content:
+          application/pdf:
+            example:
+              Some markdown text
+      "400":
+        description: Bad Request - HTML is missing
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No file was uploaded"
+    """
+    async def handle_request(request: web.Request) -> web.Response:
+        body = request["data"]["body"]
+        html = body.get("html")
+        if html is None or len(html.strip()) == 0:
+            return web.json_response(
+                {"error": "No HTML available. Please add the HTML to convert."}, status=400
+            )
+        # send the bytes to the client
+        pdf_bytes = await async_convert_html_to_pdf(html)
+        return web.Response(
+            body=pdf_bytes,
+            content_type='application/pdf',
+            headers={
+                'Content-Disposition': 'attachment; filename="document.pdf"'
+            }
+        )
+    return await handle_error(handle_request, request=request)
 
 logger.info("pdf_server.py loaded")
