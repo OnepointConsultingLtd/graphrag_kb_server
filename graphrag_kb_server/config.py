@@ -149,6 +149,11 @@ class LinkedInConfig:
     linkedin_credentials_list = list(linkedin_credentials.items())
 
 
+class BrightDataConfig:
+    bright_data_api_key = os.getenv("BRIGHT_DATA_API_KEY")
+    assert bright_data_api_key is not None, "Please specify the Bright Data API key"
+
+
 websocket_cfg = WebsocketConfig()
 
 jwt_cfg = JWTConfig()
@@ -158,6 +163,8 @@ admin_cfg = AdminConfig()
 lightrag_cfg = LightRAGConfig()
 
 linkedin_cfg = LinkedInConfig()
+
+bright_data_cfg = BrightDataConfig()
 
 if __name__ == "__main__":
     print(linkedin_cfg.linkedin_credentials)

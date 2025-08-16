@@ -1,8 +1,10 @@
 from aiohttp import web
+import json
 
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.service.linkedin.profile_service import extract_profile
+from graphrag_kb_server.service.linkedin.brightdata_service import scrape_linkedin_profile
 
 routes = web.RouteTableDef()
 
@@ -27,6 +29,15 @@ async def linkedin_profile(request: web.Request) -> web.Response:
         description: The linkedin profile id
         schema:
           type: string
+      - name: source
+        in: query
+        required: true
+        description: The source of the profile
+        schema:
+          type: string
+          enum:
+            - brightdata
+            - web_scraping
     security:
       - bearerAuth: []
     responses:
@@ -61,15 +72,36 @@ async def linkedin_profile(request: web.Request) -> web.Response:
                 "Please specify a profile id.",
                 status=400,
             )
-        profile = extract_profile(profile_id)
-        if profile is None:
-            return invalid_response(
-                "Cannot find profile",
-                "Please specify another profile id.",
-                status=404,
-            )
+        source = request.query.get("source", "brightdata")
+        profile_json: str = ""
+        match source:
+            case "brightdata":
+                profile = await scrape_linkedin_profile(profile_id)
+                if profile is None:
+                    return invalid_response(
+                        "Cannot find profile",
+                        "Please specify another profile id.",
+                        status=404,
+                    )
+                profile_json = json.dumps(profile)
+            case "web_scraping":
+                profile = extract_profile(profile_id)
+                if profile is None:
+                    return invalid_response(
+                        "Cannot find profile",
+                        "Please specify another profile id.",
+                        status=404,
+                    )
+                profile_json = profile.model_dump_json()
+            case _:
+                return invalid_response(
+                    "Invalid source",
+                    "Please specify a valid source.",
+                    status=400,
+                )
+        
         return web.Response(
-            text=profile.model_dump_json(),
+            text=profile_json,
             headers={**CORS_HEADERS, "Content-Type": "application/json"},
         )
 
