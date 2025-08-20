@@ -1,6 +1,8 @@
 import pytest
 import json
-from graphrag_kb_server.service.linkedin.brightdata_service import scrape_linkedin_profile
+from graphrag_kb_server.service.linkedin.brightdata_service import (
+    scrape_linkedin_profile,
+)
 
 
 @pytest.mark.asyncio

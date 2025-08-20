@@ -9,6 +9,7 @@ from graphrag_kb_server.service.file_conversion import convert_pdf_to_markdown
 from graphrag_kb_server.service.html_to_pdf import async_convert_html_to_pdf
 
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.main.cors import CORS_HEADERS
 
 routes = web.RouteTableDef()
 
@@ -75,6 +76,11 @@ async def convert_single_pdf(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
+@routes.options("/protected/pdf/generate")
+async def generate_pdf_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
 @routes.post("/protected/pdf/generate")
 async def generate_pdf(request: web.Request) -> web.Response:
     """
@@ -95,7 +101,7 @@ async def generate_pdf(request: web.Request) -> web.Response:
               html:
                 type: string
                 description: The HTML to be converted
-                default: "<html><body><h1>Test</h1><p style='font-weight: bold'>The Damerau–Levenshtein distance differs from the classical Levenshtein distance by including transpositions among its allowable operations in addition to the three classical single-character edit operations (insertions, deletions and substitutions).</p></body></html>"
+                default: "<html><body style='font-family: sans-serif'><h1>Test</h1><p style='font-weight: normal'>The Damerau–Levenshtein distance differs from the classical Levenshtein distance by including transpositions among its allowable operations in addition to the three classical single-character edit operations (insertions, deletions and substitutions).</p><p><img src='https://lighthouse-dev-gil.s3.eu-west-2.amazonaws.com//2/hq720_3cf2abeb8a_16d95bf029_26eb1af414.jpg' style='width: 100%' /></p></body></html>"
     responses:
       "200":
         description: A PDF file with the content of the html
@@ -111,22 +117,24 @@ async def generate_pdf(request: web.Request) -> web.Response:
               status: "error"
               message: "No file was uploaded"
     """
+
     async def handle_request(request: web.Request) -> web.Response:
         body = request["data"]["body"]
         html = body.get("html")
         if html is None or len(html.strip()) == 0:
             return web.json_response(
-                {"error": "No HTML available. Please add the HTML to convert."}, status=400
+                {"error": "No HTML available. Please add the HTML to convert."},
+                status=400, headers=CORS_HEADERS
             )
         # send the bytes to the client
         pdf_bytes = await async_convert_html_to_pdf(html)
         return web.Response(
             body=pdf_bytes,
-            content_type='application/pdf',
-            headers={
-                'Content-Disposition': 'attachment; filename="document.pdf"'
-            }
+            content_type="application/pdf",
+            headers={"Content-Disposition": 'attachment; filename="document.pdf"', **CORS_HEADERS},
         )
+
     return await handle_error(handle_request, request=request)
+
 
 logger.info("pdf_server.py loaded")

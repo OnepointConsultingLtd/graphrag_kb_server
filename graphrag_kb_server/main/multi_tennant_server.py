@@ -81,6 +81,7 @@ async def auth_middleware(request: web.Request, handler):
             "/protected/search",
             "/protected/project/questions",
             "/protected/project/related_topics",
+            "/protected/pdf/generate"
         ]
         if (
             request.method in ["POST", "PATCH", "DELETE"]
