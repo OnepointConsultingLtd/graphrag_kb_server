@@ -7,10 +7,11 @@ from graphrag_kb_server.main.error_handler import invalid_response
 from graphrag_kb_server.model.engines import find_engine_from_query
 from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.model.engines import Engine
+from graphrag_kb_server.main.multi_tennant_server import TOKEN_DATA
 
 
 def extract_tennant_folder(request: web.Request) -> Path | Response:
-    token_data = request["token_data"]
+    token_data = request[TOKEN_DATA]
     if token_data is None:
         return invalid_response(
             "No tennant information", "No tennant information available in request"

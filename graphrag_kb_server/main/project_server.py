@@ -1451,6 +1451,7 @@ async def download_single_file(request: web.Request) -> web.Response:
     summary: returns a file with the content of the input folder
     tags:
       - project
+    security: []  # Empty security array indicates no authentication required
     parameters:
       - name: project
         in: query
@@ -1483,8 +1484,12 @@ async def download_single_file(request: web.Request) -> web.Response:
         description: Whether to include the original file content in the response.
         schema:
           type: boolean
-    security:
-      - bearerAuth: []
+      - name: token
+        in: query
+        required: false
+        description: The token to use to access the file.
+        schema:
+          type: string
     responses:
       '200':
         description: A file as an attachment

@@ -26,6 +26,8 @@ UNAUTHORIZED = 401
 
 ADMIN_TOKEN_PATH = "/tennant/admin_token"
 
+TOKEN_DATA = "token_data"
+
 
 routes = web.RouteTableDef()
 
@@ -45,9 +47,13 @@ async def authenticate_request(request) -> dict:
         # Options should be not authenticated.
         return {}
     if not auth_header or not auth_header.startswith("Bearer "):
-        raise web.HTTPUnauthorized(
-            reason="Missing or invalid Authorization header", headers=CORS_HEADERS
-        )
+        token = request.rel_url.query.get("token", None) # You can also pass the token in the query string
+        if not token:
+            raise web.HTTPUnauthorized(
+                reason="Missing or invalid Authorization header", headers=CORS_HEADERS
+            )
+        else:
+            return await _validate_token(token)
     token = auth_header[len("Bearer ") :]
     return await _validate_token(token)
 
@@ -63,7 +69,7 @@ async def auth_middleware(request: web.Request, handler):
     # Authenticate for protected routes
     try:
         token_dict = await authenticate_request(request)
-        request["token_data"] = token_dict
+        request[TOKEN_DATA] = token_dict
 
         # All tennant routes are only accessible to administrators
         if request_path.startswith("/protected/tennant"):
@@ -468,7 +474,7 @@ async def create_read_only_token(request: web.Request) -> web.Response:
         body = await request.json()
         if "email" in body:
             email = body["email"]
-            sub = request["token_data"]["sub"]
+            sub = request[TOKEN_DATA]["sub"]
             jwt_token: JWTToken | Error = await _generate_jwt_token(email, sub)
             if isinstance(jwt_token, JWTToken):
                 return web.json_response(jwt_token.model_dump())
