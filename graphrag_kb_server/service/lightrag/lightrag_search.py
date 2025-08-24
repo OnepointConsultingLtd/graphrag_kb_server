@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 from dataclasses import asdict
 from typing import AsyncIterator
@@ -7,6 +8,13 @@ import os
 import numpy as np
 
 from lightrag import LightRAG, QueryParam
+from lightrag.constants import (
+    DEFAULT_MAX_ENTITY_TOKENS,
+    DEFAULT_MAX_RELATION_TOKENS,
+    DEFAULT_MAX_TOTAL_TOKENS,
+    GRAPH_FIELD_SEP
+)
+from lightrag.utils import truncate_list_by_token_size, process_chunks_unified
 
 from lightrag.operate import (
     PROMPTS,
@@ -22,6 +30,7 @@ from lightrag.operate import (
     _get_vector_context,
 )
 from lightrag.base import BaseGraphStorage, BaseVectorStorage, BaseKVStorage
+from lightrag.operate import _find_most_related_text_unit_from_entities, _find_related_text_unit_from_relationships
 
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.model.rag_parameters import (
@@ -198,7 +207,8 @@ async def prepare_context(
 ) -> tuple[str, str, np.ndarray | None, int, int, list[dict], list[dict], list[dict]]:
 
     # Handle cache
-    args_hash = compute_args_hash(query_param.mode, query, cache_type="query")
+    cache_type = "query"
+    args_hash = compute_args_hash(query_param.mode, query, cache_type)
     _, quantized, min_val, max_val = await handle_cache(
         hashing_kv, args_hash, query, query_param.mode, cache_type="query"
     )
@@ -239,6 +249,7 @@ async def prepare_context(
     # Build context
     entities_context, relations_context, text_units_context = (
         await _build_query_context(
+            query,
             ll_keywords_str,
             hl_keywords_str,
             knowledge_graph_inst,
@@ -268,7 +279,7 @@ async def prepare_context(
     )
 
 
-async def _build_query_context(
+async def _build_query_context_xxx(
     ll_keywords: str,
     hl_keywords: str,
     knowledge_graph_inst: BaseGraphStorage,
@@ -302,27 +313,23 @@ async def _build_query_context(
             ll_keywords,
             knowledge_graph_inst,
             entities_vdb,
-            text_chunks_db,
             query_param,
         )
         hl_data = await _get_edge_data(
             hl_keywords,
             knowledge_graph_inst,
             relationships_vdb,
-            text_chunks_db,
             query_param,
         )
 
         (
             ll_entities_context,
             ll_relations_context,
-            ll_text_units_context,
         ) = ll_data
 
         (
             hl_entities_context,
             hl_relations_context,
-            hl_text_units_context,
         ) = hl_data
 
         # Initialize vector data with empty lists
@@ -361,12 +368,453 @@ async def _build_query_context(
             hl_relations_context, ll_relations_context, vector_relations_context
         )
         text_units_context = process_combine_contexts(
-            hl_text_units_context, ll_text_units_context, vector_text_units_context
+            vector_text_units_context
         )
     # not necessary to use LLM to generate a response
     if not entities_context and not relations_context:
         return None
 
+    return entities_context, relations_context, text_units_context
+
+
+async def _build_query_context(
+    query: str,
+    ll_keywords: str,
+    hl_keywords: str,
+    knowledge_graph_inst: BaseGraphStorage,
+    entities_vdb: BaseVectorStorage,
+    relationships_vdb: BaseVectorStorage,
+    text_chunks_db: BaseKVStorage,
+    query_param: QueryParam,
+    chunks_vdb: BaseVectorStorage = None,
+):
+    logger.info(f"Process {os.getpid()} building query context...")
+
+    # Collect chunks from different sources separately
+    vector_chunks = []
+    entity_chunks = []
+    relation_chunks = []
+    entities_context = []
+    relations_context = []
+
+    # Store original data for later text chunk retrieval
+    local_entities = []
+    local_relations = []
+    global_entities = []
+    global_relations = []
+
+    # Handle local and global modes
+    if query_param.mode == "local":
+        local_entities, local_relations = await _get_node_data(
+            ll_keywords,
+            knowledge_graph_inst,
+            entities_vdb,
+            query_param,
+        )
+
+    elif query_param.mode == "global":
+        global_relations, global_entities = await _get_edge_data(
+            hl_keywords,
+            knowledge_graph_inst,
+            relationships_vdb,
+            query_param,
+        )
+
+    else:  # hybrid or mix mode
+        local_entities, local_relations = await _get_node_data(
+            ll_keywords,
+            knowledge_graph_inst,
+            entities_vdb,
+            query_param,
+        )
+        global_relations, global_entities = await _get_edge_data(
+            hl_keywords,
+            knowledge_graph_inst,
+            relationships_vdb,
+            query_param,
+        )
+
+        # Get vector chunks first if in mix mode
+        if query_param.mode == "mix" and chunks_vdb:
+            vector_chunks = await _get_vector_context(
+                query,
+                chunks_vdb,
+                query_param,
+            )
+
+    # Use round-robin merge to combine local and global data fairly
+    final_entities = []
+    seen_entities = set()
+
+    # Round-robin merge entities
+    max_len = max(len(local_entities), len(global_entities))
+    for i in range(max_len):
+        # First from local
+        if i < len(local_entities):
+            entity = local_entities[i]
+            entity_name = entity.get("entity_name")
+            if entity_name and entity_name not in seen_entities:
+                final_entities.append(entity)
+                seen_entities.add(entity_name)
+
+        # Then from global
+        if i < len(global_entities):
+            entity = global_entities[i]
+            entity_name = entity.get("entity_name")
+            if entity_name and entity_name not in seen_entities:
+                final_entities.append(entity)
+                seen_entities.add(entity_name)
+
+    # Round-robin merge relations
+    final_relations = []
+    seen_relations = set()
+
+    max_len = max(len(local_relations), len(global_relations))
+    for i in range(max_len):
+        # First from local
+        if i < len(local_relations):
+            relation = local_relations[i]
+            # Build relation unique identifier
+            if "src_tgt" in relation:
+                rel_key = tuple(sorted(relation["src_tgt"]))
+            else:
+                rel_key = tuple(
+                    sorted([relation.get("src_id"), relation.get("tgt_id")])
+                )
+
+            if rel_key not in seen_relations:
+                final_relations.append(relation)
+                seen_relations.add(rel_key)
+
+        # Then from global
+        if i < len(global_relations):
+            relation = global_relations[i]
+            # Build relation unique identifier
+            if "src_tgt" in relation:
+                rel_key = tuple(sorted(relation["src_tgt"]))
+            else:
+                rel_key = tuple(
+                    sorted([relation.get("src_id"), relation.get("tgt_id")])
+                )
+
+            if rel_key not in seen_relations:
+                final_relations.append(relation)
+                seen_relations.add(rel_key)
+
+    # Generate entities context
+    entities_context = []
+    for i, n in enumerate(final_entities):
+        created_at = n.get("created_at", "UNKNOWN")
+        if isinstance(created_at, (int, float)):
+            created_at = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(created_at))
+
+        # Get file path from node data
+        file_path = n.get("file_path", "unknown_source")
+
+        entities_context.append(
+            {
+                "id": i + 1,
+                "entity": n["entity_name"],
+                "type": n.get("entity_type", "UNKNOWN"),
+                "description": n.get("description", "UNKNOWN"),
+                "created_at": created_at,
+                "file_path": file_path,
+            }
+        )
+
+    # Generate relations context
+    relations_context = []
+    for i, e in enumerate(final_relations):
+        created_at = e.get("created_at", "UNKNOWN")
+        # Convert timestamp to readable format
+        if isinstance(created_at, (int, float)):
+            created_at = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(created_at))
+
+        # Get file path from edge data
+        file_path = e.get("file_path", "unknown_source")
+
+        # Handle different relation data formats
+        if "src_tgt" in e:
+            entity1, entity2 = e["src_tgt"]
+        else:
+            entity1, entity2 = e.get("src_id"), e.get("tgt_id")
+
+        relations_context.append(
+            {
+                "id": i + 1,
+                "entity1": entity1,
+                "entity2": entity2,
+                "description": e.get("description", "UNKNOWN"),
+                "created_at": created_at,
+                "file_path": file_path,
+            }
+        )
+
+    logger.debug(
+        f"Initial KG query results: {len(entities_context)} entities, {len(relations_context)} relations"
+    )
+
+    # Unified token control system - Apply precise token limits to entities and relations
+    tokenizer = text_chunks_db.global_config.get("tokenizer")
+    # Get new token limits from query_param (with fallback to global_config)
+    max_entity_tokens = getattr(
+        query_param,
+        "max_entity_tokens",
+        text_chunks_db.global_config.get(
+            "max_entity_tokens", DEFAULT_MAX_ENTITY_TOKENS
+        ),
+    )
+    max_relation_tokens = getattr(
+        query_param,
+        "max_relation_tokens",
+        text_chunks_db.global_config.get(
+            "max_relation_tokens", DEFAULT_MAX_RELATION_TOKENS
+        ),
+    )
+    max_total_tokens = getattr(
+        query_param,
+        "max_total_tokens",
+        text_chunks_db.global_config.get("max_total_tokens", DEFAULT_MAX_TOTAL_TOKENS),
+    )
+
+    # Truncate entities based on complete JSON serialization
+    if entities_context:
+        # Process entities context to replace GRAPH_FIELD_SEP with : in file_path fields
+        for entity in entities_context:
+            if "file_path" in entity and entity["file_path"]:
+                entity["file_path"] = entity["file_path"].replace(GRAPH_FIELD_SEP, ";")
+
+        entities_context = truncate_list_by_token_size(
+            entities_context,
+            key=lambda x: json.dumps(x, ensure_ascii=False),
+            max_token_size=max_entity_tokens,
+            tokenizer=tokenizer,
+        )
+
+    # Truncate relations based on complete JSON serialization
+    if relations_context:
+        # Process relations context to replace GRAPH_FIELD_SEP with : in file_path fields
+        for relation in relations_context:
+            if "file_path" in relation and relation["file_path"]:
+                relation["file_path"] = relation["file_path"].replace(
+                    GRAPH_FIELD_SEP, ";"
+                )
+
+        relations_context = truncate_list_by_token_size(
+            relations_context,
+            key=lambda x: json.dumps(x, ensure_ascii=False),
+            max_token_size=max_relation_tokens,
+            tokenizer=tokenizer,
+        )
+
+    # After truncation, get text chunks based on final entities and relations
+    logger.info(
+        f"Truncated KG query results: {len(entities_context)} entities, {len(relations_context)} relations"
+    )
+
+    # Create filtered data based on truncated context
+    final_node_datas = []
+    if entities_context and final_entities:
+        final_entity_names = {e["entity"] for e in entities_context}
+        seen_nodes = set()
+        for node in final_entities:
+            name = node.get("entity_name")
+            if name in final_entity_names and name not in seen_nodes:
+                final_node_datas.append(node)
+                seen_nodes.add(name)
+
+    final_edge_datas = []
+    if relations_context and final_relations:
+        final_relation_pairs = {(r["entity1"], r["entity2"]) for r in relations_context}
+        seen_edges = set()
+        for edge in final_relations:
+            src, tgt = edge.get("src_id"), edge.get("tgt_id")
+            if src is None or tgt is None:
+                src, tgt = edge.get("src_tgt", (None, None))
+
+            pair = (src, tgt)
+            if pair in final_relation_pairs and pair not in seen_edges:
+                final_edge_datas.append(edge)
+                seen_edges.add(pair)
+
+    # Get text chunks based on final filtered data
+    if final_node_datas:
+        entity_chunks = await _find_most_related_text_unit_from_entities(
+            final_node_datas,
+            query_param,
+            text_chunks_db,
+            knowledge_graph_inst,
+        )
+
+    if final_edge_datas:
+        relation_chunks = await _find_related_text_unit_from_relationships(
+            final_edge_datas,
+            query_param,
+            text_chunks_db,
+            entity_chunks,
+        )
+
+    # Round-robin merge chunks from different sources with deduplication by chunk_id
+    merged_chunks = []
+    seen_chunk_ids = set()
+    max_len = max(len(vector_chunks), len(entity_chunks), len(relation_chunks))
+    origin_len = len(vector_chunks) + len(entity_chunks) + len(relation_chunks)
+
+    for i in range(max_len):
+        # Add from vector chunks first (Naive mode)
+        if i < len(vector_chunks):
+            chunk = vector_chunks[i]
+            chunk_id = chunk.get("chunk_id") or chunk.get("id")
+            if chunk_id and chunk_id not in seen_chunk_ids:
+                seen_chunk_ids.add(chunk_id)
+                merged_chunks.append(
+                    {
+                        "content": chunk["content"],
+                        "file_path": chunk.get("file_path", "unknown_source"),
+                    }
+                )
+
+        # Add from entity chunks (Local mode)
+        if i < len(entity_chunks):
+            chunk = entity_chunks[i]
+            chunk_id = chunk.get("chunk_id") or chunk.get("id")
+            if chunk_id and chunk_id not in seen_chunk_ids:
+                seen_chunk_ids.add(chunk_id)
+                merged_chunks.append(
+                    {
+                        "content": chunk["content"],
+                        "file_path": chunk.get("file_path", "unknown_source"),
+                    }
+                )
+
+        # Add from relation chunks (Global mode)
+        if i < len(relation_chunks):
+            chunk = relation_chunks[i]
+            chunk_id = chunk.get("chunk_id") or chunk.get("id")
+            if chunk_id and chunk_id not in seen_chunk_ids:
+                seen_chunk_ids.add(chunk_id)
+                merged_chunks.append(
+                    {
+                        "content": chunk["content"],
+                        "file_path": chunk.get("file_path", "unknown_source"),
+                    }
+                )
+
+    logger.debug(
+        f"Round-robin merged total chunks from {origin_len} to {len(merged_chunks)}"
+    )
+
+    # Apply token processing to merged chunks
+    text_units_context = []
+    if merged_chunks:
+        # Calculate dynamic token limit for text chunks
+        entities_str = json.dumps(entities_context, ensure_ascii=False)
+        relations_str = json.dumps(relations_context, ensure_ascii=False)
+
+        # Calculate base context tokens (entities + relations + template)
+        kg_context_template = """-----Entities(KG)-----
+
+```json
+{entities_str}
+```
+
+-----Relationships(KG)-----
+
+```json
+{relations_str}
+```
+
+-----Document Chunks(DC)-----
+
+```json
+[]
+```
+
+"""
+        kg_context = kg_context_template.format(
+            entities_str=entities_str, relations_str=relations_str
+        )
+        kg_context_tokens = len(tokenizer.encode(kg_context))
+
+        # Calculate actual system prompt overhead dynamically
+        # 1. Calculate conversation history tokens
+        history_context = ""
+        if query_param.conversation_history:
+            history_context = get_conversation_turns(
+                query_param.conversation_history, query_param.history_turns
+            )
+        history_tokens = (
+            len(tokenizer.encode(history_context)) if history_context else 0
+        )
+
+        # 2. Calculate system prompt template tokens (excluding context_data)
+        user_prompt = query_param.user_prompt if query_param.user_prompt else ""
+        response_type = (
+            query_param.response_type
+            if query_param.response_type
+            else "Multiple Paragraphs"
+        )
+
+        # Get the system prompt template from PROMPTS
+        sys_prompt_template = text_chunks_db.global_config.get(
+            "system_prompt_template", PROMPTS["rag_response"]
+        )
+
+        # Create a sample system prompt with placeholders filled (excluding context_data)
+        sample_sys_prompt = sys_prompt_template.format(
+            history=history_context,
+            context_data="",  # Empty for overhead calculation
+            response_type=response_type,
+            user_prompt=user_prompt,
+        )
+        sys_prompt_template_tokens = len(tokenizer.encode(sample_sys_prompt))
+
+        # Total system prompt overhead = template + query tokens
+        query_tokens = len(tokenizer.encode(query))
+        sys_prompt_overhead = sys_prompt_template_tokens + query_tokens
+
+        buffer_tokens = 100  # Safety buffer as requested
+
+        # Calculate available tokens for text chunks
+        used_tokens = kg_context_tokens + sys_prompt_overhead + buffer_tokens
+        available_chunk_tokens = max_total_tokens - used_tokens
+
+        logger.debug(
+            f"Token allocation - Total: {max_total_tokens}, History: {history_tokens}, SysPrompt: {sys_prompt_overhead}, KG: {kg_context_tokens}, Buffer: {buffer_tokens}, Available for chunks: {available_chunk_tokens}"
+        )
+
+        # Apply token truncation to chunks using the dynamic limit
+        truncated_chunks = await process_chunks_unified(
+            query=query,
+            unique_chunks=merged_chunks,
+            query_param=query_param,
+            global_config=text_chunks_db.global_config,
+            source_type=query_param.mode,
+            chunk_token_limit=available_chunk_tokens,  # Pass dynamic limit
+        )
+
+        # Rebuild text_units_context with truncated chunks
+        for i, chunk in enumerate(truncated_chunks):
+            text_units_context.append(
+                {
+                    "id": i + 1,
+                    "content": chunk["content"],
+                    "file_path": chunk.get("file_path", "unknown_source"),
+                }
+            )
+
+        logger.debug(
+            f"Final chunk processing: {len(merged_chunks)} -> {len(text_units_context)} (chunk available tokens: {available_chunk_tokens})"
+        )
+
+    logger.info(
+        f"Final context: {len(entities_context)} entities, {len(relations_context)} relations, {len(text_units_context)} chunks"
+    )
+
+    # not necessary to use LLM to generate a response
+    if not entities_context and not relations_context:
+        return None
+    
     return entities_context, relations_context, text_units_context
 
 
