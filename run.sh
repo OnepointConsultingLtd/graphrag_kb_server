@@ -18,6 +18,11 @@ source .venv/bin/activate
 # cp src/lib/server_prod.ts src/lib/server.ts
 # yarn
 # yarn build
+# VERSION=1
+# sed -i "s/index-fixed\.css?v=[0-9]\+/index-fixed.css/g" ./front_end_chat/dist/index.html
+# sed -i "s/index-fixed.css/index-fixed.css?v=$VERSION/g" ./front_end_chat/dist/index.html
+# sed -i "s/index-fixed\.js?v=[0-9]\+/index-fixed.js/g" ./front_end_chat/dist/index.html
+# sed -i "s/index-fixed.js/index-fixed.js?v=$VERSION/g" ./front_end_chat/dist/index.html
 # cd ..
 
 cd "$(dirname "$0")"
