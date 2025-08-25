@@ -47,7 +47,9 @@ async def authenticate_request(request) -> dict:
         # Options should be not authenticated.
         return {}
     if not auth_header or not auth_header.startswith("Bearer "):
-        token = request.rel_url.query.get("token", None) # You can also pass the token in the query string
+        token = request.rel_url.query.get(
+            "token", None
+        )  # You can also pass the token in the query string
         if not token:
             raise web.HTTPUnauthorized(
                 reason="Missing or invalid Authorization header", headers=CORS_HEADERS
@@ -87,7 +89,7 @@ async def auth_middleware(request: web.Request, handler):
             "/protected/search",
             "/protected/project/questions",
             "/protected/project/related_topics",
-            "/protected/pdf/generate"
+            "/protected/pdf/generate",
         ]
         if (
             request.method in ["POST", "PATCH", "DELETE"]

@@ -8,7 +8,11 @@ import type {
 } from "../model/projectCategory";
 import { ENGINES } from "../constants/engines";
 import { type ChatMessage, ChatMessageTypeOptions } from "../model/message";
-import { fetchProjects, fetchRelatedTopics } from "../lib/apiClient";
+import {
+  fetchProjects,
+  fetchRelatedTopics,
+  generateQuestions,
+} from "../lib/apiClient";
 import { MARKDOWN_DIALOGUE_ID } from "../components/MarkdownDialogue";
 import { ChatTypeOptions } from "../model/types";
 import { ChatType } from "../lib/chatTypes";
@@ -53,6 +57,7 @@ type ChatStore = {
   useStreaming: boolean;
   conversationTopicsNumber: number;
   showTopics: boolean;
+  topicQuestionsLoading: number | null;
   newProject: () => void;
   setJwt: (jwt: string) => void;
   setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
@@ -75,6 +80,8 @@ type ChatStore = {
   refreshProjects: () => void;
   setTopics: (topics: Topics) => void;
   injectTopicDescription: (index: number, related: boolean) => void;
+  injectTopicQuestions: (index: number, related: boolean) => void;
+  removeTopicQuestions: (index: number, related: boolean) => void;
   setInputText: (inputText: string) => void;
   setSelectedTopic: (topic: Topic) => void;
   setConversationId: (conversationId: string) => void;
@@ -82,6 +89,7 @@ type ChatStore = {
   setConversationTopicsNumber: (conversationTopicsNumber: number) => void;
   setShowTopics: (showTopics: boolean) => void;
   streamEnded: () => void;
+  selectTopicQuestion: (question: string) => void;
 };
 
 const THRESHOLD = 50;
@@ -166,7 +174,7 @@ const useChatStore = create<ChatStore>()(
       }
 
       function loadRelatedTopics(message: ChatMessage) {
-        const isAgentMessage = message.type === ChatMessageTypeOptions.AGENT
+        const isAgentMessage = message.type === ChatMessageTypeOptions.AGENT;
         if (!isAgentMessage) {
           return;
         }
@@ -201,6 +209,40 @@ const useChatStore = create<ChatStore>()(
         }
       }
 
+      function generateTopicQuestions(index: number, related: boolean) {
+        const project = get().selectedProject;
+        const currentTopics = getCurrentTopics(related);
+        if (!project || !currentTopics) {
+          set({ topicQuestionsLoading: index });
+          return;
+        }
+        const topic = currentTopics[index];
+        generateQuestions(get().jwt, project, topic)
+          .then((questions) => {
+            const newTopics = [...currentTopics];
+            newTopics[index].questions = [];
+            if (questions.topic_questions.length > 0) {
+              newTopics[index].questions = questions.topic_questions[0].questions;
+            }
+            if (related) {
+              set({ relatedTopics: { topics: newTopics } });
+            } else {
+              set({ topics: { topics: newTopics } });
+            }
+          })
+          .catch((error) => {
+            console.error("Error generating topic questions:", error);
+          })
+          .finally(() => {
+            set({ topicQuestionsLoading: null });
+          });
+      }
+
+      function getCurrentTopics(related: boolean) {
+        const state = get();
+        return related ? state.relatedTopics?.topics : state.topics?.topics;
+      }
+
       // Initialize projects if JWT is available
       const initialJwt = initJwt();
       if (initialJwt) {
@@ -230,6 +272,7 @@ const useChatStore = create<ChatStore>()(
         conversationTopicsNumber: 6,
         showTopics: true,
         relatedTopics: null,
+        topicQuestionsLoading: null,
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {
@@ -316,7 +359,7 @@ const useChatStore = create<ChatStore>()(
               relatedTopics: null,
               selectedTopic: null,
               inputText: "",
-            }
+            };
           }),
         initializeProjects: async () => {
           const jwt = get().jwt;
@@ -361,20 +404,49 @@ const useChatStore = create<ChatStore>()(
           }),
         setTopics: (topics: Topics) =>
           set(() => {
-            const filteredTopics = topics?.topics?.filter((topic) => topic.type);
+            const filteredTopics = topics?.topics?.filter(
+              (topic) => topic.type,
+            );
             return {
               topics: { topics: filteredTopics },
               conversationTopicsNumber: topics?.topics?.length ?? 0,
             };
           }),
         injectTopicDescription: (index: number, related: boolean) =>
-          set((state) => {
-            const currentTopics = related ? state.relatedTopics?.topics : state.topics?.topics
+          set(() => {
+            const currentTopics = getCurrentTopics(related);
             if (!currentTopics) {
-              return related ? { relatedTopics: { topics: [] } } : { topics: { topics: [] } };
+              return {};
             }
-            const newTopics = currentTopics.filter((topic) => topic.type).map((topic, i) => ({...topic, showDescription: i === index ? (topic.showDescription ? false : true) : false }))
-            return related ? { relatedTopics: { topics: newTopics } } : { topics: { topics: newTopics } };
+            const newTopics = currentTopics
+              .filter((topic) => topic.type)
+              .map((topic, i) => ({
+                ...topic,
+                showDescription:
+                  i === index ? (topic.showDescription ? false : true) : false,
+              }));
+            return related
+              ? { relatedTopics: { topics: newTopics } }
+              : { topics: { topics: newTopics } };
+          }),
+        injectTopicQuestions: (index: number, related: boolean) =>
+          set(() => {
+            generateTopicQuestions(index, related);
+            return { topicQuestionsLoading: index };
+          }),
+        removeTopicQuestions: (index: number, related: boolean) =>
+          set(() => {
+            const currentTopics = getCurrentTopics(related);
+            if (!currentTopics) {
+              return {};
+            }
+            const newTopics = [...currentTopics];
+            newTopics[index].questions = [];
+            if (related) {
+              return { topicQuestionsLoading: null, relatedTopics: { topics: newTopics } };
+            } else {
+              return { topicQuestionsLoading: null, topics: { topics: newTopics } };
+            }
           }),
         setInputText: (inputText: string) =>
           set((_) => {
@@ -404,6 +476,10 @@ const useChatStore = create<ChatStore>()(
               loadRelatedTopics(state.chatMessages.slice(-1)[0]);
             }
             return { isThinking: false };
+          }),
+        selectTopicQuestion: (question: string) =>
+          set(() => {
+            return { inputText: question };
           }),
       };
     },

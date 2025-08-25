@@ -124,14 +124,18 @@ async def generate_pdf(request: web.Request) -> web.Response:
         if html is None or len(html.strip()) == 0:
             return web.json_response(
                 {"error": "No HTML available. Please add the HTML to convert."},
-                status=400, headers=CORS_HEADERS
+                status=400,
+                headers=CORS_HEADERS,
             )
         # send the bytes to the client
         pdf_bytes = await async_convert_html_to_pdf(html)
         return web.Response(
             body=pdf_bytes,
             content_type="application/pdf",
-            headers={"Content-Disposition": 'attachment; filename="document.pdf"', **CORS_HEADERS},
+            headers={
+                "Content-Disposition": 'attachment; filename="document.pdf"',
+                **CORS_HEADERS,
+            },
         )
 
     return await handle_error(handle_request, request=request)

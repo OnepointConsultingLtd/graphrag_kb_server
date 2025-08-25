@@ -95,3 +95,4 @@ class QuestionsQuery(BaseModel):
     entity_type_filter: str = Field(..., description="The entity type to filter by")
     topics: list[str] = Field(..., description="The topics filter list")
     text: str = Field(default="", description="The text to generate questions for")
+    system_prompt: str = Field(default="", description="The system prompt to use")

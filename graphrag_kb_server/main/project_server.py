@@ -836,6 +836,10 @@ async def project_questions(request: web.Request) -> web.Response:
                 description: The format of the output (json, csv)
                 enum: [json, csv]
                 default: json
+              system_prompt:
+                type: string
+                description: The system prompt to use for the question generation. This will override the default system prompt.
+                default: ""
     responses:
       '200':
         description: Expected response to a valid request
@@ -867,6 +871,7 @@ async def project_questions(request: web.Request) -> web.Response:
                         entity_type_filter=entity_type_filter,
                         topics=topics,
                         text=text,
+                        system_prompt=body.get("system_prompt", ""),
                     )
                 )
                 format = request.rel_url.query.get("format", Format.JSON.value)

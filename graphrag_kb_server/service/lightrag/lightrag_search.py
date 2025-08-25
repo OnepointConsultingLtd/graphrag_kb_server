@@ -12,7 +12,7 @@ from lightrag.constants import (
     DEFAULT_MAX_ENTITY_TOKENS,
     DEFAULT_MAX_RELATION_TOKENS,
     DEFAULT_MAX_TOTAL_TOKENS,
-    GRAPH_FIELD_SEP
+    GRAPH_FIELD_SEP,
 )
 from lightrag.utils import truncate_list_by_token_size, process_chunks_unified
 
@@ -30,7 +30,10 @@ from lightrag.operate import (
     _get_vector_context,
 )
 from lightrag.base import BaseGraphStorage, BaseVectorStorage, BaseKVStorage
-from lightrag.operate import _find_most_related_text_unit_from_entities, _find_related_text_unit_from_relationships
+from lightrag.operate import (
+    _find_most_related_text_unit_from_entities,
+    _find_related_text_unit_from_relationships,
+)
 
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.model.rag_parameters import (
@@ -367,9 +370,7 @@ async def _build_query_context_xxx(
         relations_context = process_combine_contexts(
             hl_relations_context, ll_relations_context, vector_relations_context
         )
-        text_units_context = process_combine_contexts(
-            vector_text_units_context
-        )
+        text_units_context = process_combine_contexts(vector_text_units_context)
     # not necessary to use LLM to generate a response
     if not entities_context and not relations_context:
         return None
@@ -814,7 +815,7 @@ async def _build_query_context(
     # not necessary to use LLM to generate a response
     if not entities_context and not relations_context:
         return None
-    
+
     return entities_context, relations_context, text_units_context
 
 

@@ -29,16 +29,15 @@ export default function Actions() {
 
   const isActionDisabled = !selectionProject;
   const isLighrag = selectedProject?.platform === "lightrag";
-  
 
   function handleDownloadTopics() {
-    if(selectedProject) {
+    if (selectedProject) {
       setDownloadingTopics(true);
       downloadTopics(jwt, selectedProject)
-      .then((blob) => {
-        downloadBlob(blob, `${selectedProject?.name}_topics.csv`);
-      })
-      .finally(() => setDownloadingTopics(false));
+        .then((blob) => {
+          downloadBlob(blob, `${selectedProject?.name}_topics.csv`);
+        })
+        .finally(() => setDownloadingTopics(false));
     }
   }
 

@@ -109,7 +109,13 @@ function AdditionalInstructionsInput({
 function ActionButtons() {
   const navigate = useNavigate();
 
-  const { setIsChatConfigDialogOpen, localChatType, searchType, selectionProject, additionalPromptInstructions } = useProjectSelectionStore(
+  const {
+    setIsChatConfigDialogOpen,
+    localChatType,
+    searchType,
+    selectionProject,
+    additionalPromptInstructions,
+  } = useProjectSelectionStore(
     useShallow((state) => ({
       localChatType: state.localChatType,
       selectionProject: state.selectionProject,
@@ -166,7 +172,6 @@ function ActionButtons() {
 export const CHAT_CONFIG_DIALOG_ID = "chat-config-dialog";
 
 export default function ChatConfigDialog() {
-
   const { selectedProject } = useChatStore(
     useShallow((state) => ({
       selectedProject: state.selectedProject,

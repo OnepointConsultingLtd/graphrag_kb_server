@@ -1,6 +1,6 @@
 import type { Project } from "../model/projectCategory";
 import type { Reference } from "../model/references";
-import type { Topics } from "../model/topics";
+import type { Topics, Topic } from "../model/topics";
 import { getBaseServer } from "./server";
 import type { Query } from "../model/query";
 import type { ChatMessage } from "../model/message";
@@ -14,6 +14,13 @@ function createHeaders(jwt: string) {
       Authorization: `Bearer ${jwt}`,
     },
   };
+}
+
+function createBaseUrlParams(project: Project) {
+  const params = new URLSearchParams();
+  params.set("project", project.name);
+  params.set("engine", project.platform);
+  return params;
 }
 
 async function processError(response: Response) {
@@ -127,9 +134,7 @@ export async function downloadFile(
   reference: Reference,
   originalFile: boolean = false,
 ): Promise<Response> {
-  const params = new URLSearchParams();
-  params.set("project", project.name);
-  params.set("engine", project.platform);
+  const params = createBaseUrlParams(project);
   params.set("file", reference.path || "");
   params.set("summary", "false");
   if (originalFile) {
@@ -219,9 +224,7 @@ export async function deleteProject(
 }
 
 function topicRequestFactory(project: Project, limit: number = 12) {
-  const params = new URLSearchParams();
-  params.set("project", project.name);
-  params.set("engine", project.platform);
+  const params = createBaseUrlParams(project);
   params.set("limit", `${limit}`);
   params.set("add_questions", "false");
   return params;
@@ -262,9 +265,7 @@ export async function fetchRelatedTopics(
   source: string,
   text: string,
 ) {
-  const params = new URLSearchParams();
-  params.set("project", project.name);
-  params.set("engine", project.platform);
+  const params = createBaseUrlParams(project);
   const requestBody = {
     source: source,
     text,
@@ -288,9 +289,7 @@ export async function fetchRelatedTopics(
 }
 
 export async function downloadTopics(jwt: string, project: Project) {
-  const params = new URLSearchParams();
-  params.set("project", project.name);
-  params.set("engine", project.platform);
+  const params = createBaseUrlParams(project);
   params.set("format", "csv");
   params.set("limit", "100000");
   const response = await fetch(
@@ -303,4 +302,34 @@ export async function downloadTopics(jwt: string, project: Project) {
     );
   }
   return await response.blob();
+}
+
+export async function generateQuestions(
+  jwt: string,
+  project: Project,
+  topic: Topic,
+) {
+  const params = createBaseUrlParams(project);
+  const requestBody = {
+    topics: [topic.name],
+    text: "",
+    topic_limit: 10,
+    entity_type_filter: topic.type,
+    format: "json",
+    system_prompt: "",
+  };
+  const response = await fetch(
+    `${getBaseServer()}/protected/project/questions?${params.toString()}`,
+    {
+      method: "POST",
+      ...createHeaders(jwt),
+      body: JSON.stringify(requestBody),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Failed to generate questions. Error code: ${response.status}. Error: ${response.statusText}`,
+    );
+  }
+  return await response.json();
 }
