@@ -8,10 +8,12 @@ from graphrag.query.structured_search.local_search.search import LocalSearch
 T = TypeVar("T")
 U = TypeVar("U")
 
+DEFAULT_TIMEOUT = 3600 * 24 # 1 day
+
 
 class GenericProjectSimpleCache(Generic[T]):
 
-    def __init__(self, timeout: int = 3600):
+    def __init__(self, timeout: int = DEFAULT_TIMEOUT):
         self.cache: Dict[str, Dict[str, Any]] = {}
         self.timeout = timeout
 
@@ -35,7 +37,7 @@ class GenericProjectSimpleCache(Generic[T]):
 
 class GenericSimpleCache(Generic[T, U]):
 
-    def __init__(self, timeout: int = 3600):
+    def __init__(self, timeout: int = DEFAULT_TIMEOUT):
         self.cache: Dict[U, Dict[str, Any]] = {}
         self.timeout = timeout
 
