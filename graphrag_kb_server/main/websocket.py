@@ -1,4 +1,5 @@
 import json
+import traceback
 from pathlib import Path
 from enum import StrEnum
 
@@ -82,6 +83,7 @@ async def relevant_documents(
     except Exception as e:
         err_msg = f"Errors: {e}. Please try again."
         logger.error(err_msg)
+        logger.error(f"Stack trace: {traceback.format_exc()}")
         await sio.emit(Command.ERROR, {"message": err_msg}, to=sid)
 
 
@@ -119,6 +121,7 @@ async def chat_stream(sid: str, token: str, project: str, query_parameters: dict
     except Exception as e:
         err_msg = f"Errors: {e}. Please try again."
         logger.error(err_msg)
+        logger.error(f"Stack trace: {traceback.format_exc()}")
         await sio.emit(Command.ERROR, {"message": err_msg}, to=sid)
 
 

@@ -25,11 +25,18 @@ from graphrag_kb_server.logger import logger
 
 DOCUMENT_PATHS_LIMIT = 10
 
+SEPARATORS = ["<SEP>", ";"]
+
 
 def _extract_references(chat_response: ChatResponse) -> list[tuple[str, str]]:
     document_paths_topics = []
     for reference in chat_response.response["references"][:DOCUMENT_PATHS_LIMIT]:
-        docs = reference["file"].split("<SEP>")
+        for separator in SEPARATORS:
+            if separator in reference["file"]:
+                docs = reference["file"].split(separator)
+                break
+        else:
+            docs = [reference["file"]]
         document_paths_topics.append((docs[0], reference["main_keyword"]))
     return document_paths_topics
 
