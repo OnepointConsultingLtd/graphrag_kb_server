@@ -36,7 +36,7 @@ def _extract_profile_dict(profile: str) -> dict | None:
             logger.error(f"Error refreshing cookies for {user}: {e}")
             return None
     except Exception as e:
-        logger.error(f"Error extracting profile {profile}: {e}")
+        logger.error(f"Error extracting profile {profile}: {e} with user {user}")
         return None
     profile_dict = api.get_profile(profile)
     if profile_dict is None:
