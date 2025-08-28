@@ -66,7 +66,7 @@ async def verify_pin(soup: BeautifulSoup, session: aiohttp.ClientSession) -> Non
         'failureRedirectUri': soup.find('input', {'name': 'failureRedirectUri'})['value'],
         'pin': pin
     }
-    session.post(VERIFY_URL, data=payload)
+    await session.post(VERIFY_URL, data=payload)
 
 async def login(email: str, password: str) -> None:
     timeout = ClientTimeout(total=30)
