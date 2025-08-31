@@ -14,6 +14,7 @@ from graphrag_kb_server.service.lightrag.lightrag_search import (
     extract_keywords_only_lightrag,
 )
 from lightrag.base import QueryParam
+from graphrag_kb_server.service.topics_post_processing import post_process_topics
 
 
 def get_sorted_related_entities(
@@ -72,7 +73,10 @@ async def get_related_topics_lightrag(
             return None
     if request.source not in G.nodes():
         return None
-    return get_sorted_related_entities_simple_rerank(G, request)
+    similarity_topics = get_sorted_related_entities_simple_rerank(G, request)
+    if request.topics_prompt:
+        similarity_topics = await post_process_topics(similarity_topics, request.topics_prompt)
+    return similarity_topics
 
 
 if __name__ == "__main__":

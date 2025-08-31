@@ -44,6 +44,18 @@ class SimilarityTopic(Topic):
     probability: float = Field(
         ..., description="The probability that the path is reached on a random walk"
     )
+    
+    def markdown(self) -> str:
+        return f"""
+# {self.name}
+
+## Type: {self.type}
+
+## Description:
+{self.description}
+
+## Probability: {self.probability}
+"""
 
 
 class SimilarityTopics(BaseModel):
@@ -86,7 +98,9 @@ class SimilarityTopicsRequest(BaseModel):
         default=10, description="Number of independent runs to average results"
     )
     engine: Engine = Field(default=Engine.LIGHTRAG, description="The engine to use")
-
+    topics_prompt: str = Field(
+        default="", description="The prompt to post process the generated topics"
+    )
 
 class QuestionsQuery(BaseModel):
     project_dir: Path = Field(..., description="The project directory")

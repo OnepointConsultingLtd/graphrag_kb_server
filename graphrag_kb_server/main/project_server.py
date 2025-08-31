@@ -963,6 +963,10 @@ async def project_related_topics(request: web.Request) -> web.Response:
                 format: int32
                 default: 8
                 description: The number of topics to return
+              topics_prompt:
+                type: string
+                description: The prompt to post process the generated topics.
+                default: ""
     responses:
       '200':
         description: Expected response to a valid request
@@ -1001,6 +1005,7 @@ async def project_related_topics(request: web.Request) -> web.Response:
                     restart_prob = body.get("restart_prob", 0.15)
                     runs = body.get("runs", 10)
                     limit = body.get("limit", 8)
+                    topics_prompt = body.get("topics_prompt", "")
 
                     engine = find_engine_from_query(request)
 
@@ -1014,6 +1019,7 @@ async def project_related_topics(request: web.Request) -> web.Response:
                         restart_prob=restart_prob,
                         k=limit,
                         runs=runs,
+                        topics_prompt=topics_prompt,
                     )
                     # Run the CPU-intensive work in a thread pool
                     topics = await get_related_topics(engine, similarity_topics)

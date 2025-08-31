@@ -119,3 +119,17 @@ Here are the topics, their descriptions and their categories:
 {topics}
 </topics>
 """
+
+[topics-post-processing]
+system_prompt = """You are a helpful assistant that post processes topics."""
+user_prompt = """
+Please post process the following topics using the following instructions:
+
+<topics_prompt>
+{topics_prompt}
+</topics_prompt>
+
+<topics>
+{topics}
+</topics>
+"""
