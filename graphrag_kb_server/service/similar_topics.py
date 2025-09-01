@@ -50,8 +50,10 @@ def convert_to_similarity_topics(
 def get_similar_nodes(
     G: nx.Graph, request: SimilarityTopicsRequest
 ) -> SimilarityTopics:
-    # Use Numba-optimized version for better performance
+    neighbors_cache = {}
     visited_nodes = []
+    rand = random.random
+    randrange = random.randrange
     samples, path_length, restart_prob, source = (
         request.samples,
         request.path_length,
@@ -63,13 +65,18 @@ def get_similar_nodes(
         path = [current_node]
 
         for _ in range(path_length):
-            if random.random() < restart_prob:
+            if rand() < restart_prob:
                 current_node = source
             else:
-                neighbors = list(G.neighbors(current_node))
+                neighbors = neighbors_cache.get(current_node)
+                if neighbors is None:
+                    neighbors = tuple(G.neighbors(current_node))
+                    neighbors_cache[current_node] = neighbors
+                else:
+                    pass
                 if not neighbors:
                     break
-                current_node = random.choice(neighbors)
+                current_node = neighbors[randrange(len(neighbors))]
                 path.append(current_node)
 
         visited_nodes.extend(path)
