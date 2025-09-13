@@ -97,7 +97,7 @@ async def retrieve_relevant_documents(
     if callback is not None:
         await callback.callback("Preparing answer...")
         logger.info("Preparing answer...")
-    chat_response = await search_documents(project_dir, query)
+    chat_response = await search_documents(project_dir, query, callback)
     if callback is not None:
         await callback.callback(chat_response.response["response"])
         logger.info(f"Answer prepared: {chat_response.response['response']}")
@@ -119,11 +119,23 @@ async def retrieve_relevant_documents(
 
 
 async def search_documents(
-    project_dir: Path, query: DocumentSearchQuery
+    project_dir: Path, query: DocumentSearchQuery, callback: BaseCallback = None
 ) -> ChatResponse:
     question = generate_question(query)
-    query_params = generate_query(project_dir, query, question)
-    return await lightrag_search(query_params)
+    query_params = generate_query(project_dir, query, question, callback)
+    retries = 5
+    while retries > 0:
+        try:
+            return await lightrag_search(query_params)
+        except Exception as e:
+            logger.error(f"Error searching documents: {e}")
+            retries -= 1
+            if retries == 0:
+                raise e
+            params = {**query_params.model_dump(), "max_entity_size": 10, "max_relation_size": 10, "max_filepath_depth": 10}
+            await callback.callback(f"Failed to search documents, retrying {retries} more times.")
+            query_params = QueryParameters(**params)
+            logger.info(f"Retrying {retries} times")
 
 
 def get_document_text(project_dir: Path, document_path: Path) -> str:
@@ -170,16 +182,24 @@ async def summarize_document(request: SummarisationRequest) -> SummarisationResp
             user_profile=request.user_profile,
             document=request.document,
         )
-    summarisation_response_dict = await structured_completion(
-        prompts["document-summarization"]["system_prompt"],
-        user_prompt,
-        SummarisationResponse,
-    )
-    return SummarisationResponse(**summarisation_response_dict)
+    retries = 5
+    while retries > 0:
+        try:
+            summarisation_response_dict = await structured_completion(
+                prompts["document-summarization"]["system_prompt"],
+                user_prompt,
+                SummarisationResponse,
+            )
+            return SummarisationResponse(**summarisation_response_dict)
+        except Exception as e:
+            logger.error(f"Error summarizing document: {e}")
+            retries -= 1
+            if retries == 0:
+                raise e
 
 
 def generate_query(
-    project_dir: Path, query: DocumentSearchQuery, question: str
+    project_dir: Path, query: DocumentSearchQuery, question: str, callback: BaseCallback = None
 ) -> QueryParameters:
     query_params = QueryParameters(
         format="json",
@@ -206,6 +226,8 @@ def generate_query(
         include_context_as_text=False,
         structured_output=True,
         max_filepath_depth=query.max_filepath_depth,
+        is_search_query=query.is_search_query,
+        callback=callback,
     )
     return query_params
 

@@ -14,7 +14,9 @@ def shorten(topics: SimilarityTopics):
             t.description += "..."
 
 
-async def post_process_topics(topics: SimilarityTopics, topics_prompt: str) -> SimilarityTopics:
+async def post_process_topics(
+    topics: SimilarityTopics, topics_prompt: str
+) -> SimilarityTopics:
     shorten(topics)
     topics_str = "\n\n".join([topic.markdown() for topic in topics.topics])
     prompt_path = "topics-post-processing"

@@ -38,6 +38,10 @@ class DocumentSearchQuery(BaseModel):
         default=20,
         description="The maximum depth of the file path to include in the context.",
     )
+    is_search_query: bool = Field(
+        default=False,
+        description="Whether the query is a search query.",
+    )
 
 
 class SummarisationResponse(BaseModel):

@@ -2,6 +2,7 @@ import json
 
 from google import genai
 from google.genai import types
+from openai import AsyncOpenAI
 
 from pydantic import BaseModel
 
@@ -16,11 +17,22 @@ async def structured_completion(
 system: {system_message}
 user:{user_message}
 """
-    response = await client.aio.models.generate_content(
-        model=lightrag_cfg.lightrag_model,
-        contents=[contents],
-        config=types.GenerateContentConfig(
-            response_schema=response_schema, response_mime_type="application/json"
-        ),
-    )
-    return json.loads(response.text)
+    model = lightrag_cfg.lightrag_model
+    match model:
+        case model if model.startswith("gemini"):
+            response = await client.aio.models.generate_content(
+                model=model,
+                contents=[contents],
+                config=types.GenerateContentConfig(
+                    response_schema=response_schema, response_mime_type="application/json"
+                ),
+            )
+            return json.loads(response.text)
+        case model if model.startswith("gpt"):
+            client = AsyncOpenAI()
+            response = await client.beta.chat.completions.parse(
+                model=model,
+                messages=[{"role": "system", "content": system_message}, {"role": "user", "content": user_message}],
+                response_format=response_schema,
+            )
+            return json.loads(response.choices[0].message.content)

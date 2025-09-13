@@ -3,6 +3,7 @@ from enum import StrEnum
 from pathlib import Path
 from pydantic import BaseModel, Field
 
+from graphrag_kb_server.callbacks.callback_support import BaseCallback
 from lightrag import QueryParam
 
 from graphrag_kb_server.model.engines import Engine
@@ -72,6 +73,22 @@ class QueryParameters(BaseModel):
     max_filepath_depth: int = Field(
         default=50,
         description="The maximum length of the file path to include in the context.",
+    )
+    is_search_query: bool = Field(
+        default=False,
+        description="Whether the query is a search query.",
+    )
+    callback: BaseCallback | None = Field(
+        default=None,
+        description="The callback to use in the context of websockets",
+    )
+    max_entity_size: int = Field(
+        default=1000,
+        description="The maximum number of entities to include in the context.",
+    )
+    max_relation_size: int = Field(
+        default=1000,
+        description="The maximum number of relations to include in the context.",
     )
 
 

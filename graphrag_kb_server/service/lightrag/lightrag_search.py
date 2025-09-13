@@ -124,6 +124,8 @@ In case of a coloquial question or non context related sentence you can respond 
         # Add the keywords to the query parameters
         param.hl_keywords = _combine_keywords(param.hl_keywords, hl_keywords)
         param.ll_keywords = _combine_keywords(param.ll_keywords, ll_keywords)
+        if query_params.callback is not None:
+            await query_params.callback.callback(f"Focusing on the following keywords: {", ".join(hl_keywords)} and {", ".join(ll_keywords)}")
         query = query.strip()
         (
             context,
@@ -145,7 +147,12 @@ In case of a coloquial question or non context related sentence you can respond 
             hashing_kv=rag.llm_response_cache,
             chunks_vdb=rag.chunks_vdb,
             max_filepath_depth=query_params.max_filepath_depth,
+            is_search_query=query_params.is_search_query,
+            max_entity_size=query_params.max_entity_size,
+            max_relation_size=query_params.max_relation_size,
         )
+        if query_params.callback is not None:
+            await query_params.callback.callback(f"Retrievedontext with {len(entities_context)} entities and {len(relations_context)} relations and {len(text_units_context)} text units")
         response = await extended_kg_query(
             query,
             context,
@@ -207,6 +214,9 @@ async def prepare_context(
     hashing_kv: BaseKVStorage | None = None,
     chunks_vdb: BaseVectorStorage = None,
     max_filepath_depth: int = 20,
+    is_search_query: bool = False,
+    max_entity_size: int = 1000,
+    max_relation_size: int = 1000,
 ) -> tuple[str, str, np.ndarray | None, int, int, list[dict], list[dict], list[dict]]:
 
     # Handle cache
@@ -264,8 +274,13 @@ async def prepare_context(
         )
     )
 
+    
     entities_context = _shorten_file_path(entities_context, max_filepath_depth)
     relations_context = _shorten_file_path(relations_context, max_filepath_depth)
+
+    if is_search_query:
+        entities_context = entities_context[:max_entity_size]
+        relations_context = relations_context[:max_relation_size]
 
     context = _build_context_str(
         entities_context, relations_context, text_units_context

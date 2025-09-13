@@ -54,7 +54,9 @@ async def get_keywords_from_text(
     all_keywords = [*hl_keywords, *ll_keywords]
     # Convert nodes to a set for O(1) lookup instead of O(n) for each keyword
     nodes_set = set(G.nodes())
-    existing_keywords = [k for k in all_keywords if k in nodes_set]
+    nodes_set = {k.lower() : k for k in nodes_set}
+    all_keywords = {k.lower(): k for k in all_keywords}
+    existing_keywords = [nodes_set[k[0]] for k in all_keywords.items() if k[0] in nodes_set.keys()]
     return existing_keywords
 
 
@@ -75,7 +77,9 @@ async def get_related_topics_lightrag(
         return None
     similarity_topics = get_sorted_related_entities_simple_rerank(G, request)
     if request.topics_prompt:
-        similarity_topics = await post_process_topics(similarity_topics, request.topics_prompt)
+        similarity_topics = await post_process_topics(
+            similarity_topics, request.topics_prompt
+        )
     return similarity_topics
 
 

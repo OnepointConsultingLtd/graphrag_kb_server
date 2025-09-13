@@ -8,7 +8,7 @@ from graphrag.query.structured_search.local_search.search import LocalSearch
 T = TypeVar("T")
 U = TypeVar("U")
 
-DEFAULT_TIMEOUT = 3600 * 24 * 7 # 7 days
+DEFAULT_TIMEOUT = 3600 * 24 * 7  # 7 days
 
 
 class GenericProjectSimpleCache(Generic[T]):

@@ -44,7 +44,7 @@ class SimilarityTopic(Topic):
     probability: float = Field(
         ..., description="The probability that the path is reached on a random walk"
     )
-    
+
     def markdown(self) -> str:
         return f"""
 # {self.name}
@@ -101,6 +101,7 @@ class SimilarityTopicsRequest(BaseModel):
     topics_prompt: str = Field(
         default="", description="The prompt to post process the generated topics"
     )
+
 
 class QuestionsQuery(BaseModel):
     project_dir: Path = Field(..., description="The project directory")

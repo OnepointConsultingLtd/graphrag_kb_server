@@ -2,6 +2,7 @@ import json
 import traceback
 from pathlib import Path
 from enum import StrEnum
+from pydantic import Field
 
 
 from graphrag_kb_server.logger import logger
@@ -34,8 +35,7 @@ class Command(StrEnum):
 
 class WebsocketCallback(BaseCallback):
 
-    def __init__(self, sid: str):
-        self.sid = sid
+    sid: str = Field(description="The SID of the websocket")
 
     async def callback(self, message: str):
         await sio.emit(Command.PROGRESS, {"data": message}, to=self.sid)
@@ -67,15 +67,15 @@ async def relevant_documents(
     token: str,
     project: str,
     document_query: str,
-    max_filepath_depth: int = 20,
+    max_filepath_depth: int = 1000,
 ):
     try:
         logger.info(f"Document query from {sio}: {document_query}")
         project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
         document_search_query = DocumentSearchQuery(
-            **json.loads(document_query), max_filepath_depth=max_filepath_depth
+            **json.loads(document_query), max_filepath_depth=max_filepath_depth, is_search_query=True
         )
-        callback = WebsocketCallback(sid)
+        callback = WebsocketCallback(sid=sid)
         response = await retrieve_relevant_documents(
             project_dir, document_search_query, callback
         )
