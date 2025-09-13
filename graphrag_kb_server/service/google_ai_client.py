@@ -10,14 +10,13 @@ from graphrag_kb_server.config import cfg, lightrag_cfg
 
 
 async def structured_completion(
-    system_message: str, user_message: str, response_schema: BaseModel
+    system_message: str, user_message: str, response_schema: BaseModel, model: str = lightrag_cfg.lightrag_model
 ) -> dict:
     client = genai.Client(api_key=cfg.gemini_api_key)
     contents = f"""
 system: {system_message}
 user:{user_message}
 """
-    model = lightrag_cfg.lightrag_model
     match model:
         case model if model.startswith("gemini"):
             response = await client.aio.models.generate_content(

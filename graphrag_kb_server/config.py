@@ -136,6 +136,8 @@ class AdminConfig:
 class LightRAGConfig:
     lightrag_model = os.getenv("LIGHTRAG_MODEL")
     assert lightrag_model is not None, "Please specify the LightRAG model"
+    lightrag_lite_model = os.getenv("LIGHTRAG_LITE_MODEL")
+    assert lightrag_lite_model is not None, "Please specify the LightRAG quick model"
 
 
 class LinkedInConfig:
