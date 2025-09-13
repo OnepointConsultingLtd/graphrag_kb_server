@@ -103,7 +103,7 @@ async def retrieve_relevant_documents(
         logger.info(f"Answer prepared: {chat_response.response['response']}")
     document_paths_topics = _extract_references(chat_response)
     if callback is not None:
-        await callback.callback(f"Extracted {len(document_paths_topics)} references")
+        await callback.callback(f"Extracted {len(document_paths_topics)} references. Please wait while I summarize the documents...")
         logger.info(f"Extracted {len(document_paths_topics)} references")
     promises = _create_summarisation_promises(document_paths_topics, project_dir, query)
     logger.info("_create_summarisation_promises")
