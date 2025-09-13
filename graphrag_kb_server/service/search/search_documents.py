@@ -108,7 +108,6 @@ async def retrieve_relevant_documents(
     promises = _create_summarisation_promises(document_paths_topics, project_dir, query)
     logger.info("_create_summarisation_promises")
     summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
-    logger.info(f"Summaries created: {summaries}")
     summaries_with_document_paths = _combine_summaries(summaries, document_paths_topics)
     logger.info(f"Summaries combined: {summaries_with_document_paths}")
     response = chat_response.response["response"]
