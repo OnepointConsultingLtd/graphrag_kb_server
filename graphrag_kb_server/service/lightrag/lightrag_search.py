@@ -152,7 +152,7 @@ In case of a coloquial question or non context related sentence you can respond 
             max_relation_size=query_params.max_relation_size,
         )
         if query_params.callback is not None:
-            await query_params.callback.callback(f"Retrievedontext with {len(entities_context)} entities and {len(relations_context)} relations and {len(text_units_context)} text units")
+            await query_params.callback.callback(f"Retrieved overall context with {len(entities_context)} entities and {len(relations_context)} relations and {len(text_units_context)} text units")
         response = await extended_kg_query(
             query,
             context,
