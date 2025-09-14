@@ -78,6 +78,30 @@ class TopicsRequest(BaseModel):
     topics: list[str] = Field(
         default=[], description="The topics for which questions should be generated"
     )
+    deduplicate_topics: bool = Field(
+        default=False, description="Whether to deduplicate the topics"
+    )
+
+    def __hash__(self) -> int:
+        """Make TopicsRequest hashable by converting all fields to hashable types."""
+        # Convert Path to string for hashing
+        project_dir_str = str(self.project_dir)
+        
+        # Convert list to tuple for hashing (tuples are hashable)
+        topics_tuple = tuple(self.topics)
+        
+        # Create a tuple of all hashable field values
+        hashable_fields = (
+            self.limit,
+            project_dir_str,
+            self.engine,
+            self.add_questions,
+            self.entity_type_filter,
+            topics_tuple,
+            self.deduplicate_topics,
+        )
+        
+        return hash(hashable_fields)
 
 
 class SimilarityTopicsRequest(BaseModel):
@@ -100,6 +124,9 @@ class SimilarityTopicsRequest(BaseModel):
     engine: Engine = Field(default=Engine.LIGHTRAG, description="The engine to use")
     topics_prompt: str = Field(
         default="", description="The prompt to post process the generated topics"
+    )
+    deduplicate_topics: bool = Field(
+        default=False, description="Whether to deduplicate the topics"
     )
 
 

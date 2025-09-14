@@ -133,3 +133,17 @@ Please post process the following topics using the following instructions:
 {topics}
 </topics>
 """
+
+[topics-deduplication]
+system_prompt = """You are a helpful assistant that post processes topics and deduplicates them."""
+user_prompt = """
+Please post process the following topics and deduplicate by their meaning. If a topic is a specialization of another topic, it is ok to keep the more specialized topic.
+
+Example 1: if you have a topic "AI" and a topic "Artificial Intelligence", you should deduplicate them and keep the topic "AI" if the description of the topic "AI" is more thorough.
+
+Example 2: If you have a topic like "Zühlke" and a topic like "Zuhlke" where the only difference is the umlaut, you should deduplicate them and keep the topic "Zühlke" if the description of the topic "Zühlke" is more thorough.
+
+<topics>
+{topics}
+</topics>
+"""

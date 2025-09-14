@@ -11,18 +11,30 @@ from graphrag_kb_server.service.graphrag.entity_centrality import (
     get_entity_centrality_as_pd,
 )
 from graphrag_kb_server.service.cag.cag_support import extract_main_topics
+from graphrag_kb_server.service.topics_post_processing import deduplicate_topics
+from graphrag_kb_server.utils.cache import GenericSimpleCache
+
+
+topics_cache = GenericSimpleCache[Topics, TopicsRequest]()
 
 
 async def generate_topics(topics_request: TopicsRequest) -> Topics:
+    result = topics_cache.get(topics_request)
+    if result is not None:
+        return result
     match topics_request.engine:
         case Engine.GRAPHRAG:
-            return _generate_topics_graphrag(topics_request)
+            result = _generate_topics_graphrag(topics_request)
         case Engine.LIGHTRAG:
-            return _generate_topics_lightrag(topics_request)
+            result = _generate_topics_lightrag(topics_request)
         case Engine.CAG:
-            return await _generate_topics_cag(topics_request)
+            result = await _generate_topics_cag(topics_request)
         case _:
             raise ValueError(f"Engine {topics_request.engine} not supported")
+    if topics_request.deduplicate_topics and result is not None:
+        result = await deduplicate_topics(result)
+    topics_cache.set(topics_request, result)
+    return result
 
 
 def convert_topics_to_pandas(topics: Topics) -> pd.DataFrame:

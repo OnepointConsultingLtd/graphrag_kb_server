@@ -98,6 +98,7 @@ from graphrag_kb_server.service.graphrag.related_topics import (
 from graphrag_kb_server.service.lightrag.lightrag_related_topics import (
     get_related_topics_lightrag,
 )
+from graphrag_kb_server.service.topics_post_processing import post_process_topics, deduplicate_topics
 
 routes = web.RouteTableDef()
 
@@ -722,6 +723,13 @@ async def project_topics(request: web.Request) -> web.Response:
           type: string
           enum: [json, csv]
           default: json
+      - name: deduplicate_topics
+        in: query
+        required: false
+        description: Whether to deduplicate the topics.
+        schema:
+          type: boolean
+          default: false
     responses:
       '200':
         description: Expected response to a valid request
@@ -744,6 +752,9 @@ async def project_topics(request: web.Request) -> web.Response:
                     request.rel_url.query.get("add_questions", "false") == "true"
                 )
                 entity_type_filter = request.rel_url.query.get("entity_type_filter", "")
+                deduplicate_topics_param = (
+                    request.rel_url.query.get("deduplicate_topics", "false") == "true"
+                )
                 topics = await generate_topics(
                     TopicsRequest(
                         project_dir=project_dir,
@@ -751,8 +762,9 @@ async def project_topics(request: web.Request) -> web.Response:
                         limit=limit,
                         add_questions=add_questions,
                         entity_type_filter=entity_type_filter,
+                        deduplicate_topics=deduplicate_topics_param,
                     )
-                )
+                )   
                 format = request.rel_url.query.get("format", Format.JSON.value)
                 match format:
                     case Format.JSON:
@@ -967,6 +979,10 @@ async def project_related_topics(request: web.Request) -> web.Response:
                 type: string
                 description: The prompt to post process the generated topics.
                 default: ""
+              deduplicate_topics:
+                type: boolean
+                description: Whether to deduplicate the topics.
+                default: false
     responses:
       '200':
         description: Expected response to a valid request
@@ -982,14 +998,21 @@ async def project_related_topics(request: web.Request) -> web.Response:
     async def get_related_topics(
         engine: Engine, similarity_topics: SimilarityTopicsRequest
     ) -> SimilarityTopics | None:
+        similarity_topics_result = None
         match engine:
             case Engine.GRAPHRAG:
-                return await asyncify(get_related_topics_graphrag)(similarity_topics)
+                similarity_topics_result = await asyncify(get_related_topics_graphrag)(similarity_topics)
             case Engine.LIGHTRAG:
-                return await get_related_topics_lightrag(similarity_topics)
+                similarity_topics_result = await get_related_topics_lightrag(similarity_topics)
             case _:
                 # No implementation for CAG yet
                 return None
+        if similarity_topics_result is not None:
+            if similarity_topics.deduplicate_topics:
+                similarity_topics_result = await deduplicate_topics(similarity_topics_result)
+            if similarity_topics.topics_prompt:
+                similarity_topics_result = await post_process_topics(similarity_topics_result, similarity_topics.topics_prompt)
+        return similarity_topics_result
 
     async def handle_request(request: web.Request) -> web.Response:
         match match_process_dir(request):
@@ -1006,7 +1029,7 @@ async def project_related_topics(request: web.Request) -> web.Response:
                     runs = body.get("runs", 10)
                     limit = body.get("limit", 8)
                     topics_prompt = body.get("topics_prompt", "")
-
+                    deduplicate_topics = body.get("deduplicate_topics", False)
                     engine = find_engine_from_query(request)
 
                     similarity_topics = SimilarityTopicsRequest(
@@ -1020,6 +1043,7 @@ async def project_related_topics(request: web.Request) -> web.Response:
                         k=limit,
                         runs=runs,
                         topics_prompt=topics_prompt,
+                        deduplicate_topics=deduplicate_topics,
                     )
                     # Run the CPU-intensive work in a thread pool
                     topics = await get_related_topics(engine, similarity_topics)
