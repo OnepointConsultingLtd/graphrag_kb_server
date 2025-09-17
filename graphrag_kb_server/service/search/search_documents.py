@@ -103,7 +103,9 @@ async def retrieve_relevant_documents(
         logger.info(f"Answer prepared: {chat_response.response['response']}")
     document_paths_topics = _extract_references(chat_response)
     if callback is not None:
-        await callback.callback(f"Extracted {len(document_paths_topics)} references. Please wait while I summarize the documents...")
+        await callback.callback(
+            f"Extracted {len(document_paths_topics)} references. Please wait while I summarize the documents..."
+        )
         logger.info(f"Extracted {len(document_paths_topics)} references")
     promises = _create_summarisation_promises(document_paths_topics, project_dir, query)
     logger.info("_create_summarisation_promises")
@@ -131,8 +133,15 @@ async def search_documents(
             retries -= 1
             if retries == 0:
                 raise e
-            params = {**query_params.model_dump(), "max_entity_size": 10, "max_relation_size": 10, "max_filepath_depth": 10}
-            await callback.callback(f"Failed to search documents, retrying {retries} more times.")
+            params = {
+                **query_params.model_dump(),
+                "max_entity_size": 10,
+                "max_relation_size": 10,
+                "max_filepath_depth": 10,
+            }
+            await callback.callback(
+                f"Failed to search documents, retrying {retries} more times."
+            )
             query_params = QueryParameters(**params)
             logger.info(f"Retrying {retries} times")
 
@@ -198,7 +207,10 @@ async def summarize_document(request: SummarisationRequest) -> SummarisationResp
 
 
 def generate_query(
-    project_dir: Path, query: DocumentSearchQuery, question: str, callback: BaseCallback = None
+    project_dir: Path,
+    query: DocumentSearchQuery,
+    question: str,
+    callback: BaseCallback = None,
 ) -> QueryParameters:
     query_params = QueryParameters(
         format="json",

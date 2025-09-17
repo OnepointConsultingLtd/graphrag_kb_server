@@ -53,9 +53,11 @@ async def get_keywords_from_text(
     all_keywords = [*hl_keywords, *ll_keywords]
     # Convert nodes to a set for O(1) lookup instead of O(n) for each keyword
     nodes_set = set(G.nodes())
-    nodes_set = {k.lower() : k for k in nodes_set}
+    nodes_set = {k.lower(): k for k in nodes_set}
     all_keywords = {k.lower(): k for k in all_keywords}
-    existing_keywords = [nodes_set[k[0]] for k in all_keywords.items() if k[0] in nodes_set.keys()]
+    existing_keywords = [
+        nodes_set[k[0]] for k in all_keywords.items() if k[0] in nodes_set.keys()
+    ]
     return existing_keywords
 
 

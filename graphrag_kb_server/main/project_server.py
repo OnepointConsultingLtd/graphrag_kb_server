@@ -13,7 +13,11 @@ from markdown import markdown
 from aiohttp.web import Response
 from asyncer import asyncify
 
-from graphrag_kb_server.model.rag_parameters import ContextParameters, QueryParameters, ContextFormat
+from graphrag_kb_server.model.rag_parameters import (
+    ContextParameters,
+    QueryParameters,
+    ContextFormat,
+)
 from graphrag_kb_server.model.context import Search
 from graphrag_kb_server.model.project import IndexingStatus
 from graphrag_kb_server.model.topics import SimilarityTopics, SimilarityTopicsRequest
@@ -98,7 +102,10 @@ from graphrag_kb_server.service.graphrag.related_topics import (
 from graphrag_kb_server.service.lightrag.lightrag_related_topics import (
     get_related_topics_lightrag,
 )
-from graphrag_kb_server.service.topics_post_processing import post_process_topics, deduplicate_topics
+from graphrag_kb_server.service.topics_post_processing import (
+    post_process_topics,
+    deduplicate_topics,
+)
 
 routes = web.RouteTableDef()
 
@@ -764,7 +771,7 @@ async def project_topics(request: web.Request) -> web.Response:
                         entity_type_filter=entity_type_filter,
                         deduplicate_topics=deduplicate_topics_param,
                     )
-                )   
+                )
                 format = request.rel_url.query.get("format", Format.JSON.value)
                 match format:
                     case Format.JSON:
@@ -1001,17 +1008,25 @@ async def project_related_topics(request: web.Request) -> web.Response:
         similarity_topics_result = None
         match engine:
             case Engine.GRAPHRAG:
-                similarity_topics_result = await asyncify(get_related_topics_graphrag)(similarity_topics)
+                similarity_topics_result = await asyncify(get_related_topics_graphrag)(
+                    similarity_topics
+                )
             case Engine.LIGHTRAG:
-                similarity_topics_result = await get_related_topics_lightrag(similarity_topics)
+                similarity_topics_result = await get_related_topics_lightrag(
+                    similarity_topics
+                )
             case _:
                 # No implementation for CAG yet
                 return None
         if similarity_topics_result is not None:
             if similarity_topics.deduplicate_topics:
-                similarity_topics_result = await deduplicate_topics(similarity_topics_result)
+                similarity_topics_result = await deduplicate_topics(
+                    similarity_topics_result
+                )
             if similarity_topics.topics_prompt:
-                similarity_topics_result = await post_process_topics(similarity_topics_result, similarity_topics.topics_prompt)
+                similarity_topics_result = await post_process_topics(
+                    similarity_topics_result, similarity_topics.topics_prompt
+                )
         return similarity_topics_result
 
     async def handle_request(request: web.Request) -> web.Response:
@@ -1122,10 +1137,10 @@ async def context(request: web.Request) -> web.Response:
       - name: format
         in: query
         required: false
-        description: The format of the output (json_string, json). "json" only works for Lightrag for now.
+        description: The format of the output (json_string, json, json_string_with_json). "json" only works for Lightrag for now.
         schema:
           type: string
-          enum: [json_string, json]
+          enum: [json_string, json, json_string_with_json]
           default: json_string
     responses:
       '200':
@@ -1222,7 +1237,8 @@ async def context(request: web.Request) -> web.Response:
                                     search=actual_search,
                                     engine=Engine.LIGHTRAG.value,
                                     context_params=context_params,
-                                    include_context=context_params.context_format == ContextFormat.JSON,
+                                    include_context=context_params.context_format
+                                    == ContextFormat.JSON,
                                     keywords=keywords,
                                     context_format=context_params.context_format,
                                 )
@@ -1239,14 +1255,31 @@ async def context(request: web.Request) -> web.Response:
                                     else {}
                                 )
                                 match context_params.context_format:
-                                    case ContextFormat.JSON:
-                                        return web.json_response(
-                                            {
-                                                "entities_context": context_builder_result.entities_context,
-                                                "relations_context": context_builder_result.relations_context,
-                                                "text_units_context": context_builder_result.text_units_context,
-                                            }
-                                        )
+                                    case (
+                                        ContextFormat.JSON
+                                        | ContextFormat.JSON_STRING_WITH_JSON
+                                    ):
+                                        context_data = {
+                                            "entities_context": context_builder_result.entities_context,
+                                            "relations_context": context_builder_result.relations_context,
+                                            "text_units_context": context_builder_result.text_units_context,
+                                        }
+                                        if (
+                                            context_params.context_format
+                                            == ContextFormat.JSON_STRING_WITH_JSON
+                                        ):
+                                            return web.json_response(
+                                                {
+                                                    **context_data,
+                                                    "context_text": context_builder_result.context,
+                                                }
+                                            )
+                                        else:
+                                            return web.json_response(
+                                                {
+                                                    "context_text": context_builder_result.context,
+                                                }
+                                            )
                                     case _:
                                         return web.json_response(
                                             {

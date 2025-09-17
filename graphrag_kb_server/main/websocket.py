@@ -73,7 +73,9 @@ async def relevant_documents(
         logger.info(f"Document query from {sio}: {document_query}")
         project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
         document_search_query = DocumentSearchQuery(
-            **json.loads(document_query), max_filepath_depth=max_filepath_depth, is_search_query=True
+            **json.loads(document_query),
+            max_filepath_depth=max_filepath_depth,
+            is_search_query=True,
         )
         callback = WebsocketCallback(sid=sid)
         response = await retrieve_relevant_documents(

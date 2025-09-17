@@ -109,6 +109,7 @@ def openai_model_func_factory(model: str) -> Callable[..., Awaitable[str]]:
             history_messages=history_messages,
             **kwargs,
         )
+
     return openai_model_func
 
 

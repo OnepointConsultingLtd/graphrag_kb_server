@@ -10,7 +10,10 @@ from graphrag_kb_server.config import cfg, lightrag_cfg
 
 
 async def structured_completion(
-    system_message: str, user_message: str, response_schema: BaseModel, model: str = lightrag_cfg.lightrag_model
+    system_message: str,
+    user_message: str,
+    response_schema: BaseModel,
+    model: str = lightrag_cfg.lightrag_model,
 ) -> dict:
     client = genai.Client(api_key=cfg.gemini_api_key)
     contents = f"""
@@ -23,7 +26,8 @@ user:{user_message}
                 model=model,
                 contents=[contents],
                 config=types.GenerateContentConfig(
-                    response_schema=response_schema, response_mime_type="application/json"
+                    response_schema=response_schema,
+                    response_mime_type="application/json",
                 ),
             )
             return json.loads(response.text)
@@ -31,7 +35,10 @@ user:{user_message}
             client = AsyncOpenAI()
             response = await client.beta.chat.completions.parse(
                 model=model,
-                messages=[{"role": "system", "content": system_message}, {"role": "user", "content": user_message}],
+                messages=[
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": user_message},
+                ],
                 response_format=response_schema,
             )
             return json.loads(response.choices[0].message.content)

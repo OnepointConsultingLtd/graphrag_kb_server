@@ -3,7 +3,10 @@ from graphrag_kb_server.model.topics import (
     SimilarityTopics,
     SimilarityTopic,
 )
-from graphrag_kb_server.service.topics_post_processing import post_process_topics, deduplicate_topics
+from graphrag_kb_server.service.topics_post_processing import (
+    post_process_topics,
+    deduplicate_topics,
+)
 
 sample_topics = SimilarityTopics(
     topics=[
@@ -38,5 +41,3 @@ def test_post_process_topics():
 def test_post_process_deduplicate_topics():
     topics = asyncio.run(deduplicate_topics(sample_topics))
     assert len(topics.topics) == 2
-
-

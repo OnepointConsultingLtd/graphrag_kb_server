@@ -13,7 +13,10 @@ from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.service.google_ai_client import structured_completion
 from graphrag_kb_server.config import lightrag_cfg
 
-def _convert_df_to_entities(df: pd.DataFrame, max_description_length: int = 256) -> list[Entity]:
+
+def _convert_df_to_entities(
+    df: pd.DataFrame, max_description_length: int = 256
+) -> list[Entity]:
     return [
         Entity(name=e[0], type=e[1], description=e[2][:max_description_length])
         for e in zip(df["entity_id"], df["entity_type"], df["description"])
@@ -67,7 +70,9 @@ async def match_entities(
         topics_of_interest=topics_of_interest_str,
         entities=entities_str,
     )
-    entities = await structured_completion(system_prompt, user_contents, EntityList, model=lightrag_cfg.lightrag_lite_model)
+    entities = await structured_completion(
+        system_prompt, user_contents, EntityList, model=lightrag_cfg.lightrag_lite_model
+    )
     entities_with_score = [
         EntityWithScore(
             entity=e["entity"],

@@ -42,6 +42,7 @@ from graphrag_kb_server.model.rag_parameters import (
 )
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.chat_response import ChatResponse
+from graphrag_kb_server.model.rag_parameters import ContextFormat
 
 
 def _combine_keywords(old_keywords: list[str], new_keywords: list[str]) -> list[str]:
@@ -125,7 +126,9 @@ In case of a coloquial question or non context related sentence you can respond 
         param.hl_keywords = _combine_keywords(param.hl_keywords, hl_keywords)
         param.ll_keywords = _combine_keywords(param.ll_keywords, ll_keywords)
         if query_params.callback is not None:
-            await query_params.callback.callback(f"Focusing on the following keywords: {", ".join(hl_keywords)} and {", ".join(ll_keywords)}")
+            await query_params.callback.callback(
+                f"Focusing on the following keywords: {", ".join(hl_keywords)} and {", ".join(ll_keywords)}"
+            )
         query = query.strip()
         (
             context,
@@ -152,7 +155,9 @@ In case of a coloquial question or non context related sentence you can respond 
             max_relation_size=query_params.max_relation_size,
         )
         if query_params.callback is not None:
-            await query_params.callback.callback(f"Retrieved overall context with {len(entities_context)} entities and {len(relations_context)} relations and {len(text_units_context)} text units")
+            await query_params.callback.callback(
+                f"Retrieved overall context with {len(entities_context)} entities and {len(relations_context)} relations and {len(text_units_context)} text units"
+            )
         response = await extended_kg_query(
             query,
             context,
@@ -166,25 +171,25 @@ In case of a coloquial question or non context related sentence you can respond 
             system_prompt,
             structured_output=query_params.structured_output,
         )
+        include_context_data = (
+            query_params.context_format == ContextFormat.JSON
+            or query_params.context_format == ContextFormat.JSON_STRING_WITH_JSON
+        )
         return ChatResponse(
             question=query,
             response=response,
             context=(
                 context
                 if (
-                    query_params.include_context
-                    and query_params.include_context_as_text
+                    query_params.context_format == ContextFormat.JSON_STRING_WITH_JSON
+                    or query_params.context_format == ContextFormat.JSON_STRING
                 )
                 or only_need_context
                 else None
             ),
-            entities_context=entities_context if query_params.include_context else None,
-            relations_context=(
-                relations_context if query_params.include_context else None
-            ),
-            text_units_context=(
-                text_units_context if query_params.include_context else None
-            ),
+            entities_context=entities_context if include_context_data else None,
+            relations_context=(relations_context if include_context_data else None),
+            text_units_context=(text_units_context if include_context_data else None),
             hl_keywords=hl_keywords if query_params.keywords else None,
             ll_keywords=ll_keywords if query_params.keywords else None,
         )
@@ -260,18 +265,16 @@ async def prepare_context(
     hl_keywords_str = ", ".join(hl_keywords) if hl_keywords else ""
 
     # Build context
-    context_data = (
-        await _build_query_context(
-            query,
-            ll_keywords_str,
-            hl_keywords_str,
-            knowledge_graph_inst,
-            entities_vdb,
-            relationships_vdb,
-            text_chunks_db,
-            query_param,
-            chunks_vdb,
-        )
+    context_data = await _build_query_context(
+        query,
+        ll_keywords_str,
+        hl_keywords_str,
+        knowledge_graph_inst,
+        entities_vdb,
+        relationships_vdb,
+        text_chunks_db,
+        query_param,
+        chunks_vdb,
     )
 
     if context_data is None:
@@ -287,7 +290,6 @@ async def prepare_context(
         )
     entities_context, relations_context, text_units_context = context_data
 
-    
     entities_context = _shorten_file_path(entities_context, max_filepath_depth)
     relations_context = _shorten_file_path(relations_context, max_filepath_depth)
 

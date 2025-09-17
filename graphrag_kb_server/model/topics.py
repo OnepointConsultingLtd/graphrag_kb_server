@@ -86,10 +86,10 @@ class TopicsRequest(BaseModel):
         """Make TopicsRequest hashable by converting all fields to hashable types."""
         # Convert Path to string for hashing
         project_dir_str = str(self.project_dir)
-        
+
         # Convert list to tuple for hashing (tuples are hashable)
         topics_tuple = tuple(self.topics)
-        
+
         # Create a tuple of all hashable field values
         hashable_fields = (
             self.limit,
@@ -100,7 +100,7 @@ class TopicsRequest(BaseModel):
             topics_tuple,
             self.deduplicate_topics,
         )
-        
+
         return hash(hashable_fields)
 
 

@@ -15,7 +15,11 @@ def shorten(topics: SimilarityTopics):
             t.description += "..."
 
 
-async def _execute_prompt(prompt_path: str, topics: SimilarityTopics | Topics, topics_prompt: str | None = None) -> SimilarityTopics:
+async def _execute_prompt(
+    prompt_path: str,
+    topics: SimilarityTopics | Topics,
+    topics_prompt: str | None = None,
+) -> SimilarityTopics:
     shorten(topics)
     topics_str = "\n\n".join([topic.markdown() for topic in topics.topics])
     format_params = {
@@ -41,4 +45,3 @@ async def post_process_topics(
 async def deduplicate_topics(topics: SimilarityTopics | Topics) -> SimilarityTopics:
     prompt_path = "topics-deduplication"
     return await _execute_prompt(prompt_path, topics)
-

@@ -17,6 +17,7 @@ class MessageType(StrEnum):
 class ContextFormat(StrEnum):
     JSON_STRING = "json_string"
     JSON = "json"
+    JSON_STRING_WITH_JSON = "json_string_with_json"
 
 
 class ContextParameters(BaseModel):
@@ -24,7 +25,9 @@ class ContextParameters(BaseModel):
     project_dir: Path = Field(description="The path of the project.")
     context_size: int = Field(default=5000, description="The context size in tokens.")
     model_config = {"frozen": True}  # Pydantic v2 config syntax
-    context_format: ContextFormat = Field(default=ContextFormat.JSON_STRING, description="The format of the response.")
+    context_format: ContextFormat = Field(
+        default=ContextFormat.JSON_STRING, description="The format of the response."
+    )
 
 
 class QueryParameters(BaseModel):
@@ -96,7 +99,9 @@ class QueryParameters(BaseModel):
         default=1000,
         description="The maximum number of relations to include in the context.",
     )
-    context_format: ContextFormat = Field(default=ContextFormat.JSON_STRING, description="The format of the response.")
+    context_format: ContextFormat = Field(
+        default=ContextFormat.JSON_STRING, description="The format of the response."
+    )
 
 
 def convert_to_lightrag_query_params(

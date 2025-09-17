@@ -6,7 +6,6 @@ from lightrag.llm.openai import openai_embed
 from lightrag.kg.shared_storage import initialize_pipeline_status
 
 from graphrag_kb_server.service.lightrag.lightrag_model_support import select_model_func
-from graphrag_kb_server.config import lightrag_cfg
 from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
 
 
