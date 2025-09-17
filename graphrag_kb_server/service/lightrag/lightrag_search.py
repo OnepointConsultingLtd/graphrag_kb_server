@@ -260,7 +260,7 @@ async def prepare_context(
     hl_keywords_str = ", ".join(hl_keywords) if hl_keywords else ""
 
     # Build context
-    entities_context, relations_context, text_units_context = (
+    context_data = (
         await _build_query_context(
             query,
             ll_keywords_str,
@@ -273,6 +273,19 @@ async def prepare_context(
             chunks_vdb,
         )
     )
+
+    if context_data is None:
+        return (
+            PROMPTS["fail_response"],
+            args_hash,
+            quantized,
+            min_val,
+            max_val,
+            [],
+            [],
+            [],
+        )
+    entities_context, relations_context, text_units_context = context_data
 
     
     entities_context = _shorten_file_path(entities_context, max_filepath_depth)

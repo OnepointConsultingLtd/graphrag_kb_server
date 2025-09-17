@@ -13,7 +13,7 @@ from markdown import markdown
 from aiohttp.web import Response
 from asyncer import asyncify
 
-from graphrag_kb_server.model.rag_parameters import ContextParameters, QueryParameters
+from graphrag_kb_server.model.rag_parameters import ContextParameters, QueryParameters, ContextFormat
 from graphrag_kb_server.model.context import Search
 from graphrag_kb_server.model.project import IndexingStatus
 from graphrag_kb_server.model.topics import SimilarityTopics, SimilarityTopicsRequest
@@ -1119,6 +1119,14 @@ async def context(request: web.Request) -> web.Response:
         schema:
           type: boolean
           default: false
+      - name: format
+        in: query
+        required: false
+        description: The format of the output (json_string, json). "json" only works for Lightrag for now.
+        schema:
+          type: string
+          enum: [json_string, json]
+          default: json_string
     responses:
       '200':
         description: Expected response to a valid request
@@ -1214,7 +1222,9 @@ async def context(request: web.Request) -> web.Response:
                                     search=actual_search,
                                     engine=Engine.LIGHTRAG.value,
                                     context_params=context_params,
+                                    include_context=context_params.context_format == ContextFormat.JSON,
                                     keywords=keywords,
+                                    context_format=context_params.context_format,
                                 )
                                 context_builder_result = await lightrag_search(
                                     query_params,
@@ -1228,12 +1238,22 @@ async def context(request: web.Request) -> web.Response:
                                     if keywords
                                     else {}
                                 )
-                                return web.json_response(
-                                    {
-                                        "context_text": context_builder_result.context,
-                                        **extra_context,
-                                    }
-                                )
+                                match context_params.context_format:
+                                    case ContextFormat.JSON:
+                                        return web.json_response(
+                                            {
+                                                "entities_context": context_builder_result.entities_context,
+                                                "relations_context": context_builder_result.relations_context,
+                                                "text_units_context": context_builder_result.text_units_context,
+                                            }
+                                        )
+                                    case _:
+                                        return web.json_response(
+                                            {
+                                                "context_text": context_builder_result.context,
+                                                **extra_context,
+                                            }
+                                        )
                             case _:
                                 raise web.HTTPBadRequest(
                                     text="LightRAG does not support local search"
@@ -1961,10 +1981,12 @@ async def topics_network_community_entities(request: web.Request) -> web.Respons
 def create_context_parameters(url: URL, project_dir: Path) -> ContextParameters:
     question = url.query.get("question", DEFAULT_QUESTION)
     context_size = url.query.get("context_size", cfg.local_context_max_tokens)
+    format = url.query.get("format", ContextFormat.JSON_STRING.value)
     return ContextParameters(
         query=question,
         project_dir=project_dir,
         context_size=context_size,
+        context_format=format,
     )
 
 
