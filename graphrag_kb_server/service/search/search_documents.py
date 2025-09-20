@@ -251,9 +251,9 @@ def generate_question(document_search_query: DocumentSearchQuery) -> str:
         for classification in match_output.entity_dict.values():
             for entity in classification.entities:
                 if high_level and entity.abstraction == Abstraction.HIGH_LEVEL:
-                    res += f"- {entity.entity}\n  {entity.reasoning}\n"
+                    res += f"- {entity.entity}\n"
                 else:
-                    res += f"- {entity.entity}\n  {entity.reasoning}\n"
+                    res += f"- {entity.entity}\n"
         return res
 
     high_level_keywords = format_keywords(

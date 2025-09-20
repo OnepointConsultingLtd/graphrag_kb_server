@@ -1,4 +1,5 @@
 import time
+import re
 from pathlib import Path
 from dataclasses import asdict
 from typing import AsyncIterator
@@ -47,6 +48,13 @@ from graphrag_kb_server.model.rag_parameters import ContextFormat
 
 def _combine_keywords(old_keywords: list[str], new_keywords: list[str]) -> list[str]:
     return list(set(old_keywords + new_keywords))
+
+
+def _inject_keywords(query: str, hl_keywords: list[str], ll_keywords: list[str]) -> str:
+    hl_keywords_str = "\n-".join(hl_keywords)
+    ll_keywords_str = "\n-".join(ll_keywords)
+    query = re.sub(r"<high_level_keywords>\s+?</high_level_keywords>", f"<high_level_keywords>{hl_keywords_str}</high_level_keywords>", query, flags=re.DOTALL)
+    return re.sub(r"<low_level_keywords>\s+?</low_level_keywords>", f"<low_level_keywords>{ll_keywords_str}</low_level_keywords>", query, flags=re.DOTALL)
 
 
 PROMPTS[
@@ -127,8 +135,12 @@ In case of a coloquial question or non context related sentence you can respond 
         param.ll_keywords = _combine_keywords(param.ll_keywords, ll_keywords)
         if query_params.callback is not None:
             await query_params.callback.callback(
-                f"Focusing on the following keywords: {", ".join(hl_keywords)} and {", ".join(ll_keywords)}"
+                f"High level keywords: {"<SEP>".join(hl_keywords)}"
             )
+            await query_params.callback.callback(
+                f"Low level keywords: {"<SEP>".join(ll_keywords)}"
+            )
+        query = _inject_keywords(query, hl_keywords, ll_keywords)
         query = query.strip()
         (
             context,
