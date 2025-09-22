@@ -248,8 +248,12 @@ def generate_question(document_search_query: DocumentSearchQuery) -> str:
 
     def format_keywords(match_output: MatchOutput, high_level: bool) -> str:
         res = ""
+        unique_keywords = set()
         for classification in match_output.entity_dict.values():
             for entity in classification.entities:
+                if entity.entity in unique_keywords:
+                    continue
+                unique_keywords.add(entity.entity)
                 if high_level and entity.abstraction == Abstraction.HIGH_LEVEL:
                     res += f"- {entity.entity}\n"
                 else:

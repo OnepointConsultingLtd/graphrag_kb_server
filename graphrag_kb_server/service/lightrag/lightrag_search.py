@@ -135,12 +135,12 @@ In case of a coloquial question or non context related sentence you can respond 
         param.ll_keywords = _combine_keywords(param.ll_keywords, ll_keywords)
         if query_params.callback is not None:
             await query_params.callback.callback(
-                f"High level keywords: {"<SEP>".join(hl_keywords)}"
+                f"High level keywords: {"<SEP>".join(param.hl_keywords)}"
             )
             await query_params.callback.callback(
-                f"Low level keywords: {"<SEP>".join(ll_keywords)}"
+                f"Low level keywords: {"<SEP>".join(param.ll_keywords)}"
             )
-        query = _inject_keywords(query, hl_keywords, ll_keywords)
+        query = _inject_keywords(query, param.hl_keywords, param.ll_keywords)
         query = query.strip()
         (
             context,
