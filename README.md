@@ -51,8 +51,9 @@ GEMINI_API_KEY=<key>
 
 # The LightRAG Model
 # Supported models gpt-4o-mini, gpt-4o, gemini-2.0-flash
-LIGHTRAG_MODEL=gpt-4o-mini
+LIGHTRAG_MODEL=gemini-2.5-flash
 # LIGHTRAG_MODEL=gpt-4o-mini
+LIGHTRAG_LITE_MODEL=gemini-2.5-flash-lite
 
 # The configuration directory. Here you can find the administration.yaml file which has the administrators JWT email addresses.
 CONFIG_DIR=/development/onepoint/thinqwin/graphrag_kb_server/config
