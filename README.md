@@ -96,6 +96,10 @@ JWT_GEN_FOLDER=/tmp/data_wellness/jwt_gen
 
 # This needs to be generated. See README for instructions.
 ADMIN_JWT=<jwt>
+
+ADMIN_TOKEN_NAME=<some name>
+ADMIN_TOKEN_EMAIL=<mail>
+ADMIN_TOKEN_PASSWORD=<pass>
 ```
 
 # How the system works
