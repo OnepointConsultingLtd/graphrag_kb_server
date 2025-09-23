@@ -100,7 +100,13 @@ ADMIN_JWT=<jwt>
 ADMIN_TOKEN_NAME=<some name>
 ADMIN_TOKEN_EMAIL=<mail>
 ADMIN_TOKEN_PASSWORD=<pass>
+
+BRIGHT_DATA_API_KEY=<key>
 ```
+
+You will also need to install Weasyprint. Please check the installation instructions here:
+
+https://www.msys2.org/#installation
 
 # How the system works
 
