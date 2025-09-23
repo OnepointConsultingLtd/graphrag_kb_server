@@ -8,6 +8,8 @@ import PrivateRoute from "./components/PrivateRoute";
 import Dashboard from "./components/dashboard/Dashboard";
 import ChatContainer from "./components/main-chat/ChatContainer";
 import { AppComponent } from "./lib/appComponents";
+import Admin from "./Admin";
+import Administrator from "./Administrator";
 
 function chooseComponent() {
   const widgetType = window.chatConfig?.widgetType;
@@ -62,6 +64,15 @@ function App() {
             }
           />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route
+            path="/administrator"
+            element={
+              <PrivateRoute>
+                <Administrator />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={

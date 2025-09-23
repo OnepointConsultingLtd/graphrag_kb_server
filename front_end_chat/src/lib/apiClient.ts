@@ -53,6 +53,29 @@ export async function validateToken(token: string) {
   return await response.json();
 }
 
+export async function validateAdminToken(name: string, email: string, password: string) {
+  const params = new URLSearchParams();
+  params.set("name", name);
+  params.set("email", email);
+  params.set("password", password);
+
+  const response = await fetch(
+    `${getBaseServer()}/tennant/admin_token?${params.toString()}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Admin login failed. Error code: ${response.status}. Error: ${response.statusText}`,
+    );
+  }
+  return await response.json();
+}
+
 export async function fetchProjects(jwt: string) {
   try {
     const response = await fetch(
