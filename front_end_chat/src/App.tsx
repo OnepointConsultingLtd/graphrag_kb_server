@@ -63,8 +63,10 @@ function App() {
               </ChatRoute>
             }
           />
+
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<Admin />} />
+
           <Route
             path="/administrator"
             element={

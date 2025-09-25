@@ -6,14 +6,18 @@ import LoginLayout from "./components/layout/LoginLayout";
 import useChatStore from "./context/chatStore";
 import { useDashboardStore } from "./context/dashboardStore";
 import { validateToken } from "./lib/apiClient";
+import { Role } from "./model/projectCategory";
 import { UserData } from "./model/userData";
 
 export default function Login() {
   const navigate = useNavigate();
 
-  const { setJwt } = useChatStore(
+  const { setJwt, setRole, jwt, role } = useChatStore(
     useShallow((state) => ({
       setJwt: state.setJwt,
+      setRole: state.setRole,
+      jwt: state.jwt,
+      role: state.role,
     }))
   );
 
@@ -26,6 +30,10 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [token, setToken] = useState("");
 
+  if (jwt && role != Role.TENNANT) {
+    navigate("/dashboard");
+    return null;
+  }
   async function handleTokenValidation() {
     if (!token.trim()) {
       setErrorMessage("Please enter a token.");
@@ -37,7 +45,7 @@ export default function Login() {
 
       setJwt(token);
       setUserData(data as UserData);
-
+      setRole(Role.TENNANT);
       setToken("");
       setErrorMessage("");
 

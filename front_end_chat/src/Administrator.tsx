@@ -1,17 +1,23 @@
 import { FaCog, FaEnvelope, FaSignOutAlt, FaUser } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/shallow";
+import Admin from "./Admin";
 import useChatStore from "./context/chatStore";
 import { useDashboardStore } from "./context/dashboardStore";
-import Login from "./Login";
+import { Role } from "./model/projectCategory";
 
 export default function Administrator() {
   const navigate = useNavigate();
 
-  const { logout: chatLogout, jwt } = useChatStore(
+  const {
+    logout: chatLogout,
+    jwt,
+    role,
+  } = useChatStore(
     useShallow((state) => ({
       logout: state.logout,
       jwt: state.jwt,
+      role: state.role,
     }))
   );
 
@@ -22,14 +28,30 @@ export default function Administrator() {
     }))
   );
 
+  if (!!jwt && role != Role.ADMIN) {
+    return (
+      <div className="min-h-screen lg:p-6 p-2 flex items-center justify-center">
+        <p className="mr-2">
+          You are not authorized to access this page, please login as a admin to
+          access this page.
+        </p>{" "}
+        <br />
+        <a href="/admin" className="text-blue-500" onClick={chatLogout}>
+          {" > "}
+          Admin Login
+        </a>
+      </div>
+    );
+  }
+
   if (!jwt) {
-    return <Login />;
+    return <Admin />;
   }
 
   const handleLogout = () => {
     chatLogout();
     dashboardLogout();
-    navigate("/");
+    navigate("/admin");
   };
 
   return (

@@ -7,13 +7,15 @@ import { validateAdminToken } from "./lib/apiClient";
 import useChatStore from "./context/chatStore";
 import { useDashboardStore } from "./context/dashboardStore";
 import { UserData } from "./model/userData";
+import { Role } from "./model/projectCategory";
 
 export default function Admin() {
   const navigate = useNavigate();
 
-  const { setJwt } = useChatStore(
+  const { setJwt, setRole } = useChatStore(
     useShallow((state) => ({
       setJwt: state.setJwt,
+      setRole: state.setRole,
     }))
   );
 
@@ -66,6 +68,7 @@ export default function Admin() {
       );
 
       setJwt(data.token);
+      setRole(Role.ADMIN);
       setUserData(data as UserData);
 
       setAdminForm({ name: "", email: "", password: "" });
