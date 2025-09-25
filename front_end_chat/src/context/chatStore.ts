@@ -6,6 +6,7 @@ import type {
   ProjectCategories,
   SearchType,
 } from "../model/projectCategory";
+
 import { ENGINES } from "../constants/engines";
 import { type ChatMessage, ChatMessageTypeOptions } from "../model/message";
 import {
@@ -30,6 +31,7 @@ import {
 import { showCloseModal } from "../lib/dialog";
 import { topicQuestionTemplate } from "../components/main-chat/Messages";
 import { v4 as uuidv4 } from "uuid";
+import { Role } from "../model/projectCategory";
 
 if (getParameterFromUrl("token")) {
   localStorage.removeItem("chat-store");
@@ -58,6 +60,7 @@ type ChatStore = {
   conversationTopicsNumber: number;
   showTopics: boolean;
   topicQuestionsLoading: number | null;
+  role: Role | null;
   newProject: () => void;
   setJwt: (jwt: string) => void;
   setIsMarkdownDialogueOpen: (isOpen: boolean) => void;
@@ -90,6 +93,7 @@ type ChatStore = {
   setShowTopics: (showTopics: boolean) => void;
   streamEnded: () => void;
   selectTopicQuestion: (question: string) => void;
+  setRole: (role: Role) => void;
 };
 
 const THRESHOLD = 50;
@@ -273,6 +277,7 @@ const useChatStore = create<ChatStore>()(
         showTopics: true,
         relatedTopics: null,
         topicQuestionsLoading: null,
+        role: null,
         setJwt: (jwt: string) =>
           set(() => {
             if (jwt.length > 0) {
@@ -347,6 +352,7 @@ const useChatStore = create<ChatStore>()(
             showTopics: false,
             relatedTopics: null,
             selectedTopic: null,
+            role: null,
           }),
         newProject: () =>
           set(() => {
@@ -481,6 +487,7 @@ const useChatStore = create<ChatStore>()(
           set(() => {
             return { inputText: question };
           }),
+        setRole: (role: Role) => set({ role }),
       };
     },
     {
@@ -493,6 +500,7 @@ const useChatStore = create<ChatStore>()(
         topics: state.topics,
         useStreaming: state.useStreaming,
         relatedTopics: state.relatedTopics,
+        role: state.role,
       }),
     },
   ),
