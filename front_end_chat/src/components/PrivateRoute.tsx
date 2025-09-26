@@ -17,7 +17,6 @@ export default function PrivateRoute({
 
   if (!jwt) {
     navigate("/login");
-    return null;
   }
 
   return <>{children}</>;

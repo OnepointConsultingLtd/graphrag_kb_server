@@ -1,4 +1,5 @@
 import { useShallow } from "zustand/shallow";
+import { useEffect } from "react";
 import useChatStore from "../../context/chatStore";
 import { Role } from "../../model/projectCategory";
 import Actions from "./Actions";
@@ -10,8 +11,10 @@ import GenerateURLModal from "./GenerateURLModal";
 import Header from "./Header";
 import ProjectList from "./ProjectList";
 import UserProfile from "./UserProfile";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { jwt, role, logout } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
@@ -19,6 +22,16 @@ export default function Dashboard() {
       logout: state.logout,
     }))
   );
+
+  useEffect(() => {
+    if (!jwt) {
+      navigate("/login");
+    }
+  }, [jwt, navigate]);
+
+  if (!jwt) {
+    return null;
+  }
 
   if (!!jwt && role != Role.TENNANT) {
     return (
