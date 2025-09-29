@@ -192,6 +192,10 @@ async def read_admin_token(request: web.Request) -> web.Response:
             status=401,
         )
 
+@routes.options("/protected/tennant/create")
+async def create_tennant_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
 
 @routes.post("/protected/tennant/create")
 async def create_tennant(request: web.Request) -> web.Response:
@@ -275,16 +279,21 @@ async def create_tennant(request: web.Request) -> web.Response:
             token_data = JWTTokenData(name=body["tennant_name"], email=email)
             jwt_token: JWTToken | Error = await generate_token(token_data)
             if isinstance(jwt_token, JWTToken):
-                return web.json_response(jwt_token.model_dump())
+                return web.json_response(jwt_token.model_dump(), headers=CORS_HEADERS)
             else:
-                return web.json_response(jwt_token.model_dump(), status=400)
+                return web.json_response(jwt_token.model_dump(), status=400, headers=CORS_HEADERS)
         else:
             return invalid_response(
                 "Invalid request body",
                 "Make sure you specify the email and project name.",
             )
 
-    return await handle_error(handle_request, request=request)
+    return await handle_error(handle_request, request=request, headers=CORS_HEADERS)
+
+
+@routes.options("/protected/tennant/delete_tennant")
+async def delete_tennant_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 
 @routes.delete("/protected/tennant/delete_tennant")
@@ -360,9 +369,9 @@ async def delete_tennant(request: web.Request) -> web.Response:
                 "Tennant folder does not exist.",
                 ErrorCode.TENNANT_DOES_NOT_EXIST,
             )
-        return web.json_response({"message": "Tennant deleted"})
+        return web.json_response({"message": "Tennant deleted"}, headers=CORS_HEADERS)
 
-    return await handle_error(handle_request, request=request)
+    return await handle_error(handle_request, request=request, headers=CORS_HEADERS)
 
 
 @routes.options("/protected/tennant/list_tennants")
