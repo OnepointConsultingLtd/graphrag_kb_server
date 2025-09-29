@@ -280,7 +280,7 @@ const useChatStore = create<ChatStore>()(
         role: null,
         setJwt: (jwt: string) =>
           set(() => {
-            if (jwt.length > 0) {
+            if (jwt.length > 0 && get().role === Role.TENNANT) {
               loadInitialProjects(jwt);
             }
             return { jwt };
@@ -369,7 +369,7 @@ const useChatStore = create<ChatStore>()(
           }),
         initializeProjects: async () => {
           const jwt = get().jwt;
-          if (jwt) {
+          if (jwt && get().role === Role.TENNANT) {
             const projects = await fetchProjects(jwt);
             set({ projects });
           }
@@ -405,7 +405,9 @@ const useChatStore = create<ChatStore>()(
         setChatType: (chatType: ChatTypeOptions) => set({ chatType }),
         refreshProjects: () =>
           set((state) => {
-            loadInitialProjects(state.jwt);
+            if (state.role === Role.TENNANT) {
+              loadInitialProjects(state.jwt);
+            }
             return { ...state };
           }),
         setTopics: (topics: Topics) =>
@@ -455,7 +457,7 @@ const useChatStore = create<ChatStore>()(
             }
           }),
         setInputText: (inputText: string) =>
-          set((_) => {
+          set(() => {
             return { inputText };
           }),
         setSelectedTopic: (topic: Topic) =>

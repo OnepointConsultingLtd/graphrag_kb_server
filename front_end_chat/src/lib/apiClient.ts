@@ -356,3 +356,25 @@ export async function generateQuestions(
   }
   return await response.json();
 }
+
+// List tennants
+
+export async function listTennants(
+  jwt: string,
+) {
+  const response = await fetch(
+    `${getBaseServer()}/protected/tennant/list_tennants`,
+    {
+      method: "GET",
+      ...createHeaders(jwt),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load tennants. Error code: ${response.status}. Error: ${response.statusText}`,
+    );
+  }
+  const data = await response.json();
+  console.log("the tennants are", data);
+  return data;
+}

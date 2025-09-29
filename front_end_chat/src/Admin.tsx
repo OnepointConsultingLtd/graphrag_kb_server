@@ -47,12 +47,13 @@ export default function Admin() {
     if (
       !adminForm.name.trim() ||
       !adminForm.email.trim() ||
-      !adminForm.password.trim()
+      !adminForm.password
     ) {
       setErrorMessage("Please fill in all fields.");
       return;
     }
 
+    console.log("adminForm", adminForm);
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(adminForm.email)) {
@@ -145,7 +146,7 @@ export default function Admin() {
               <input
                 id="adminPassword"
                 name="password"
-                type="text"
+                type="password"
                 value={adminForm.password}
                 onChange={handleAdminFormChange}
                 placeholder="Enter your password"

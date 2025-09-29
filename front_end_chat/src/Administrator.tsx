@@ -1,13 +1,21 @@
-import { FaCog, FaEnvelope, FaSignOutAlt, FaUser } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import {
+  FaCog,
+  FaEnvelope,
+  FaExternalLinkAlt,
+  FaSignOutAlt,
+  FaUser,
+  FaUsers,
+} from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import Admin from "./Admin";
 import useChatStore from "./context/chatStore";
-import { useDashboardStore } from "./context/dashboardStore";
+import decodedJwt from "./lib/decodeJwt";
 import { Role } from "./model/projectCategory";
+import useAdminStore from "./store/adminStore";
 
 export default function Administrator() {
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const {
     logout: chatLogout,
@@ -21,12 +29,33 @@ export default function Administrator() {
     }))
   );
 
-  const { userData, logout: dashboardLogout } = useDashboardStore(
+  const { tennants, loadTennants } = useAdminStore(
     useShallow((state) => ({
-      userData: state.userData,
-      logout: state.logout,
+      tennants: state.tennants,
+      loadTennants: state.loadTennants,
     }))
   );
+
+  console.log("tennantstennantstennants", tennants);
+
+  const handleLoadTennants = useCallback(async () => {
+    if (!jwt) return;
+    setLoading(true);
+    try {
+      await loadTennants(jwt);
+    } catch (error) {
+      console.error("Failed to load tennants:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [jwt, loadTennants]);
+
+  useEffect(() => {
+    if (jwt && role === Role.ADMIN) {
+      handleLoadTennants();
+    }
+  }, [jwt, role, handleLoadTennants]);
+  console.log("decoded jwt", decodedJwt(jwt));
 
   if (!!jwt && role != Role.ADMIN) {
     return (
@@ -50,8 +79,6 @@ export default function Administrator() {
 
   const handleLogout = () => {
     chatLogout();
-    dashboardLogout();
-    navigate("/admin");
   };
 
   return (
@@ -66,11 +93,11 @@ export default function Administrator() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {userData?.name || "Administrator"}
+                  {decodedJwt(jwt).name || "Administrator"}
                 </h1>
                 <p className="text-gray-600 flex items-center">
                   <FaEnvelope className="mr-2 text-sm" />
-                  {userData?.email || "admin@example.com"}
+                  {decodedJwt(jwt).email || "admin@example.com"}
                 </p>
                 <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-2">
                   Administrator
@@ -103,7 +130,7 @@ export default function Administrator() {
                 Full Name
               </label>
               <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
-                {userData?.name || "Administrator User"}
+                {decodedJwt(jwt).name || "Administrator User"}
               </p>
             </div>
             <div>
@@ -111,17 +138,10 @@ export default function Administrator() {
                 Email Address
               </label>
               <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
-                {userData?.email || "admin@example.com"}
+                {decodedJwt(jwt).email}
               </p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Role
-              </label>
-              <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
-                System Administrator
-              </p>
-            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Last Login
@@ -132,6 +152,126 @@ export default function Administrator() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Tennants Management */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <FaUsers className="text-gray-600 mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900">
+                Tennants Management
+              </h2>
+            </div>
+            <button
+              onClick={handleLoadTennants}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            >
+              <span>{loading ? "Loading..." : "Refresh"}</span>
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Loading tennants...</span>
+            </div>
+          ) : tennants && tennants.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Folder Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Token
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {tennants.map((tennant, index) => (
+                    <tr
+                      key={tennant.token || index}
+                      className="hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {tennant.folder_name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {new Date(
+                            tennant.creation_timestamp
+                          ).toLocaleDateString()}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(
+                            tennant.creation_timestamp
+                          ).toLocaleTimeString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 font-mono">
+                          {tennant.token.substring(0, 8)}...
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          {tennant.chat_url && (
+                            <a
+                              href={tennant.chat_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
+                            >
+                              <FaExternalLinkAlt className="text-xs" />
+                              <span>Chat</span>
+                            </a>
+                          )}
+                          {tennant.visualization_url && (
+                            <a
+                              href={tennant.visualization_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-600 hover:text-green-900 flex items-center space-x-1"
+                            >
+                              <FaExternalLinkAlt className="text-xs" />
+                              <span>Viz</span>
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FaUsers className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No tennants found
+              </h3>
+              <p className="text-gray-500 mb-4">
+                There are no tennants available. Click refresh to load tennants.
+              </p>
+              <button
+                onClick={handleLoadTennants}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              >
+                Load Tennants
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
