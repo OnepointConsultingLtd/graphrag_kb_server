@@ -359,22 +359,72 @@ export async function generateQuestions(
 
 // List tennants
 
-export async function listTennants(
+
+// Reusable template for tenant API calls
+export async function tennantApiTemplate(
   jwt: string,
+  endpoint: string,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+  requestBody?: object,
 ) {
+  const config: RequestInit = {
+    method,
+    ...createHeaders(jwt),
+  };
+
+  if (requestBody && (method === "POST" || method === "PUT")) {
+    config.body = JSON.stringify(requestBody);
+  }
+
   const response = await fetch(
-    `${getBaseServer()}/protected/tennant/list_tennants`,
-    {
-      method: "GET",
-      ...createHeaders(jwt),
-    },
+    `${getBaseServer()}/protected/tennant/${endpoint}`,
+    config,
   );
+
   if (!response.ok) {
+    const errorMessage = await response.text().catch(() => response.statusText);
     throw new Error(
-      `Failed to load tennants. Error code: ${response.status}. Error: ${response.statusText}`,
+      `Failed to ${method.toLowerCase()} tenant. Error code: ${response.status}. Error: ${errorMessage}`,
     );
   }
+
   const data = await response.json();
-  console.log("the tennants are", data);
   return data;
+}
+
+export async function listTennants(jwt: string) {
+  return await tennantApiTemplate(jwt, "list_tennants", "GET");
+}
+
+// Create tenant
+export async function createTenant(
+  jwt: string,
+  tenantData: { tennant_name: string; email: string }
+) {
+  return await tennantApiTemplate(jwt, "create", "POST", tenantData);
+}
+
+// Delete tenant
+export async function deleteTenant(
+  jwt: string,
+  tenantId: string
+) {
+  return await tennantApiTemplate(jwt, `delete_tennant/${tenantId}`, "DELETE");
+}
+
+// Update tenant
+export async function updateTenant(
+  jwt: string,
+  tenantId: string,
+  tenantData: { folder_name?: string; description?: string }
+) {
+  return await tennantApiTemplate(jwt, `update_tennant/${tenantId}`, "PUT", tenantData);
+}
+
+// Get tenant details
+export async function getTenantDetails(
+  jwt: string,
+  tenantId: string
+) {
+  return await tennantApiTemplate(jwt, `get_tennant/${tenantId}`, "GET");
 }

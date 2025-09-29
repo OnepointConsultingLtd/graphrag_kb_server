@@ -50,7 +50,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white lg:p-6 p-2">
+    <div className="min-h-screen bg-gray-900 text-white lg:p-6 p-2 lg:container mx-auto">
       <div className="lg:max-w-7xl mx-auto">
         <Header />
         <UserProfile />

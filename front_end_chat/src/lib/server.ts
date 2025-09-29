@@ -1,5 +1,5 @@
 // The base URL. Change this to reflect the domain you are operating on.
-const BASE_HOST = "ai-engine.onepointltd.ai";
+const BASE_HOST = "localhost:9999";
 const BASE_SERVER = `http://${BASE_HOST}`;
 const WEBSOCKET_SERVER = `ws://${BASE_HOST}`;
 

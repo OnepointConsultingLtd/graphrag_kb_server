@@ -1,21 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-  FaCog,
-  FaEnvelope,
-  FaExternalLinkAlt,
-  FaSignOutAlt,
-  FaUser,
-  FaUsers,
-} from "react-icons/fa";
+import { FaCog, FaEnvelope, FaSignOutAlt, FaUser } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import Admin from "./Admin";
+import TennantLits from "./components/tennants/TennantLits";
+import Modal from "./components/tennants/Actions/Modal";
+import CreateTenantForm from "./components/tennants/Actions/CreateTenantForm";
 import useChatStore from "./context/chatStore";
 import decodedJwt from "./lib/decodeJwt";
 import { Role } from "./model/projectCategory";
-import useAdminStore from "./store/adminStore";
+import { useState } from "react";
 
 export default function Administrator() {
-  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     logout: chatLogout,
@@ -28,34 +23,6 @@ export default function Administrator() {
       role: state.role,
     }))
   );
-
-  const { tennants, loadTennants } = useAdminStore(
-    useShallow((state) => ({
-      tennants: state.tennants,
-      loadTennants: state.loadTennants,
-    }))
-  );
-
-  console.log("tennantstennantstennants", tennants);
-
-  const handleLoadTennants = useCallback(async () => {
-    if (!jwt) return;
-    setLoading(true);
-    try {
-      await loadTennants(jwt);
-    } catch (error) {
-      console.error("Failed to load tennants:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [jwt, loadTennants]);
-
-  useEffect(() => {
-    if (jwt && role === Role.ADMIN) {
-      handleLoadTennants();
-    }
-  }, [jwt, role, handleLoadTennants]);
-  console.log("decoded jwt", decodedJwt(jwt));
 
   if (!!jwt && role != Role.ADMIN) {
     return (
@@ -81,199 +48,145 @@ export default function Administrator() {
     chatLogout();
   };
 
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
-    <div className="w-full h-full bg-gray-50 min-h-screen">
-      <div className="mx-auto p-6">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-                <FaUser className="text-white text-2xl" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 w-full">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-20">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f3f4f6' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        ></div>
+      </div>
+
+      <div className="relative z-10">
+        {/* Navigation Header */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-20">
+          <div className="mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                  <FaUser className="text-white text-lg" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    Administrator Dashboard
+                  </h1>
+                  <p className="text-sm text-gray-500">
+                    Tenant Management System
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {decodedJwt(jwt).name || "Administrator"}
-                </h1>
-                <p className="text-gray-600 flex items-center">
-                  <FaEnvelope className="mr-2 text-sm" />
-                  {decodedJwt(jwt).email || "admin@example.com"}
-                </p>
-                <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-2">
-                  Administrator
-                </span>
-              </div>
-            </div>
-            <div className="flex space-x-3">
               <button
                 onClick={handleLogout}
-                className="bg-red-600 cursor-pointer hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                className="group relative inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
               >
-                <FaSignOutAlt className="text-sm" />
+                <FaSignOutAlt className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform duration-200" />
                 <span>Logout</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Profile Information */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center mb-4">
-            <FaCog className="text-gray-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              Profile Information
-            </h2>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* User Profile Card */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-8 mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center space-x-6 mb-6 lg:mb-0">
+                <div className="relative">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <FaUser className="text-white text-3xl" />
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-4 border-white">
+                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                    {decodedJwt(jwt).name || "Administrator"}
+                  </h2>
+                  <p className="text-gray-600 flex items-center mb-3">
+                    <FaEnvelope className="mr-2 text-sm" />
+                    {decodedJwt(jwt).email || "admin@example.com"}
+                  </p>
+                  <div className="flex items-center space-x-3">
+                    <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                      Administrator
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      Last active: {new Date().toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
-              <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+
+          {/* Profile Information Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center mr-3">
+                  <FaUser className="text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Full Name
+                </h3>
+              </div>
+              <p className="text-gray-700 font-medium">
                 {decodedJwt(jwt).name || "Administrator User"}
               </p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
-              </label>
-              <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center mr-3">
+                  <FaEnvelope className="text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Email Address
+                </h3>
+              </div>
+              <p className="text-gray-700 font-medium">
                 {decodedJwt(jwt).email}
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Login
-              </label>
-              <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center mr-3">
+                  <FaCog className="text-purple-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Last Login
+                </h3>
+              </div>
+              <p className="text-gray-700 font-medium">
                 {new Date().toLocaleDateString()} at{" "}
                 {new Date().toLocaleTimeString()}
               </p>
             </div>
           </div>
-        </div>
 
-        {/* Tennants Management */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <FaUsers className="text-gray-600 mr-2" />
-              <h2 className="text-lg font-semibold text-gray-900">
-                Tennants Management
-              </h2>
-            </div>
-            <button
-              onClick={handleLoadTennants}
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-            >
-              <span>{loading ? "Loading..." : "Refresh"}</span>
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-gray-600">Loading tennants...</span>
-            </div>
-          ) : tennants && tennants.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Folder Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Token
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {tennants.map((tennant, index) => (
-                    <tr
-                      key={tennant.token || index}
-                      className="hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {tennant.folder_name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {new Date(
-                            tennant.creation_timestamp
-                          ).toLocaleDateString()}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {new Date(
-                            tennant.creation_timestamp
-                          ).toLocaleTimeString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 font-mono">
-                          {tennant.token.substring(0, 8)}...
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          {tennant.chat_url && (
-                            <a
-                              href={tennant.chat_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
-                            >
-                              <FaExternalLinkAlt className="text-xs" />
-                              <span>Chat</span>
-                            </a>
-                          )}
-                          {tennant.visualization_url && (
-                            <a
-                              href={tennant.visualization_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-green-600 hover:text-green-900 flex items-center space-x-1"
-                            >
-                              <FaExternalLinkAlt className="text-xs" />
-                              <span>Viz</span>
-                            </a>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <FaUsers className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No tennants found
-              </h3>
-              <p className="text-gray-500 mb-4">
-                There are no tennants available. Click refresh to load tennants.
-              </p>
-              <button
-                onClick={handleLoadTennants}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-              >
-                Load Tennants
-              </button>
-            </div>
-          )}
+          {/* Tennants Management */}
+          <TennantLits onOpenModal={openModal} />
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal title="Create Tenant" isOpen={isModalOpen} onClose={closeModal}>
+        <CreateTenantForm />
+      </Modal>
     </div>
   );
 }

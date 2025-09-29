@@ -43,7 +43,7 @@ function chooseComponent() {
 
 function App() {
   return (
-    <div className="lg:container mx-auto">
+    <div>
       <MarkdownDialogue />
       <BrowserRouter>
         <Routes>
