@@ -365,6 +365,11 @@ async def delete_tennant(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
+@routes.options("/protected/tennant/list_tennants")
+async def list_tennants_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
 @routes.get("/protected/tennant/list_tennants")
 async def list_tennants(request: web.Request) -> web.Response:
     """
@@ -403,7 +408,7 @@ async def list_tennants(request: web.Request) -> web.Response:
 
     async def handle_request(_: web.Request) -> web.Response:
         tennants = local_list_tennants()
-        return web.json_response([t.as_dict() for t in tennants])
+        return web.json_response([t.as_dict() for t in tennants], headers=CORS_HEADERS)
 
     return await handle_error(handle_request, request=request)
 
