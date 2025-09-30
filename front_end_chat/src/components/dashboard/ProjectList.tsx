@@ -11,9 +11,6 @@ export default function ProjectList() {
     }))
   );
 
-  console.log("projects", projects);
-
-  // Show loading state when JWT exists but projects haven't loaded yet
   const isLoading = jwt && !projects;
 
   return (
