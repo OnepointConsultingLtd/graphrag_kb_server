@@ -3,7 +3,7 @@ export function getParameterFromUrl(name: string) {
     return undefined;
   }
   const urlParams = new URLSearchParams(window.location.search);
-  let value = urlParams.get(name);
+  const value = urlParams.get(name);
   if (value) {
     return value;
   }

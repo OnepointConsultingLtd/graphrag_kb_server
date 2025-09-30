@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../context/chatStore";
 
@@ -8,6 +9,7 @@ export default function PrivateRoute({
   children: React.ReactNode;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { jwt } = useChatStore(
     useShallow((state) => ({
@@ -15,8 +17,18 @@ export default function PrivateRoute({
     }))
   );
 
+  useEffect(() => {
+    if (!jwt) {
+      if (location.pathname === "/administrator") {
+        navigate("/admin");
+      } else {
+        navigate("/login");
+      }
+    }
+  }, [jwt, navigate, location.pathname]);
+
   if (!jwt) {
-    navigate("/login");
+    return null;
   }
 
   return <>{children}</>;

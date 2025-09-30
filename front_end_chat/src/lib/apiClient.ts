@@ -356,3 +356,55 @@ export async function generateQuestions(
   }
   return await response.json();
 }
+
+export async function tennantApiTemplate(
+  jwt: string,
+  endpoint: string,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+  requestBody?: object,
+) {
+  const config: RequestInit = {
+    method,
+    ...createHeaders(jwt),
+  };
+
+  if (requestBody && (method === "POST" || method === "PUT" || method === "DELETE")) {
+    config.body = JSON.stringify(requestBody);
+  }
+
+  const response = await fetch(
+    `${getBaseServer()}/protected/tennant/${endpoint}`,
+    config,
+  );
+
+  if (!response.ok) {
+    const errorMessage = await response.text().catch(() => response.statusText);
+    throw new Error(
+      `Failed to ${method.toLowerCase()} tenant. Error code: ${response.status}. Error: ${errorMessage}`,
+    );
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+export async function listTennants(jwt: string) {
+  return await tennantApiTemplate(jwt, "list_tennants", "GET");
+}
+
+// Create tenant
+export async function createTenant(
+  jwt: string,
+  tenantData: { tenant_name: string; email: string }
+) {
+  return await tennantApiTemplate(jwt, "create", "POST", tenantData);
+}
+
+// Delete tenant
+export async function deleteTenant(
+  jwt: string,
+  tenantData: { tennant_folder: string }
+) {
+  console.log("deleteTenant", tenantData);
+  return await tennantApiTemplate(jwt, "delete_tennant", "DELETE", tenantData);
+}
