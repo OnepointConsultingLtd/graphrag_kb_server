@@ -395,7 +395,7 @@ export async function listTennants(jwt: string) {
 // Create tenant
 export async function createTenant(
   jwt: string,
-  tenantData: { tenant_name: string; email: string }
+  tenantData: { tennant_name: string; email: string }
 ) {
   return await tennantApiTemplate(jwt, "create", "POST", tenantData);
 }

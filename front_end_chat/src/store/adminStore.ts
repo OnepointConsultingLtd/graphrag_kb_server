@@ -17,7 +17,7 @@ const useAdminStore = create<AdminStore>()(
         }
       }
 
-      async function createTenant(jwt: string, tenantData: { tenant_name: string; email: string }) {
+      async function createTenant(jwt: string, tenantData: { tennant_name: string; email: string }) {
         try {
           await createTenantApi(jwt, tenantData);
           await loadTennants(jwt);
