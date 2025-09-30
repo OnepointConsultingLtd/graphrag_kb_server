@@ -280,7 +280,7 @@ const useChatStore = create<ChatStore>()(
         role: null,
         setJwt: (jwt: string) =>
           set(() => {
-            if (jwt.length > 0 && get().role === Role.TENNANT) {
+            if (jwt.length > 0) {
               loadInitialProjects(jwt);
             }
             return { jwt };
