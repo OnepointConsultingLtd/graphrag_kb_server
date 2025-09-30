@@ -17,7 +17,7 @@ const useAdminStore = create<AdminStore>()(
         }
       }
 
-      async function createTenant(jwt: string, tenantData: { tennant_name: string; email: string }) {
+      async function createTenant(jwt: string, tenantData: { tenant_name: string; email: string }) {
         try {
           await createTenantApi(jwt, tenantData);
           await loadTennants(jwt);
@@ -27,9 +27,9 @@ const useAdminStore = create<AdminStore>()(
         }
       }
 
-      async function deleteTenant(jwt: string, tenantId: string) {
+      async function deleteTenant(jwt: string, tenantData: { tennant_folder: string }) {
         try {
-          await deleteTenantApi(jwt, tenantId);
+          await deleteTenantApi(jwt, tenantData);
           await loadTennants(jwt);
         } catch (error) {
           console.error("Failed to delete tenant:", error);

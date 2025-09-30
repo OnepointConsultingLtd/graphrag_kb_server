@@ -4,13 +4,20 @@ import Admin from "./Admin";
 import TennantLits from "./components/tennants/TennantLits";
 import Modal from "./components/tennants/Actions/Modal";
 import CreateTenantForm from "./components/tennants/Actions/CreateTenantForm";
+import DeleteTenantForm from "./components/tennants/Actions/DeleteTenantForm";
 import useChatStore from "./context/chatStore";
+import useAdminStore from "./store/adminStore";
 import decodedJwt from "./lib/decodeJwt";
 import { Role } from "./model/projectCategory";
 import { useState } from "react";
 
 export default function Administrator() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedTenant, setSelectedTenant] = useState<{
+    folder_name: string;
+    token: string;
+  } | null>(null);
 
   const {
     logout: chatLogout,
@@ -21,6 +28,12 @@ export default function Administrator() {
       logout: state.logout,
       jwt: state.jwt,
       role: state.role,
+    }))
+  );
+
+  const { deleteTenant } = useAdminStore(
+    useShallow((state) => ({
+      deleteTenant: state.deleteTenant,
     }))
   );
 
@@ -54,6 +67,16 @@ export default function Administrator() {
 
   const closeModal = () => {
     setIsModalOpen(false);
+  };
+
+  const openDeleteModal = (tenant: { folder_name: string; token: string }) => {
+    setSelectedTenant(tenant);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedTenant(null);
   };
 
   return (
@@ -179,13 +202,41 @@ export default function Administrator() {
           </div>
 
           {/* Tennants Management */}
-          <TennantLits onOpenModal={openModal} />
+          <TennantLits
+            onOpenModal={openModal}
+            onOpenDeleteModal={openDeleteModal}
+          />
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Create Modal */}
       <Modal title="Create Tenant" isOpen={isModalOpen} onClose={closeModal}>
-        <CreateTenantForm />
+        <CreateTenantForm onSuccess={closeModal} onCancel={closeModal} />
+      </Modal>
+
+      {/* Delete Modal */}
+      <Modal
+        title="Delete Tenant"
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+      >
+        {selectedTenant && (
+          <DeleteTenantForm
+            tenantName={selectedTenant.folder_name}
+            onConfirm={async () => {
+              if (!jwt) return;
+              try {
+                await deleteTenant(jwt, {
+                  tennant_folder: selectedTenant.folder_name,
+                });
+                closeDeleteModal();
+              } catch (error) {
+                console.error("Failed to delete tenant:", error);
+              }
+            }}
+            onCancel={closeDeleteModal}
+          />
+        )}
       </Modal>
     </div>
   );

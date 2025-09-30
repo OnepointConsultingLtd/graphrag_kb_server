@@ -58,7 +58,6 @@ export default function CreateTenantForm({
       setTenantName("");
       setTenantEmail("");
 
-      // Call success callback and reset after 2 seconds
       setTimeout(() => {
         setSubmitStatus("idle");
         onSuccess?.();
@@ -67,7 +66,6 @@ export default function CreateTenantForm({
       console.error("Failed to create tenant:", error);
       setSubmitStatus("error");
 
-      // Reset error status after 3 seconds
       setTimeout(() => {
         setSubmitStatus("idle");
       }, 3000);

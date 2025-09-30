@@ -357,10 +357,6 @@ export async function generateQuestions(
   return await response.json();
 }
 
-// List tennants
-
-
-// Reusable template for tenant API calls
 export async function tennantApiTemplate(
   jwt: string,
   endpoint: string,
@@ -372,7 +368,7 @@ export async function tennantApiTemplate(
     ...createHeaders(jwt),
   };
 
-  if (requestBody && (method === "POST" || method === "PUT")) {
+  if (requestBody && (method === "POST" || method === "PUT" || method === "DELETE")) {
     config.body = JSON.stringify(requestBody);
   }
 
@@ -399,7 +395,7 @@ export async function listTennants(jwt: string) {
 // Create tenant
 export async function createTenant(
   jwt: string,
-  tenantData: { tennant_name: string; email: string }
+  tenantData: { tenant_name: string; email: string }
 ) {
   return await tennantApiTemplate(jwt, "create", "POST", tenantData);
 }
@@ -407,24 +403,8 @@ export async function createTenant(
 // Delete tenant
 export async function deleteTenant(
   jwt: string,
-  tenantId: string
+  tenantData: { tennant_folder: string }
 ) {
-  return await tennantApiTemplate(jwt, `delete_tennant/${tenantId}`, "DELETE");
-}
-
-// Update tenant
-export async function updateTenant(
-  jwt: string,
-  tenantId: string,
-  tenantData: { folder_name?: string; description?: string }
-) {
-  return await tennantApiTemplate(jwt, `update_tennant/${tenantId}`, "PUT", tenantData);
-}
-
-// Get tenant details
-export async function getTenantDetails(
-  jwt: string,
-  tenantId: string
-) {
-  return await tennantApiTemplate(jwt, `get_tennant/${tenantId}`, "GET");
+  console.log("deleteTenant", tenantData);
+  return await tennantApiTemplate(jwt, "delete_tennant", "DELETE", tenantData);
 }
