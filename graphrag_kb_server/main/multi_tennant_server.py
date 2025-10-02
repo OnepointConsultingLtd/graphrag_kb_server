@@ -192,6 +192,7 @@ async def read_admin_token(request: web.Request) -> web.Response:
             status=401,
         )
 
+
 @routes.options("/protected/tennant/create")
 async def create_tennant_options(request: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
@@ -281,7 +282,9 @@ async def create_tennant(request: web.Request) -> web.Response:
             if isinstance(jwt_token, JWTToken):
                 return web.json_response(jwt_token.model_dump(), headers=CORS_HEADERS)
             else:
-                return web.json_response(jwt_token.model_dump(), status=400, headers=CORS_HEADERS)
+                return web.json_response(
+                    jwt_token.model_dump(), status=400, headers=CORS_HEADERS
+                )
         else:
             return invalid_response(
                 "Invalid request body",

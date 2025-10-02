@@ -15,6 +15,7 @@ async def structured_completion(
     response_schema: BaseModel,
     model: str = lightrag_cfg.lightrag_model,
 ) -> dict:
+
     client = genai.Client(api_key=cfg.gemini_api_key)
     contents = f"""
 system: {system_message}

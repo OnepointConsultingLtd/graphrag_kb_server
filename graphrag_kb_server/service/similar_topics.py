@@ -1,12 +1,22 @@
+from pathlib import Path
 import random
 from collections import Counter
+
 import networkx as nx
+import numpy as np
+from sklearn.preprocessing import normalize
+from sklearn.neighbors import NearestNeighbors
+from graspologic.embed import node2vec_embed
+
 from graphrag_kb_server.model.topics import (
     SimilarityTopics,
     SimilarityTopic,
     SimilarityTopicsRequest,
 )
 from graphrag_kb_server.model.engines import Engine
+from graphrag_kb_server.utils.cache import GenericSimpleCache
+from graphrag_kb_server.model.related_topics import RelatedTopicsNearestNeighbors
+from graphrag_kb_server.model.topics import SimilarityTopicsMethod
 
 
 def convert_to_similarity_topics(
@@ -68,12 +78,9 @@ def get_similar_nodes(
             if rand() < restart_prob:
                 current_node = source
             else:
-                neighbors = neighbors_cache.get(current_node)
-                if neighbors is None:
-                    neighbors = tuple(G.neighbors(current_node))
-                    neighbors_cache[current_node] = neighbors
-                else:
-                    pass
+                neighbors = neighbors_cache.setdefault(
+                    current_node, tuple(G.neighbors(current_node))
+                )
                 if not neighbors:
                     break
                 current_node = neighbors[randrange(len(neighbors))]
@@ -84,17 +91,97 @@ def get_similar_nodes(
     return similarity_topics
 
 
+_nearest_neighbors_cache = GenericSimpleCache[Path, RelatedTopicsNearestNeighbors]()
+
+
+def _get_nearest_neighbors_vectors(
+    G: nx.Graph, project_dir: Path
+) -> RelatedTopicsNearestNeighbors:
+    nearest_neighbors = _nearest_neighbors_cache.get(project_dir)
+    if nearest_neighbors is not None:
+        return nearest_neighbors
+    nodes: list[str] = list(G.nodes())
+
+    X, vertex_labels = node2vec_embed(G)
+
+    # For undirected graphs, X is (n, d).
+    # For directed graphs, X is a tuple (X_in, X_out). Concatenate for a single embedding:
+    if isinstance(X, tuple):
+        X = np.hstack(X[0])  # shape (n, 2d)
+
+    # --- 4) (Optional) Normalize if you want cosine similarity ---
+    X_cos = normalize(X)  # row-wise L2 norm = 1
+
+    # --- 5) Build a k-NN index over the embeddings ---
+    # Choose 'cosine' or 'euclidean' to match your intention
+    k = 10
+    nn = NearestNeighbors(
+        metric="cosine", n_neighbors=k + 1
+    )  # +1 to include the node itself
+    nn.fit(X_cos)
+
+    node_to_idx: dict[str, int] = {u: i for i, u in enumerate(vertex_labels)}
+
+    nearest_neighbors = RelatedTopicsNearestNeighbors(
+        node_to_idx=node_to_idx,
+        nodes=vertex_labels,
+        X=X,
+        X_cos=X_cos,
+        nn=nn,
+    )
+    _nearest_neighbors_cache.set(project_dir, nearest_neighbors)
+    return nearest_neighbors
+
+
+def get_similar_nodes_nearest_neighbors(
+    G: nx.Graph, request: SimilarityTopicsRequest
+) -> SimilarityTopics:
+    nearest_neighbors = _get_nearest_neighbors_vectors(G, request.project_dir)
+    idx = nearest_neighbors.node_to_idx[request.source]
+    query_vec = (
+        nearest_neighbors.X_cos[idx : idx + 1]
+        if request.use_cosine
+        else nearest_neighbors.X[idx : idx + 1]
+    )
+    dist, ind = nearest_neighbors.nn.kneighbors(query_vec, n_neighbors=request.k + 1)
+    ind = ind.ravel()
+    dist = dist.ravel()
+    ind = ind[1:]
+    dist = dist[1:]
+    similarity_topics = []
+    for i in range(len(ind)):
+        node_name = nearest_neighbors.nodes[ind[i]]
+        node_data = G.nodes[node_name]
+        similarity_topics.append(
+            SimilarityTopic(
+                name=nearest_neighbors.nodes[ind[i]],
+                description=node_data["description"],
+                type=node_data["entity_type"],
+                questions=[],
+                probability=dist[i],
+            )
+        )
+    similarity_topics = sorted(
+        similarity_topics, key=lambda x: x.probability, reverse=False
+    )
+    return SimilarityTopics(topics=similarity_topics)
+
+
 def get_sorted_related_entities_simple_rerank(
     G: nx.Graph, request: SimilarityTopicsRequest
 ) -> SimilarityTopics | None:
     similarity_topics_results = []
-    for _ in range(request.runs):
-        related_entities = get_similar_nodes(G, request)
-        if related_entities is None:
-            return None
-        similarity_topics_results.append(related_entities)
-    similarity_topics_results = similarity_topics_results
-    return rerank_similarity_topics(similarity_topics_results, request.k)
+    match request.method:
+        case SimilarityTopicsMethod.RANDOM_WALK:
+            for _ in range(request.runs):
+                related_entities = get_similar_nodes(G, request)
+                if related_entities is None:
+                    return None
+                similarity_topics_results.append(related_entities)
+            return rerank_similarity_topics(similarity_topics_results, request.k)
+        case SimilarityTopicsMethod.NEAREST_NEIGHBORS:
+            related_entities = get_similar_nodes_nearest_neighbors(G, request)
+            return related_entities
 
 
 def rerank_similarity_topics(

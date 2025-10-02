@@ -1,6 +1,7 @@
 from typing import Final
 from pathlib import Path
 from pydantic import BaseModel, Field
+from enum import Enum
 
 from graphrag_kb_server.model.engines import Engine
 
@@ -104,6 +105,19 @@ class TopicsRequest(BaseModel):
         return hash(hashable_fields)
 
 
+class SimilarityTopicsMethod(Enum):
+    RANDOM_WALK = "random_walk"
+    NEAREST_NEIGHBORS = "nearest_neighbors"
+    
+    @classmethod
+    def from_string(cls, value: str) -> "SimilarityTopicsMethod":
+        """Convert a string to SimilarityTopicsMethod, defaulting to RANDOM_WALK if invalid."""
+        try:
+            return cls(value)
+        except ValueError:
+            return cls.RANDOM_WALK
+
+
 class SimilarityTopicsRequest(BaseModel):
     project_dir: Path = Field(..., description="The project directory")
     source: str = Field(
@@ -127,6 +141,13 @@ class SimilarityTopicsRequest(BaseModel):
     )
     deduplicate_topics: bool = Field(
         default=False, description="Whether to deduplicate the topics"
+    )
+    use_cosine: bool = Field(
+        default=True, description="Whether to use cosine similarity"
+    )
+    method: SimilarityTopicsMethod = Field(
+        default=SimilarityTopicsMethod.NEAREST_NEIGHBORS,
+        description="The method to use",
     )
 
 
