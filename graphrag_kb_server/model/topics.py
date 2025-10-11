@@ -108,7 +108,7 @@ class TopicsRequest(BaseModel):
 class SimilarityTopicsMethod(Enum):
     RANDOM_WALK = "random_walk"
     NEAREST_NEIGHBORS = "nearest_neighbors"
-    
+
     @classmethod
     def from_string(cls, value: str) -> "SimilarityTopicsMethod":
         """Convert a string to SimilarityTopicsMethod, defaulting to RANDOM_WALK if invalid."""

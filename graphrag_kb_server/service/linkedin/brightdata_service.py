@@ -3,7 +3,7 @@ import httpx
 import time
 
 from graphrag_kb_server.logger import logger
-
+from graphrag_kb_server.service.linkedin.linkedin_functions import correct_linkedin_url
 from graphrag_kb_server.config import bright_data_cfg
 
 from graphrag_kb_server.utils.cache import GenericSimpleCache
@@ -50,8 +50,7 @@ async def scrape_linkedin_profile(
 ) -> dict | None:
     if cached_result := _cache.get(url):
         return cached_result
-    if not url.startswith("https://www.linkedin.com/in/"):
-        url = f"https://www.linkedin.com/in/{url}"
+    url = correct_linkedin_url(url)
     payload = [{"url": url}]
     async with httpx.AsyncClient() as client:
         response = await client.post(LINKEDIN_ENDPOINT, json=payload, headers=_headers)

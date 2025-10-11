@@ -5,7 +5,7 @@ from sklearn.neighbors import NearestNeighbors
 
 class RelatedTopicsNearestNeighbors(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    
+
     node_to_idx: dict[str, int] = Field(..., description="The node to index mapping")
     nodes: list[str] = Field(..., description="The nodes")
     X: np.ndarray = Field(..., description="The embeddings")

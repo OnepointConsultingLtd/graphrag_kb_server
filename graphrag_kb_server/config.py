@@ -2,6 +2,7 @@ import os
 import yaml
 import shutil
 from pathlib import Path
+import random
 
 from dotenv import load_dotenv
 from graphrag_kb_server.logger import logger
@@ -149,6 +150,11 @@ class LinkedInConfig:
                 f"LINKEDIN_PASSWORD_{cred_number}"
             )
     linkedin_credentials_list = list(linkedin_credentials.items())
+
+    def get_random_credential(self) -> tuple[str, str]:
+        cred_index = random.randint(0, len(linkedin_cfg.linkedin_credentials_list) - 1)
+        user, password = linkedin_cfg.linkedin_credentials_list[cred_index]
+        return user, password
 
 
 class BrightDataConfig:

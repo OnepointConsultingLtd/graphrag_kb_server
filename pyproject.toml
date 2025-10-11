@@ -19,13 +19,16 @@ dependencies = [
     "pdf-to-markdown-llm>=0.1.12",
     "lightrag-hku[api]>=1.4.6",
     "nano-vectordb>=0.0.4.3",
-    "google-genai>=1.13.0",
+    "google-genai>=1.39.1",
     "pyvis>=0.3.2",
     "rustworkx>=0.16.0",
     "tomli>=2.2.1",
     "linkedin-api>=2.3.1",
+    "linkedin-scraper>=2.11.2",
     "asyncer>=0.0.8",
     "weasyprint>=66.0",
+    "selenium>=4.36.0",
+    "webdriver-manager>=4.0.2",
 ]
 
 [project.scripts]

@@ -100,7 +100,6 @@ def _get_nearest_neighbors_vectors(
     nearest_neighbors = _nearest_neighbors_cache.get(project_dir)
     if nearest_neighbors is not None:
         return nearest_neighbors
-    nodes: list[str] = list(G.nodes())
 
     X, vertex_labels = node2vec_embed(G)
 

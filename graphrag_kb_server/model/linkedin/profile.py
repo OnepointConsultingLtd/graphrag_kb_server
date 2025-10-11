@@ -15,6 +15,7 @@ class Industry(BaseModel):
 
 class Company(BaseModel):
     name: str = Field(..., description="The name of the company")
+    linkedin_url: str = Field(default="", description="The linkedin url of the company")
     industries: Optional[list[Industry]] = Field(
         None, description="The industries of the company"
     )
@@ -22,24 +23,42 @@ class Company(BaseModel):
 
 class Experience(BaseModel):
     location: str = Field(..., description="The name of the location")
-    title: str = Field(..., description="The job title")
+    position_title: str = Field(default="", description="The job title")
     start: Optional[datetime.datetime] = Field(
         None, description="The start of the employment"
     )
     end: Optional[datetime.datetime] = Field(
         None, description="The end of the employment"
     )
+    duration: Optional[str] = Field(None, description="The duration of the employment")
     company: Company = Field(
         ..., description="The company in which the consultant worked"
     )
+    description: str = Field(
+        default="", description="The description of the experience"
+    )
+
+
+class Education(BaseModel):
+    institution_name: str = Field(default="", description="The name of the institution")
+    linkedin_url: str = Field(
+        default="", description="The linkedin url of the institution"
+    )
+    degree: str = Field(default="", description="The degree of the education")
+    start: Optional[datetime.datetime] = Field(
+        None, description="The start of the education"
+    )
+    end: Optional[datetime.datetime] = Field(
+        None, description="The end of the education"
+    )
+    description: str = Field(default="", description="The description of the education")
 
     def __str__(self) -> str:
-        return f"""Company: {self.title}
-Location: {self.location}
-Company: {self.company.name if self.company.name else "No company found"} ({", ".join([industry.name for industry in self.company.industries]) if self.company.industries else "No industries found"})
+        return f"""Institution: {self.institution_name}
+Degree: {self.degree}
 Start: {self.start}
 End: {self.end}
-
+Description: {self.description}
 """
 
 
@@ -57,9 +76,12 @@ class Profile(BaseModel):
     )
     linkedin_profile_url: str = Field(..., description="The linkedin profile")
     experiences: list[Experience] = Field(
-        ..., description="The experiences of this user"
+        default=[], description="The experiences of this user"
     )
-    skills: list[Skill] = Field(..., description="The list of skills")
+    educations: list[Education] = Field(
+        default=[], description="The educations of this user"
+    )
+    skills: list[Skill] = Field(default=[], description="The list of skills")
     photo_200: str | None = Field(
         default=None, description="The 200x200 photo of the consultant"
     )

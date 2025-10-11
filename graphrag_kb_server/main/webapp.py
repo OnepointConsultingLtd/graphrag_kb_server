@@ -19,7 +19,7 @@ from graphrag_kb_server.service.jwt_service import (
 )
 from graphrag_kb_server.service.snippet_generation_service import find_chat_assets
 from graphrag_kb_server.main.cors import CORS_HEADERS
-from graphrag_kb_server.main.websocket import *
+from graphrag_kb_server.main.websocket_api import *
 
 
 init_logger()

@@ -1,7 +1,6 @@
 from pathlib import Path
 import json
 import datetime
-import random
 
 from linkedin_api import Linkedin
 from linkedin_api.cookie_repository import LinkedinSessionExpired
@@ -24,8 +23,7 @@ def _extract_profile_dict(profile: str) -> dict | None:
     profile_dict = _cache.get(profile)
     if profile_dict is not None:
         return profile_dict
-    cred_index = random.randint(0, len(linkedin_cfg.linkedin_credentials_list) - 1)
-    user, password = linkedin_cfg.linkedin_credentials_list[cred_index]
+    user, password = linkedin_cfg.get_random_credential()
     try:
         api = Linkedin(user, password, debug=True)
     except LinkedinSessionExpired:

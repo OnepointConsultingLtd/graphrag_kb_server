@@ -20,7 +20,11 @@ from graphrag_kb_server.model.rag_parameters import (
 )
 from graphrag_kb_server.model.context import Search
 from graphrag_kb_server.model.project import IndexingStatus
-from graphrag_kb_server.model.topics import SimilarityTopics, SimilarityTopicsRequest, SimilarityTopicsMethod
+from graphrag_kb_server.model.topics import (
+    SimilarityTopics,
+    SimilarityTopicsRequest,
+    SimilarityTopicsMethod,
+)
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.service.graphrag.query import rag_local_simple
@@ -1050,7 +1054,10 @@ async def project_related_topics(request: web.Request) -> web.Response:
                     limit = body.get("limit", 8)
                     topics_prompt = body.get("topics_prompt", "")
                     deduplicate_topics = body.get("deduplicate_topics", False)
-                    similarity_topics_method_str = body.get("similarity_topics_method", SimilarityTopicsMethod.RANDOM_WALK.value)
+                    similarity_topics_method_str = body.get(
+                        "similarity_topics_method",
+                        SimilarityTopicsMethod.RANDOM_WALK.value,
+                    )
                     engine = find_engine_from_query(request)
 
                     similarity_topics = SimilarityTopicsRequest(
@@ -1065,7 +1072,9 @@ async def project_related_topics(request: web.Request) -> web.Response:
                         runs=runs,
                         topics_prompt=topics_prompt,
                         deduplicate_topics=deduplicate_topics,
-                        method=SimilarityTopicsMethod.from_string(similarity_topics_method_str),
+                        method=SimilarityTopicsMethod.from_string(
+                            similarity_topics_method_str
+                        ),
                     )
                     # Run the CPU-intensive work in a thread pool
                     topics = await get_related_topics(engine, similarity_topics)
