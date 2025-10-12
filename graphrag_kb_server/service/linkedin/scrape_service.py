@@ -30,7 +30,7 @@ COOKIES_DIR = Path(cfg.config_dir) / "linkedin_cookies"
 COOKIES_DIR.mkdir(exist_ok=True, parents=True)
 
 
-_cache = GenericSimpleCache[str, Profile](timeout=60 * 60 * 4)  # 3 hours
+_cache = GenericSimpleCache[str, Profile](timeout=60 * 60 * 4)  # 4 hours
 
 
 def _get_cookies_file(user: str) -> Path:

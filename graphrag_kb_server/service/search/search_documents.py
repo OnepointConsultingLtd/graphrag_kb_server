@@ -111,7 +111,8 @@ async def retrieve_relevant_documents(
     logger.info("_create_summarisation_promises")
     summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
     summaries_with_document_paths = _combine_summaries(summaries, document_paths_topics)
-    logger.info(f"Summaries combined: {summaries_with_document_paths}")
+    if summaries_with_document_paths:
+        logger.info(f"Summaries combined: {summaries_with_document_paths[:100]}")
     response = chat_response.response["response"]
     return SearchResults(
         documents=summaries_with_document_paths,
