@@ -28,6 +28,14 @@ class EntityWithScore(BaseModel):
     )
 
 
+class DuplicateEntity(BaseModel):
+    entity: str = Field(..., description="The entity name")
+    duplicates: list[str] = Field(
+        ...,
+        description="A dictionary of the duplicates of the entity",
+    )
+
+
 class EntityList(BaseModel):
     entities: list[EntityWithScore] = Field(
         ...,

@@ -2,13 +2,15 @@
 system_prompt = """You are a helpful assistant that matches user interests and profile to entities."""
 user_prompt = """Given the following user profile, an optional question and the user''s chosen topics of interest which you can find between the <user_profile>, <question> and <topics_of_interest> tags, please match them to the most likely entity from the list of entities which can be found between the <entities> tags. Make sure that you rank them also according to the user interests. On top you should have the most relevant entities according to the user interests.
 
-  Also divide the entities into two groups:
-  - high-level keywords: Identify high-level key words that summarize the main concepts, themes, or topics of the entire text. These should capture the overarching ideas present in the document.
-  - low-level keywords: Identify low-level key words that summarize more specific topics or subconcepts that are related to the high-level keywords.
+Also divide the entities into two groups:
+- high-level keywords: Identify high-level key words that summarize the main concepts, themes, or topics of the entire text. These should capture the overarching ideas present in the document.
+- low-level keywords: Identify low-level key words that summarize more specific topics or subconcepts that are related to the high-level keywords.
 
-  For example: high-level concept "AI" has the following low-level keywords: "machine learning", "deep learning", "natural language processing", "computer vision", "robotics", "automation", "data science", "analytics", "cloud computing", "blockchain", "cybersecurity", "internet of things", "augmented reality", "virtual reality", "mixed reality"
+For example: high-level concept "AI" has the following low-level keywords: "machine learning", "deep learning", "natural language processing", "computer vision", "robotics", "automation", "data science", "analytics", "cloud computing", "blockchain", "cybersecurity", "internet of things", "augmented reality", "virtual reality", "mixed reality"
 
-  If the question is provided, use it to find extra entities that are related to the question.
+If the question is provided, use it to find extra entities that are related to the question.
+
+Make sure to omit any duplicates of the enitities in the list. If the entity "AI" is in the list, you should not include the entity "Artificial Intelligence" further down in the list.
 
 <question>
 {question}
@@ -55,6 +57,7 @@ You are a helpful assistant tasked with summarising a document based on the user
 The content of the document can be found between the <document> and </document> tags.
 The user's interests and the question they are asking can be found between the <user_profile> and </user_profile> tags.
 The question asked by the user which retrieved the document can be found between the <question> and </question> tags.
+The summary should be at most 60 words or three paragraphs at most.
 
 <document>
 {document}
@@ -97,6 +100,7 @@ The user's interests can be found between the <user_profile> and </user_profile>
 ---Instructions---
 
 - The output should be a summary of the document in British English and also a section (paragraph) on how the document relates to the user's interests and the question they are asking, if it is relevant.
+- The summary and the relevance paragraph should be at most 60 words or three sentences at most. When talking about the relevance of the document for the user, refer to the user as "you", assuming that the user is reading the summary.
 - Use this format:
 
 # Summary

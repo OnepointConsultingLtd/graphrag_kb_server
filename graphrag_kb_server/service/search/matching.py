@@ -29,8 +29,8 @@ SCORE_THRESHOLD = 0.5
 async def match_entities_with_lightrag(
     project_dir: Path, query: MatchQuery, score_threshold: float = SCORE_THRESHOLD
 ) -> MatchOutput:
-    df = await asyncio.to_thread(get_sorted_centrality_scores_as_pd, project_dir)
     entity_types, entities_limit = query.entity_types, query.entities_limit
+    df = await asyncio.to_thread(get_sorted_centrality_scores_as_pd, project_dir)
     df = df[df["entity_type"].isin(entity_types)][:entities_limit]
     all_entities = _convert_df_to_entities(df)
     entity_list = await match_entities(query, all_entities)
@@ -82,7 +82,14 @@ async def match_entities(
         )
         for e in entities["entities"]
     ]
-    return EntityList(entities=entities_with_score)
+    deduped = {}
+    for entity in entities_with_score:
+        if not deduped.get(entity.entity):
+            deduped[entity.entity] = entity
+    entities_with_score = list(deduped.values())
+    entity_list = EntityList(entities=entities_with_score)
+
+    return entity_list
 
 
 if __name__ == "__main__":

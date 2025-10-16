@@ -23,6 +23,10 @@ RELEVANCE_SCORE_POINTS_MAP = {
 
 
 class DocumentSearchQuery(BaseModel):
+    request_id: str = Field(
+        default="",
+        description="The request ID used to track the request",
+    )
     question: str | None = Field(
         ...,
         description="The question used to search for documentss or none in which case the question will be generated from the keywords",
@@ -110,6 +114,10 @@ class SummarisationResponse(BaseModel):
 
 
 class SearchResults(BaseModel):
+    request_id: str = Field(
+        default="",
+        description="The request ID used to track the request",
+    )
     documents: list[SummarisationResponseWithDocument] = Field(
         ...,
         description="The documents that are relevant to the user's interests and question",

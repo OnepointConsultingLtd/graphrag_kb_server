@@ -36,9 +36,10 @@ class Command(StrEnum):
 class WebsocketCallback(BaseCallback):
 
     sid: str = Field(description="The SID of the websocket")
+    request_id: str = Field(default="", description="The request ID used to track the request")
 
     async def callback(self, message: str):
-        await sio.emit(Command.PROGRESS, {"data": message}, to=self.sid)
+        await sio.emit(Command.PROGRESS, {"data": message, "request_id": self.request_id}, to=self.sid)
 
 
 @sio.event
@@ -70,14 +71,15 @@ async def relevant_documents(
     max_filepath_depth: int = 1000,
 ):
     try:
-        logger.info(f"Document query from {sio}: {document_query}")
-        project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
         document_search_query = DocumentSearchQuery(
             **json.loads(document_query),
             max_filepath_depth=max_filepath_depth,
             is_search_query=True,
         )
-        callback = WebsocketCallback(sid=sid)
+        callback = WebsocketCallback(sid=sid, request_id=document_search_query.request_id)
+        logger.info(f"Document query from {sio}: {document_query}")
+        await callback.callback("Preparing answer...")
+        project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
         response = await retrieve_relevant_documents(
             project_dir, document_search_query, callback
         )

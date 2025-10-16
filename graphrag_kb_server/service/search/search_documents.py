@@ -94,9 +94,6 @@ async def retrieve_relevant_documents(
     Returns:
         A list of summarization responses with document paths
     """
-    if callback is not None:
-        await callback.callback("Preparing answer...")
-        logger.info("Preparing answer...")
     chat_response = await search_documents(project_dir, query, callback)
     if callback is not None:
         await callback.callback(chat_response.response["response"])
@@ -112,9 +109,10 @@ async def retrieve_relevant_documents(
     summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
     summaries_with_document_paths = _combine_summaries(summaries, document_paths_topics)
     if summaries_with_document_paths:
-        logger.info(f"Summaries combined: {summaries_with_document_paths[:100]}")
+        logger.debug(f"Summaries combined: {summaries_with_document_paths[:100]}")
     response = chat_response.response["response"]
     return SearchResults(
+        request_id=query.request_id,
         documents=summaries_with_document_paths,
         response=response,
     )

@@ -86,8 +86,15 @@ async def linkedin_profile(request: web.Request) -> web.Response:
                     )
                 profile_json = json.dumps(profile)
             case "web_scraping":
-                from graphrag_kb_server.service.linkedin.scrape_service import aextract_profile
-                profile = await aextract_profile(profile_id)
+                from graphrag_kb_server.service.linkedin.scrape_service import (
+                    aextract_profile,
+                )
+
+                profile = await aextract_profile(
+                    profile_id,
+                    extract_educations=False,
+                    extract_experiences_from_homepage=True,
+                )
                 if profile is None:
                     return invalid_response(
                         "Cannot find profile",

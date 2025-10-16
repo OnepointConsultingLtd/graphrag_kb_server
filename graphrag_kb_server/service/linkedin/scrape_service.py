@@ -149,9 +149,16 @@ def login_with_cookies(
 
 
 class SafePerson(Person):
-    def __init__(self, linkedin_url: str, driver: webdriver.Chrome, extract_educations: bool = True):
+    def __init__(
+        self,
+        linkedin_url: str,
+        driver: webdriver.Chrome,
+        extract_educations: bool = True,
+        extract_experiences_from_homepage: bool = True,
+    ):
         self.headline = ""
         self.extract_educations = extract_educations
+        self.extract_experiences_from_homepage = extract_experiences_from_homepage
         super().__init__(linkedin_url, driver=driver)
 
     def get_name_and_location(self):
@@ -178,15 +185,16 @@ class SafePerson(Person):
         driver.execute_script(
             "window.scrollTo(0, Math.ceil(document.body.scrollHeight/2));"
         )
-        driver.execute_script(
-            "window.scrollTo(0, Math.ceil(document.body.scrollHeight/1.5));"
-        )
 
         # get experience
-        self.get_experiences()
+        if self.extract_experiences_from_homepage:
+            self.get_homepage_experiences()
+        else:
+            self.get_experiences()
 
         # get education
-        self.get_educations()
+        if self.extract_educations:
+            self.get_educations()
 
         driver.get(self.linkedin_url)
 
@@ -350,6 +358,14 @@ class SafePerson(Person):
             logger.error(f"Error extracting experience: {e}")
             return None
 
+    def _extract_experiences_from_parent(
+        self, parent: WebElement, loop_class_name: str = "pvs-list__paged-list-item"
+    ):
+        for position in parent.find_elements(By.CLASS_NAME, loop_class_name):
+            experience = self._extract_experience(position)
+            if experience:
+                self.experiences.append(experience)
+
     def get_experiences(self):
         try:
             url = os.path.join(self.linkedin_url, "details/experience")
@@ -361,20 +377,24 @@ class SafePerson(Person):
             main_list = self.wait_for_element_to_load(
                 name="pvs-list__container", base=main
             )
-            for position in main_list.find_elements(
-                By.CLASS_NAME, "pvs-list__paged-list-item"
-            ):
-                experience = self._extract_experience(position)
-                if experience:
-                    self.experiences.append(experience)
+            self._extract_experiences_from_parent(main_list)
 
         except Exception as e:
             logger.error(f"Error getting experiences: {e}")
         return self.experiences
 
+    def get_homepage_experiences(self):
+        experience_main = self.wait_for_element_to_load(by=By.ID, name="experience")
+        experience_siblings = experience_main.parent.find_elements(
+            By.CSS_SELECTOR, "#experience ~ div"
+        )
+        if len(experience_siblings) > 1:
+            experience_parent = experience_siblings[1]
+            self._extract_experiences_from_parent(
+                experience_parent, "artdeco-list__item"
+            )
+
     def get_educations(self):
-        if not self.extract_educations:
-            return
         try:
             url = os.path.join(self.linkedin_url, "details/education")
             self.driver.get(url)
@@ -477,15 +497,22 @@ def _convert_to_profile(person: SafePerson | None) -> Profile | None:
     )
 
 
-async def aextract_profile(profile: str, force_login: bool = False, extract_educations: bool = False) -> Profile | None:
+async def aextract_profile(
+    profile: str,
+    force_login: bool = False,
+    extract_educations: bool = False,
+    extract_experiences_from_homepage: bool = False,
+) -> Profile | None:
     if profile_data := _cache.get(profile):
         return profile_data
-    profile_data = await asyncify(extract_profile)(profile, force_login, extract_educations)
+    profile_data = await asyncify(extract_profile)(
+        profile, force_login, extract_educations, extract_experiences_from_homepage
+    )
     _cache.set(profile, profile_data)
     return profile_data
 
 
-def _create_driver() -> webdriver.Chrome:#
+def _create_driver() -> webdriver.Chrome:  #
     # Configure Chrome options
     options = Options()
     options.add_argument("--headless=new")  # 'new' mode for Chrome >= 109
@@ -494,19 +521,24 @@ def _create_driver() -> webdriver.Chrome:#
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
     return webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()), 
-        options=options
+        service=Service(ChromeDriverManager().install()), options=options
     )
 
 
-def extract_profile(profile: str, force_login: bool = False, extract_educations: bool = False) -> Profile | None:
+def extract_profile(
+    profile: str,
+    force_login: bool = False,
+    extract_educations: bool = False,
+    extract_experiences_from_homepage: bool = False,
+) -> Profile | None:
     """
     Extract a LinkedIn profile using web scraping with Selenium.
 
     Args:
         profile: LinkedIn profile URL or username
         force_login: If True, skip cookie loading and force a fresh login
-
+        extract_educations: If True, extract educations
+        extract_experiences_from_homepage: If True, extract experiences from the homepage
     Returns:
         Profile object if successful, None otherwise
     """
@@ -520,6 +552,11 @@ def extract_profile(profile: str, force_login: bool = False, extract_educations:
 
     profile = correct_linkedin_url(profile)
     logger.info(f"Corrected LinkedIn URL: {profile}")
-    person = SafePerson(profile, driver=driver, extract_educations=extract_educations)
+    person = SafePerson(
+        profile,
+        driver=driver,
+        extract_educations=extract_educations,
+        extract_experiences_from_homepage=extract_experiences_from_homepage,
+    )
     logger.info(f"Extracted profile: {person}")
     return _convert_to_profile(person)
