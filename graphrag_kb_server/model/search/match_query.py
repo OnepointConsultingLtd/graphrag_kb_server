@@ -29,7 +29,7 @@ class MatchQuery(BaseModel):
 class MatchOutput(BaseModel):
     entity_dict: dict[str, EntityList] = Field(
         default={},
-        description="A dictionary of entity names and their corresponding entity lists",
+        description="A dictionary of entity type names and their corresponding entity lists",
     )
     model_config = {"frozen": True}  # Pydantic v2 config syntax
 
