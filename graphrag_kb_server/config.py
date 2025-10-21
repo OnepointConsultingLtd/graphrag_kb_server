@@ -162,6 +162,25 @@ class BrightDataConfig:
     assert bright_data_api_key is not None, "Please specify the Bright Data API key"
 
 
+class DBConfig:
+    postgres_connection_string = os.getenv("POSTGRES_CONNECTION_STRING")
+    assert (
+        postgres_connection_string is not None
+    ), "Please specify the PostgreSQL connection string"
+    postgres_connection_pool_min_size = int(
+        os.getenv("POSTGRES_CONNECTION_POOL_MIN_SIZE", "1")
+    )
+    assert (
+        postgres_connection_pool_min_size is not None
+    ), "Please specify the PostgreSQL connection pool minimum size"
+    postgres_connection_pool_max_size = int(
+        os.getenv("POSTGRES_CONNECTION_POOL_MAX_SIZE", "10")
+    )
+    assert (
+        postgres_connection_pool_max_size is not None
+    ), "Please specify the PostgreSQL connection pool maximum size"
+
+
 websocket_cfg = WebsocketConfig()
 
 jwt_cfg = JWTConfig()
@@ -174,5 +193,4 @@ linkedin_cfg = LinkedInConfig()
 
 bright_data_cfg = BrightDataConfig()
 
-if __name__ == "__main__":
-    print(linkedin_cfg.linkedin_credentials)
+db_cfg = DBConfig()

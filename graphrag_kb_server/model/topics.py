@@ -10,10 +10,12 @@ DEFAULT_TOPIC_LIMIT: Final[int] = 20
 
 
 class Topic(BaseModel):
+    id: int | None = Field(default=None, description="The id of the topic")
     name: str = Field(..., description="The name of the topic")
     description: str = Field(..., description="The description of the topic")
     type: str = Field(..., description="The type of th topic")
     questions: list[str] = Field(default=[], description="The questions of the topic")
+    project_id: int | None = Field(default=None, description="The id of the project")
 
     def markdown(self) -> str:
         return f"""

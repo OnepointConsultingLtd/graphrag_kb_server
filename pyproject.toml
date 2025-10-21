@@ -29,6 +29,7 @@ dependencies = [
     "weasyprint>=66.0",
     "selenium>=4.36.0",
     "webdriver-manager>=4.0.2",
+    "asyncpg>=0.30.0",
 ]
 
 [project.scripts]

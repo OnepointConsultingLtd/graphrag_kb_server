@@ -23,7 +23,7 @@ async def test_scrape_linkedin_profile_allan():
 
 
 @pytest.mark.asyncio
-async def test_scrape_linkedin_profile_allan():
+async def test_scrape_linkedin_profile_maithilishetty():
     await download_profile_data("maithilishetty")
 
 

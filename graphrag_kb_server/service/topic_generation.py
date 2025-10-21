@@ -29,8 +29,6 @@ async def generate_topics(topics_request: TopicsRequest) -> Topics:
             result = _generate_topics_lightrag(topics_request)
         case Engine.CAG:
             result = await _generate_topics_cag(topics_request)
-        case _:
-            raise ValueError(f"Engine {topics_request.engine} not supported")
     if topics_request.deduplicate_topics and result is not None:
         result = await deduplicate_topics(result)
     topics_cache.set(topics_request, result)

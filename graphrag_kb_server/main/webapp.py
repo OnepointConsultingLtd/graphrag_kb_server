@@ -20,7 +20,12 @@ from graphrag_kb_server.service.jwt_service import (
 from graphrag_kb_server.service.snippet_generation_service import find_chat_assets
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.websocket_api import *
-
+from graphrag_kb_server.service.tennant import list_tennants
+from graphrag_kb_server.service.db.connection_pool import (
+    create_connection_pool,
+    close_connection_pool,
+)
+from graphrag_kb_server.main.bootstrap import create_schemas_and_projects
 
 init_logger()
 
@@ -112,9 +117,20 @@ async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
     return d, True
 
 
+async def on_startup(app: web.Application):
+    await create_connection_pool()
+    await create_schemas_and_projects(list_tennants())
+
+
+async def on_cleanup(app: web.Application):
+    await close_connection_pool()
+
+
 def run_server():
 
     app = web.Application(middlewares=[static_routing_middleware, auth_middleware])
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_cleanup)
     app.middlewares.append(auth_middleware)
     logger.info("Set up application ...")
     sio.attach(app)
@@ -162,4 +178,4 @@ if __name__ == "__main__":
     generate_admin_token()
     save_security_yaml()
     run_server()
-    logger.info("Graph RAG Knowledge Base Server stopped.")
+    logger.info("Knowledge Base Server stopped.")

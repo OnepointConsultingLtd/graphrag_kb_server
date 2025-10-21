@@ -51,7 +51,9 @@ async def match_entities_with_lightrag(
     return MatchOutput(entity_dict=entity_dict)
 
 
-async def _dedupe_entities(project_dir: Path, entities: list[EntityWithScore], similarity_threshold = 0.51) -> list[EntityWithScore]:
+async def _dedupe_entities(
+    project_dir: Path, entities: list[EntityWithScore], similarity_threshold=0.51
+) -> list[EntityWithScore]:
     rag: LightRAG = await initialize_rag(project_dir)
     embeddings = [rag.entities_vdb.embedding_func(entity.entity) for entity in entities]
     embeddings = await asyncio.gather(*embeddings)
@@ -61,7 +63,7 @@ async def _dedupe_entities(project_dir: Path, entities: list[EntityWithScore], s
     X = X / np.maximum(norms, 1e-12)
 
     S = X @ X.T
-    
+
     np.fill_diagonal(S, -np.inf)
     comparison_matrix = S > similarity_threshold
     remove_indices = set()
@@ -73,12 +75,12 @@ async def _dedupe_entities(project_dir: Path, entities: list[EntityWithScore], s
         for j in range(i + 1, len(comparison_matrix)):
             if comparison_matrix[i, j]:
                 remove_indices.add(j)
-    deduped = [e for i,e in enumerate(entities) if i not in remove_indices]
+    deduped = [e for i, e in enumerate(entities) if i not in remove_indices]
     if len(deduped) < 2:
         # Return at least two entities
         return entities
     return deduped
-    
+
 
 def _convert_entities_to_str(entities: list[Entity]) -> str:
     return "\n".join(
@@ -172,7 +174,7 @@ if __name__ == "__main__":
             name="Compliance",
             type="category",
             description="Process automation and workflow optimization",
-        )
+        ),
     ]
 
     def test_matching():
@@ -192,9 +194,12 @@ if __name__ == "__main__":
             print("# ", entity_type)
             for entity in entity_list.entities:
                 print(
-                    "- ", entity.entity, entity.score, entity.reasoning, entity.abstraction
+                    "- ",
+                    entity.entity,
+                    entity.score,
+                    entity.reasoning,
+                    entity.abstraction,
                 )
-
 
     def test_deduplication():
         entities_with_score = [
@@ -206,7 +211,12 @@ if __name__ == "__main__":
             )
             for e in topics_of_interest
         ]
-        deduped = asyncio.run(_dedupe_entities(Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full"), entities_with_score))
+        deduped = asyncio.run(
+            _dedupe_entities(
+                Path("/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full"),
+                entities_with_score,
+            )
+        )
         for entity in deduped:
             print(entity.entity)
 

@@ -102,6 +102,11 @@ ADMIN_TOKEN_EMAIL=<mail>
 ADMIN_TOKEN_PASSWORD=<pass>
 
 BRIGHT_DATA_API_KEY=<key>
+
+# Database related
+POSTGRES_CONNECTION_STRING=postgresql://<user>:<pass>@127.0.0.1:5432/knowledge_base_server
+POSTGRES_CONNECTION_POOL_MIN_SIZE = 1
+POSTGRES_CONNECTION_POOL_MAX_SIZE = 10
 ```
 
 You will also need to install Weasyprint. Please check the installation instructions here:

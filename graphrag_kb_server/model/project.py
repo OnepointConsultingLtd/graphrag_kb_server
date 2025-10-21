@@ -2,6 +2,8 @@ from enum import StrEnum
 from pydantic import BaseModel, Field, field_serializer
 from datetime import datetime
 
+from graphrag_kb_server.model.engines import Engine
+
 
 class GenerationStatus(StrEnum):
     EXISTS = "exists"
@@ -47,3 +49,10 @@ class EngineProjectListing(BaseModel):
         ..., description="The list of LightRAG projects"
     )
     cag_projects: ProjectListing = Field(..., description="The list of CAG projects")
+
+
+class FullProject(BaseModel):
+    id: int | None = Field(default=None, description="The id of the project")
+    schema_name: str = Field(..., description="The name of the schema")
+    engine: Engine = Field(..., description="The engine of the project")
+    project: Project = Field(..., description="The project")
