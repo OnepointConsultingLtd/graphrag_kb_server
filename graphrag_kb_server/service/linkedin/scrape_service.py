@@ -106,9 +106,9 @@ def load_cookies(driver: webdriver.Chrome, user: str) -> bool:
             driver.find_element(By.CSS_SELECTOR, "a[href*='/feed/']")
             logger.info("Successfully authenticated using saved cookies")
             return True
-        except:
+        except Exception as e:
             logger.warning(
-                "Cookies loaded but authentication failed, may need to login again"
+                f"Cookies loaded but authentication failed, may need to login again: {e}"
             )
             return False
 

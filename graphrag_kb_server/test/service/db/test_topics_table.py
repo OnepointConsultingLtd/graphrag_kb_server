@@ -8,7 +8,7 @@ from graphrag_kb_server.service.db.db_persistence_topics import (
     insert_topic,
     find_topics_by_project_name,
     save_topics_request,
-    delete_topics_by_project_name
+    delete_topics_by_project_name,
 )
 from graphrag_kb_server.service.db.db_persistence_project import (
     create_project,
@@ -48,7 +48,7 @@ async def test_create_topic():
         )
         assert found_project is not None
         assert found_project.id != full_project.id
-        
+
         # Create topics table and insert topic
         await create_topics_table(schema_name)
         topic = Topic(
@@ -61,7 +61,9 @@ async def test_create_topic():
         topic_id = await insert_topic(schema_name, topic)
         assert topic_id is not None
         assert topic_id != 0
-        topics = await find_topics_by_project_name(schema_name, project_name, full_project.engine)
+        topics = await find_topics_by_project_name(
+            schema_name, project_name, full_project.engine
+        )
         assert len(topics) == 1
         assert topics[0].id == topic_id
         assert topics[0].name == topic.name
@@ -78,7 +80,9 @@ async def test_create_topic():
             deduplicate_topics=False,
             limit=20,
         )
-        await delete_topics_by_project_name(schema_name, project_name, full_project.engine)
+        await delete_topics_by_project_name(
+            schema_name, project_name, full_project.engine
+        )
         await save_topics_request(topics_request, Topics(topics=topics))
 
     finally:

@@ -1,5 +1,9 @@
 from graphrag_kb_server.model.topics import Topic
-from graphrag_kb_server.service.db.connection_pool import execute_query, execute_query_with_return, fetch_all
+from graphrag_kb_server.service.db.connection_pool import (
+    execute_query,
+    execute_query_with_return,
+    fetch_all,
+)
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 from graphrag_kb_server.model.topics import TopicsRequest, Topics
 from graphrag_kb_server.model.engines import Engine
@@ -17,12 +21,13 @@ CREATE TABLE IF NOT EXISTS {schema_name}.{TB_TOPICS} (
     TYPE TEXT NOT NULL,
     QUESTIONS TEXT[] DEFAULT '{{}}',
     PROJECT_ID INTEGER NOT NULL,
+    ACTIVE BOOLEAN NOT NULL DEFAULT TRUE,
     CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (ID),
 	UNIQUE (NAME, PROJECT_ID),
     CONSTRAINT PROJECT_ID
-		FOREIGN KEY (PROJECT_ID) REFERENCES PUBLIC.TB_PROJECTS (ID) 
+		FOREIGN KEY (PROJECT_ID) REFERENCES {schema_name}.TB_PROJECTS (ID) 
 		MATCH SIMPLE ON UPDATE NO ACTION ON DELETE CASCADE
 );
 """
@@ -52,7 +57,9 @@ RETURNING ID;
     return res
 
 
-async def delete_topics_by_project_name(schema_name: str, project_name: str, engine: Engine):
+async def delete_topics_by_project_name(
+    schema_name: str, project_name: str, engine: Engine
+):
     await execute_query(
         f"""
 DELETE FROM {schema_name}.{TB_TOPICS} WHERE PROJECT_ID = 
@@ -63,28 +70,52 @@ DELETE FROM {schema_name}.{TB_TOPICS} WHERE PROJECT_ID =
     )
 
 
-async def find_topics_by_project_name(schema_name: str, project_name: str, engine: Engine) -> list[Topic]:
+async def find_topics_by_project_name(topics_request: TopicsRequest) -> Topics:
+    schema_name = topics_request.project_dir.parent.parent.name
+    project_name = topics_request.project_dir.name
+    engine = topics_request.engine
+    limit = topics_request.limit
+    entity_type_filter = topics_request.entity_type_filter
+    type_filter = ""
+    if entity_type_filter != "":
+        type_filter = f" AND TYPE = '{entity_type_filter}' "
     result = await fetch_all(
         f"""
 SELECT * FROM {schema_name}.{TB_TOPICS} WHERE PROJECT_ID = 
-(SELECT ID FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1 AND ENGINE = $2);
+(SELECT ID FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1 AND ENGINE = $2) 
+AND ACTIVE = TRUE {type_filter} ORDER BY ID ASC LIMIT $3;
 """,
         project_name,
         engine.value,
+        limit,
     )
-    return [Topic(id=int(row["id"]), name=row["name"], description=row["description"], type=row["type"], questions=row["questions"], project_id=int(row["project_id"])) for row in result]
+    topics = [
+        Topic(
+            id=int(row["id"]),
+            name=row["name"],
+            description=row["description"],
+            type=row["type"],
+            questions=row["questions"],
+            project_id=int(row["project_id"]),
+        )
+        for row in result
+    ]
+    return Topics(topics=topics)
 
 
 async def save_topics_request(topics_request: TopicsRequest, topics: Topics) -> int:
     engine = topics_request.engine.value
     project_dir = topics_request.project_dir
     project_name = project_dir.name
-    schema_name = project_dir.parent.name
-    result = await fetch_all(f"""SELECT ID FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1 AND ENGINE = $2""", project_name, engine)
+    schema_name = project_dir.parent.parent.name
+    result = await fetch_all(
+        f"""SELECT ID FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1 AND ENGINE = $2""",
+        project_name,
+        engine,
+    )
     if len(result) == 0:
         raise ValueError(f"Project {project_name} with engine {engine} not found")
     project_id = result[0]["id"]
     for topic in topics.topics:
         topic_with_id = topic.model_copy(update={"id": None, "project_id": project_id})
         await insert_topic(schema_name, topic_with_id)
-

@@ -2,7 +2,6 @@ import pytest
 
 from graphrag_kb_server.service.db.connection_pool import (
     create_connection_pool,
-    create_connection_pool,
 )
 
 
