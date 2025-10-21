@@ -61,19 +61,27 @@ async def test_create_topic():
         topic_id = await insert_topic(schema_name, topic)
         assert topic_id is not None
         assert topic_id != 0
-        topics = await find_topics_by_project_name(
-            schema_name, project_name, full_project.engine
+        project_dir = cfg.graphrag_root_dir_path / schema_name / full_project.engine.value / project_name
+        topics_request = TopicsRequest(
+            engine=full_project.engine,
+            project_dir=project_dir,
+            topics=[],
+            add_questions=False,
+            entity_type_filter="",
+            deduplicate_topics=False,
+            limit=20,
         )
-        assert len(topics) == 1
-        assert topics[0].id == topic_id
-        assert topics[0].name == topic.name
-        assert topics[0].description == topic.description
-        assert topics[0].type == topic.type
-        assert topics[0].questions == topic.questions
-        assert topics[0].project_id == found_project.id
+        topics = await find_topics_by_project_name(topics_request)
+        assert len(topics.topics) == 1
+        assert topics.topics[0].id == topic_id
+        assert topics.topics[0].name == topic.name
+        assert topics.topics[0].description == topic.description
+        assert topics.topics[0].type == topic.type
+        assert topics.topics[0].questions == topic.questions
+        assert topics.topics[0].project_id == found_project.id
         topics_request = TopicsRequest(
             engine=Engine.GRAPHRAG,
-            project_dir=cfg.graphrag_root_dir_path / schema_name / project_name,
+            project_dir=project_dir,
             topics=[],
             add_questions=False,
             entity_type_filter="category",
@@ -83,7 +91,7 @@ async def test_create_topic():
         await delete_topics_by_project_name(
             schema_name, project_name, full_project.engine
         )
-        await save_topics_request(topics_request, Topics(topics=topics))
+        await save_topics_request(topics_request, topics)
 
     finally:
         await drop_topics_table(schema_name)

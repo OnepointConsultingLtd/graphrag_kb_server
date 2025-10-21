@@ -4,6 +4,7 @@ from graphrag_kb_server.service.db.db_persistence_project import (
 )
 from graphrag_kb_server.service.db.ddl_operations import create_schema
 from graphrag_kb_server.service.db.db_persistence_topics import create_topics_table
+from graphrag_kb_server.service.db.db_persistence_topics_centrality import create_topics_with_centrality_table
 from graphrag_kb_server.model.tennant import Tennant
 from graphrag_kb_server.main.project_server import project_listing
 from graphrag_kb_server.model.project import FullProject, Project
@@ -39,3 +40,4 @@ async def create_projects_and_topics(
             )
         )
         await create_topics_table(schema_name)
+        await create_topics_with_centrality_table(schema_name)
