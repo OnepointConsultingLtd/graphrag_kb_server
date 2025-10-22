@@ -56,3 +56,9 @@ class FullProject(BaseModel):
     schema_name: str = Field(..., description="The name of the schema")
     engine: Engine = Field(..., description="The engine of the project")
     project: Project = Field(..., description="The project")
+
+
+class SimpleProject(BaseModel):
+    schema_name: str = Field(..., description="The schema name of the project")
+    engine: Engine = Field(..., description="The engine of the project")
+    project_name: str = Field(..., description="The name of the project")

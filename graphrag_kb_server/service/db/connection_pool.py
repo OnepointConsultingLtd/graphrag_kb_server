@@ -85,6 +85,19 @@ async def fetch_all(sql: str, *args: Sequence[Any]) -> list[asyncpg.Record]:
         return await conn.fetch(sql, *args)
 
 
+async def fetch_one(sql: str, *args: Sequence[Any]) -> Optional[asyncpg.Record]:
+    """Fetch a single record from the database.
+    
+    Returns:
+        asyncpg.Record or None: The single record, or None if no records found
+    """
+    await create_connection_pool()
+    if _connection_pool is None:
+        raise ValueError("Connection pool is not created")
+    async with _connection_pool.acquire() as conn:
+        return await conn.fetchrow(sql, *args)
+
+
 async def execute_query_with_return(sql: str, *args: Sequence[Any]) -> int:
     await create_connection_pool()
     if _connection_pool is None:

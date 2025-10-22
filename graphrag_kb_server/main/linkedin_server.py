@@ -1,11 +1,15 @@
+from pathlib import Path
 from aiohttp import web
 import json
+
+from aiohttp.web import Response
 
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.service.linkedin.brightdata_service import (
     scrape_linkedin_profile,
 )
+from graphrag_kb_server.main.project_server import match_process_dir
 
 routes = web.RouteTableDef()
 
@@ -28,6 +32,12 @@ async def linkedin_profile(request: web.Request) -> web.Response:
         in: path
         required: true
         description: The linkedin profile id
+        schema:
+          type: string
+      - name: project
+        in: query
+        required: true
+        description: The project name
         schema:
           type: string
       - name: source
@@ -66,52 +76,58 @@ async def linkedin_profile(request: web.Request) -> web.Response:
     """
 
     async def handle_request(request: web.Request) -> web.Response:
-        profile_id = request.match_info.get("id", None)
-        if profile_id is None:
-            return invalid_response(
-                "No profile id",
-                "Please specify a profile id.",
-                status=400,
-            )
-        source = request.query.get("source", "brightdata")
-        profile_json: str = ""
-        match source:
-            case "brightdata":
-                profile = await scrape_linkedin_profile(profile_id)
-                if profile is None:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                profile_id = request.match_info.get("id", None)
+                if profile_id is None:
                     return invalid_response(
-                        "Cannot find profile",
-                        "Please specify another profile id.",
-                        status=404,
+                        "No profile id",
+                        "Please specify a profile id.",
+                        status=400,
                     )
-                profile_json = json.dumps(profile)
-            case "web_scraping":
-                from graphrag_kb_server.service.linkedin.scrape_service import (
-                    aextract_profile,
-                )
+                source = request.query.get("source", "brightdata")
+                profile_json: str = ""
+                match source:
+                    case "brightdata":
+                        profile = await scrape_linkedin_profile(profile_id)
+                        if profile is None:
+                            return invalid_response(
+                                "Cannot find profile",
+                                "Please specify another profile id.",
+                                status=404,
+                            )
+                        profile_json = json.dumps(profile)
+                    case "web_scraping":
+                        from graphrag_kb_server.service.linkedin.scrape_service import (
+                            aextract_profile,
+                        )
 
-                profile = await aextract_profile(
-                    profile_id,
-                    extract_educations=False,
-                    extract_experiences_from_homepage=True,
-                )
-                if profile is None:
-                    return invalid_response(
-                        "Cannot find profile",
-                        "Please specify another profile id.",
-                        status=404,
-                    )
-                profile_json = profile.model_dump_json()
-            case _:
-                return invalid_response(
-                    "Invalid source",
-                    "Please specify a valid source.",
-                    status=400,
-                )
+                        profile = await aextract_profile(
+                            profile_id,
+                            force_login=False,
+                            extract_educations=False,
+                            extract_experiences_from_homepage=True,
+                            project_dir=project_dir,
+                        )
+                        if profile is None:
+                            return invalid_response(
+                                "Cannot find profile",
+                                "Please specify another profile id.",
+                                status=404,
+                            )
+                        profile_json = profile.model_dump_json()
+                    case _:
+                        return invalid_response(
+                            "Invalid source",
+                            "Please specify a valid source.",
+                            status=400,
+                        )
 
-        return web.Response(
-            text=profile_json,
-            headers={**CORS_HEADERS, "Content-Type": "application/json"},
-        )
+                return web.Response(
+                    text=profile_json,
+                    headers={**CORS_HEADERS, "Content-Type": "application/json"},
+                )
 
     return await handle_error(handle_request, request=request)

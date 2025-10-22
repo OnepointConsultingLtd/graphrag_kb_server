@@ -1,8 +1,9 @@
 from pathlib import Path
 
 from graphrag_kb_server.service.db.connection_pool import execute_query, fetch_all
-from graphrag_kb_server.model.engines import Engine
+from graphrag_kb_server.model.engines import Engine, find_engine
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
+from graphrag_kb_server.model.project import SimpleProject
 
 
 async def clear_table(
@@ -18,11 +19,11 @@ DELETE FROM {schema_name}.{table_name} WHERE PROJECT_ID =
     )
 
 
-def extract_elements_from_path(project_dir: Path) -> tuple[str, str, str]:
+def extract_elements_from_path(project_dir: Path) -> SimpleProject:
     schema_name = project_dir.parent.parent.name
     project_name = project_dir.name
     engine = project_dir.parent.name
-    return schema_name, project_name, engine
+    return SimpleProject(schema_name=schema_name, project_name=project_name, engine=find_engine(engine))
 
 
 async def get_project_id(schema_name: str, project_name: str, engine: str) -> int:

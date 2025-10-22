@@ -10,9 +10,7 @@ import jwt
 from graphrag_kb_server.config import jwt_cfg, cfg, admin_cfg
 from graphrag_kb_server.model.jwt_token import JWTToken, JWTTokenData
 from graphrag_kb_server.model.error import Error
-from graphrag_kb_server.service.tennant import create_tennant_folder
 from graphrag_kb_server.logger import logger
-from graphrag_kb_server.main.bootstrap import create_tennant_tables
 from graphrag_kb_server.model.tennant import Tennant
 
 def rename_to_folder(name: str) -> str:
@@ -22,6 +20,8 @@ def rename_to_folder(name: str) -> str:
 async def generate_token(
     token_data: JWTTokenData, generate_folder: bool = True, read_only: bool = False
 ) -> JWTToken | Error:
+    from graphrag_kb_server.service.tennant import create_tennant_folder
+    from graphrag_kb_server.main.bootstrap import create_tennant_tables
     name, email, time_delta_minutes = (
         token_data.name,
         token_data.email,

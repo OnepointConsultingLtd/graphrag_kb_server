@@ -53,11 +53,15 @@ DROP TABLE IF EXISTS {schema_name}.{TB_TOPICS_WITH_CENTRALITY};
 async def insert_topics_with_centrality(
     project_dir: Path, node_centralities: list[NodeCentrality]
 ) -> int:
-    schema_name, project_name, engine = extract_elements_from_path(project_dir)
-    project_id = await get_project_id(schema_name, project_name, engine)
+    simple_project = extract_elements_from_path(project_dir)
+    project_id = await get_project_id(
+        simple_project.schema_name, 
+        simple_project.project_name, 
+        simple_project.engine.value
+    )
     for node_centrality in node_centralities:
         await insert_topic_with_centrality(
-            schema_name, project_id, node_centrality
+            simple_project.schema_name, project_id, node_centrality
         )
     return len(node_centralities)
 
@@ -90,7 +94,10 @@ async def delete_topics_with_centrality_by_project_name(
 async def find_topics_with_centrality_by_project_name(
     project_dir: Path, limit: int = -1
 ) -> list[NodeCentrality]:
-    schema_name, project_name, engine = extract_elements_from_path(project_dir)
+    simple_project = extract_elements_from_path(project_dir)
+    schema_name = simple_project.schema_name
+    project_name = simple_project.project_name
+    engine = simple_project.engine.value
     limit_clause = 1000000
     if limit > 0:
         limit_clause = limit

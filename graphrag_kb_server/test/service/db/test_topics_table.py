@@ -1,6 +1,7 @@
 import pytest
 
 from datetime import datetime
+from typing import Callable, Awaitable
 
 from graphrag_kb_server.service.db.db_persistence_topics import (
     create_topics_table,
@@ -20,25 +21,26 @@ from graphrag_kb_server.service.db.db_persistence_project import (
 from graphrag_kb_server.model.project import FullProject, Project
 from graphrag_kb_server.model.project import IndexingStatus
 from graphrag_kb_server.model.engines import Engine
-from graphrag_kb_server.model.topics import Topic, TopicsRequest, Topics
+from graphrag_kb_server.model.topics import Topic, TopicsRequest
 from graphrag_kb_server.config import cfg
 
 
-@pytest.mark.asyncio
-async def test_create_topic():
+async def create_test_project_wrapper(
+    function: Callable[[FullProject, Project, str, str], Awaitable[None]]
+):
     schema_name = "public"
     project_name = "test_project"
-    full_project = FullProject(
-        schema_name=schema_name,
-        engine=Engine.GRAPHRAG,
-        project=Project(
-            name=project_name,
-            updated_timestamp=datetime.now(),
-            input_files=[],
-            indexing_status=IndexingStatus.NOT_STARTED,
-        ),
-    )
     try:
+        full_project = FullProject(
+            schema_name=schema_name,
+            engine=Engine.GRAPHRAG,
+            project=Project(
+                name=project_name,
+                updated_timestamp=datetime.now(),
+                input_files=[],
+                indexing_status=IndexingStatus.NOT_STARTED,
+            ),
+        )
         # Create project table, project, and topics table
         await create_project_table(schema_name)
         await create_project(full_project)
@@ -46,59 +48,73 @@ async def test_create_topic():
         found_project = await find_project_by_name(
             schema_name, full_project.project.name
         )
+        
         assert found_project is not None
         assert found_project.id != full_project.id
 
-        # Create topics table and insert topic
-        await create_topics_table(schema_name)
-        topic = Topic(
-            name=f"{project_name}_topic",
-            description="test_description",
-            type="test_type",
-            questions=[],
-            project_id=found_project.id,
-        )
-        topic_id = await insert_topic(schema_name, topic)
-        assert topic_id is not None
-        assert topic_id != 0
-        project_dir = (
-            cfg.graphrag_root_dir_path
-            / schema_name
-            / full_project.engine.value
-            / project_name
-        )
-        topics_request = TopicsRequest(
-            engine=full_project.engine,
-            project_dir=project_dir,
-            topics=[],
-            add_questions=False,
-            entity_type_filter="",
-            deduplicate_topics=False,
-            limit=20,
-        )
-        topics = await find_topics_by_project_name(topics_request)
-        assert len(topics.topics) == 1
-        assert topics.topics[0].id == topic_id
-        assert topics.topics[0].name == topic.name
-        assert topics.topics[0].description == topic.description
-        assert topics.topics[0].type == topic.type
-        assert topics.topics[0].questions == topic.questions
-        assert topics.topics[0].project_id == found_project.id
-        topics_request = TopicsRequest(
-            engine=Engine.GRAPHRAG,
-            project_dir=project_dir,
-            topics=[],
-            add_questions=False,
-            entity_type_filter="category",
-            deduplicate_topics=False,
-            limit=20,
-        )
-        await delete_topics_by_project_name(
-            schema_name, project_name, full_project.engine
-        )
-        await save_topics_request(topics_request, topics)
+        await function(full_project, found_project, schema_name, project_name)
 
     finally:
-        await drop_topics_table(schema_name)
         await delete_project(full_project)
         await drop_project_table(full_project)
+
+
+@pytest.mark.asyncio
+async def test_create_topic():
+
+    async def test_function(full_project: FullProject, found_project: Project, schema_name: str, project_name: str):
+        # Create topics table and insert topic
+        try:
+            await create_topics_table(schema_name)
+            topic = Topic(
+                name=f"{project_name}_topic",
+                description="test_description",
+                type="test_type",
+                questions=[],
+                project_id=found_project.id,
+            )
+            topic_id = await insert_topic(schema_name, topic)
+            assert topic_id is not None
+            assert topic_id != 0
+            project_dir = (
+                cfg.graphrag_root_dir_path
+                / schema_name
+                / full_project.engine.value
+                / project_name
+            )
+            topics_request = TopicsRequest(
+                engine=full_project.engine,
+                project_dir=project_dir,
+                topics=[],
+                add_questions=False,
+                entity_type_filter="",
+                deduplicate_topics=False,
+                limit=20,
+            )
+            topics = await find_topics_by_project_name(topics_request)
+            assert len(topics.topics) == 1
+            assert topics.topics[0].id == topic_id
+            assert topics.topics[0].name == topic.name
+            assert topics.topics[0].description == topic.description
+            assert topics.topics[0].type == topic.type
+            assert topics.topics[0].questions == topic.questions
+            assert topics.topics[0].project_id == found_project.id
+            topics_request = TopicsRequest(
+                engine=Engine.GRAPHRAG,
+                project_dir=project_dir,
+                topics=[],
+                add_questions=False,
+                entity_type_filter="category",
+                deduplicate_topics=False,
+                limit=20,
+            )
+            await delete_topics_by_project_name(
+                schema_name, project_name, full_project.engine
+            )
+            await save_topics_request(topics_request, topics)
+        finally:
+            await drop_topics_table(schema_name)
+
+
+    await create_test_project_wrapper(test_function)
+    
