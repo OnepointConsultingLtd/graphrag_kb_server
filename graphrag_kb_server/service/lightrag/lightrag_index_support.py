@@ -6,7 +6,8 @@ from graphrag_kb_server.model.project import GenerationStatus
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
-from graphrag_kb_server.service.lightrag.lightrag_centrality import lightrag_cache
+
+
 
 
 async def acreate_lightrag(
@@ -35,7 +36,8 @@ async def acreate_lightrag(
                 if f.split("/")[-1] in file.name:
                     files_to_index.append(file)
                     break
-        lightrag_cache.clear(project_folder)
+        # TODO: Clear the whole project from the database
+        # lightrag_cache.clear(project_folder)
         await lightrag_index(rag, files_to_index)
     else:
 

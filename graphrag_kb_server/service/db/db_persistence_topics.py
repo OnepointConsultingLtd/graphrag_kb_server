@@ -7,6 +7,7 @@ from graphrag_kb_server.service.db.connection_pool import (
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 from graphrag_kb_server.model.topics import TopicsRequest, Topics
 from graphrag_kb_server.model.engines import Engine
+from graphrag_kb_server.service.db.common_operations import clear_table, get_project_id
 
 TB_TOPICS = "TB_TOPICS"
 
@@ -60,14 +61,7 @@ RETURNING ID;
 async def delete_topics_by_project_name(
     schema_name: str, project_name: str, engine: Engine
 ):
-    await execute_query(
-        f"""
-DELETE FROM {schema_name}.{TB_TOPICS} WHERE PROJECT_ID = 
-(SELECT ID FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1 AND ENGINE = $2);
-""",
-        project_name,
-        engine.value,
-    )
+    await clear_table(schema_name, project_name, engine, TB_TOPICS)
 
 
 async def find_topics_by_project_name(topics_request: TopicsRequest) -> Topics:
@@ -108,14 +102,7 @@ async def save_topics_request(topics_request: TopicsRequest, topics: Topics) -> 
     project_dir = topics_request.project_dir
     project_name = project_dir.name
     schema_name = project_dir.parent.parent.name
-    result = await fetch_all(
-        f"""SELECT ID FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1 AND ENGINE = $2""",
-        project_name,
-        engine,
-    )
-    if len(result) == 0:
-        raise ValueError(f"Project {project_name} with engine {engine} not found")
-    project_id = result[0]["id"]
+    project_id = await get_project_id(schema_name, project_name, engine)
     for topic in topics.topics:
         topic_with_id = topic.model_copy(update={"id": None, "project_id": project_id})
         await insert_topic(schema_name, topic_with_id)

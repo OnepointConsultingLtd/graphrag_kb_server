@@ -12,7 +12,8 @@ from graphrag_kb_server.model.jwt_token import JWTToken, JWTTokenData
 from graphrag_kb_server.model.error import Error
 from graphrag_kb_server.service.tennant import create_tennant_folder
 from graphrag_kb_server.logger import logger
-
+from graphrag_kb_server.main.bootstrap import create_tennant_tables
+from graphrag_kb_server.model.tennant import Tennant
 
 def rename_to_folder(name: str) -> str:
     return re.sub(r"[^a-z0-9_]", "_", name.lower().strip())
@@ -45,6 +46,12 @@ async def generate_token(
     jwt_token = JWTToken(folder_name=folder_name, email=email, token=token)
     if generate_folder:
         result = create_tennant_folder(jwt_token)
+        tennant = Tennant(
+            folder_name=folder_name, 
+            creation_timestamp=datetime.now(timezone.utc), 
+            token=token
+        )
+        await create_tennant_tables(tennant)
         if isinstance(result, Error):
             return result
     return jwt_token

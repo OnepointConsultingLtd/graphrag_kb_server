@@ -20,12 +20,10 @@ from graphrag_kb_server.service.jwt_service import (
 from graphrag_kb_server.service.snippet_generation_service import find_chat_assets
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.websocket_api import *
-from graphrag_kb_server.service.tennant import list_tennants
 from graphrag_kb_server.service.db.connection_pool import (
-    create_connection_pool,
     close_connection_pool,
 )
-from graphrag_kb_server.main.bootstrap import create_schemas_and_projects
+from graphrag_kb_server.main.bootstrap import bootstrap_database
 
 init_logger()
 
@@ -118,8 +116,7 @@ async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
 
 
 async def on_startup(app: web.Application):
-    await create_connection_pool()
-    await create_schemas_and_projects(list_tennants())
+    await bootstrap_database()
 
 
 async def on_cleanup(app: web.Application):

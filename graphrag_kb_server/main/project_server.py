@@ -2265,9 +2265,7 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                 limit = int(request.rel_url.query.get("limit", 20))
                 match format:
                     case "json":
-                        df = await asyncio.to_thread(
-                            get_sorted_centrality_scores_as_pd, project_dir
-                        )
+                        df = await get_sorted_centrality_scores_as_pd(project_dir)
                         category = request.rel_url.query.get("category", None)
                         categories = request.rel_url.query.get("categories", None)
                         if categories:
@@ -2281,8 +2279,8 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                             df.to_dict(orient="records"), headers=CORS_HEADERS
                         )
                     case "xls":
-                        excel_bytes = await asyncio.to_thread(
-                            get_sorted_centrality_scores_as_xls, project_dir, limit
+                        excel_bytes = await get_sorted_centrality_scores_as_xls(
+                            project_dir, limit
                         )
                         return web.Response(
                             body=excel_bytes,

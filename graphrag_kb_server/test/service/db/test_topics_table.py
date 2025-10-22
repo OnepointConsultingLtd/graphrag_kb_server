@@ -61,7 +61,12 @@ async def test_create_topic():
         topic_id = await insert_topic(schema_name, topic)
         assert topic_id is not None
         assert topic_id != 0
-        project_dir = cfg.graphrag_root_dir_path / schema_name / full_project.engine.value / project_name
+        project_dir = (
+            cfg.graphrag_root_dir_path
+            / schema_name
+            / full_project.engine.value
+            / project_name
+        )
         topics_request = TopicsRequest(
             engine=full_project.engine,
             project_dir=project_dir,

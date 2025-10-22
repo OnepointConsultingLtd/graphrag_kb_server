@@ -9,6 +9,7 @@ from graphrag_kb_server.model.error import Error, ErrorCode
 from graphrag_kb_server.model.tennant import Tennant
 from graphrag_kb_server.utils.file_support import get_creation_time
 from graphrag_kb_server.model.engines import Engine
+from graphrag_kb_server.service.db.ddl_operations import drop_schema
 
 TENNANT_JSON = "tennant.json"
 
@@ -33,15 +34,16 @@ def create_tennant_folder(jwt_token: JWTToken) -> str | Error:
     return folder_name
 
 
-def delete_tennant_folder(jwt_token: JWTToken) -> str | None:
+async def delete_tennant_folder(jwt_token: JWTToken) -> str | None:
     _, folder_name = get_folder(jwt_token)
-    delete_tennant_folder_by_folder(folder_name)
+    await delete_tennant_folder_by_folder(folder_name)
 
 
-def delete_tennant_folder_by_folder(folder_name: str) -> str | None:
+async def delete_tennant_folder_by_folder(folder_name: str) -> str | None:
     folder_path: Path = cfg.graphrag_root_dir_path / folder_name
     if folder_path.exists():
         shutil.rmtree(folder_path)
+        await drop_schema(folder_name)
         return folder_name
     return None
 

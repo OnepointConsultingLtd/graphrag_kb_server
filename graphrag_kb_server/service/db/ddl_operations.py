@@ -6,7 +6,7 @@ async def create_schema(schema_name: str):
 
 
 async def drop_schema(schema_name: str):
-    await execute_query(f"""DROP SCHEMA IF EXISTS {schema_name};""")
+    await execute_query(f"""DROP SCHEMA IF EXISTS {schema_name} CASCADE;""")
 
 
 async def schema_exists(schema_name: str) -> bool:

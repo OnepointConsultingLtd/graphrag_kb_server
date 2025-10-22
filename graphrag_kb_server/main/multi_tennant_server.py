@@ -365,7 +365,7 @@ async def delete_tennant(request: web.Request) -> web.Response:
                 "Tennant name is missing", "Make sure you specify a valid tennant."
             )
         tennant_folder = body["tennant_folder"]
-        response = delete_tennant_folder_by_folder(tennant_folder)
+        response = await delete_tennant_folder_by_folder(tennant_folder)
         if not response:
             return invalid_response(
                 "No tennant folder.",

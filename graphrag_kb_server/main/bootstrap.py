@@ -4,18 +4,26 @@ from graphrag_kb_server.service.db.db_persistence_project import (
 )
 from graphrag_kb_server.service.db.ddl_operations import create_schema
 from graphrag_kb_server.service.db.db_persistence_topics import create_topics_table
-from graphrag_kb_server.service.db.db_persistence_topics_centrality import create_topics_with_centrality_table
+from graphrag_kb_server.service.db.db_persistence_topics_centrality import (
+    create_topics_with_centrality_table,
+)
 from graphrag_kb_server.model.tennant import Tennant
 from graphrag_kb_server.main.project_server import project_listing
 from graphrag_kb_server.model.project import FullProject, Project
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.config import cfg
+from graphrag_kb_server.service.db.connection_pool import create_connection_pool
+from graphrag_kb_server.service.tennant import list_tennants
+
+
+async def bootstrap_database():
+    await create_connection_pool()
+    await create_schemas_and_projects(list_tennants())
 
 
 async def create_schemas_and_projects(tennants: list[Tennant]):
     for tennant in tennants:
-        await create_schema(tennant.folder_name)
-        await create_project_table(tennant.folder_name)
+        await create_tennant_tables(tennant)
         projects = project_listing(cfg.graphrag_root_dir_path / tennant.folder_name)
         await create_projects_and_topics(
             tennant.folder_name, projects.graphrag_projects.projects, Engine.GRAPHRAG
@@ -26,6 +34,11 @@ async def create_schemas_and_projects(tennants: list[Tennant]):
         await create_projects_and_topics(
             tennant.folder_name, projects.cag_projects.projects, Engine.CAG
         )
+
+
+async def create_tennant_tables(tennant: Tennant):
+    await create_schema(tennant.folder_name)
+    await create_project_table(tennant.folder_name)
 
 
 async def create_projects_and_topics(

@@ -26,7 +26,7 @@ async def generate_topics(topics_request: TopicsRequest) -> Topics:
         case Engine.GRAPHRAG:
             result = _generate_topics_graphrag(topics_request)
         case Engine.LIGHTRAG:
-            result = _generate_topics_lightrag(topics_request)
+            result = await _generate_topics_lightrag(topics_request)
         case Engine.CAG:
             result = await _generate_topics_cag(topics_request)
     await save_topics_request(topics_request, result)
@@ -66,8 +66,10 @@ def _generate_topics_graphrag(topics_request: TopicsRequest) -> Topics:
     return Topics(topics=topics)
 
 
-def _generate_topics_lightrag(topics_request: TopicsRequest) -> Topics:
-    centrality_scores = get_sorted_centrality_scores_as_pd(topics_request.project_dir)
+async def _generate_topics_lightrag(topics_request: TopicsRequest) -> Topics:
+    centrality_scores = await get_sorted_centrality_scores_as_pd(
+        topics_request.project_dir
+    )
     if topics_request.topics and len(topics_request.topics) > 0:
         centrality_scores = centrality_scores[
             centrality_scores["entity_id"].isin(topics_request.topics)
