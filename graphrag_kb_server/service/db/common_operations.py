@@ -23,7 +23,9 @@ def extract_elements_from_path(project_dir: Path) -> SimpleProject:
     schema_name = project_dir.parent.parent.name
     project_name = project_dir.name
     engine = project_dir.parent.name
-    return SimpleProject(schema_name=schema_name, project_name=project_name, engine=find_engine(engine))
+    return SimpleProject(
+        schema_name=schema_name, project_name=project_name, engine=find_engine(engine)
+    )
 
 
 async def get_project_id(schema_name: str, project_name: str, engine: str) -> int:
@@ -41,8 +43,6 @@ async def get_project_id_from_path(project_dir: Path) -> int:
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id(
-        schema_name, 
-        simple_project.project_name, 
-        simple_project.engine.value
+        schema_name, simple_project.project_name, simple_project.engine.value
     )
     return project_id

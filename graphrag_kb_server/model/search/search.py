@@ -27,6 +27,22 @@ class DocumentSearchQuery(BaseModel):
         default="",
         description="The request ID used to track the request",
     )
+    linkedin_profile_url: str = Field(
+        ...,
+        description="The LinkedIn profile URL of the user",
+    )
+    organisation_role: str = Field(
+        ...,
+        description="The organisation role of the user",
+    )
+    organisation_type: str = Field(
+        ...,
+        description="The organisation type of the user",
+    )
+    business_type: str = Field(
+        ...,
+        description="The business type of the user",
+    )
     question: str | None = Field(
         ...,
         description="The question used to search for documentss or none in which case the question will be generated from the keywords",
@@ -45,6 +61,10 @@ class DocumentSearchQuery(BaseModel):
     is_search_query: bool = Field(
         default=False,
         description="Whether the query is a search query.",
+    )
+    biggest_challenge: str | None = Field(
+        default=None,
+        description="The biggest challenge that the user is facing",
     )
 
 

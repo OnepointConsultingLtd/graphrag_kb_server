@@ -133,9 +133,7 @@ async def match_entities(request: web.Request) -> web.Response:
 
     async def handle_expansion(project_dir: Path, body: dict) -> web.Response:
         match_query = MatchQuery(**body)
-        match_output = await match_entities_with_lightrag(
-            project_dir, match_query
-        )
+        match_output = await match_entities_with_lightrag(project_dir, match_query)
         return web.json_response(match_output.model_dump(), headers=CORS_HEADERS)
 
     return await handle_error(
@@ -178,11 +176,32 @@ async def relevant_documents(request: web.Request) -> web.Response:
                 type: string
                 description: The profile of the user, describing his interests.
                 default: "John Doe is an embedded systems engineer who is interested in automation and Internet of Things."
+              linkedin_profile_url:
+                type: string
+                description: The LinkedIn profile URL of the user. If unknown, leave it blank.
+                default: "https://www.linkedin.com/in/john-doe-1234567890/"
+              organisation_role:
+                type: string
+                description: The organisation role of the user.
+                default: "CEO"
+              organisation_type:
+                type: string
+                description: The organisation type of the user.
+                default: "SME"
+              business_type:
+                type: string
+                description: The business type of the user.
+                default: "Consultancy"
               question:
                 type: string
                 description: The question used to find documents. This is optional.
                 nullable: true
                 default: "How can I use AI to improve my automation and achieve truly autonomous systems?"
+              biggest_challenge:
+                type: string
+                description: The biggest challenge that the user is facing. This is optional.
+                nullable: true
+                default: "I want to improve my automation and achieve truly autonomous systems."
               topics_of_interest:
                 type: object
                 properties:

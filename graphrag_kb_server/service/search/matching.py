@@ -15,7 +15,10 @@ from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.service.google_ai_client import structured_completion
 from graphrag_kb_server.config import lightrag_cfg
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
-from graphrag_kb_server.service.db.db_persistence_expanded_entities import get_expanded_entities, insert_expanded_entities
+from graphrag_kb_server.service.db.db_persistence_expanded_entities import (
+    get_expanded_entities,
+    insert_expanded_entities,
+)
 from graphrag_kb_server.logger import logger
 
 
@@ -35,7 +38,9 @@ async def match_entities_with_lightrag(
     project_dir: Path, query: MatchQuery
 ) -> MatchOutput:
     logger.info(f"Matching entities with lightrag for query: {query}")
-    if (matched_output_from_db := await get_expanded_entities(project_dir, query)) is not None:
+    if (
+        matched_output_from_db := await get_expanded_entities(project_dir, query)
+    ) is not None:
         return matched_output_from_db
 
     entity_types, entities_limit = query.entity_types, query.entities_limit
@@ -44,7 +49,9 @@ async def match_entities_with_lightrag(
     all_entities = _convert_df_to_entities(df)
     entity_list = await match_entities(query, all_entities)
     entity_list = [
-        entity for entity in entity_list.entities if entity.score > query.score_threshold
+        entity
+        for entity in entity_list.entities
+        if entity.score > query.score_threshold
     ]
     entity_list = await _dedupe_entities(project_dir, entity_list)
     # Convert to format {entity_type: EntityList}

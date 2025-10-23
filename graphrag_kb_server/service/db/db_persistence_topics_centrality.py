@@ -55,9 +55,9 @@ async def insert_topics_with_centrality(
 ) -> int:
     simple_project = extract_elements_from_path(project_dir)
     project_id = await get_project_id(
-        simple_project.schema_name, 
-        simple_project.project_name, 
-        simple_project.engine.value
+        simple_project.schema_name,
+        simple_project.project_name,
+        simple_project.engine.value,
     )
     for node_centrality in node_centralities:
         await insert_topic_with_centrality(

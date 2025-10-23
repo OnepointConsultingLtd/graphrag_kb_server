@@ -9,11 +9,12 @@ from graphrag_kb_server.service.db.db_persistence_project import (
     delete_project,
 )
 from datetime import datetime
+from graphrag_kb_server.test.service.db.common_test_support import DEFAULT_SCHEMA_NAME
 
 
 async def _create_test_project():
     test_project = FullProject(
-        schema_name="public",
+        schema_name=DEFAULT_SCHEMA_NAME,
         engine=Engine.GRAPHRAG,
         project=Project(
             name="test_project",

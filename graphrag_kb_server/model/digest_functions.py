@@ -4,6 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+
 def _normalize(value: Any) -> Any:
     """
     Return a structure that is deterministic for hashing:
@@ -28,5 +29,7 @@ def content_sha256(model: BaseModel) -> str:
     # Optional: normalize nested structures
     payload = _normalize(payload)
     # Deterministic, compact JSON bytes
-    data = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    data = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
     return hashlib.sha256(data).hexdigest()

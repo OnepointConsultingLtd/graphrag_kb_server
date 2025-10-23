@@ -1,15 +1,25 @@
 import pytest
 
 from graphrag_kb_server.model.project import FullProject, Project
-from graphrag_kb_server.service.db.db_persistence_profile import create_profile_table, drop_profile_table, insert_profile, select_profile
-from graphrag_kb_server.test.service.db.test_topics_table import create_test_project_wrapper
+from graphrag_kb_server.service.db.db_persistence_profile import (
+    create_profile_table,
+    drop_profile_table,
+    insert_profile,
+    select_profile,
+)
+from graphrag_kb_server.test.service.db.test_topics_table import (
+    create_test_project_wrapper,
+)
 from graphrag_kb_server.model.linkedin.profile import Profile
-from graphrag_kb_server.config import cfg
+from graphrag_kb_server.test.service.db.common_test_support import create_project_dir
+
 
 @pytest.mark.asyncio
 async def test_create_profile():
-    
-    async def test_function(full_project: FullProject, _: Project, schema_name: str, project_name: str):
+
+    async def test_function(
+        full_project: FullProject, _: Project, schema_name: str, project_name: str
+    ):
         try:
             linkedin_profile_url = "test_linkedin_profile_url"
             await create_profile_table(schema_name)
@@ -23,7 +33,9 @@ async def test_create_profile():
                 linkedin_profile_url=linkedin_profile_url,
                 experiences=[],
             )
-            fake_project_dir = cfg.graphrag_root_dir_path / schema_name / full_project.engine.value / project_name
+            fake_project_dir = create_project_dir(
+                schema_name, full_project.engine, project_name
+            )
             await insert_profile(fake_project_dir, profile)
             profile_data = await select_profile(fake_project_dir, linkedin_profile_url)
             assert profile_data is not None

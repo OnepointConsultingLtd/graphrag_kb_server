@@ -15,7 +15,9 @@ from graphrag_kb_server.config import cfg
 from graphrag_kb_server.service.db.connection_pool import create_connection_pool
 from graphrag_kb_server.service.tennant import list_tennants
 from graphrag_kb_server.service.db.db_persistence_profile import create_profile_table
-from graphrag_kb_server.service.db.db_persistence_expanded_entities import create_expanded_entities_table
+from graphrag_kb_server.service.db.db_persistence_expanded_entities import (
+    create_expanded_entities_table,
+)
 
 
 async def bootstrap_database():

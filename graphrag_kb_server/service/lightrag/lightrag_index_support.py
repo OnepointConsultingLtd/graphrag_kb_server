@@ -8,8 +8,6 @@ from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
 
 
-
-
 async def acreate_lightrag(
     create_if_not_exists: bool = True,
     project_folder: Path | None = None,

@@ -1,10 +1,14 @@
 from pathlib import Path
 from graphrag_kb_server.service.db.connection_pool import execute_query, fetch_one
-from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id_from_path
+from graphrag_kb_server.service.db.common_operations import (
+    extract_elements_from_path,
+    get_project_id_from_path,
+)
 from graphrag_kb_server.model.linkedin.profile import Profile, Experience
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 
 TB_PROFILES = "TB_PROFILES"
+
 
 async def create_profile_table(schema_name: str):
     await execute_query(
@@ -43,9 +47,8 @@ DROP TABLE IF EXISTS {schema_name}.{TB_PROFILES};
 """
     )
 
-async def insert_profile(
-    project_dir: Path, profile: Profile
-) -> int:
+
+async def insert_profile(project_dir: Path, profile: Profile) -> int:
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
@@ -90,7 +93,10 @@ AND ACTIVE = TRUE AND LINKEDIN_PROFILE_URL = $3 AND UPDATED_AT > now() - interva
     )
     if result is None:
         return None
-    experiences = [Experience.model_validate_json(experience) for experience in result.get("experiences", [])]
+    experiences = [
+        Experience.model_validate_json(experience)
+        for experience in result.get("experiences", [])
+    ]
     return Profile(
         given_name=result.get("given_name", ""),
         surname=result.get("family_name", ""),
@@ -101,5 +107,3 @@ AND ACTIVE = TRUE AND LINKEDIN_PROFILE_URL = $3 AND UPDATED_AT > now() - interva
         linkedin_profile_url=result.get("linkedin_profile_url", ""),
         experiences=experiences,
     )
-    
-    

@@ -8,6 +8,12 @@ def create_document_search_query() -> DocumentSearchQuery:
     return DocumentSearchQuery(
         question="How can I use AI to improve my automation and achieve truly autonomous systems?",
         user_profile="I am a software engineer with a passion for building scalable and efficient systems.",
+        biggest_challenge="I want to improve my automation and achieve truly autonomous systems.",
+        linkedin_profile_url="https://www.linkedin.com/in/john-doe-1234567890/",
+        organisation_role="CEO",
+        organisation_type="SME",
+        business_type="Consultancy",
+        request_id="1234567890",
         topics_of_interest=MatchOutput(
             entity_dict={
                 "category": EntityList(

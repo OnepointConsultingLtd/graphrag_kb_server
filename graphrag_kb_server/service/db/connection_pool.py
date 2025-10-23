@@ -87,7 +87,7 @@ async def fetch_all(sql: str, *args: Sequence[Any]) -> list[asyncpg.Record]:
 
 async def fetch_one(sql: str, *args: Sequence[Any]) -> Optional[asyncpg.Record]:
     """Fetch a single record from the database.
-    
+
     Returns:
         asyncpg.Record or None: The single record, or None if no records found
     """

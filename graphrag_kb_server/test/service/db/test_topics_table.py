@@ -1,8 +1,5 @@
 import pytest
 
-from datetime import datetime
-from typing import Callable, Awaitable
-
 from graphrag_kb_server.service.db.db_persistence_topics import (
     create_topics_table,
     drop_topics_table,
@@ -11,58 +8,24 @@ from graphrag_kb_server.service.db.db_persistence_topics import (
     save_topics_request,
     delete_topics_by_project_name,
 )
-from graphrag_kb_server.service.db.db_persistence_project import (
-    create_project,
-    delete_project,
-    create_project_table,
-    drop_project_table,
-    find_project_by_name,
-)
 from graphrag_kb_server.model.project import FullProject, Project
-from graphrag_kb_server.model.project import IndexingStatus
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.model.topics import Topic, TopicsRequest
-from graphrag_kb_server.config import cfg
-
-
-async def create_test_project_wrapper(
-    function: Callable[[FullProject, Project, str, str], Awaitable[None]]
-):
-    schema_name = "public"
-    project_name = "test_project"
-    try:
-        full_project = FullProject(
-            schema_name=schema_name,
-            engine=Engine.GRAPHRAG,
-            project=Project(
-                name=project_name,
-                updated_timestamp=datetime.now(),
-                input_files=[],
-                indexing_status=IndexingStatus.NOT_STARTED,
-            ),
-        )
-        # Create project table, project, and topics table
-        await create_project_table(schema_name)
-        await create_project(full_project)
-
-        found_project = await find_project_by_name(
-            schema_name, full_project.project.name
-        )
-        
-        assert found_project is not None
-        assert found_project.id != full_project.id
-
-        await function(full_project, found_project, schema_name, project_name)
-
-    finally:
-        await delete_project(full_project)
-        await drop_project_table(full_project)
+from graphrag_kb_server.test.service.db.common_test_support import (
+    create_test_project_wrapper,
+    create_project_dir,
+)
 
 
 @pytest.mark.asyncio
 async def test_create_topic():
 
-    async def test_function(full_project: FullProject, found_project: Project, schema_name: str, project_name: str):
+    async def test_function(
+        full_project: FullProject,
+        found_project: Project,
+        schema_name: str,
+        project_name: str,
+    ):
         # Create topics table and insert topic
         try:
             await create_topics_table(schema_name)
@@ -76,11 +39,8 @@ async def test_create_topic():
             topic_id = await insert_topic(schema_name, topic)
             assert topic_id is not None
             assert topic_id != 0
-            project_dir = (
-                cfg.graphrag_root_dir_path
-                / schema_name
-                / full_project.engine.value
-                / project_name
+            project_dir = create_project_dir(
+                schema_name, full_project.engine, project_name
             )
             topics_request = TopicsRequest(
                 engine=full_project.engine,
@@ -115,6 +75,4 @@ async def test_create_topic():
         finally:
             await drop_topics_table(schema_name)
 
-
     await create_test_project_wrapper(test_function)
-    

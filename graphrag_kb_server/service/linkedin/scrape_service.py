@@ -20,7 +20,10 @@ from graphrag_kb_server.model.linkedin.profile import (
 )
 from graphrag_kb_server.config import linkedin_cfg, cfg
 from graphrag_kb_server.service.linkedin.linkedin_functions import correct_linkedin_url
-from graphrag_kb_server.service.db.db_persistence_profile import select_profile, insert_profile
+from graphrag_kb_server.service.db.db_persistence_profile import (
+    select_profile,
+    insert_profile,
+)
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.utils.date_support import convert_linkedin_date
 from graphrag_kb_server.utils.cache import GenericSimpleCache
@@ -506,7 +509,9 @@ async def aextract_profile(
     project_dir: Path = None,
 ) -> Profile | None:
     if project_dir is not None:
-        if profile_data := await select_profile(project_dir, correct_linkedin_url(profile)):
+        if profile_data := await select_profile(
+            project_dir, correct_linkedin_url(profile)
+        ):
             return profile_data
     else:
         if profile_data := _cache.get(profile):
