@@ -1,9 +1,10 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from graphrag_kb_server.model.search.entity import Entity, EntityList
 
 
 class MatchQuery(BaseModel):
+    model_config = ConfigDict(frozen=True)
     question: str | None = Field(
         default=None,
         description="The question used to find extra entities. This is optional",
@@ -11,10 +12,10 @@ class MatchQuery(BaseModel):
     user_profile: str = Field(
         ..., description="The user profile with some information about the user"
     )
-    topics_of_interest: list[Entity] = Field(
+    topics_of_interest: tuple[Entity, ...] = Field(
         ..., description="The topics of interest selected by the user"
     )
-    entity_types: list[str] = Field(
+    entity_types: tuple[str, ...] = Field(
         default=["category"],
         description="The entities to match with the user profile and topics of interest",
     )
@@ -27,11 +28,11 @@ class MatchQuery(BaseModel):
 
 
 class MatchOutput(BaseModel):
+    model_config = ConfigDict(frozen=True)
     entity_dict: dict[str, EntityList] = Field(
         default={},
         description="A dictionary of entity type names and their corresponding entity lists",
     )
-    model_config = {"frozen": True}  # Pydantic v2 config syntax
 
 
 if __name__ == "__main__":

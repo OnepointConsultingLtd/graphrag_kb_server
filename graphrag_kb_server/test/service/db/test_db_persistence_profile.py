@@ -7,9 +7,9 @@ from graphrag_kb_server.model.linkedin.profile import Profile
 from graphrag_kb_server.config import cfg
 
 @pytest.mark.asyncio
-async def test_create_topic():
+async def test_create_profile():
     
-    async def test_function(full_project: FullProject, found_project: Project, schema_name: str, project_name: str):
+    async def test_function(full_project: FullProject, _: Project, schema_name: str, project_name: str):
         try:
             linkedin_profile_url = "test_linkedin_profile_url"
             await create_profile_table(schema_name)

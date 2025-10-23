@@ -15,6 +15,8 @@ from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.service.google_ai_client import structured_completion
 from graphrag_kb_server.config import lightrag_cfg
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
+from graphrag_kb_server.service.db.db_persistence_expanded_entities import get_expanded_entities, insert_expanded_entities
+from graphrag_kb_server.logger import logger
 
 
 def _convert_df_to_entities(
@@ -30,15 +32,19 @@ SCORE_THRESHOLD = 0.5
 
 
 async def match_entities_with_lightrag(
-    project_dir: Path, query: MatchQuery, score_threshold: float = SCORE_THRESHOLD
+    project_dir: Path, query: MatchQuery
 ) -> MatchOutput:
+    logger.info(f"Matching entities with lightrag for query: {query}")
+    if (matched_output_from_db := await get_expanded_entities(project_dir, query)) is not None:
+        return matched_output_from_db
+
     entity_types, entities_limit = query.entity_types, query.entities_limit
     df = await get_sorted_centrality_scores_as_pd(project_dir)
     df = df[df["entity_type"].isin(entity_types)][:entities_limit]
     all_entities = _convert_df_to_entities(df)
     entity_list = await match_entities(query, all_entities)
     entity_list = [
-        entity for entity in entity_list.entities if entity.score > score_threshold
+        entity for entity in entity_list.entities if entity.score > query.score_threshold
     ]
     entity_list = await _dedupe_entities(project_dir, entity_list)
     # Convert to format {entity_type: EntityList}
@@ -48,7 +54,9 @@ async def match_entities_with_lightrag(
         if entity.entity in entity_type_dict:
             entity_dict[entity_type_dict[entity.entity]].append(entity)
     entity_dict = {e[0]: EntityList(entities=e[1]) for e in entity_dict.items()}
-    return MatchOutput(entity_dict=entity_dict)
+    matched_output = MatchOutput(entity_dict=entity_dict)
+    await insert_expanded_entities(project_dir, query, matched_output)
+    return matched_output
 
 
 async def _dedupe_entities(
@@ -184,8 +192,8 @@ if __name__ == "__main__":
                 MatchQuery(
                     question="How can I use AI to improve my automation and achieve truly autonomous systems?",
                     user_profile="I am a software engineer interested in automation and Robotics",
-                    topics_of_interest=topics_of_interest,
-                    entity_types=["category"],
+                    topics_of_interest=tuple(topics_of_interest),
+                    entity_types=tuple(["category"]),
                     entities_limit=30,
                 ),
             )
@@ -220,4 +228,4 @@ if __name__ == "__main__":
         for entity in deduped:
             print(entity.entity)
 
-    test_deduplication()
+    test_matching()

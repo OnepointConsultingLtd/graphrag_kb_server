@@ -1,5 +1,5 @@
 from enum import StrEnum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Abstraction(StrEnum):
@@ -8,12 +8,14 @@ class Abstraction(StrEnum):
 
 
 class Entity(BaseModel):
+    model_config = ConfigDict(frozen=True)
     name: str = Field(..., description="The name of the entity")
     type: str = Field(default="category", description="The type of the entity")
     description: str = Field(..., description="The description of the entity")
 
 
 class EntityWithScore(BaseModel):
+    model_config = ConfigDict(frozen=True)
     entity: str = Field(..., description="The entity name")
     score: float = Field(
         ..., description="The score of the entity according to the user interests"
@@ -37,6 +39,7 @@ class DuplicateEntity(BaseModel):
 
 
 class EntityList(BaseModel):
+    model_config = ConfigDict(frozen=True)
     entities: list[EntityWithScore] = Field(
         ...,
         description="A sorted list of entity names ordered by relevance according to the user interests",

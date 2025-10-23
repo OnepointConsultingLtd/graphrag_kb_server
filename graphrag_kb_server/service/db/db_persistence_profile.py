@@ -1,6 +1,6 @@
 from pathlib import Path
 from graphrag_kb_server.service.db.connection_pool import execute_query, fetch_one
-from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id
+from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id_from_path
 from graphrag_kb_server.model.linkedin.profile import Profile, Experience
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 
@@ -48,11 +48,7 @@ async def insert_profile(
 ) -> int:
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
-    project_id = await get_project_id(
-        schema_name, 
-        simple_project.project_name, 
-        simple_project.engine.value
-    )
+    project_id = await get_project_id_from_path(project_dir)
     experiences = [experience.model_dump_json() for experience in profile.experiences]
     await execute_query(
         f"""

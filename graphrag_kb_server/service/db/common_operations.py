@@ -35,3 +35,14 @@ async def get_project_id(schema_name: str, project_name: str, engine: str) -> in
     if len(result) == 0:
         raise ValueError(f"Project {project_name} with engine {engine} not found")
     return result[0]["id"]
+
+
+async def get_project_id_from_path(project_dir: Path) -> int:
+    simple_project = extract_elements_from_path(project_dir)
+    schema_name = simple_project.schema_name
+    project_id = await get_project_id(
+        schema_name, 
+        simple_project.project_name, 
+        simple_project.engine.value
+    )
+    return project_id

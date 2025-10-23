@@ -134,7 +134,7 @@ async def match_entities(request: web.Request) -> web.Response:
     async def handle_expansion(project_dir: Path, body: dict) -> web.Response:
         match_query = MatchQuery(**body)
         match_output = await match_entities_with_lightrag(
-            project_dir, match_query, score_threshold=match_query.score_threshold
+            project_dir, match_query
         )
         return web.json_response(match_output.model_dump(), headers=CORS_HEADERS)
 
