@@ -126,7 +126,9 @@ WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED
     )
     if result is None:
         return None
-    match_output = MatchOutput(**json.loads(result.get("match_output")), id=int(result.get("id")))
+    data = json.loads(result["match_output"])
+    data["id"] = int(result["id"])  # this overwrites any id in the JSON
+    match_output = MatchOutput(**data)
     return match_output
 
 
