@@ -14,9 +14,7 @@ from graphrag_kb_server.service.db.db_persistence_topics_centrality import (
     find_topics_with_centrality_by_project_name,
     insert_topics_with_centrality,
 )
-
-# Full day cache
-
+from graphrag_kb_server.logger import logger
 
 def get_sorted_centrality_scores(
     project_dir: Path,
@@ -54,8 +52,10 @@ def convert_to_pd(sorted_centrality: list[NodeCentrality]) -> pd.DataFrame:
 
 
 async def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
+    logger.info(f"Getting sorted centrality scores as pandas dataframe for project: {project_dir}")
     cached_data = await find_topics_with_centrality_by_project_name(project_dir, -1)
     if cached_data is not None and len(cached_data) > 0:
+        logger.info(f"Found cached centrality scores for project: {project_dir}")
         return convert_to_pd(cached_data)
     sorted_centrality = get_sorted_centrality_scores(project_dir)
     data = convert_to_pd(sorted_centrality)
