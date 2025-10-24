@@ -21,40 +21,44 @@ async def get_sorted_centrality_scores(
     project_dir: Path,
 ) -> list[NodeCentrality]:
     logger.info(f"Getting sorted centrality scores for project: {project_dir}")
-    G = create_network_from_project_dir(project_dir)
+    G = await asyncio.to_thread(create_network_from_project_dir, project_dir)
     logger.info(f"Created network from project directory: {project_dir}")
-    rw_graph = networkx_to_rustworkx(G)
+    rw_graph = await asyncio.to_thread(networkx_to_rustworkx, G)
     logger.info(f"Converted network to rustworkx graph: {project_dir}")
     centrality = await asyncio.to_thread(rx.betweenness_centrality, rw_graph)
     logger.info(f"Calculated betweenness centrality for project: {project_dir}")
-    node_centrality = {
-        node: (centrality[node], rw_graph[node]) for node in rw_graph.node_indices()
-    }
-    sorted_centrality = []
-    for _, centrality_info in sorted(
-        node_centrality.items(), key=lambda item: item[1][0], reverse=True
-    ):
-        data = centrality_info[1]
-        sorted_centrality.append(
-            (
-                data["entity_id"],
-                data["entity_type"],
-                data["description"],
-                data["file_path"],
-                centrality_info[0],
+    def process_centrality_data():
+        node_centrality = {
+            node: (centrality[node], rw_graph[node]) for node in rw_graph.node_indices()
+        }
+        sorted_centrality = []
+        for _, centrality_info in sorted(
+            node_centrality.items(), key=lambda item: item[1][0], reverse=True
+        ):
+            data = centrality_info[1]
+            sorted_centrality.append(
+                (
+                    data["entity_id"],
+                    data["entity_type"],
+                    data["description"],
+                    data["file_path"],
+                    centrality_info[0],
+                )
             )
-        )
+        return sorted_centrality
+    
+    sorted_centrality = await asyncio.to_thread(process_centrality_data)
     logger.info(f"Sorted centrality scores for project: {project_dir}")
     return sorted_centrality
 
 
-def convert_to_pd(sorted_centrality: list[NodeCentrality]) -> pd.DataFrame:
-    data = pd.DataFrame(
-        sorted_centrality,
-        columns=["entity_id", "entity_type", "description", "file_path", "centrality"],
+async def convert_to_pd(sorted_centrality: list[NodeCentrality]) -> pd.DataFrame:
+    return await asyncio.to_thread(
+        lambda: pd.DataFrame(
+            sorted_centrality,
+            columns=["entity_id", "entity_type", "description", "file_path", "centrality"],
+        ).set_index(pd.RangeIndex(1, len(sorted_centrality) + 1))
     )
-    data.index = range(1, len(data) + 1)
-    return data
 
 
 async def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
@@ -62,10 +66,10 @@ async def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
     cached_data = await find_topics_with_centrality_by_project_name(project_dir, -1)
     if cached_data is not None and len(cached_data) > 0:
         logger.info(f"Found cached centrality scores for project: {project_dir}")
-        return convert_to_pd(cached_data)
+        return await convert_to_pd(cached_data)
     sorted_centrality = await get_sorted_centrality_scores(project_dir)
     logger.info(f"Sorted centrality scores for project: {project_dir}")
-    data = convert_to_pd(sorted_centrality)
+    data = await convert_to_pd(sorted_centrality)
     await insert_topics_with_centrality(project_dir, sorted_centrality)
     logger.info(f"Inserted centrality scores for project: {project_dir}")
     return data
