@@ -54,7 +54,7 @@ async def match_entities_with_lightrag(
         for entity in entity_list.entities
         if entity.score > query.score_threshold
     ]
-    entity_list = await _dedupe_entities(project_dir, entity_list)
+    # entity_list = await _dedupe_entities(project_dir, entity_list)
     # Convert to format {entity_type: EntityList}
     entity_dict = defaultdict(list)
     entity_type_dict = {e.name: e.type for e in all_entities}
