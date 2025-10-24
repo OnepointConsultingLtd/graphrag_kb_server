@@ -127,7 +127,7 @@ WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED
     if result is None:
         return None
     match_output = MatchOutput.model_validate_json(result.get("match_output"))
-    match_output.id = int(result.get("id"))
+    match_output = MatchOutput(id=int(result.get("id")), **match_output.model_dump())
     return match_output
 
 
