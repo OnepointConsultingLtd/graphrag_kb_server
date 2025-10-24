@@ -18,6 +18,9 @@ from graphrag_kb_server.service.db.db_persistence_profile import create_profile_
 from graphrag_kb_server.service.db.db_persistence_expanded_entities import (
     create_expanded_entities_table,
 )
+from graphrag_kb_server.service.db.db_persistence_search import (
+    create_search_history_tables,
+)
 
 
 async def bootstrap_database():
@@ -45,6 +48,7 @@ async def create_tennant_tables(tennant: Tennant):
     await create_project_table(tennant.folder_name)
     await create_profile_table(tennant.folder_name)
     await create_expanded_entities_table(tennant.folder_name)
+    await create_search_history_tables(tennant.folder_name)
 
 
 async def create_projects_and_topics(

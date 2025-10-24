@@ -1,5 +1,5 @@
 from enum import StrEnum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from abc import ABC
 
 from graphrag_kb_server.model.search.match_query import MatchOutput
@@ -23,6 +23,7 @@ RELEVANCE_SCORE_POINTS_MAP = {
 
 
 class DocumentSearchQuery(BaseModel):
+    model_config = ConfigDict(frozen=True)
     request_id: str = Field(
         default="",
         description="The request ID used to track the request",

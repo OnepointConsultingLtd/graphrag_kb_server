@@ -3,6 +3,7 @@ import hashlib
 from typing import Any
 
 from pydantic import BaseModel
+from binascii import unhexlify
 
 
 def _normalize(value: Any) -> Any:
@@ -33,3 +34,8 @@ def content_sha256(model: BaseModel) -> str:
         payload, sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode("utf-8")
     return hashlib.sha256(data).hexdigest()
+
+
+def content_sha256_combined(model: BaseModel) -> tuple[str, bytes]:
+    digest_sha256 = content_sha256(model)
+    return digest_sha256, unhexlify(digest_sha256)

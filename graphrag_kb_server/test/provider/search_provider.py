@@ -1,7 +1,15 @@
-from graphrag_kb_server.model.search.search import DocumentSearchQuery
+from graphrag_kb_server.model.search.search import (
+    DocumentSearchQuery,
+    SearchResults,
+    SummarisationResponseWithDocument,
+    RelevanceScore,
+)
 from graphrag_kb_server.model.search.match_query import MatchOutput
 from graphrag_kb_server.model.search.entity import EntityWithScore, Abstraction
 from graphrag_kb_server.model.search.entity import EntityList
+
+
+COMMON_REQUEST_ID = "1234567890"
 
 
 def create_document_search_query() -> DocumentSearchQuery:
@@ -13,7 +21,7 @@ def create_document_search_query() -> DocumentSearchQuery:
         organisation_role="CEO",
         organisation_type="SME",
         business_type="Consultancy",
-        request_id="1234567890",
+        request_id=COMMON_REQUEST_ID,
         topics_of_interest=MatchOutput(
             entity_dict={
                 "category": EntityList(
@@ -28,4 +36,20 @@ def create_document_search_query() -> DocumentSearchQuery:
                 ),
             }
         ),
+    )
+
+
+def create_search_results() -> SearchResults:
+    return SearchResults(
+        response="The user is interested in AI",
+        request_id=COMMON_REQUEST_ID,
+        documents=[
+            SummarisationResponseWithDocument(
+                summary="The user is interested in AI",
+                relevance="The user is interested in AI",
+                relevancy_score=RelevanceScore.HIGH,
+                document_path="/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full/input/clustre/Case studies/Case_Study_-_AIMIA_and_Zuhlke.txt",
+                main_keyword="AIMIA and Zuhlke",
+            )
+        ],
     )

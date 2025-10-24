@@ -3,6 +3,7 @@ from graphrag_kb_server.service.db.connection_pool import execute_query, fetch_o
 from graphrag_kb_server.service.db.common_operations import (
     extract_elements_from_path,
     get_project_id_from_path,
+    DB_CACHE_EXPIRATION_TIME,
 )
 from graphrag_kb_server.model.linkedin.profile import Profile, Experience
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
@@ -85,7 +86,7 @@ async def select_profile(
 SELECT GIVEN_NAME, FAMILY_NAME, CV, INDUSTRY_NAME, GEO_LOCATION, LINKEDIN_PROFILE_URL, EXPERIENCES, PROJECT_ID, ACTIVE, CREATED_AT, UPDATED_AT
 FROM {schema_name}.{TB_PROFILES} WHERE PROJECT_ID = 
 (SELECT ID FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1 AND ENGINE = $2)
-AND ACTIVE = TRUE AND LINKEDIN_PROFILE_URL = $3 AND UPDATED_AT > now() - interval '30 day';
+AND ACTIVE = TRUE AND LINKEDIN_PROFILE_URL = $3 AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} day';
 """,
         simple_project.project_name,
         simple_project.engine.value,

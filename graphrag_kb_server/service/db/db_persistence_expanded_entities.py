@@ -1,6 +1,5 @@
 from pathlib import Path
 import json
-from binascii import unhexlify
 
 from pydantic.json import pydantic_encoder
 
@@ -8,8 +7,9 @@ from graphrag_kb_server.service.db.connection_pool import execute_query, fetch_o
 from graphrag_kb_server.service.db.common_operations import (
     get_project_id_from_path,
     extract_elements_from_path,
+    DB_CACHE_EXPIRATION_TIME,
 )
-from graphrag_kb_server.model.digest_functions import content_sha256
+from graphrag_kb_server.model.digest_functions import content_sha256_combined
 from graphrag_kb_server.model.search.match_query import MatchQuery, MatchOutput
 
 
@@ -59,8 +59,7 @@ async def insert_expanded_entities(
     project_id = await get_project_id_from_path(project_dir)
     profile_dict = json.loads(match_query.user_profile)
     linkedin_profile_url = profile_dict.get("linkedin_profile_url")
-    digest_sha256 = content_sha256(match_query)
-    query_digest_sha256 = unhexlify(digest_sha256)
+    digest_sha256, query_digest_sha256 = content_sha256_combined(match_query)
     sql = f"""
 MERGE INTO {schema_name}.{TB_EXPANDED_ENTITIES} AS t
 USING (
@@ -116,11 +115,11 @@ async def get_expanded_entities(
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
-    query_digest_sha256 = unhexlify(content_sha256(match_query))
+    _, query_digest_sha256 = content_sha256_combined(match_query)
     result = await fetch_one(
         f"""
 SELECT MATCH_OUTPUT FROM {schema_name}.{TB_EXPANDED_ENTITIES} 
-WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '30 day';
+WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} day';
 """,  #
         project_id,
         query_digest_sha256,

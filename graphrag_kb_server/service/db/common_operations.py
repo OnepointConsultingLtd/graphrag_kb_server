@@ -6,6 +6,9 @@ from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 from graphrag_kb_server.model.project import SimpleProject
 
 
+DB_CACHE_EXPIRATION_TIME = 30
+
+
 async def clear_table(
     schema_name: str, project_name: str, engine: Engine, table_name: str
 ):

@@ -20,6 +20,11 @@ from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.service.cag.cag_support import cag_get_response_stream
 from graphrag_kb_server.service.graphrag.query import rag_local
 from graphrag_kb_server.model.engines import find_engine
+from graphrag_kb_server.service.db.db_persistence_search import (
+    insert_search_query,
+    process_search_response,
+    get_search_results,
+)
 
 
 class Command(StrEnum):
@@ -85,13 +90,26 @@ async def relevant_documents(
         callback = WebsocketCallback(
             sid=sid, request_id=document_search_query.request_id
         )
+        project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
+        found_search_results = await get_search_results(project_dir, document_search_query)
+        if found_search_results is not None:
+            await callback.callback(found_search_results.response)
+            await sio.emit(Command.RESPONSE, found_search_results.model_dump_json(), to=sid)
+            return
+        search_history_id = await insert_search_query(
+            project_dir, document_search_query
+        )
         logger.info(f"Document query from {sio}: {document_query}")
         await callback.callback("Preparing answer...")
-        project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
+
         response = await retrieve_relevant_documents(
             project_dir, document_search_query, callback
         )
+        search_results_ids = await process_search_response(
+            project_dir, search_history_id, response
+        )
         await sio.emit(Command.RESPONSE, response.model_dump_json(), to=sid)
+        logger.info(f"Inserted search results IDs: {search_results_ids}")
     except Exception as e:
         err_msg = f"Errors: {e}. Please try again."
         logger.error(err_msg)
