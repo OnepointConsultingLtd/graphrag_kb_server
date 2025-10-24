@@ -46,7 +46,8 @@ async def match_entities_with_lightrag(
             return matched_output_from_db
         else:
             id = matched_output_from_db.id
-            await delete_expanded_entities(project_dir, id)
+            deleted_str = await delete_expanded_entities(project_dir, id)
+            logger.info(f"Deleted expanded entities for query: {deleted_str}")
             logger.info(f"Found cached expanded entities for query: {query}")
 
     entity_types, entities_limit = query.entity_types, query.entities_limit
