@@ -1,5 +1,6 @@
 from io import BytesIO
 from pathlib import Path
+import asyncio
 
 import pandas as pd
 import rustworkx as rx
@@ -16,12 +17,16 @@ from graphrag_kb_server.service.db.db_persistence_topics_centrality import (
 )
 from graphrag_kb_server.logger import logger
 
-def get_sorted_centrality_scores(
+async def get_sorted_centrality_scores(
     project_dir: Path,
 ) -> list[NodeCentrality]:
+    logger.info(f"Getting sorted centrality scores for project: {project_dir}")
     G = create_network_from_project_dir(project_dir)
+    logger.info(f"Created network from project directory: {project_dir}")
     rw_graph = networkx_to_rustworkx(G)
-    centrality = rx.betweenness_centrality(rw_graph)
+    logger.info(f"Converted network to rustworkx graph: {project_dir}")
+    centrality = await asyncio.to_thread(rx.betweenness_centrality, rw_graph)
+    logger.info(f"Calculated betweenness centrality for project: {project_dir}")
     node_centrality = {
         node: (centrality[node], rw_graph[node]) for node in rw_graph.node_indices()
     }
@@ -39,6 +44,7 @@ def get_sorted_centrality_scores(
                 centrality_info[0],
             )
         )
+    logger.info(f"Sorted centrality scores for project: {project_dir}")
     return sorted_centrality
 
 
@@ -57,9 +63,11 @@ async def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
     if cached_data is not None and len(cached_data) > 0:
         logger.info(f"Found cached centrality scores for project: {project_dir}")
         return convert_to_pd(cached_data)
-    sorted_centrality = get_sorted_centrality_scores(project_dir)
+    sorted_centrality = await get_sorted_centrality_scores(project_dir)
+    logger.info(f"Sorted centrality scores for project: {project_dir}")
     data = convert_to_pd(sorted_centrality)
     await insert_topics_with_centrality(project_dir, sorted_centrality)
+    logger.info(f"Inserted centrality scores for project: {project_dir}")
     return data
 
 
