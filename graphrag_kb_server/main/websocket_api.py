@@ -82,6 +82,7 @@ async def relevant_documents(
     max_filepath_depth: int = 1000,
 ):
     try:
+        logger.info(f"Document query from {sio}: {document_query}")
         document_search_query = DocumentSearchQuery(
             **json.loads(document_query),
             max_filepath_depth=max_filepath_depth,
