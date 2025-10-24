@@ -31,6 +31,9 @@ class MatchQuery(BaseModel):
 
 
 class MatchOutput(BaseModel):
+    id: int = Field(
+        default=0, description="The id of the match output"
+    )
     model_config = ConfigDict(frozen=True)
     entity_dict: dict[str, EntityList] = Field(
         default={},

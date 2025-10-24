@@ -18,6 +18,7 @@ from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.db.db_persistence_expanded_entities import (
     get_expanded_entities,
     insert_expanded_entities,
+    delete_expanded_entities,
 )
 from graphrag_kb_server.logger import logger
 
@@ -43,6 +44,10 @@ async def match_entities_with_lightrag(
     ) is not None:
         if not query.no_cache:
             return matched_output_from_db
+        else:
+            id = matched_output_from_db.id
+            await delete_expanded_entities(project_dir, id)
+            logger.info(f"Found cached expanded entities for query: {query}")
 
     entity_types, entities_limit = query.entity_types, query.entities_limit
     df = await get_sorted_centrality_scores_as_pd(project_dir)

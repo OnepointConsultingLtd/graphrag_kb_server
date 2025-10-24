@@ -118,7 +118,7 @@ async def get_expanded_entities(
     _, query_digest_sha256 = content_sha256_combined(match_query)
     result = await fetch_one(
         f"""
-SELECT MATCH_OUTPUT FROM {schema_name}.{TB_EXPANDED_ENTITIES} 
+SELECT ID, MATCH_OUTPUT FROM {schema_name}.{TB_EXPANDED_ENTITIES} 
 WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} day';
 """,  #
         project_id,
@@ -126,4 +126,19 @@ WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED
     )
     if result is None:
         return None
-    return MatchOutput.model_validate_json(result.get("match_output"))
+    match_output = MatchOutput.model_validate_json(result.get("match_output"))
+    match_output.id = int(result.get("id"))
+    return match_output
+
+
+async def delete_expanded_entities(
+    project_dir: Path, id: int
+) -> str:
+    simple_project = extract_elements_from_path(project_dir)
+    schema_name = simple_project.schema_name
+    project_id = await get_project_id_from_path(project_dir)
+    return await execute_query(
+        f"""
+DELETE FROM {schema_name}.{TB_EXPANDED_ENTITIES} WHERE PROJECT_ID = $1 AND ID = $2;
+""",
+        project_id, id)
