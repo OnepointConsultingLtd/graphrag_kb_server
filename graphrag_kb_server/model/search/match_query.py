@@ -25,6 +25,9 @@ class MatchQuery(BaseModel):
     score_threshold: float = Field(
         default=0.5, description="The score threshold for the entities"
     )
+    no_cache: bool = Field(
+        default=False, description="Whether to bypass the cache and force a new search"
+    )
 
 
 class MatchOutput(BaseModel):

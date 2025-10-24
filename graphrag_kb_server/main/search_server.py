@@ -118,6 +118,10 @@ async def match_entities(request: web.Request) -> web.Response:
                 type: number
                 description: The score threshold for the entities
                 default: 0.5
+              no_cache:
+                type: boolean
+                description: Whether to bypass the cache and force a new search
+                default: false
     responses:
       '200':
         description: The response to the query in either json, html or markdown format

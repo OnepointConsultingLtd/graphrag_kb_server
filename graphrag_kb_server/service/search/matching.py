@@ -41,7 +41,8 @@ async def match_entities_with_lightrag(
     if (
         matched_output_from_db := await get_expanded_entities(project_dir, query)
     ) is not None:
-        return matched_output_from_db
+        if not query.no_cache:
+            return matched_output_from_db
 
     entity_types, entities_limit = query.entity_types, query.entities_limit
     df = await get_sorted_centrality_scores_as_pd(project_dir)
