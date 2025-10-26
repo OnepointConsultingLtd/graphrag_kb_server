@@ -175,6 +175,8 @@ In case of a coloquial question or non context related sentence you can respond 
             is_search_query=query_params.is_search_query,
             max_entity_size=query_params.max_entity_size,
             max_relation_size=query_params.max_relation_size,
+            existing_hl_keywords=param.hl_keywords,
+            existing_ll_keywords=param.ll_keywords,
         )
         if query_params.callback is not None:
             await query_params.callback.callback(
@@ -244,6 +246,8 @@ async def prepare_context(
     is_search_query: bool = False,
     max_entity_size: int = 1000,
     max_relation_size: int = 1000,
+    existing_hl_keywords: list[str] = [],
+    existing_ll_keywords: list[str] = [],
 ) -> tuple[str, str, np.ndarray | None, int, int, list[dict], list[dict], list[dict]]:
 
     # Handle cache
@@ -253,9 +257,13 @@ async def prepare_context(
         hashing_kv, args_hash, query, query_param.mode, cache_type="query"
     )
 
-    hl_keywords, ll_keywords = await get_keywords_from_query(
-        query, query_param, global_config, hashing_kv
-    )
+    if len(existing_hl_keywords) == 0 and len(existing_ll_keywords) == 0:
+        hl_keywords, ll_keywords = await get_keywords_from_query(
+            query, query_param, global_config, hashing_kv
+        )
+    else:
+        hl_keywords = existing_hl_keywords
+        ll_keywords = existing_ll_keywords
 
     # Handle empty keywords
     if hl_keywords == [] and ll_keywords == []:

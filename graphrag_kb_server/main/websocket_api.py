@@ -101,7 +101,7 @@ async def relevant_documents(
             project_dir, document_search_query
         )
         logger.info(f"Document query from {sio}: {document_query}")
-        await callback.callback("Preparing answer...")
+        await callback.callback("Searching documents...")
 
         response = await retrieve_relevant_documents(
             project_dir, document_search_query, callback
