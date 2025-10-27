@@ -962,25 +962,6 @@ async def project_related_topics(request: web.Request) -> web.Response:
               text:
                 type: string
                 description: The text to find related entities for
-              samples:
-                type: integer
-                format: int32
-                default: 50000
-                description: The number of random walk samples to perform
-              path_length:
-                type: integer
-                format: int32
-                default: 5
-                description: The length of each random walk path
-              restart_prob:
-                type: number
-                default: 0.15
-                description: The probability of restarting the random walk at the source node
-              runs:
-                type: integer
-                format: int32
-                default: 10
-                description: The number of independent runs to average results
               limit:
                 type: integer
                 format: int32
@@ -994,6 +975,29 @@ async def project_related_topics(request: web.Request) -> web.Response:
                 type: boolean
                 description: Whether to deduplicate the topics.
                 default: false
+              random_walk_parameters:
+                type: object
+                description: The parameters to use for the random walk.
+                properties:
+                  samples:
+                    type: integer
+                    format: int32
+                    description: The number of random walk samples to perform
+                    default: 50000
+                  path_length:
+                    type: integer
+                    format: int32
+                    description: The length of each random walk path
+                    default: 5
+                  restart_prob:
+                    type: number
+                    description: The probability of restarting the random walk at the source node
+                    default: 0.15
+                  runs:
+                    type: integer
+                    format: int32
+                    description: The number of independent runs to average results
+                    default: 10
               similarity_topics_method:
                 type: string
                 description: The method to use for similarity topics.
@@ -1047,10 +1051,11 @@ async def project_related_topics(request: web.Request) -> web.Response:
                     body = await request.json()
                     source = body.get("source", "AI")
                     text = body.get("text", "")
-                    samples = body.get("samples", 50000)
-                    path_length = body.get("path_length", 5)
-                    restart_prob = body.get("restart_prob", 0.15)
-                    runs = body.get("runs", 10)
+                    random_walk_parameters = body.get("random_walk_parameters", {})
+                    samples = random_walk_parameters.get("samples", 50000)
+                    path_length = random_walk_parameters.get("path_length", 5)
+                    restart_prob = random_walk_parameters.get("restart_prob", 0.15)
+                    runs = random_walk_parameters.get("runs", 10)
                     limit = body.get("limit", 8)
                     topics_prompt = body.get("topics_prompt", "")
                     deduplicate_topics = body.get("deduplicate_topics", False)

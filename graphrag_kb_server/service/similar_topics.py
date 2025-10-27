@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.preprocessing import normalize
 from sklearn.neighbors import NearestNeighbors
 from graspologic.embed import node2vec_embed
+from nano_vectordb.dbs import load_storage
 
 from graphrag_kb_server.model.topics import (
     SimilarityTopics,
@@ -95,14 +96,16 @@ _nearest_neighbors_cache = GenericSimpleCache[Path, RelatedTopicsNearestNeighbor
 
 
 def _get_nearest_neighbors_vectors(
-    G: nx.Graph, project_dir: Path
+    request: SimilarityTopicsRequest
 ) -> RelatedTopicsNearestNeighbors:
+    project_dir = request.project_dir
     nearest_neighbors = _nearest_neighbors_cache.get(project_dir)
     if nearest_neighbors is not None:
         return nearest_neighbors
 
-    X, vertex_labels = node2vec_embed(G)
-
+    vdb_entities = load_storage(project_dir / "lightrag/vdb_entities.json")
+    X, vertex_labels = vdb_entities["matrix"], [e["entity_name"] for e in vdb_entities["data"]]
+    
     # For undirected graphs, X is (n, d).
     # For directed graphs, X is a tuple (X_in, X_out). Concatenate for a single embedding:
     if isinstance(X, tuple):
@@ -113,7 +116,7 @@ def _get_nearest_neighbors_vectors(
 
     # --- 5) Build a k-NN index over the embeddings ---
     # Choose 'cosine' or 'euclidean' to match your intention
-    k = 10
+    k = request.k
     nn = NearestNeighbors(
         metric="cosine", n_neighbors=k + 1
     )  # +1 to include the node itself
@@ -135,7 +138,7 @@ def _get_nearest_neighbors_vectors(
 def get_similar_nodes_nearest_neighbors(
     G: nx.Graph, request: SimilarityTopicsRequest
 ) -> SimilarityTopics:
-    nearest_neighbors = _get_nearest_neighbors_vectors(G, request.project_dir)
+    nearest_neighbors = _get_nearest_neighbors_vectors(request)
     idx = nearest_neighbors.node_to_idx[request.source]
     query_vec = (
         nearest_neighbors.X_cos[idx : idx + 1]
