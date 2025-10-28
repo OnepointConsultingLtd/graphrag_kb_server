@@ -42,7 +42,10 @@ async def gemini_model_func(
 
     structured_output = "structured_output" in kwargs and kwargs["structured_output"]
     if structured_output:
-        if "structured_output_format" in kwargs and kwargs["structured_output_format"] is not None:
+        if (
+            "structured_output_format" in kwargs
+            and kwargs["structured_output_format"] is not None
+        ):
             config_dict["response_schema"] = kwargs["structured_output_format"]
         elif structured_output is True:
             config_dict["response_schema"] = ResponseSchema

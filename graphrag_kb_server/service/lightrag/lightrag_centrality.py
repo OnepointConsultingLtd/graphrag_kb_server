@@ -17,6 +17,7 @@ from graphrag_kb_server.service.db.db_persistence_topics_centrality import (
 )
 from graphrag_kb_server.logger import logger
 
+
 async def get_sorted_centrality_scores(
     project_dir: Path,
 ) -> list[NodeCentrality]:
@@ -27,6 +28,7 @@ async def get_sorted_centrality_scores(
     logger.info(f"Converted network to rustworkx graph: {project_dir}")
     centrality = await asyncio.to_thread(rx.betweenness_centrality, rw_graph)
     logger.info(f"Calculated betweenness centrality for project: {project_dir}")
+
     def process_centrality_data():
         node_centrality = {
             node: (centrality[node], rw_graph[node]) for node in rw_graph.node_indices()
@@ -46,7 +48,7 @@ async def get_sorted_centrality_scores(
                 )
             )
         return sorted_centrality
-    
+
     sorted_centrality = await asyncio.to_thread(process_centrality_data)
     logger.info(f"Sorted centrality scores for project: {project_dir}")
     return sorted_centrality
@@ -56,13 +58,21 @@ async def convert_to_pd(sorted_centrality: list[NodeCentrality]) -> pd.DataFrame
     return await asyncio.to_thread(
         lambda: pd.DataFrame(
             sorted_centrality,
-            columns=["entity_id", "entity_type", "description", "file_path", "centrality"],
+            columns=[
+                "entity_id",
+                "entity_type",
+                "description",
+                "file_path",
+                "centrality",
+            ],
         ).set_index(pd.RangeIndex(1, len(sorted_centrality) + 1))
     )
 
 
 async def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
-    logger.info(f"Getting sorted centrality scores as pandas dataframe for project: {project_dir}")
+    logger.info(
+        f"Getting sorted centrality scores as pandas dataframe for project: {project_dir}"
+    )
     cached_data = await find_topics_with_centrality_by_project_name(project_dir, -1)
     if cached_data is not None and len(cached_data) > 0:
         logger.info(f"Found cached centrality scores for project: {project_dir}")

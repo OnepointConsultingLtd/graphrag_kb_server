@@ -132,9 +132,7 @@ WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED
     return match_output
 
 
-async def delete_expanded_entities(
-    project_dir: Path, id: int
-) -> str:
+async def delete_expanded_entities(project_dir: Path, id: int) -> str:
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
@@ -142,4 +140,6 @@ async def delete_expanded_entities(
         f"""
 DELETE FROM {schema_name}.{TB_EXPANDED_ENTITIES} WHERE PROJECT_ID = $1 AND ID = $2;
 """,
-        project_id, id)
+        project_id,
+        id,
+    )

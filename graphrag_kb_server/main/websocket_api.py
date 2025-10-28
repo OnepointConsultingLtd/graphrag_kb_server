@@ -92,10 +92,14 @@ async def relevant_documents(
             sid=sid, request_id=document_search_query.request_id
         )
         project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
-        found_search_results = await get_search_results(project_dir, document_search_query)
+        found_search_results = await get_search_results(
+            project_dir, document_search_query
+        )
         if found_search_results is not None:
             await callback.callback(found_search_results.response)
-            await sio.emit(Command.RESPONSE, found_search_results.model_dump_json(), to=sid)
+            await sio.emit(
+                Command.RESPONSE, found_search_results.model_dump_json(), to=sid
+            )
             return
         search_history_id = await insert_search_query(
             project_dir, document_search_query

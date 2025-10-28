@@ -104,6 +104,16 @@ When handling relationships with timestamps:
 
 Response:"""
 
+PROMPTS["document-retrieval"] = "\n".join(
+    [
+        line
+        for line in PROMPTS["rag_response"].split("\n")
+        if not line.strip().startswith(
+            "- List up to 10 most important reference sources"
+        )
+    ]
+)
+
 
 async def extract_keywords_only_lightrag(
     text: str, param: QueryParam, project_folder: Path
@@ -968,3 +978,7 @@ def expand_files(response: dict[str, any] | str) -> None:
                 }
 
     response["references"] = list(final_references.values())
+
+
+if __name__ == "__main__":
+    print(PROMPTS["document-retrieval"])

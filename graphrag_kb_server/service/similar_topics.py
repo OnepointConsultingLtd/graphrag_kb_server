@@ -6,7 +6,6 @@ import networkx as nx
 import numpy as np
 from sklearn.preprocessing import normalize
 from sklearn.neighbors import NearestNeighbors
-from graspologic.embed import node2vec_embed
 from nano_vectordb.dbs import load_storage
 
 from graphrag_kb_server.model.topics import (
@@ -96,7 +95,7 @@ _nearest_neighbors_cache = GenericSimpleCache[Path, RelatedTopicsNearestNeighbor
 
 
 def _get_nearest_neighbors_vectors(
-    request: SimilarityTopicsRequest
+    request: SimilarityTopicsRequest,
 ) -> RelatedTopicsNearestNeighbors:
     project_dir = request.project_dir
     nearest_neighbors = _nearest_neighbors_cache.get(project_dir)
@@ -104,8 +103,10 @@ def _get_nearest_neighbors_vectors(
         return nearest_neighbors
 
     vdb_entities = load_storage(project_dir / "lightrag/vdb_entities.json")
-    X, vertex_labels = vdb_entities["matrix"], [e["entity_name"] for e in vdb_entities["data"]]
-    
+    X, vertex_labels = vdb_entities["matrix"], [
+        e["entity_name"] for e in vdb_entities["data"]
+    ]
+
     # For undirected graphs, X is (n, d).
     # For directed graphs, X is a tuple (X_in, X_out). Concatenate for a single embedding:
     if isinstance(X, tuple):

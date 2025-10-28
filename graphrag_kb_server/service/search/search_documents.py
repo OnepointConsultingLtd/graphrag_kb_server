@@ -9,7 +9,7 @@ from graphrag_kb_server.model.search.entity import Abstraction
 from graphrag_kb_server.model.rag_parameters import QueryParameters, ContextParameters
 from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.model.engines import Engine
-from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
+from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search, PROMPTS
 from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.model.search.search import (
     SummarisationRequestWithDocumentPath,
@@ -45,9 +45,7 @@ async def retrieve_relevant_documents(
     if callback is not None:
         await callback.callback(chat_response.response["response"])
         logger.info(f"Answer prepared: {chat_response.response['response']}")
-        await callback.callback(
-            f"Extracted {len(documents)} references."
-        )
+        await callback.callback(f"Extracted {len(documents)} references.")
         logger.info(f"Extracted {len(documents)} references")
     return SearchResults(
         request_id=query.request_id,
@@ -65,7 +63,11 @@ async def search_documents(
     while retries > 0:
         try:
             results = await lightrag_search(query_params)
-            results.response["documents"] = sorted(results.response["documents"], key=lambda r: RELEVANCE_SCORE_POINTS_MAP[r["relevancy_score"]], reverse=True)
+            results.response["documents"] = sorted(
+                results.response["documents"],
+                key=lambda r: RELEVANCE_SCORE_POINTS_MAP[r["relevancy_score"]],
+                reverse=True,
+            )
             return results
         except Exception as e:
             logger.error(f"Error searching documents: {e}")
@@ -161,6 +163,7 @@ def generate_query(
             project_dir=project_dir,
             context_size=8000,
         ),
+        system_prompt=PROMPTS["document-retrieval"],
         system_prompt_additional=system_prompt_additional,
         hl_keywords=[
             entity.entity

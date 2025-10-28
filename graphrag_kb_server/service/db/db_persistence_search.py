@@ -58,11 +58,11 @@ CREATE TABLE IF NOT EXISTS {schema_name}.{TB_SEARCH_RESULTS} (
     PROJECT_ID INTEGER NOT NULL,
     SEARCH_HISTORY_ID INTEGER NOT NULL,
     REQUEST_ID CHARACTER VARYING(128) NOT NULL,
-    DOCUMENT_SUMMARY CHARACTER VARYING(4096) NOT NULL,
-    DOCUMENT_PATH CHARACTER VARYING(4096) NOT NULL,
+    DOCUMENT_SUMMARY CHARACTER VARYING(16384) NOT NULL,
+    DOCUMENT_PATH CHARACTER VARYING(16384) NOT NULL,
     DOCUMENT_MAIN_KEYWORD CHARACTER VARYING(128) NOT NULL,
     DOCUMENT_RELEVANCY_SCORE CHARACTER VARYING(12) NOT NULL,
-    DOCUMENT_RELEVANCY_SCORE_REASONING CHARACTER VARYING(4096) NOT NULL,
+    DOCUMENT_RELEVANCY_SCORE_REASONING CHARACTER VARYING(16384) NOT NULL,
     ACTIVE BOOLEAN NOT NULL DEFAULT TRUE,
     CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -115,17 +115,19 @@ async def insert_search_query(
         if len(category_entities.entities) > 2:
             topic_3 = category_entities.entities[2].entity
     biggest_challenge = document_search_query.biggest_challenge
-    _, query_digest_sha256 = content_sha256_combined(DocumentSearchQuery(
-        request_id="",
-        question=document_search_query.question,
-        user_profile=document_search_query.user_profile,
-        biggest_challenge=document_search_query.biggest_challenge,
-        linkedin_profile_url=linkedin_profile_url,
-        organisation_role=user_role,
-        organisation_type=user_organisation_type,
-        business_type=user_business_type,
-        topics_of_interest=topics_of_interest,
-    ))
+    _, query_digest_sha256 = content_sha256_combined(
+        DocumentSearchQuery(
+            request_id="",
+            question=document_search_query.question,
+            user_profile=document_search_query.user_profile,
+            biggest_challenge=document_search_query.biggest_challenge,
+            linkedin_profile_url=linkedin_profile_url,
+            organisation_role=user_role,
+            organisation_type=user_organisation_type,
+            business_type=user_business_type,
+            topics_of_interest=topics_of_interest,
+        )
+    )
     search_history_id = await execute_query_with_return(
         f"""
 INSERT INTO {schema_name}.{TB_SEARCH_HISTORY} 
@@ -185,7 +187,7 @@ async def insert_search_results(
     search_results_ids = []
     for document in search_results.documents:
         document_summary = document.summary
-        document_path = document.document_path
+        document_path = document.document_path[:16384]
         document_main_keyword = document.main_keyword
         document_relevancy_score = document.relevancy_score
         document_relevancy_score_reasoning = document.relevance
@@ -217,17 +219,19 @@ async def get_search_results(
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
-    _, query_digest_sha256 = content_sha256_combined(DocumentSearchQuery(
-        request_id="",
-        question=document_search_query.question,
-        user_profile=document_search_query.user_profile,
-        biggest_challenge=document_search_query.biggest_challenge,
-        linkedin_profile_url=document_search_query.linkedin_profile_url,
-        organisation_role=document_search_query.organisation_role,
-        organisation_type=document_search_query.organisation_type,
-        business_type=document_search_query.business_type,
-        topics_of_interest=document_search_query.topics_of_interest,
-    ))
+    _, query_digest_sha256 = content_sha256_combined(
+        DocumentSearchQuery(
+            request_id="",
+            question=document_search_query.question,
+            user_profile=document_search_query.user_profile,
+            biggest_challenge=document_search_query.biggest_challenge,
+            linkedin_profile_url=document_search_query.linkedin_profile_url,
+            organisation_role=document_search_query.organisation_role,
+            organisation_type=document_search_query.organisation_type,
+            business_type=document_search_query.business_type,
+            topics_of_interest=document_search_query.topics_of_interest,
+        )
+    )
     history_result = await fetch_one(
         f"""
 SELECT ID, RESPONSE FROM {schema_name}.{TB_SEARCH_HISTORY}
