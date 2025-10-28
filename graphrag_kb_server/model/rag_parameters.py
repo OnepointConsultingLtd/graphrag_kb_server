@@ -96,11 +96,11 @@ class QueryParameters(BaseModel):
         description="The callback to use in the context of websockets",
     )
     max_entity_size: int = Field(
-        default=1000,
+        default=20,
         description="The maximum number of entities to include in the context.",
     )
     max_relation_size: int = Field(
-        default=1000,
+        default=20,
         description="The maximum number of relations to include in the context.",
     )
     context_format: ContextFormat = Field(
