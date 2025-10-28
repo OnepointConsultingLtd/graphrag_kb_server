@@ -25,3 +25,16 @@ class ChatResponse(BaseModel):
         default=None,
         description="The ll_keywords used to generate the response.",
     )
+
+
+class Reference(BaseModel):
+    type: str = Field(description="The type of the reference")
+    main_keyword: str = Field(description="The main keyword or topic of the reference")
+    file: str = Field(description="The file of the reference")
+
+
+class ResponseSchema(BaseModel):
+    response: str = Field(description="The response to the user's question")
+    references: list[Reference] = Field(
+        description="The references to the user's question"
+    )

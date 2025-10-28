@@ -8,22 +8,9 @@ from lightrag.utils import TokenTracker
 from lightrag.llm.openai import gpt_4o_mini_complete, gpt_4o_complete
 from lightrag.llm.openai import openai_complete_if_cache
 from lightrag.types import GPTKeywordExtractionFormat
-from pydantic import BaseModel, Field
 
 from graphrag_kb_server.config import cfg, lightrag_cfg
-
-
-class Reference(BaseModel):
-    type: str = Field(description="The type of the reference")
-    main_keyword: str = Field(description="The main keyword or topic of the reference")
-    file: str = Field(description="The file of the reference")
-
-
-class ResponseSchema(BaseModel):
-    response: str = Field(description="The response to the user's question")
-    references: list[Reference] = Field(
-        description="The references to the user's question"
-    )
+from graphrag_kb_server.model.chat_response import ResponseSchema
 
 
 async def gemini_model_func(
@@ -55,7 +42,10 @@ async def gemini_model_func(
 
     structured_output = "structured_output" in kwargs and kwargs["structured_output"]
     if structured_output:
-        config_dict["response_schema"] = ResponseSchema
+        if "structured_output_format" in kwargs and kwargs["structured_output_format"] is not None:
+            config_dict["response_schema"] = kwargs["structured_output_format"]
+        elif structured_output is True:
+            config_dict["response_schema"] = ResponseSchema
         config_dict["response_mime_type"] = "application/json"
 
     response = await client.aio.models.generate_content(

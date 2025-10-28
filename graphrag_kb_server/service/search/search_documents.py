@@ -1,10 +1,8 @@
 from pathlib import Path
 import asyncio
-from typing import Coroutine
 
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
-    SummarisationResponseWithDocument,
 )
 from graphrag_kb_server.model.search.match_query import MatchOutput
 from graphrag_kb_server.model.search.entity import Abstraction
@@ -18,6 +16,7 @@ from graphrag_kb_server.model.search.search import (
     SummarisationRequest,
     SummarisationResponse,
     SearchResults,
+    RELEVANCE_SCORE_POINTS_MAP,
 )
 from graphrag_kb_server.service.google_ai_client import structured_completion
 from graphrag_kb_server.callbacks.callback_support import BaseCallback
@@ -26,59 +25,6 @@ from graphrag_kb_server.logger import logger
 DOCUMENT_PATHS_LIMIT = 10
 
 SEPARATORS = ["<SEP>", ";"]
-
-
-def _extract_references(chat_response: ChatResponse) -> list[tuple[str, str]]:
-    document_paths_topics = []
-    for reference in chat_response.response["references"][:DOCUMENT_PATHS_LIMIT]:
-        for separator in SEPARATORS:
-            if separator in reference["file"]:
-                docs = reference["file"].split(separator)
-                break
-        else:
-            docs = [reference["file"]]
-        document_paths_topics.append((docs[0], reference["main_keyword"]))
-    return document_paths_topics
-
-
-def _create_summarisation_promises(
-    document_paths_topics: list[tuple[str, str]],
-    project_dir: Path,
-    query: DocumentSearchQuery,
-) -> list[Coroutine]:
-    promises = []
-    for document_path, _ in document_paths_topics:
-        summarisation_request = SummarisationRequestWithDocumentPath(
-            user_profile=query.user_profile,
-            question=query.question,
-            document_path=document_path,
-        )
-        promises.append(
-            summarize_document_with_document_path(project_dir, summarisation_request)
-        )
-    return promises
-
-
-def _combine_summaries(
-    summaries: list[SummarisationResponse], document_paths_topics: list[tuple[str, str]]
-) -> list[SummarisationResponseWithDocument]:
-    summaries_with_document_paths = []
-    for i in range(len(document_paths_topics)):
-        summaries_with_document_paths.append(
-            SummarisationResponseWithDocument(
-                summary=summaries[i].summary,
-                relevancy_score=summaries[i].relevancy_score,
-                relevance=summaries[i].relevance,
-                document_path=document_paths_topics[i][0],
-                main_keyword=document_paths_topics[i][1],
-            )
-        )
-    summaries_with_document_paths = sorted(
-        summaries_with_document_paths,
-        key=lambda x: x.get_relevancy_score_points(),
-        reverse=True,
-    )
-    return summaries_with_document_paths
 
 
 async def retrieve_relevant_documents(
@@ -95,26 +41,18 @@ async def retrieve_relevant_documents(
         A list of summarization responses with document paths
     """
     chat_response = await search_documents(project_dir, query, callback)
+    documents = chat_response.response["documents"]
     if callback is not None:
         await callback.callback(chat_response.response["response"])
         logger.info(f"Answer prepared: {chat_response.response['response']}")
-    document_paths_topics = _extract_references(chat_response)
-    if callback is not None:
         await callback.callback(
-            f"Extracted {len(document_paths_topics)} references. Please wait while I summarize the documents..."
+            f"Extracted {len(documents)} references."
         )
-        logger.info(f"Extracted {len(document_paths_topics)} references")
-    promises = _create_summarisation_promises(document_paths_topics, project_dir, query)
-    logger.info("_create_summarisation_promises")
-    summaries: list[SummarisationResponse] = await asyncio.gather(*promises)
-    summaries_with_document_paths = _combine_summaries(summaries, document_paths_topics)
-    if summaries_with_document_paths:
-        logger.debug(f"Summaries combined: {summaries_with_document_paths[:100]}")
-    response = chat_response.response["response"]
+        logger.info(f"Extracted {len(documents)} references")
     return SearchResults(
         request_id=query.request_id,
-        documents=summaries_with_document_paths,
-        response=response,
+        documents=documents,
+        response=chat_response.response["response"],
     )
 
 
@@ -126,7 +64,9 @@ async def search_documents(
     retries = 5
     while retries > 0:
         try:
-            return await lightrag_search(query_params)
+            results = await lightrag_search(query_params)
+            results.response["documents"] = sorted(results.response["documents"], key=lambda r: RELEVANCE_SCORE_POINTS_MAP[r["relevancy_score"]], reverse=True)
+            return results
         except Exception as e:
             logger.error(f"Error searching documents: {e}")
             retries -= 1
@@ -211,6 +151,7 @@ def generate_query(
     question: str,
     callback: BaseCallback = None,
 ) -> QueryParameters:
+    system_prompt_additional = prompts["document-retrieval"]["system_prompt_additional"]
     query_params = QueryParameters(
         format="json",
         search="hybrid",
@@ -220,6 +161,7 @@ def generate_query(
             project_dir=project_dir,
             context_size=8000,
         ),
+        system_prompt_additional=system_prompt_additional,
         hl_keywords=[
             entity.entity
             for entity_list in query.topics_of_interest.entity_dict.values()
@@ -235,6 +177,7 @@ def generate_query(
         include_context=True,
         include_context_as_text=False,
         structured_output=True,
+        structured_output_format=SearchResults,
         max_filepath_depth=query.max_filepath_depth,
         is_search_query=query.is_search_query,
         callback=callback,

@@ -30,7 +30,20 @@ Make sure to omit any duplicates of the enitities in the list. If the entity "AI
 """
 
 [document-retrieval]
-question-template = """Can you please provide information related to the following user profile and optional question:
+system_prompt_additional = """
+Also summarize each document that you retrieve based on the user's interests and the question they are asking. Make sure that the summary is at most 60 words or three paragraphs at most.
+Also describe why a specific document is relevant to the user's interests and the question they are asking. Make sure that the relevance explanation is at most 60 words or three paragraphs at most.
+
+Make sure that the documents sorting order is based on the relevance of the document to the user's interests and the question they are asking. The most relevant document should be at the top of the list.
+Assume that the profile of the user is the profile of the person who is asking the questio. Therefore address the user as "you" in your response.
+
+Make sure that you use British English in your response.
+
+Please omit the references to the documents in your text response.
+"""
+question-template = """Please provide information related to the following user profile and the provided question between the <user_profile> and </user_profile> tags and the <question> and </question> tags.
+
+
   
   <user_profile>
   {user_profile}
@@ -47,6 +60,7 @@ question-template = """Can you please provide information related to the followi
   <low_level_keywords>
   {low_level_keywords}
   </low_level_keywords>
+
 """
 
 [document-summarization]

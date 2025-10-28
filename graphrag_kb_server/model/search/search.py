@@ -137,7 +137,7 @@ class SummarisationResponse(BaseModel):
 class SearchResults(BaseModel):
     request_id: str = Field(
         default="",
-        description="The request ID used to track the request",
+        description="The request ID used to track the request. Can be left blank if not provided.",
     )
     documents: list[SummarisationResponseWithDocument] = Field(
         ...,

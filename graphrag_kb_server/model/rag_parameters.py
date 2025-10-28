@@ -62,6 +62,10 @@ class QueryParameters(BaseModel):
         default=False,
         description="Whether to use structured output.",
     )
+    structured_output_format: type[BaseModel] | None = Field(
+        default=None,
+        description="The format of the structured output.",
+    )
     chat_history: list[dict[str, str]] = Field(
         default=[],
         description="The chat history.",

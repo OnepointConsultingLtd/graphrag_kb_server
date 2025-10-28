@@ -7,6 +7,7 @@ from functools import partial
 import json
 import os
 import numpy as np
+from pydantic import BaseModel
 
 from lightrag import LightRAG, QueryParam
 from lightrag.constants import (
@@ -194,6 +195,7 @@ In case of a coloquial question or non context related sentence you can respond 
             rag.llm_response_cache,
             system_prompt,
             structured_output=query_params.structured_output,
+            structured_output_format=query_params.structured_output_format,
         )
         include_context_data = (
             query_params.context_format == ContextFormat.JSON
@@ -340,102 +342,6 @@ async def prepare_context(
         relations_context,
         text_units_context,
     )
-
-
-async def _build_query_context_xxx(
-    ll_keywords: str,
-    hl_keywords: str,
-    knowledge_graph_inst: BaseGraphStorage,
-    entities_vdb: BaseVectorStorage,
-    relationships_vdb: BaseVectorStorage,
-    text_chunks_db: BaseKVStorage,
-    query_param: QueryParam,
-    chunks_vdb: BaseVectorStorage = None,  # Add chunks_vdb parameter for mix mode
-) -> tuple[list[dict], list[dict], list[dict]]:
-    logger.info(f"Process {os.getpid()} building query context...")
-
-    # Handle local and global modes as before
-    if query_param.mode == "local":
-        entities_context, relations_context, text_units_context = await _get_node_data(
-            ll_keywords,
-            knowledge_graph_inst,
-            entities_vdb,
-            text_chunks_db,
-            query_param,
-        )
-    elif query_param.mode == "global":
-        entities_context, relations_context, text_units_context = await _get_edge_data(
-            hl_keywords,
-            knowledge_graph_inst,
-            relationships_vdb,
-            text_chunks_db,
-            query_param,
-        )
-    else:  # hybrid or mix mode
-        ll_data = await _get_node_data(
-            ll_keywords,
-            knowledge_graph_inst,
-            entities_vdb,
-            query_param,
-        )
-        hl_data = await _get_edge_data(
-            hl_keywords,
-            knowledge_graph_inst,
-            relationships_vdb,
-            query_param,
-        )
-
-        (
-            ll_entities_context,
-            ll_relations_context,
-        ) = ll_data
-
-        (
-            hl_entities_context,
-            hl_relations_context,
-        ) = hl_data
-
-        # Initialize vector data with empty lists
-        vector_entities_context, vector_relations_context, vector_text_units_context = (
-            [],
-            [],
-            [],
-        )
-
-        # Only get vector data if in mix mode
-        if query_param.mode == "mix" and hasattr(query_param, "original_query"):
-            # Get tokenizer from text_chunks_db
-            tokenizer = text_chunks_db.global_config.get("tokenizer")
-
-            # Get vector context in triple format
-            vector_data = await _get_vector_context(
-                query_param.original_query,  # We need to pass the original query
-                chunks_vdb,
-                query_param,
-                tokenizer,
-            )
-
-            # If vector_data is not None, unpack it
-            if vector_data is not None:
-                (
-                    vector_entities_context,
-                    vector_relations_context,
-                    vector_text_units_context,
-                ) = vector_data
-
-        # Combine and deduplicate the entities, relationships, and sources
-        entities_context = process_combine_contexts(
-            hl_entities_context, ll_entities_context, vector_entities_context
-        )
-        relations_context = process_combine_contexts(
-            hl_relations_context, ll_relations_context, vector_relations_context
-        )
-        text_units_context = process_combine_contexts(vector_text_units_context)
-    # not necessary to use LLM to generate a response
-    if not entities_context and not relations_context:
-        return None
-
-    return entities_context, relations_context, text_units_context
 
 
 async def _build_query_context(
@@ -947,7 +853,7 @@ def _build_context_str(
 # from lightrag.operate import kg_query
 async def extended_kg_query(
     query: str,
-    context: str,
+    context: str | None,
     query_param: QueryParam,
     global_config: dict[str, str],
     args_hash: str,
@@ -957,6 +863,7 @@ async def extended_kg_query(
     hashing_kv: BaseKVStorage | None = None,
     system_prompt: str | None = None,
     structured_output: bool = False,
+    structured_output_format: BaseModel | None = None,
 ) -> str | AsyncIterator[str]:
 
     if query_param.model_func:
@@ -1000,6 +907,7 @@ async def extended_kg_query(
         system_prompt=sys_prompt,
         stream=query_param.stream,
         structured_output=structured_output,
+        structured_output_format=structured_output_format,
     )
     expand_files(response)
 
