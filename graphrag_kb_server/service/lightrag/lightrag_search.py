@@ -136,6 +136,12 @@ async def lightrag_search(
     param = convert_to_lightrag_query_params(query_params, only_need_context)
     if query_params.system_prompt:
         system_prompt = query_params.system_prompt
+        if system_prompt_additional:
+            system_prompt = f"""{system_prompt}
+
+Additional Instructions: 
+{system_prompt_additional}
+"""
     else:
         system_prompt = f"""{system_prompt_additional}
 

@@ -27,7 +27,6 @@ class Config:
     assert (
         openai_api_model is not None
     ), "Please specify the OPENAI_API_MODEL environment variable."
-    logger.info(f"Using model {openai_api_model}")
 
     openai_api_model_embedding = os.getenv("OPENAI_API_MODEL_EMBEDDING")
     assert (
@@ -36,6 +35,18 @@ class Config:
 
     gemini_api_key = os.getenv("GEMINI_API_KEY")
     # This is optional, only used by LightRAG
+    assert (
+        gemini_api_key is not None
+    ), "Please specify the GEMINI_API_KEY environment variable."
+
+    togetherai_api_key = os.getenv("TOGETHERAI_API_KEY")
+    assert (
+        togetherai_api_key is not None
+    ), "Please specify the TOGETHERAI_API_KEY environment variable."
+    togetherai_model = os.getenv("TOGETHERAI_MODEL")
+    assert (
+        togetherai_model is not None
+    ), "Please specify the TOGETHERAI_MODEL environment variable."
 
     config_dir_str = os.getenv("CONFIG_DIR")
     assert config_dir_str is not None, "The configuration directory with Swagger files"
@@ -139,6 +150,13 @@ class LightRAGConfig:
     assert lightrag_model is not None, "Please specify the LightRAG model"
     lightrag_lite_model = os.getenv("LIGHTRAG_LITE_MODEL")
     assert lightrag_lite_model is not None, "Please specify the LightRAG quick model"
+    lightrag_model_type = os.getenv("LIGHTRAG_MODEL_TYPE", "google")
+    assert lightrag_model_type is not None, "Please specify the LightRAG model type"
+    assert lightrag_model_type in [
+        "google",
+        "openai",
+        "togetherai",
+    ], "Invalid LightRAG model type"
 
 
 class LinkedInConfig:

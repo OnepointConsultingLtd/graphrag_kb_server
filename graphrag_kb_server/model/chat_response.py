@@ -36,5 +36,5 @@ class Reference(BaseModel):
 class ResponseSchema(BaseModel):
     response: str = Field(description="The response to the user's question")
     references: list[Reference] = Field(
-        description="The references to the user's question"
+        description="The references to the user's question which are typically documents or files with a path. If there are no references, return an empty list."
     )

@@ -1,16 +1,49 @@
 import json
 from typing import Callable, Awaitable
 
+from together import AsyncTogether
 from google import genai
 from google.genai import types
+from openai import AsyncOpenAI
 
 from lightrag.utils import TokenTracker
-from lightrag.llm.openai import gpt_4o_mini_complete, gpt_4o_complete
+
 from lightrag.llm.openai import openai_complete_if_cache
 from lightrag.types import GPTKeywordExtractionFormat
 
 from graphrag_kb_server.config import cfg, lightrag_cfg
 from graphrag_kb_server.model.chat_response import ResponseSchema
+
+
+def _create_combined_prompt(system_prompt, history_messages, prompt):
+    combined_prompt = ""
+    if system_prompt:
+        combined_prompt += f"{system_prompt}\n"
+
+    for msg in history_messages:
+        # Each msg is expected to be a dict: {"role": "...", "content": "..."}
+        combined_prompt += f"{msg['role']}: {msg['content']}\n"
+
+    # Finally, add the new user prompt
+    combined_prompt += f"user: {prompt}"
+    return combined_prompt
+
+
+def _store_prompts(system_prompt: str, history_messages: list[dict], prompt: str):
+    from pathlib import Path
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    prompts_dir = Path(__file__).parent.parent.parent / "docs/prompts"
+    prompts_dir.mkdir(parents=True, exist_ok=True)
+    prompts_file = prompts_dir / f"prompts_{timestamp}.json"
+    prompts = {
+        "system_prompt": system_prompt,
+        "history_messages": history_messages,
+        "prompt": prompt,
+    }
+    with open(prompts_file, "w") as f:
+        json.dump(prompts, f)
 
 
 async def gemini_model_func(
@@ -26,16 +59,8 @@ async def gemini_model_func(
     if history_messages is None:
         history_messages = []
 
-    combined_prompt = ""
-    if system_prompt:
-        combined_prompt += f"{system_prompt}\n"
-
-    for msg in history_messages:
-        # Each msg is expected to be a dict: {"role": "...", "content": "..."}
-        combined_prompt += f"{msg['role']}: {msg['content']}\n"
-
-    # Finally, add the new user prompt
-    combined_prompt += f"user: {prompt}"
+    combined_prompt = _create_combined_prompt(system_prompt, history_messages, prompt)
+    # _store_prompts(system_prompt, history_messages, prompt)
 
     # 3. Call the Gemini model
     config_dict = {"max_output_tokens": 65000, "temperature": 0, "top_k": 8}
@@ -82,6 +107,84 @@ async def gemini_model_func(
     return response.text
 
 
+async def structured_completion(
+    client: AsyncTogether | AsyncOpenAI,
+    prompt,
+    system_prompt=None,
+    history_messages=[],
+    **kwargs,
+) -> str:
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    for msg in history_messages:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+    messages.append({"role": "user", "content": prompt})
+    structured_output = "structured_output" in kwargs and kwargs["structured_output"]
+    config_dict = {
+        "model": lightrag_cfg.lightrag_model,
+        "messages": messages,
+    }
+    if structured_output:
+        # Detect client type to use appropriate format
+        is_openai = isinstance(client, AsyncOpenAI)
+
+        if is_openai:
+            # OpenAI requires nested json_schema structure with name
+            if (
+                "structured_output_format" in kwargs
+                and kwargs["structured_output_format"] is not None
+            ):
+                schema_model = kwargs["structured_output_format"]
+                schema_dict = schema_model.model_json_schema()
+                # Extract name from schema title or use class name
+                schema_name = schema_dict.get("title", schema_model.__name__)
+            else:
+                # Default to ResponseSchema if no format specified
+                schema_dict = ResponseSchema.model_json_schema()
+                schema_name = schema_dict.get("title", ResponseSchema.__name__)
+
+            config_dict["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": schema_name, "schema": schema_dict},
+            }
+        else:
+            # Together AI uses simpler format
+            config_dict["response_format"] = {"type": "json_schema"}
+            if (
+                "structured_output_format" in kwargs
+                and kwargs["structured_output_format"] is not None
+            ):
+                config_dict["response_format"]["schema"] = kwargs[
+                    "structured_output_format"
+                ].model_json_schema()
+            elif structured_output is True:
+                config_dict["response_format"][
+                    "schema"
+                ] = ResponseSchema.model_json_schema()
+    response = await client.chat.completions.create(**config_dict)
+    content = response.choices[0].message.content
+    return json.loads(content) if structured_output else content
+
+
+async def togetherai_model_func(
+    prompt, system_prompt=None, history_messages=[], **kwargs
+) -> str:
+    client = AsyncTogether(api_key=cfg.togetherai_api_key)
+    return await structured_completion(
+        client, prompt, system_prompt, history_messages, **kwargs
+    )
+
+
+async def openai_model_func(
+    prompt, system_prompt=None, history_messages=[], **kwargs
+) -> str:
+    client = AsyncOpenAI()
+    return await structured_completion(
+        client, prompt, system_prompt, history_messages, **kwargs
+    )
+
+
 def openai_model_func_factory(model: str) -> Callable[..., Awaitable[str]]:
     async def openai_model_func(
         prompt,
@@ -107,14 +210,45 @@ def openai_model_func_factory(model: str) -> Callable[..., Awaitable[str]]:
 
 
 def select_model_func() -> Callable[..., Awaitable[str]]:
-    match lightrag_cfg.lightrag_model:
-        case "gpt-4o-mini":
-            return gpt_4o_mini_complete
-        case "gpt-4o":
-            return gpt_4o_complete
-        case model if model.startswith("gemini"):
+    match lightrag_cfg.lightrag_model_type:
+        case "google":
             return gemini_model_func
-        case model if model.startswith("gpt"):
-            return openai_model_func_factory(model)
+        case "openai":
+            match lightrag_cfg.lightrag_model:
+                case "gpt-4o-mini":
+                    return openai_model_func
+                case "gpt-4o":
+                    return openai_model_func
+                case model if model.startswith("gpt"):
+                    return openai_model_func
+        case "togetherai":
+            return togetherai_model_func
         case _:
-            raise ValueError(f"Invalid LightRAG model: {lightrag_cfg.lightrag_model}")
+            raise ValueError(
+                f"Invalid LightRAG model type: {lightrag_cfg.lightrag_model_type}"
+            )
+
+
+if __name__ == "__main__":
+    import asyncio
+    from pathlib import Path
+
+    from graphrag_kb_server.model.search.search import SearchResults
+
+    prompts_dir = Path(__file__).parent.parent.parent / "docs/prompts"
+
+    async def main():
+        prompts_file = prompts_dir / "prompts_20251029081051.json"
+        with open(prompts_file, "r") as f:
+            prompts = json.load(f)
+        print(prompts)
+        response = await togetherai_model_func(
+            prompts["prompt"],
+            system_prompt=prompts["system_prompt"],
+            history_messages=[],
+            structured_output=True,
+            structured_output_format=SearchResults,
+        )
+        print(response)
+
+    asyncio.run(main())
