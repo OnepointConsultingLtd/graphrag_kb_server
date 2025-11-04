@@ -75,6 +75,7 @@ function TopicQuestions({topic}: {topic: Topic}) {
           onClick={(e) => {
             e.stopPropagation();
             selectTopicQuestion(question)
+            
           }}>{question}</li>
         ))}
       </ul>

@@ -1,95 +1,26 @@
 import { useEffect, useMemo } from "react";
-import { v4 as uuidv4 } from "uuid";
 import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
-import { sendQuery } from "../../lib/apiClient";
-import { extractSimpleReferences } from "../../lib/referenceExtraction";
-import {
-  ChatMessageTypeOptions,
-  type QueryResponse,
-} from "../../model/message";
-import { sendWebsocketQuery } from "../../lib/websocketClient";
-import { supportsStreaming } from "../../lib/streamingUtils";
 import Send from "../icons/Send";
 
 export default function ChatInput() {
   const [
     inputText,
-    jwt,
     isThinking,
-    selectedProject,
-    chatMessages,
-    conversationId,
-    useStreaming,
-    socket,
-    addChatMessage,
-    setIsThinking,
+    sendUserMessage,
     setInputText,
   ] = useChatStore(
     useShallow((state) => [
       state.inputText,
-      state.jwt,
       state.isThinking,
-      state.selectedProject,
-      state.chatMessages,
-      state.conversationId,
-      state.useStreaming,
-      state.socket,
-      state.addChatMessage,
-      state.setIsThinking,
+      state.sendUserMessage,
       state.setInputText,
     ]),
   );
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setIsThinking(true);
-    setInputText("");
-    addChatMessage({
-      id: uuidv4(),
-      text: inputText,
-      type: ChatMessageTypeOptions.USER,
-      timestamp: new Date(),
-    });
-    if (selectedProject) {
-      const query = {
-        jwt,
-        question: inputText,
-        project: selectedProject,
-        chatHistory: chatMessages,
-        conversationId: conversationId ?? uuidv4(),
-      };
-      if (useStreaming && supportsStreaming(selectedProject.platform)) {
-        sendWebsocketQuery(socket, jwt, query);
-      } else {
-        sendQuery(query)
-          .then((response: QueryResponse) => {
-            console.info("response", response);
-            const finalResponse =
-              response?.response?.response ?? response?.response;
-            const references = extractSimpleReferences(response?.response);
-            addChatMessage({
-              id: uuidv4(),
-              text: finalResponse,
-              type: ChatMessageTypeOptions.AGENT,
-              timestamp: new Date(),
-              references: references,
-            });
-          })
-          .catch((error) => {
-            console.error("error", error);
-            addChatMessage({
-              id: uuidv4(),
-              text: `An error occurred while processing your request: ${error.message}. Please try again.`,
-              type: ChatMessageTypeOptions.AGENT_ERROR,
-              timestamp: new Date(),
-            });
-          })
-          .finally(() => {
-            setIsThinking(false);
-          });
-      }
-    }
+    sendUserMessage();
   }
 
   useEffect(() => {

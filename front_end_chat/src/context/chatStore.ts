@@ -8,7 +8,7 @@ import type {
 } from "../model/projectCategory";
 
 import { ENGINES } from "../constants/engines";
-import { type ChatMessage, ChatMessageTypeOptions } from "../model/message";
+import { type ChatMessage, type QueryResponse, ChatMessageTypeOptions } from "../model/message";
 import {
   fetchProjects,
   fetchRelatedTopics,
@@ -32,6 +32,10 @@ import { showCloseModal } from "../lib/dialog";
 import { topicQuestionTemplate } from "../components/main-chat/Messages";
 import { v4 as uuidv4 } from "uuid";
 import { Role } from "../model/projectCategory";
+import { supportsStreaming } from "../lib/streamingUtils";
+import { sendWebsocketQuery } from "../lib/websocketClient";
+import { sendQuery } from "../lib/apiClient";
+import { extractSimpleReferences } from "../lib/referenceExtraction";
 
 if (getParameterFromUrl("token")) {
   localStorage.removeItem("chat-store");
@@ -67,6 +71,7 @@ type ChatStore = {
   setMarkdownDialogueContent: (content: string) => void;
   logout: () => void;
   addChatMessage: (chatMessage: ChatMessage) => void;
+  sendUserMessage: () => void;
   appendToLastChatMessage: (token: string) => void;
   clearChatMessages: () => void;
   setProjects: (projects: ProjectCategories) => void;
@@ -213,6 +218,57 @@ const useChatStore = create<ChatStore>()(
         }
       }
 
+      function sendUserMessage() {
+        const state = get();
+        state.setIsThinking(true);
+        state.setInputText("");
+        state.addChatMessage({
+          id: uuidv4(),
+          text: state.inputText,
+          type: ChatMessageTypeOptions.USER,
+          timestamp: new Date(),
+        });
+        if (state.selectedProject) {
+          const query = {
+            jwt: state.jwt,
+            question: state.inputText,
+            project: state.selectedProject,
+            chatHistory: state.chatMessages,
+            conversationId: state.conversationId ?? uuidv4(),
+          };
+          if (state.useStreaming && supportsStreaming(state.selectedProject?.platform ?? "")) {
+            sendWebsocketQuery(state.socket, state.jwt, query);
+          } else {
+            sendQuery(query)
+              .then((response: QueryResponse) => {
+                console.info("response", response);
+                const finalResponse =
+                  response?.response?.response ?? response?.response;
+                const references = extractSimpleReferences(response?.response);
+                state.addChatMessage({
+                  id: uuidv4(),
+                  text: finalResponse,
+                  type: ChatMessageTypeOptions.AGENT,
+                  timestamp: new Date(),
+                  references: references,
+                });
+              })
+              .catch((error) => {
+                console.error("error", error);
+                state.addChatMessage({
+                  id: uuidv4(),
+                  text: `An error occurred while processing your request: ${error.message}. Please try again.`,
+                  type: ChatMessageTypeOptions.AGENT_ERROR,
+                  timestamp: new Date(),
+                });
+              })
+              .finally(() => {
+                state.setIsThinking(false);
+              });
+          }
+        }
+      }
+
       function generateTopicQuestions(index: number, related: boolean) {
         const project = get().selectedProject;
         const currentTopics = getCurrentTopics(related);
@@ -307,6 +363,7 @@ const useChatStore = create<ChatStore>()(
               relatedTopics: null,
             };
           }),
+        sendUserMessage: () => sendUserMessage(),
         appendToLastChatMessage: (token: string) =>
           set((state) => {
             const lastMessage = state.chatMessages.slice(-1)[0];
@@ -485,10 +542,12 @@ const useChatStore = create<ChatStore>()(
             }
             return { isThinking: false };
           }),
-        selectTopicQuestion: (question: string) =>
+        selectTopicQuestion: (question: string) => {
           set(() => {
             return { inputText: question };
-          }),
+          });
+          get().sendUserMessage();
+        },
         setRole: (role: Role) => set({ role }),
       };
     },

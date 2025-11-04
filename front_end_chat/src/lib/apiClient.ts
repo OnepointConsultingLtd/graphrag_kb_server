@@ -293,10 +293,7 @@ export async function fetchRelatedTopics(
     source: source,
     text,
     limit: limit,
-    samples: 50000,
-    path_length: 5,
-    restart_prob: 0.15,
-    runs: 10,
+    similarity_topics_method: "nearest_neighbors"
   };
 
   const response = await fetch(
