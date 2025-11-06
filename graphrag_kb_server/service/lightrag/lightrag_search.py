@@ -46,6 +46,10 @@ from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.model.rag_parameters import ContextFormat
 
+PREFIX_HIGH_LEVEL_KEYWORDS = "High level keywords:"
+PREFIX_LOW_LEVEL_KEYWORDS = "Low level keywords:"
+PREFIX_RELATIONSHIPS = "Relationships context:"
+
 
 def _combine_keywords(old_keywords: list[str], new_keywords: list[str]) -> list[str]:
     return list(set(old_keywords + new_keywords))
@@ -162,10 +166,10 @@ In case of a coloquial question or non context related sentence you can respond 
         param.ll_keywords = _combine_keywords(param.ll_keywords, ll_keywords)
         if query_params.callback is not None:
             await query_params.callback.callback(
-                f"High level keywords: {"<SEP>".join(param.hl_keywords)}"
+                f"{PREFIX_HIGH_LEVEL_KEYWORDS} {"<SEP>".join(param.hl_keywords)}"
             )
             await query_params.callback.callback(
-                f"Low level keywords: {"<SEP>".join(param.ll_keywords)}"
+                f"{PREFIX_LOW_LEVEL_KEYWORDS} {"<SEP>".join(param.ll_keywords)}"
             )
         query = _inject_keywords(query, param.hl_keywords, param.ll_keywords)
         query = query.strip()
@@ -198,6 +202,9 @@ In case of a coloquial question or non context related sentence you can respond 
         if query_params.callback is not None:
             await query_params.callback.callback(
                 f"Retrieved overall context with {len(entities_context)} entities and {len(relations_context)} relations and {len(text_units_context)} text units"
+            )
+            await query_params.callback.callback(
+                f"{PREFIX_RELATIONSHIPS} {json.dumps(relations_context, ensure_ascii=False)}"
             )
         response = await extended_kg_query(
             query,
@@ -370,7 +377,7 @@ async def _build_query_context(
     text_chunks_db: BaseKVStorage,
     query_param: QueryParam,
     chunks_vdb: BaseVectorStorage = None,
-):
+) -> tuple[list[dict], list[dict], list[dict]]:
     logger.info(f"Process {os.getpid()} building query context...")
 
     # Collect chunks from different sources separately

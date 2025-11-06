@@ -12,7 +12,7 @@ FINAL_SUFFIX = "_final.txt"
 async def convert_pdf_to_markdown(local_pdf: Path) -> Path:
     process_result = await convert_single_file(local_pdf)
     if len(process_result.exceptions):
-        raise Exception("Failed to convert PDF to markdown")
+        raise Exception(f"Failed to convert PDF to markdown: {process_result.exceptions}")
     dict_path = await compact_files(
         [local_pdf.parent.as_posix()], SupportedFormat.MARKDOWN
     )
@@ -26,7 +26,7 @@ async def convert_pdf_to_markdown(local_pdf: Path) -> Path:
                     f.unlink(missing_ok=True)
         except Exception:
             logger.error(f"Failed to delete {local_pdf.stem}*.md files")
-        markdown_file.rename(
+        markdown_file = markdown_file.rename(
             markdown_file.parent
             / markdown_file.name.replace("_aggregate.md", FINAL_SUFFIX)
         )
