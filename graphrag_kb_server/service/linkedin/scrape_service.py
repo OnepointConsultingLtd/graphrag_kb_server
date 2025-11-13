@@ -17,7 +17,7 @@ from graphrag_kb_server.model.linkedin.profile import (
     Company,
     Education,
 )
-from graphrag_kb_server.config import linkedin_cfg, cfg
+from graphrag_kb_server.config import linkedin_cfg
 from graphrag_kb_server.service.linkedin.cookie_manager import login_with_cookies
 from graphrag_kb_server.service.linkedin.linkedin_functions import correct_linkedin_url
 from graphrag_kb_server.service.db.db_persistence_profile import (
@@ -27,7 +27,6 @@ from graphrag_kb_server.service.db.db_persistence_profile import (
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.utils.date_support import convert_linkedin_date
 from graphrag_kb_server.utils.cache import GenericSimpleCache
-
 
 
 _cache = GenericSimpleCache[str, Profile](timeout=60 * 60 * 4)  # 4 hours
@@ -86,7 +85,9 @@ class SafePerson(Person):
         if close_on_complete:
             driver.quit()
 
-    def _extract_multiple_positions(self, position: WebElement) -> list[WebElement]:
+    def _extract_multiple_positions(
+        self, position: WebElement
+    ) -> tuple[WebElement, WebElement]:
         position_elements = position.find_elements(By.XPATH, "*")
         company_logo_elem = position_elements[0] if len(position_elements) > 0 else None
         position_details = position_elements[1] if len(position_elements) > 1 else None

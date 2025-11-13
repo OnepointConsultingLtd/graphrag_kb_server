@@ -6,6 +6,7 @@ from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.model.jwt_token import JWTToken, JWTTokenData
 from graphrag_kb_server.model.error import Error, ErrorCode
 from graphrag_kb_server.service.jwt_service import generate_token, decode_token
+from graphrag_kb_server.service.login import admin_login
 from graphrag_kb_server.service.tennant import (
     delete_tennant_folder_by_folder,
     list_tennants as local_list_tennants,
@@ -180,9 +181,7 @@ async def read_admin_token(request: web.Request) -> web.Response:
     email = query.get("email", "")
     password = query.get("password", "")
     if (
-        name == jwt_cfg.admin_token_name
-        and email == jwt_cfg.admin_token_email
-        and password == jwt_cfg.admin_token_password
+        admin_login(name, email, password)
     ):
         return web.json_response({"token": jwt_cfg.admin_jwt}, headers=CORS_HEADERS)
     else:

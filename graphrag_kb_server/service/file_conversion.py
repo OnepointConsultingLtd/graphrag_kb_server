@@ -12,7 +12,9 @@ FINAL_SUFFIX = "_final.txt"
 async def convert_pdf_to_markdown(local_pdf: Path) -> Path:
     process_result = await convert_single_file(local_pdf)
     if len(process_result.exceptions):
-        raise Exception(f"Failed to convert PDF to markdown: {process_result.exceptions}")
+        raise Exception(
+            f"Failed to convert PDF to markdown: {process_result.exceptions}"
+        )
     dict_path = await compact_files(
         [local_pdf.parent.as_posix()], SupportedFormat.MARKDOWN
     )

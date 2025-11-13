@@ -59,9 +59,11 @@ async def generate_questions_from_topics(
                 )
     else:
         match engine:
-            case Engine.GRAPHRAG:   
+            case Engine.GRAPHRAG:
                 nodes = read_graphrag_project(project_dir).nodes
-                topics = [nodes[t.upper()]["name"] for t in topics if t.upper() in nodes]
+                topics = [
+                    nodes[t.upper()]["name"] for t in topics if t.upper() in nodes
+                ]
             case Engine.LIGHTRAG:
                 nodes = create_network_from_project_dir(project_dir).nodes
                 topics = [nodes[t]["entity_id"] for t in topics if t in nodes]
@@ -69,11 +71,25 @@ async def generate_questions_from_topics(
     match engine:
         case Engine.GRAPHRAG:
             nodes = read_graphrag_project(project_dir).nodes
-            topics = [Topic(name=nodes[t]["name"], description=nodes[t]["description"], type=nodes[t]["type"]) for t in topics]
+            topics = [
+                Topic(
+                    name=nodes[t]["name"],
+                    description=nodes[t]["description"],
+                    type=nodes[t]["type"],
+                )
+                for t in topics
+            ]
         case Engine.LIGHTRAG:
             nodes = create_network_from_project_dir(project_dir).nodes
-            topics = [Topic(name=nodes[t]["entity_id"], description=nodes[t]["description"], type=nodes[t]["entity_type"]) for t in topics]
-        
+            topics = [
+                Topic(
+                    name=nodes[t]["entity_id"],
+                    description=nodes[t]["description"],
+                    type=nodes[t]["entity_type"],
+                )
+                for t in topics
+            ]
+
     question_generation_cache.set(
         cache_key,
         generated_questions := await generate_questions(

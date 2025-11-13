@@ -1,3 +1,4 @@
+from graphrag_kb_server.service.db.db_persistence_admin_user import create_admin_user_table, create_initial_admin_user
 from graphrag_kb_server.service.db.db_persistence_project import (
     create_project_table,
     create_project,
@@ -49,6 +50,8 @@ async def create_tennant_tables(tennant: Tennant):
     await create_profile_table(tennant.folder_name)
     await create_expanded_entities_table(tennant.folder_name)
     await create_search_history_tables(tennant.folder_name)
+    await create_admin_user_table()
+    await create_initial_admin_user()
 
 
 async def create_projects_and_topics(
