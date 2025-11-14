@@ -2,7 +2,6 @@ import {
   FaCheckCircle,
   FaEnvelope,
   FaUser,
-  FaSignOutAlt,
   FaFolder,
 } from "react-icons/fa";
 import { useState, useEffect } from "react";

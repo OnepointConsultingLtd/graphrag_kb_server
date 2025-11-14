@@ -1,4 +1,4 @@
-import { FaCog, FaEnvelope, FaSignOutAlt, FaUser } from "react-icons/fa";
+import { FaCog, FaEnvelope, FaUser } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 import Admin from "./Admin";
 import TennantLits from "./components/tennants/TennantLits";
