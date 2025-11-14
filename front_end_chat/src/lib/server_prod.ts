@@ -2,6 +2,8 @@
 const BASE_SERVER = `//${location.host}`;
 const WEBSOCKET_SERVER = `//${location.host}`;
 
+console.info("AI Engine: BASE_SERVER", BASE_SERVER);
+
 export function getBaseServer() {
   console.log("window.chatConfig?.baseServer", window.chatConfig?.baseServer);
   if (window.chatConfig?.baseServer) {

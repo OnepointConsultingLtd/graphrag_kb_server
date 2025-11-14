@@ -3,6 +3,8 @@ const BASE_HOST = "localhost:9999";
 const BASE_SERVER = `http://${BASE_HOST}`;
 const WEBSOCKET_SERVER = `ws://${BASE_HOST}`;
 
+console.info("AI Engine: BASE_SERVER", BASE_SERVER);
+
 export function getBaseServer() {
   if (window.chatConfig?.baseServer) {
     return window.chatConfig.baseServer;
