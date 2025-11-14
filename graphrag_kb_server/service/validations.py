@@ -10,6 +10,12 @@ def validate_email(email: str) -> bool:
     return re.match(email_regex, email) is not None
 
 
+def validate_password(email: str) -> bool:
+    # Basic email regex pattern
+    email = email.strip()
+    return len(email) >= 10 and len(email) <= 100
+
+
 def generate_hash(password_plain: str) -> str:
     """
     Generates and sets the password_hash field based on password_plain.

@@ -10,3 +10,4 @@ class AdminUser(BaseModel):
     password_hash: str | None = Field(
         default=None, description="The password hash of the admin user"
     )
+    jwt_token: str = Field(default=None, description="The JWT token of the admin user")

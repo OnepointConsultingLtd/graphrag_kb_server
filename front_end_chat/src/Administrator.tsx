@@ -10,6 +10,7 @@ import useAdminStore from "./store/adminStore";
 import decodedJwt from "./lib/decodeJwt";
 import { Role } from "./model/projectCategory";
 import { useState } from "react";
+import LogoutButton from "./components/buttons/LogoutButton";
 
 export default function Administrator() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -109,13 +110,7 @@ export default function Administrator() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="group relative inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-              >
-                <FaSignOutAlt className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform duration-200" />
-                <span>Logout</span>
-              </button>
+              <LogoutButton handleLogout={handleLogout} />
             </div>
           </div>
         </div>

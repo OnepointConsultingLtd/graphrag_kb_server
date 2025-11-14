@@ -12,6 +12,7 @@ import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import { useNavigate } from "react-router-dom";
 import useProjectSelectionStore from "../../context/projectSelectionStore";
+import LogoutButton from "../buttons/LogoutButton";
 
 export default function UserProfile() {
   const [isLoading, setIsLoading] = useState(true);
@@ -57,13 +58,7 @@ export default function UserProfile() {
     <div className="bg-gray-800 rounded-lg p-4 lg:p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">User Profile</h2>
-        <button
-          onClick={handleLogout}
-          className="btn btn-sm btn-outline btn-error flex items-center space-x-2"
-        >
-          <FaSignOutAlt />
-          <span>Logout</span>
-        </button>
+        <LogoutButton handleLogout={handleLogout} />
       </div>
 
       <div className="flex items-start space-x-4">

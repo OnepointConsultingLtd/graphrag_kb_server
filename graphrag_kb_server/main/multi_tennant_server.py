@@ -3,15 +3,17 @@ from datetime import datetime, timezone
 from aiohttp import web
 
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
+from graphrag_kb_server.model.admin import AdminUser
 from graphrag_kb_server.model.jwt_token import JWTToken, JWTTokenData
 from graphrag_kb_server.model.error import Error, ErrorCode
+from graphrag_kb_server.service.db.db_persistence_admin_user import delete_admin_user, insert_admin_user, select_admin_user, select_all_admin_users
 from graphrag_kb_server.service.jwt_service import generate_token, decode_token
 from graphrag_kb_server.service.login import admin_login
 from graphrag_kb_server.service.tennant import (
     delete_tennant_folder_by_folder,
     list_tennants as local_list_tennants,
 )
-from graphrag_kb_server.service.validations import validate_email
+from graphrag_kb_server.service.validations import validate_email, validate_password
 from graphrag_kb_server.model.snippet import Snippet, Project
 from graphrag_kb_server.service.snippet_generation_service import (
     generate_snippet,
@@ -25,7 +27,13 @@ from graphrag_kb_server.service.generate_url_service import generate_direct_url
 
 UNAUTHORIZED = 401
 
+TENNANT_CREATE_PATH = "/protected/tennant/create"
+TENNANT_DELETE_PATH = "/protected/tennant/delete_tennant"
+
 ADMIN_TOKEN_PATH = "/tennant/admin_token"
+ADMIN_CREATE_PATH = "/admin/create"
+ADMIN_DELETE_PATH = "/admin/delete"
+ADMIN_LIST_PATH = "/admin/list"
 
 TOKEN_DATA = "token_data"
 
@@ -114,6 +122,11 @@ async def auth_middleware(request: web.Request, handler):
     return await handler(request)
 
 
+@routes.options(ADMIN_TOKEN_PATH)
+async def read_admin_token(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
 @routes.get(ADMIN_TOKEN_PATH)
 async def read_admin_token(request: web.Request) -> web.Response:
     """
@@ -181,9 +194,9 @@ async def read_admin_token(request: web.Request) -> web.Response:
     email = query.get("email", "")
     password = query.get("password", "")
     if (
-        admin_login(name, email, password)
+        (admin_user := await admin_login(name, email, password)) is not None
     ):
-        return web.json_response({"token": jwt_cfg.admin_jwt}, headers=CORS_HEADERS)
+        return web.json_response({"token": admin_user.jwt_token}, headers=CORS_HEADERS)
     else:
         return invalid_response(
             "Invalid name or email",
@@ -192,12 +205,206 @@ async def read_admin_token(request: web.Request) -> web.Response:
         )
 
 
-@routes.options("/protected/tennant/create")
+@routes.options(ADMIN_CREATE_PATH)
+async def create_admin_user_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.post(ADMIN_CREATE_PATH)
+async def create_admin_user(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: creates a new admin user
+    tags:
+      - admin
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: name
+        in: query
+        required: true
+        description: The name used to generate the admin token
+        schema:
+          type: string
+      - name: email
+        in: query
+        required: true
+        description: The email used to generate the admin token
+        schema:
+          type: string
+      - name: password
+        in: query
+        required: true
+        description: The password used to generate the admin token
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Returns the created admin user with corresponding token.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - email
+                - name
+              properties:
+                token:
+                  type: string
+                  description: The generated token
+                email:
+                  type: string
+                  description: The email of the admin user
+      '409':
+        description: Expected response when the admin user already exists.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - error_code
+                - error
+                - description
+              properties:
+                error_code:
+                  type: integer
+                  description: The error code
+                error:
+                  type: string
+                  description: The error name
+                description:
+                  type: string
+                  description: The description of the error
+    """
+    async def handle_request(request: web.Request) -> web.Response:
+        query = request.rel_url.query
+        name = query.get("name", "")
+        email = query.get("email", "")
+        password = query.get("password", "")
+        if not validate_email(email):
+            return invalid_response(
+                "Invalid email", "Make sure you specify a valid email", status=400
+            )
+        if not validate_password(password):
+            return invalid_response(
+                "Invalid password", "Make sure you specify a valid password", status=400
+            )
+        if await select_admin_user(email) is not None:
+            return invalid_response(
+                "Admin user already exists",
+                "The admin user already exists.",
+                status=409
+            )
+        else:
+            admin_user = AdminUser(
+                name=name,
+                email=email,
+                password_plain=password,
+            )
+            await insert_admin_user(admin_user)
+            return web.json_response({
+              "token": jwt_cfg.admin_jwt,
+              "email": email,
+              "name": name,
+            }, headers=CORS_HEADERS)
+    return await handle_error(handle_request, request=request, headers=CORS_HEADERS)
+
+
+@routes.options(ADMIN_DELETE_PATH)
+async def delete_admin_user_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.delete(ADMIN_DELETE_PATH)
+async def delete_admin_user_options(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: deletes an admin user
+    tags:
+      - admin
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: email
+        in: query
+        required: true
+        description: The email used to generate the admin token
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Confirms the deletion of the admin user.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deleted
+              properties:
+                deleted:
+                  type: boolean
+                  description: True if the admin user was deleted, False otherwise
+    """
+    async def handle_request(request: web.Request) -> web.Response:
+        query = request.rel_url.query
+        email = query.get("email", "")
+        deleted =await delete_admin_user(email)
+        return web.json_response({"deleted": deleted}, headers=CORS_HEADERS)
+
+    return await handle_error(handle_request, request=request, headers=CORS_HEADERS)
+
+
+@routes.options(ADMIN_LIST_PATH)
+async def admin_list_options(request: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.get(ADMIN_LIST_PATH)
+async def admin_list(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: Lists all admin users
+    tags:
+      - admin
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List the admin users
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required:
+                  - username
+                  - email
+                properties:
+                  username:
+                    type: string
+                    description: The username of the admin user
+                  email:
+                    type: string
+                    description: The email of the admin user
+    """
+    async def handle_request(_: web.Request) -> web.Response:
+        admin_users = await select_all_admin_users()
+        return web.json_response(admin_users, headers=CORS_HEADERS)
+
+    return await handle_error(handle_request, request=request, headers=CORS_HEADERS)
+
+
+@routes.options(TENNANT_CREATE_PATH)
 async def create_tennant_options(request: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 
-@routes.post("/protected/tennant/create")
+@routes.post(TENNANT_CREATE_PATH)
 async def create_tennant(request: web.Request) -> web.Response:
     """
     Optional route description
@@ -293,12 +500,12 @@ async def create_tennant(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request, headers=CORS_HEADERS)
 
 
-@routes.options("/protected/tennant/delete_tennant")
+@routes.options(TENNANT_DELETE_PATH)
 async def delete_tennant_options(request: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 
-@routes.delete("/protected/tennant/delete_tennant")
+@routes.delete(TENNANT_DELETE_PATH)
 async def delete_tennant(request: web.Request) -> web.Response:
     """
     Optional route description
