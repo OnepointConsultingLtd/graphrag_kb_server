@@ -809,7 +809,7 @@ async def project_questions(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
-    summary: returns generated questions for a project based on the most popular topics
+    summary: returns generated questions for a project based on selected topics or text.
     tags:
       - project
     security:
@@ -1328,7 +1328,7 @@ async def list_projects(request: web.Request) -> web.Response:
     ---
     summary: returns all projects of a tennant
     tags:
-      - project
+      - project management
     security:
       - bearerAuth: []
     responses:
@@ -1367,7 +1367,7 @@ async def project_status(request: web.Request) -> web.Response:
     ---
     summary: returns the status information of a project
     tags:
-      - project
+      - project management
     security:
       - bearerAuth: []
     parameters:
@@ -1446,7 +1446,7 @@ async def delete_index(request: web.Request) -> web.Response:
     ---
     summary: returns the response to a query from an LLM
     tags:
-      - project
+      - project management
     parameters:
       - name: project
         in: query
@@ -1494,7 +1494,7 @@ async def download_project(request: web.Request) -> web.Response:
     ---
     summary: returns a file with the content of the input folder
     tags:
-      - project
+      - project management
     parameters:
       - name: project
         in: query
@@ -1559,7 +1559,7 @@ async def download_single_file(request: web.Request) -> web.Response:
     ---
     summary: returns a file with the content of the input folder
     tags:
-      - project
+      - project management
     security: []  # Empty security array indicates no authentication required
     parameters:
       - name: project
@@ -1749,6 +1749,13 @@ async def topics(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
+      - name: engine
+        in: query
+        required: true
+        description: The project name. Only graphrag is supported for now.
+        schema:
+          type: string
+          enum: [graphrag]
       - name: levels
         in: query
         required: true
@@ -1766,7 +1773,7 @@ async def topics(request: web.Request) -> web.Response:
       - bearerAuth: []
     responses:
       '200':
-        description: A list of topics matching the specified levels either in HTML of JSON
+        description: A list of topics matching the specified levels either in HTML or JSON format
     """
 
     async def handle_request(request: web.Request) -> web.Response:

@@ -14,6 +14,7 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
 )
 from google import genai
 from graphrag_kb_server.config import cfg, lightrag_cfg
+from graphrag_kb_server.service.lightrag.lightrag_model_support import openai_model_func
 
 Communities = list[Community]
 
@@ -139,15 +140,29 @@ The community is represented by a list of nodes and can be found between the <co
 The report should be a short description of the community, including a description of the most important nodes in the community and their relationships.
 
     """
-    response = await client.aio.models.generate_content(
-        model=lightrag_cfg.lightrag_model,
-        contents=prompt,
-        config={
-            "response_mime_type": "application/json",
-            "response_schema": CommunityDescriptors,
-        },
-    )
-    return response.parsed
+    model_type = lightrag_cfg.lightrag_model_type
+    match model_type:
+        case "google":
+            response = await client.aio.models.generate_content(
+                model=lightrag_cfg.lightrag_model,
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_schema": CommunityDescriptors,
+                },
+            )
+            return response.parsed
+        case "openai":
+            response = await openai_model_func(
+                prompt,
+                system_prompt=None,
+                history_messages=[],
+                structured_output=True,
+                structured_output_format=CommunityDescriptors
+            )
+            return CommunityDescriptors.model_validate(response)
+        case "togetherai":
+            raise NotImplementedError("TogetherAI is not supported yet")
 
 
 def _cluster_graph(
