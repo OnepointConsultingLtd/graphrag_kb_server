@@ -15,7 +15,6 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
 from google import genai
 from graphrag_kb_server.config import cfg, lightrag_cfg
 from graphrag_kb_server.service.lightrag.lightrag_model_support import openai_model_func
-from graphrag_kb_server.utils.cache import PersistentSimpleCache
 
 Communities = list[Community]
 
@@ -23,14 +22,9 @@ NodeIdToCommunityMap = dict[int, dict[str, int]]
 ParentMapping = dict[int, int]
 
 
-_lightrag_communities_cache = PersistentSimpleCache[Communities]("lightrag_communities")
-
-
 async def cluster_graph_from_project_dir(
     project_dir: Path, lightrag_max_cluster_size: int = 10
 ) -> Communities:
-    if communities := _lightrag_communities_cache.get(project_dir):
-        return communities
     graph: nx.classes.graph.Graph = create_network_from_project_dir(project_dir)
     communities = await asyncio.to_thread(
         _cluster_graph, graph, lightrag_max_cluster_size, True, 42
@@ -74,7 +68,7 @@ async def cluster_graph_from_project_dir(
                 for index, community in enumerate(batch)
             ]
         )
-    _lightrag_communities_cache.set(project_dir, communities)
+
     return communities
 
 
