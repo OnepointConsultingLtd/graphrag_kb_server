@@ -100,7 +100,7 @@ class QueryParameters(BaseModel):
         description="The maximum number of entities to include in the context.",
     )
     max_relation_size: int = Field(
-        default=25,
+        default=30,
         description="The maximum number of relations to include in the context.",
     )
     context_format: ContextFormat = Field(

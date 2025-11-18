@@ -118,7 +118,8 @@ async def structured_completion(
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     for msg in history_messages:
-        messages.append({"role": msg["role"], "content": msg["content"]})
+        if "role" in msg and "content" in msg:
+            messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": prompt})
     structured_output = "structured_output" in kwargs and kwargs["structured_output"]
     config_dict = {

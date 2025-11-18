@@ -41,15 +41,11 @@ Make sure that you use British English in your response.
 
 Please omit the references to the documents in your text response.
 """
-question-template = """Please provide information related to the following user profile and the provided question between the <user_profile> and </user_profile> tags and the <question> and </question> tags.
-  
+question-template = """{question}. Below is my user profile that shows my interests, so base your answer on my profile.
+
   <user_profile>
   {user_profile}
   </user_profile>
-
-  <question>
-  {question}
-  </question>
   
   <high_level_keywords>
   {high_level_keywords}

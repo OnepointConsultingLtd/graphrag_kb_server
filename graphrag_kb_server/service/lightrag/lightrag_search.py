@@ -55,6 +55,7 @@ class ExtendedQueryResult(QueryResult):
         context: The context string used to generate the response
     """
     context: str | None = None
+    response: dict | None = None
 
 
 def _combine_keywords(old_keywords: list[str], new_keywords: list[str]) -> list[str]:
@@ -151,7 +152,7 @@ In case of a coloquial question or non context related sentence you can respond 
         )
         return ChatResponse(
             question=query,
-            response=response_dict["llm_response"]["content"],
+            response=response_dict["llm_response"].get("content", ""),
             context=(
                 response_dict["llm_response"]["context"]
                 if (
@@ -241,7 +242,7 @@ async def aquery_llm(
         # Extract structured data from query result
         raw_data = query_result.raw_data or {}
         raw_data["llm_response"] = {
-            "content": query_result.content
+            "content": query_result.content if not query_result.response else query_result.response
             if not query_result.is_streaming
             else None,
             "response_iterator": query_result.response_iterator
@@ -379,6 +380,8 @@ async def kg_query(
     relations_context = context_result.raw_data["data"]["relationships"]
     text_units_context = context_result.raw_data["data"]["chunks"]
     if query_params.callback is not None:
+        if query_params.max_relation_size > 0:
+            relations_context = relations_context[:query_params.max_relation_size]
         await query_params.callback.callback(
             f"Retrieved overall context with {len(entities_context)} entities and {len(relations_context)} relations and {len(text_units_context)} text units"
         )
@@ -443,7 +446,7 @@ async def kg_query(
         hashing_kv, args_hash, user_query, query_param.mode, cache_type="query"
     )
 
-    if cached_result is not None:
+    if cached_result is not None and not query_params.structured_output:
         cached_response, _ = cached_result  # Extract content, ignore timestamp
         logger.info(
             " == LLM cache == Query cache hit, using cached response as query result"
@@ -467,7 +470,7 @@ async def kg_query(
             structured_output_format=query_params.structured_output_format,
         )
 
-        if hashing_kv and hashing_kv.global_config.get("enable_llm_cache"):
+        if hashing_kv and hashing_kv.global_config.get("enable_llm_cache") and not query_params.structured_output:
             queryparam_dict = {
                 "mode": query_param.mode,
                 "response_type": query_param.response_type,
@@ -508,6 +511,8 @@ async def kg_query(
             )
 
         return ExtendedQueryResult(content=response, raw_data=context_result.raw_data, context=context_result.context)
+    elif query_params.structured_output and isinstance(response, dict):
+        return ExtendedQueryResult(response=response, raw_data=context_result.raw_data, context=context_result.context)
     else:
         return ExtendedQueryResult(
             response_iterator=response,
