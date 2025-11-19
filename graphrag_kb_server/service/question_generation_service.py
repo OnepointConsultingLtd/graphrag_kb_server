@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from graphrag_kb_server.service.db.db_persistence_topics import find_questions, save_questions
 from graphrag_kb_server.service.google_ai_client import structured_completion
 from graphrag_kb_server.model.topics import (
     Topics,
@@ -20,7 +21,6 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
 )
 from graphrag_kb_server.service.graphrag.graph_support import read_graphrag_project
 
-question_generation_cache = GenericSimpleCache[str, TopicQuestions]()
 
 
 async def generate_questions_from_topics(
@@ -29,11 +29,9 @@ async def generate_questions_from_topics(
     project_dir: Path = questions_query.project_dir
     engine: Engine = questions_query.engine
     limit: int = questions_query.limit
-    entity_type_filter: str = questions_query.entity_type_filter
     topics: list[str] = questions_query.topics
-    cache_key = f"{project_dir.as_posix()}_{engine.value}_{limit}_{entity_type_filter}_{";".join(topics)}_{questions_query.text}_{questions_query.system_prompt}"
-    cached_questions = question_generation_cache.get(cache_key)
-    if cached_questions is not None:
+    cached_questions = await find_questions(questions_query)
+    if cached_questions is not None and len(cached_questions.topic_questions) > 0:
         return cached_questions
     topics = [t for t in topics if t and len(t.strip()) > 0]
     misses_topics = len(topics) == 0
@@ -90,12 +88,12 @@ async def generate_questions_from_topics(
                 for t in topics
             ]
 
-    question_generation_cache.set(
-        cache_key,
-        generated_questions := await generate_questions(
-            Topics(topics=topics), questions_query.system_prompt
-        ),
+
+    generated_questions = await generate_questions(
+        Topics(topics=topics), questions_query.system_prompt
     )
+
+    await save_questions(questions_query, generated_questions)
     return generated_questions
 
 
