@@ -3,9 +3,17 @@ from typing import AsyncIterator
 
 
 class ChatResponse(BaseModel):
-    question: str | None = Field(default=None, description="The question that was asked.")
-    response: str | dict | None = Field(default=None, description="The response to the chat request. If structured output is enabled, return a dictionary with the response and the references.")
-    response_iterator: AsyncIterator[str] | None = Field(default=None, description="The response iterator to the chat request. If streaming is enabled, return an iterator of strings.")
+    question: str | None = Field(
+        default=None, description="The question that was asked."
+    )
+    response: str | dict | None = Field(
+        default=None,
+        description="The response to the chat request. If structured output is enabled, return a dictionary with the response and the references.",
+    )
+    response_iterator: AsyncIterator[str] | None = Field(
+        default=None,
+        description="The response iterator to the chat request. If streaming is enabled, return an iterator of strings.",
+    )
     context: str | None = Field(
         default=None, description="The context used to generate the response."
     )
@@ -28,6 +36,7 @@ class ChatResponse(BaseModel):
         description="The ll_keywords used to generate the response.",
     )
     model_config = {"arbitrary_types_allowed": True}
+
 
 class Reference(BaseModel):
     type: str = Field(description="The type of the reference")

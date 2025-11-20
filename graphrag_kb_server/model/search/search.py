@@ -2,6 +2,7 @@ from enum import StrEnum
 from pydantic import BaseModel, Field, ConfigDict
 from abc import ABC
 
+from graphrag_kb_server.model.search.keywords import Keywords
 from graphrag_kb_server.model.search.match_query import MatchOutput
 
 
@@ -146,4 +147,12 @@ class SearchResults(BaseModel):
     response: str = Field(
         ...,
         description="The response to the user's question",
+    )
+    low_level_keywords: Keywords | None = Field(
+        default=None,
+        description="The low level keywords that were used to search for the documents",
+    )
+    high_level_keywords: Keywords | None = Field(
+        default=None,
+        description="The high level keywords that were used to search for the documents",
     )

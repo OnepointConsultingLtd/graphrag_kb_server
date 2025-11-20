@@ -1,11 +1,13 @@
 from pathlib import Path
 
+from graphrag_kb_server.model.search.keywords import KeywordType
 from graphrag_kb_server.service.db.connection_pool import (
     execute_query,
     execute_query_with_return,
     fetch_all,
     fetch_one,
 )
+
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
@@ -235,7 +237,7 @@ async def get_search_results(
     history_result = await fetch_one(
         f"""
 SELECT ID, RESPONSE FROM {schema_name}.{TB_SEARCH_HISTORY}
-WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} day';
+WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} day' ORDER BY ID DESC;
 """,
         project_id,
         query_digest_sha256,
@@ -271,8 +273,13 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval
                 main_keyword=document_main_keyword,
             )
         )
+    from graphrag_kb_server.service.db.db_persistence_keywords import find_keywords
+    low_level_keywords = await find_keywords(schema_name, KeywordType.LOW_LEVEL, search_history_id)
+    high_level_keywords = await find_keywords(schema_name, KeywordType.HIGH_LEVEL, search_history_id)
     return SearchResults(
         request_id=document_search_query.request_id,
         documents=documents,
         response=response,
+        low_level_keywords=low_level_keywords,
+        high_level_keywords=high_level_keywords,
     )

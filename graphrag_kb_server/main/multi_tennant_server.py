@@ -6,7 +6,12 @@ from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.model.admin import AdminUser
 from graphrag_kb_server.model.jwt_token import JWTToken, JWTTokenData
 from graphrag_kb_server.model.error import Error, ErrorCode
-from graphrag_kb_server.service.db.db_persistence_admin_user import delete_admin_user, insert_admin_user, select_admin_user, select_all_admin_users
+from graphrag_kb_server.service.db.db_persistence_admin_user import (
+    delete_admin_user,
+    insert_admin_user,
+    select_admin_user,
+    select_all_admin_users,
+)
 from graphrag_kb_server.service.jwt_service import generate_token, decode_token
 from graphrag_kb_server.service.login import admin_login
 from graphrag_kb_server.service.tennant import (
@@ -193,9 +198,7 @@ async def read_admin_token(request: web.Request) -> web.Response:
     name = query.get("name", "")
     email = query.get("email", "")
     password = query.get("password", "")
-    if (
-        (admin_user := await admin_login(name, email, password)) is not None
-    ):
+    if (admin_user := await admin_login(name, email, password)) is not None:
         return web.json_response({"token": admin_user.jwt_token}, headers=CORS_HEADERS)
     else:
         return invalid_response(
@@ -278,6 +281,7 @@ async def create_admin_user(request: web.Request) -> web.Response:
                   type: string
                   description: The description of the error
     """
+
     async def handle_request(request: web.Request) -> web.Response:
         query = request.rel_url.query
         name = query.get("name", "")
@@ -295,7 +299,7 @@ async def create_admin_user(request: web.Request) -> web.Response:
             return invalid_response(
                 "Admin user already exists",
                 "The admin user already exists.",
-                status=409
+                status=409,
             )
         else:
             admin_user = AdminUser(
@@ -304,11 +308,15 @@ async def create_admin_user(request: web.Request) -> web.Response:
                 password_plain=password,
             )
             await insert_admin_user(admin_user)
-            return web.json_response({
-              "token": jwt_cfg.admin_jwt,
-              "email": email,
-              "name": name,
-            }, headers=CORS_HEADERS)
+            return web.json_response(
+                {
+                    "token": jwt_cfg.admin_jwt,
+                    "email": email,
+                    "name": name,
+                },
+                headers=CORS_HEADERS,
+            )
+
     return await handle_error(handle_request, request=request, headers=CORS_HEADERS)
 
 
@@ -348,10 +356,11 @@ async def delete_admin_user_options(request: web.Request) -> web.Response:
                   type: boolean
                   description: True if the admin user was deleted, False otherwise
     """
+
     async def handle_request(request: web.Request) -> web.Response:
         query = request.rel_url.query
         email = query.get("email", "")
-        deleted =await delete_admin_user(email)
+        deleted = await delete_admin_user(email)
         return web.json_response({"deleted": deleted}, headers=CORS_HEADERS)
 
     return await handle_error(handle_request, request=request, headers=CORS_HEADERS)
@@ -392,6 +401,7 @@ async def admin_list(request: web.Request) -> web.Response:
                     type: string
                     description: The email of the admin user
     """
+
     async def handle_request(_: web.Request) -> web.Response:
         admin_users = await select_all_admin_users()
         return web.json_response(admin_users, headers=CORS_HEADERS)

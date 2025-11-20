@@ -1,5 +1,4 @@
 import time
-import re
 from pathlib import Path
 from dataclasses import asdict, dataclass
 from typing import Any
@@ -15,7 +14,16 @@ from lightrag.constants import (
     DEFAULT_RELATED_CHUNK_NUMBER,
     GRAPH_FIELD_SEP,
 )
-from lightrag.utils import Tokenizer, convert_to_user_format, generate_reference_list_from_chunks, pick_by_vector_similarity, pick_by_weighted_polling, process_chunks_unified, split_string_by_multi_markers, truncate_list_by_token_size
+from lightrag.utils import (
+    Tokenizer,
+    convert_to_user_format,
+    generate_reference_list_from_chunks,
+    pick_by_vector_similarity,
+    pick_by_weighted_polling,
+    process_chunks_unified,
+    split_string_by_multi_markers,
+    truncate_list_by_token_size,
+)
 
 from lightrag.operate import (
     PROMPTS,
@@ -28,7 +36,13 @@ from lightrag.operate import (
     _get_edge_data,
     _get_vector_context,
 )
-from lightrag.base import BaseGraphStorage, BaseVectorStorage, BaseKVStorage, QueryContextResult, QueryResult
+from lightrag.base import (
+    BaseGraphStorage,
+    BaseVectorStorage,
+    BaseKVStorage,
+    QueryContextResult,
+    QueryResult,
+)
 
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.model.rag_parameters import (
@@ -38,10 +52,12 @@ from graphrag_kb_server.model.rag_parameters import (
 )
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.chat_response import ChatResponse
-
-PREFIX_HIGH_LEVEL_KEYWORDS = "High level keywords:"
-PREFIX_LOW_LEVEL_KEYWORDS = "Low level keywords:"
-PREFIX_RELATIONSHIPS = "Relationships context:"
+from graphrag_kb_server.service.lightrag.lightrag_constants import (
+    KEYWORDS_SEPARATOR,
+    PREFIX_HIGH_LEVEL_KEYWORDS,
+    PREFIX_LOW_LEVEL_KEYWORDS,
+    PREFIX_RELATIONSHIPS,
+)
 
 ### A lot of the code here is copied from https://github.com/HKUDS/LightRAG with some modifications to fit our needs.
 
@@ -50,16 +66,18 @@ PREFIX_RELATIONSHIPS = "Relationships context:"
 class ExtendedQueryResult(QueryResult):
     """
     Extended QueryResult with additional context field.
-    
+
     Attributes:
         context: The context string used to generate the response
     """
+
     context: str | None = None
     response: dict | None = None
 
 
 def _combine_keywords(old_keywords: list[str], new_keywords: list[str]) -> list[str]:
     return list(set(old_keywords + new_keywords))
+
 
 PROMPTS[
     "rag_response"
@@ -242,12 +260,14 @@ async def aquery_llm(
         # Extract structured data from query result
         raw_data = query_result.raw_data or {}
         raw_data["llm_response"] = {
-            "content": query_result.content if not query_result.response else query_result.response
-            if not query_result.is_streaming
-            else None,
-            "response_iterator": query_result.response_iterator
-            if query_result.is_streaming
-            else None,
+            "content": (
+                query_result.content
+                if not query_result.response
+                else query_result.response if not query_result.is_streaming else None
+            ),
+            "response_iterator": (
+                query_result.response_iterator if query_result.is_streaming else None
+            ),
             "is_streaming": query_result.is_streaming,
             "context": query_result.context,
         }
@@ -334,10 +354,10 @@ async def kg_query(
 
     if query_params.callback is not None:
         await query_params.callback.callback(
-            f"{PREFIX_HIGH_LEVEL_KEYWORDS} {"<SEP>".join(query_param.hl_keywords)}"
+            f"{PREFIX_HIGH_LEVEL_KEYWORDS} {KEYWORDS_SEPARATOR.join(query_param.hl_keywords)}"
         )
         await query_params.callback.callback(
-            f"{PREFIX_LOW_LEVEL_KEYWORDS} {"<SEP>".join(query_param.ll_keywords)}"
+            f"{PREFIX_LOW_LEVEL_KEYWORDS} {KEYWORDS_SEPARATOR.join(query_param.ll_keywords)}"
         )
 
     logger.debug(f"High-level keywords: {hl_keywords}")
@@ -375,13 +395,12 @@ async def kg_query(
         logger.info("[kg_query] No query context could be built; returning no-result.")
         return None
 
-
     entities_context = context_result.raw_data["data"]["entities"]
     relations_context = context_result.raw_data["data"]["relationships"]
     text_units_context = context_result.raw_data["data"]["chunks"]
     if query_params.callback is not None:
         if query_params.max_relation_size > 0:
-            relations_context = relations_context[:query_params.max_relation_size]
+            relations_context = relations_context[: query_params.max_relation_size]
         await query_params.callback.callback(
             f"Retrieved overall context with {len(entities_context)} entities and {len(relations_context)} relations and {len(text_units_context)} text units"
         )
@@ -392,7 +411,9 @@ async def kg_query(
     # Return different content based on query parameters
     if query_param.only_need_context and not query_param.only_need_prompt:
         return ExtendedQueryResult(
-            content=context_result.context, raw_data=context_result.raw_data, context=context_result.context
+            content=context_result.context,
+            raw_data=context_result.raw_data,
+            context=context_result.context,
         )
 
     user_prompt = f"\n\n{query_param.user_prompt}" if query_param.user_prompt else "n/a"
@@ -414,7 +435,11 @@ async def kg_query(
 
     if query_param.only_need_prompt:
         prompt_content = "\n\n".join([sys_prompt, "---User Query---", user_query])
-        return ExtendedQueryResult(content=prompt_content, raw_data=context_result.raw_data, context=context_result.context)
+        return ExtendedQueryResult(
+            content=prompt_content,
+            raw_data=context_result.raw_data,
+            context=context_result.context,
+        )
 
     # Call LLM
     tokenizer: Tokenizer = global_config["tokenizer"]
@@ -439,7 +464,7 @@ async def kg_query(
         ll_keywords_str,
         query_param.user_prompt or "",
         query_param.enable_rerank,
-        project_dir.as_posix()
+        project_dir.as_posix(),
     )
 
     cached_result = await handle_cache(
@@ -470,7 +495,11 @@ async def kg_query(
             structured_output_format=query_params.structured_output_format,
         )
 
-        if hashing_kv and hashing_kv.global_config.get("enable_llm_cache") and not query_params.structured_output:
+        if (
+            hashing_kv
+            and hashing_kv.global_config.get("enable_llm_cache")
+            and not query_params.structured_output
+        ):
             queryparam_dict = {
                 "mode": query_param.mode,
                 "response_type": query_param.response_type,
@@ -510,9 +539,17 @@ async def kg_query(
                 .strip()
             )
 
-        return ExtendedQueryResult(content=response, raw_data=context_result.raw_data, context=context_result.context)
+        return ExtendedQueryResult(
+            content=response,
+            raw_data=context_result.raw_data,
+            context=context_result.context,
+        )
     elif query_params.structured_output and isinstance(response, dict):
-        return ExtendedQueryResult(response=response, raw_data=context_result.raw_data, context=context_result.context)
+        return ExtendedQueryResult(
+            response=response,
+            raw_data=context_result.raw_data,
+            context=context_result.context,
+        )
     else:
         return ExtendedQueryResult(
             response_iterator=response,
@@ -829,6 +866,7 @@ def _shorten_file_path(context_obj: dict, max_depth: int = 20) -> str:
         {**e, "file_path": "<SEP>".join(e["file_path"].split("<SEP>")[:max_depth])}
         for e in context_obj
     ]
+
 
 async def _perform_kg_search(
     query: str,
@@ -1435,7 +1473,6 @@ async def _find_related_text_unit_from_entities(
     return result_chunks
 
 
-
 async def _find_related_text_unit_from_relations(
     edge_datas: list[dict],
     query_param: QueryParam,
@@ -1538,8 +1575,8 @@ async def _find_related_text_unit_from_relations(
 
     if not relations_with_chunks:
         logger.info(
-                f"Find no additional relations-related chunks from {len(edge_datas)} relations"
-            )
+            f"Find no additional relations-related chunks from {len(edge_datas)} relations"
+        )
         return []
 
     # Step 3: Sort chunks for each relationship by occurrence count (higher count = higher priority)

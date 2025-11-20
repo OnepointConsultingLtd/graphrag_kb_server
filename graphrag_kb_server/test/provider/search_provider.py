@@ -1,3 +1,4 @@
+from graphrag_kb_server.model.search.keywords import KeywordType, Keywords
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
     SearchResults,
@@ -52,4 +53,20 @@ def create_search_results() -> SearchResults:
                 main_keyword="AIMIA and Zuhlke",
             )
         ],
+    )
+
+
+def create_keywords_high_level(search_history_id: int) -> Keywords:
+    return Keywords(
+        keywords=["AI", "Automation", "Autonomous Systems"],
+        keyword_type=KeywordType.HIGH_LEVEL,
+        search_id=search_history_id,
+    )
+
+
+def create_keywords_low_level(search_history_id: int) -> Keywords:
+    return Keywords(
+        keywords=["Be Informed", "Zuehlke"],
+        keyword_type=KeywordType.LOW_LEVEL,
+        search_id=search_history_id,
     )

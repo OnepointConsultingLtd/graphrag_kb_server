@@ -7,7 +7,9 @@ async def admin_login(username: str, email: str, password: str) -> AdminUser | N
     admin_user = await select_admin_user(email)
     if admin_user is None:
         return None
-    if admin_user.name == username and check_password(password, admin_user.password_hash):
+    if admin_user.name == username and check_password(
+        password, admin_user.password_hash
+    ):
         return admin_user
     else:
         return None

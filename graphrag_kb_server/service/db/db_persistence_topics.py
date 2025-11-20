@@ -1,4 +1,9 @@
-from graphrag_kb_server.model.topics import QuestionsQuery, Topic, TopicQuestion, TopicQuestions
+from graphrag_kb_server.model.topics import (
+    QuestionsQuery,
+    Topic,
+    TopicQuestion,
+    TopicQuestions,
+)
 from graphrag_kb_server.service.db.connection_pool import (
     execute_query,
     execute_query_with_return,
@@ -45,9 +50,13 @@ DROP TABLE IF EXISTS {schema_name}.{TB_TOPICS};
 
 
 async def insert_topic(schema_name: str, topic: Topic) -> int:
-    existing_topic = await fetch_one(f"""
+    existing_topic = await fetch_one(
+        f"""
 SELECT ID FROM {schema_name}.{TB_TOPICS} WHERE NAME = $1 AND PROJECT_ID = $2;
-""", topic.name, topic.project_id)
+""",
+        topic.name,
+        topic.project_id,
+    )
     if existing_topic is not None:
         return existing_topic["id"]
     res = await execute_query_with_return(
@@ -114,7 +123,7 @@ async def find_questions(questions_query: QuestionsQuery) -> TopicQuestions:
     schema_name = questions_query.project_dir.parent.parent.name
     project_name = questions_query.project_dir.name
     engine = questions_query.engine
-    
+
     topics = questions_query.topics
     results: list[TopicQuestion] = []
     for name in topics:
@@ -135,7 +144,9 @@ async def find_questions(questions_query: QuestionsQuery) -> TopicQuestions:
     return TopicQuestions(topic_questions=results)
 
 
-async def save_questions(questions_query: QuestionsQuery, topic_questions:TopicQuestions):
+async def save_questions(
+    questions_query: QuestionsQuery, topic_questions: TopicQuestions
+):
     schema_name = questions_query.project_dir.parent.parent.name
     project_name = questions_query.project_dir.name
     engine = questions_query.engine

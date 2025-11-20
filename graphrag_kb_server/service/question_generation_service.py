@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from graphrag_kb_server.service.db.db_persistence_topics import find_questions, save_questions
+from graphrag_kb_server.service.db.db_persistence_topics import (
+    find_questions,
+    save_questions,
+)
 from graphrag_kb_server.service.google_ai_client import structured_completion
 from graphrag_kb_server.model.topics import (
     Topics,
@@ -10,7 +13,6 @@ from graphrag_kb_server.model.topics import (
 )
 from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.model.engines import Engine
-from graphrag_kb_server.utils.cache import GenericSimpleCache
 from graphrag_kb_server.service.lightrag.lightrag_related_topics import (
     get_keywords_from_text,
 )
@@ -20,7 +22,6 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     create_network_from_project_dir,
 )
 from graphrag_kb_server.service.graphrag.graph_support import read_graphrag_project
-
 
 
 async def generate_questions_from_topics(
@@ -87,7 +88,6 @@ async def generate_questions_from_topics(
                 )
                 for t in topics
             ]
-
 
     generated_questions = await generate_questions(
         Topics(topics=topics), questions_query.system_prompt

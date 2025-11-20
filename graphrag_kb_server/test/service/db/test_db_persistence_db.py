@@ -1,7 +1,14 @@
 import pytest
 
 from graphrag_kb_server.model.admin import AdminUser
-from graphrag_kb_server.service.db.db_persistence_admin_user import create_admin_user_table, delete_admin_user, insert_admin_user, select_admin_user, select_all_admin_users
+from graphrag_kb_server.service.db.db_persistence_admin_user import (
+    create_admin_user_table,
+    delete_admin_user,
+    insert_admin_user,
+    select_admin_user,
+    select_all_admin_users,
+)
+
 
 @pytest.mark.asyncio
 async def test_create_drop_admin_user_table():

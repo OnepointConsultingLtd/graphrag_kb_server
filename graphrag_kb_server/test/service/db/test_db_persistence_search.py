@@ -1,5 +1,12 @@
 import pytest
 
+from graphrag_kb_server.model.search.keywords import KeywordType
+from graphrag_kb_server.service.db.db_persistence_keywords import (
+    create_keywords_table,
+    drop_keywords_table,
+    find_keywords,
+    save_keywords,
+)
 from graphrag_kb_server.service.db.db_persistence_search import (
     create_search_history_tables,
     drop_search_history_tables,
@@ -7,6 +14,8 @@ from graphrag_kb_server.service.db.db_persistence_search import (
 )
 from graphrag_kb_server.test.provider.search_provider import (
     create_document_search_query,
+    create_keywords_high_level,
+    create_keywords_low_level,
     create_search_results,
 )
 from graphrag_kb_server.test.service.db.test_topics_table import (
@@ -29,8 +38,10 @@ async def test_create_drop_search_history_tables():
     schema_name = DEFAULT_SCHEMA_NAME
     try:
         await create_search_history_tables(schema_name)
+        await create_keywords_table(schema_name)
     finally:
         await drop_search_history_tables(schema_name)
+        await drop_keywords_table(schema_name)
 
 
 @pytest.mark.asyncio
@@ -41,6 +52,7 @@ async def test_insert_search_query():
     ):
         try:
             await create_search_history_tables(schema_name)
+            await create_keywords_table(schema_name)
             project_dir = create_project_dir(
                 schema_name, full_project.engine, project_name
             )
@@ -56,6 +68,25 @@ async def test_insert_search_query():
             assert updated_count is not None
             assert updated_count > 0
             search_results = create_search_results()
+            keywords_high_level = create_keywords_high_level(search_history_id)
+            keywords_low_level = create_keywords_low_level(search_history_id)
+            await save_keywords(schema_name, keywords_high_level)
+            await save_keywords(schema_name, keywords_low_level)
+            found_keywords_high_level = await find_keywords(
+                schema_name, KeywordType.HIGH_LEVEL, search_history_id
+            )
+            assert found_keywords_high_level is not None
+            assert found_keywords_high_level.keywords == keywords_high_level.keywords
+            assert (
+                found_keywords_high_level.keyword_type
+                == keywords_high_level.keyword_type
+            )
+            assert found_keywords_high_level.search_id == keywords_high_level.search_id
+            found_keywords_low_level = await find_keywords(
+                schema_name, KeywordType.LOW_LEVEL, search_history_id
+            )
+            assert found_keywords_low_level is not None
+            assert found_keywords_low_level.keywords == keywords_low_level.keywords
             search_results_ids = await insert_search_results(
                 project_dir, search_history_id, search_results
             )
@@ -74,5 +105,6 @@ async def test_insert_search_query():
                 assert document.relevance == search_results.documents[0].relevance
         finally:
             await drop_search_history_tables(schema_name)
+            await drop_keywords_table(schema_name)
 
     await create_test_project_wrapper(test_function)

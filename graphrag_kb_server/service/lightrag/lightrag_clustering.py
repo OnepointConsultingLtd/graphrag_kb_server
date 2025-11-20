@@ -158,7 +158,7 @@ The report should be a short description of the community, including a descripti
                 system_prompt=None,
                 history_messages=[],
                 structured_output=True,
-                structured_output_format=CommunityDescriptors
+                structured_output_format=CommunityDescriptors,
             )
             return CommunityDescriptors.model_validate(response)
         case "togetherai":

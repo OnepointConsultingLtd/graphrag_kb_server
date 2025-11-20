@@ -6,9 +6,17 @@ from pydantic import Field
 
 
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.model.search.keywords import KeywordType, Keywords
 from graphrag_kb_server.model.search.search import DocumentSearchQuery
 from graphrag_kb_server.main import sio
+from graphrag_kb_server.service.db.common_operations import extract_elements_from_path
+from graphrag_kb_server.service.db.db_persistence_keywords import save_keywords
 from graphrag_kb_server.service.jwt_service import decode_token
+from graphrag_kb_server.service.lightrag.lightrag_constants import (
+    KEYWORDS_SEPARATOR,
+    PREFIX_HIGH_LEVEL_KEYWORDS,
+    PREFIX_LOW_LEVEL_KEYWORDS,
+)
 from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.engines import Engine
@@ -53,6 +61,46 @@ class WebsocketCallback(BaseCallback):
         )
 
 
+class KeywordsCallback(WebsocketCallback):
+
+    search_history_id: int | None = None
+    project_dir: Path | None = None
+
+    async def callback(self, message: str):
+        # call super to emit the message
+        await super().callback(message)
+        if self.search_history_id is not None and message is not None:
+            is_high_level_keywords = message.startswith(PREFIX_HIGH_LEVEL_KEYWORDS)
+            is_low_level_keywords = message.startswith(PREFIX_LOW_LEVEL_KEYWORDS)
+            if is_high_level_keywords or is_low_level_keywords:
+                keyword_type = (
+                    KeywordType.HIGH_LEVEL
+                    if is_high_level_keywords
+                    else KeywordType.LOW_LEVEL
+                )
+                simple_project = extract_elements_from_path(self.project_dir)
+                schema_name = simple_project.schema_name
+                only_keywords = message[
+                    len(
+                        PREFIX_HIGH_LEVEL_KEYWORDS
+                        if is_high_level_keywords
+                        else PREFIX_LOW_LEVEL_KEYWORDS
+                    ) :
+                ].split(KEYWORDS_SEPARATOR)
+                only_keywords = [keyword.strip() for keyword in only_keywords]
+                try:
+                    await save_keywords(
+                        schema_name,
+                        Keywords(
+                            keywords=only_keywords,
+                            keyword_type=keyword_type,
+                            search_id=self.search_history_id,
+                        ),
+                    )
+                except Exception as e:
+                    logger.error(f"Error saving keywords: {e}")
+
+
 @sio.event
 async def connect(sid: str, environ):
     logger.info(f"🔥 SERVER: Client connected with SID: {sid}")
@@ -88,10 +136,13 @@ async def relevant_documents(
             max_filepath_depth=max_filepath_depth,
             is_search_query=True,
         )
-        callback = WebsocketCallback(
-            sid=sid, request_id=document_search_query.request_id
-        )
         project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
+        callback = KeywordsCallback(
+            sid=sid,
+            request_id=document_search_query.request_id,
+            project_dir=project_dir,
+            search_history_id=None,
+        )
         found_search_results = await get_search_results(
             project_dir, document_search_query
         )
@@ -104,6 +155,7 @@ async def relevant_documents(
         search_history_id = await insert_search_query(
             project_dir, document_search_query
         )
+        callback.search_history_id = search_history_id
         logger.info(f"Document query from {sio}: {document_query}")
         await callback.callback("Searching documents...")
 
