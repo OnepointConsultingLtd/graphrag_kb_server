@@ -1,5 +1,5 @@
 from enum import StrEnum
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from abc import ABC
 
 from graphrag_kb_server.model.search.keywords import Keywords
@@ -68,6 +68,21 @@ class DocumentSearchQuery(BaseModel):
         default=None,
         description="The biggest challenge that the user is facing",
     )
+    
+    @field_validator('biggest_challenge', mode='before')
+    @classmethod
+    def clean_biggest_challenge(cls, v: str | None) -> str | None:
+        """Remove leading/trailing spaces and trailing dots from biggest_challenge."""
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            return v
+        # Remove leading and trailing spaces
+        cleaned = v.strip()
+        # Remove trailing dots
+        cleaned = cleaned.rstrip('.')
+        return cleaned if cleaned else None
+    
 
 
 class SummarisationResponse(BaseModel):
