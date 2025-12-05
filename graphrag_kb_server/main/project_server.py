@@ -1181,6 +1181,7 @@ async def context(request: web.Request) -> web.Response:
                 return error_response
             case Path() as project_dir:
                 search = request.rel_url.query.get("search", Search.LOCAL.value)
+                logger.info(f"Searching context for: {search}")
                 use_context_records = (
                     request.rel_url.query.get("use_context_records", "false") == "true"
                 )
