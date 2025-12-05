@@ -81,6 +81,7 @@ class DocumentSearchQuery(BaseModel):
         cleaned = v.strip()
         # Remove trailing dots
         cleaned = cleaned.rstrip('.')
+        cleaned = v.strip()
         return cleaned if cleaned else None
     
 
