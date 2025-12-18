@@ -7,15 +7,18 @@ from pydantic import Field
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.search.keywords import KeywordType, Keywords
+from graphrag_kb_server.model.search.relationships import RelationshipsJSON
 from graphrag_kb_server.model.search.search import DocumentSearchQuery
 from graphrag_kb_server.main import sio
 from graphrag_kb_server.service.db.common_operations import extract_elements_from_path
 from graphrag_kb_server.service.db.db_persistence_keywords import save_keywords
+from graphrag_kb_server.service.db.db_persistence_relationships import save_relationships
 from graphrag_kb_server.service.jwt_service import decode_token
 from graphrag_kb_server.service.lightrag.lightrag_constants import (
     KEYWORDS_SEPARATOR,
     PREFIX_HIGH_LEVEL_KEYWORDS,
     PREFIX_LOW_LEVEL_KEYWORDS,
+    PREFIX_RELATIONSHIPS,
 )
 from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.config import cfg
@@ -61,7 +64,7 @@ class WebsocketCallback(BaseCallback):
         )
 
 
-class KeywordsCallback(WebsocketCallback):
+class PersistentCallback(WebsocketCallback):
 
     search_history_id: int | None = None
     project_dir: Path | None = None
@@ -72,33 +75,50 @@ class KeywordsCallback(WebsocketCallback):
         if self.search_history_id is not None and message is not None:
             is_high_level_keywords = message.startswith(PREFIX_HIGH_LEVEL_KEYWORDS)
             is_low_level_keywords = message.startswith(PREFIX_LOW_LEVEL_KEYWORDS)
+            is_relationships = message.startswith(PREFIX_RELATIONSHIPS)
             if is_high_level_keywords or is_low_level_keywords:
-                keyword_type = (
-                    KeywordType.HIGH_LEVEL
-                    if is_high_level_keywords
-                    else KeywordType.LOW_LEVEL
-                )
-                simple_project = extract_elements_from_path(self.project_dir)
-                schema_name = simple_project.schema_name
-                only_keywords = message[
-                    len(
-                        PREFIX_HIGH_LEVEL_KEYWORDS
-                        if is_high_level_keywords
-                        else PREFIX_LOW_LEVEL_KEYWORDS
-                    ) :
-                ].split(KEYWORDS_SEPARATOR)
-                only_keywords = [keyword.strip() for keyword in only_keywords]
-                try:
-                    await save_keywords(
-                        schema_name,
-                        Keywords(
-                            keywords=only_keywords,
-                            keyword_type=keyword_type,
-                            search_id=self.search_history_id,
-                        ),
-                    )
-                except Exception as e:
-                    logger.error(f"Error saving keywords: {e}")
+                await self._save_keywords(message, is_high_level_keywords)
+            elif is_relationships:
+                await self._save_relationships(message)
+    
+
+    async def _save_relationships(self, message: str):
+        simple_project = extract_elements_from_path(self.project_dir)
+        schema_name = simple_project.schema_name
+        relationships = RelationshipsJSON(
+            relationships=message[len(PREFIX_RELATIONSHIPS):].strip(),
+            search_id=self.search_history_id,
+        )
+        await save_relationships(schema_name, relationships)
+
+
+    async def _save_keywords(self, message: str, is_high_level_keywords: bool):
+        keyword_type = (
+            KeywordType.HIGH_LEVEL
+            if is_high_level_keywords
+            else KeywordType.LOW_LEVEL
+        )
+        simple_project = extract_elements_from_path(self.project_dir)
+        schema_name = simple_project.schema_name
+        only_keywords = message[
+            len(
+                PREFIX_HIGH_LEVEL_KEYWORDS
+                if is_high_level_keywords
+                else PREFIX_LOW_LEVEL_KEYWORDS
+            ) :
+        ].split(KEYWORDS_SEPARATOR)
+        only_keywords = [keyword.strip() for keyword in only_keywords]
+        try:
+            await save_keywords(
+                schema_name,
+                Keywords(
+                    keywords=only_keywords,
+                    keyword_type=keyword_type,
+                    search_id=self.search_history_id,
+                ),
+            )
+        except Exception as e:
+            logger.error(f"Error saving keywords: {e}")
 
 
 @sio.event
@@ -137,7 +157,7 @@ async def relevant_documents(
             is_search_query=True,
         )
         project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
-        callback = KeywordsCallback(
+        callback = PersistentCallback(
             sid=sid,
             request_id=document_search_query.request_id,
             project_dir=project_dir,

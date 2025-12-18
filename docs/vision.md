@@ -102,3 +102,10 @@ What are the components?
 What is novel (innovation paragraph)?
 
 This is a multi-tennant fully integrated solution which offers a full range of tools around your data which is internally represented as a knowledge graph. You get in one package a research agent associated to a smart advisor, two chatbots, a search engine, visualization tools that you can use as is or integrate into existing webpages or other services.
+
+
+2025-11-12
+
+- generational use cases: automated use cases, propositions, learning materials, webpages, business opportunities generator
+- pluggable use cases
+- ingestional: extractional tools

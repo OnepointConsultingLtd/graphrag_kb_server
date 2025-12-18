@@ -4,6 +4,7 @@ from abc import ABC
 
 from graphrag_kb_server.model.search.keywords import Keywords
 from graphrag_kb_server.model.search.match_query import MatchOutput
+from graphrag_kb_server.model.search.relationships import RelationshipsJSON
 
 
 class RelevanceScore(StrEnum):
@@ -68,8 +69,8 @@ class DocumentSearchQuery(BaseModel):
         default=None,
         description="The biggest challenge that the user is facing",
     )
-    
-    @field_validator('biggest_challenge', mode='before')
+
+    @field_validator("biggest_challenge", mode="before")
     @classmethod
     def clean_biggest_challenge(cls, v: str | None) -> str | None:
         """Remove leading/trailing spaces and trailing dots from biggest_challenge."""
@@ -80,10 +81,9 @@ class DocumentSearchQuery(BaseModel):
         # Remove leading and trailing spaces
         cleaned = v.strip()
         # Remove trailing dots
-        cleaned = cleaned.rstrip('.')
+        cleaned = cleaned.rstrip(".")
         cleaned = v.strip()
         return cleaned if cleaned else None
-    
 
 
 class SummarisationResponse(BaseModel):
@@ -171,4 +171,8 @@ class SearchResults(BaseModel):
     high_level_keywords: Keywords | None = Field(
         default=None,
         description="The high level keywords that were used to search for the documents",
+    )
+    relationships: RelationshipsJSON | None = Field(
+        default=None,
+        description="The relationships that were used to search for the documents",
     )

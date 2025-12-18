@@ -20,6 +20,7 @@ from graphrag_kb_server.service.db.common_operations import (
     DB_CACHE_EXPIRATION_TIME,
 )
 from graphrag_kb_server.model.digest_functions import content_sha256_combined
+from graphrag_kb_server.service.db.db_persistence_relationships import find_relationships
 
 TB_SEARCH_HISTORY = "TB_SEARCH_HISTORY"
 TB_SEARCH_RESULTS = "TB_SEARCH_RESULTS"
@@ -86,7 +87,7 @@ async def drop_search_history_tables(schema_name: str):
 DROP TABLE IF EXISTS {schema_name}.{TB_SEARCH_RESULTS};
 """,
         f"""
-DROP TABLE IF EXISTS {schema_name}.{TB_SEARCH_HISTORY};
+DROP TABLE IF EXISTS {schema_name}.{TB_SEARCH_HISTORY} CASCADE;
 """,
     ]
     for query in queries:
@@ -274,12 +275,19 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval
             )
         )
     from graphrag_kb_server.service.db.db_persistence_keywords import find_keywords
-    low_level_keywords = await find_keywords(schema_name, KeywordType.LOW_LEVEL, search_history_id)
-    high_level_keywords = await find_keywords(schema_name, KeywordType.HIGH_LEVEL, search_history_id)
+
+    low_level_keywords = await find_keywords(
+        schema_name, KeywordType.LOW_LEVEL, search_history_id
+    )
+    high_level_keywords = await find_keywords(
+        schema_name, KeywordType.HIGH_LEVEL, search_history_id
+    )
+    relationships = await find_relationships(schema_name, search_history_id)
     return SearchResults(
         request_id=document_search_query.request_id,
         documents=documents,
         response=response,
         low_level_keywords=low_level_keywords,
         high_level_keywords=high_level_keywords,
+        relationships=relationships,
     )

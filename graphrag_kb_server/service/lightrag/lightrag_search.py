@@ -172,7 +172,7 @@ In case of a coloquial question or non context related sentence you can respond 
             question=query,
             response=response_dict["llm_response"].get("content", ""),
             context=(
-                response_dict["llm_response"]["context"]
+                response_dict["llm_response"].get("context", None)
                 if (
                     query_params.context_format == ContextFormat.JSON_STRING_WITH_JSON
                     or query_params.context_format == ContextFormat.JSON_STRING
