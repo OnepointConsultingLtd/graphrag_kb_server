@@ -134,7 +134,14 @@ async def unzip_file(upload_folder: Path, zip_file: Path):
         if not target_folder.exists():
             target_folder.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
-            zip_ref.extractall(target_folder)
+            # Extract files one by one to handle individual errors
+            for member in zip_ref.namelist():
+                try:
+                    zip_ref.extract(member, target_folder)
+                except Exception as e:
+                    log.error(
+                        f"Failed to extract {member} from {zip_file.name}: {e}"
+                    )
     await convert_to_text(input_folder)
 
 

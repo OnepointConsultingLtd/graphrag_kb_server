@@ -322,6 +322,7 @@ async def upload_index(request: web.Request) -> web.Response:
         except Exception as e:
             write_project_file(project_folder, IndexingStatus.FAILED)
             logger.error(f"Failed to process uploaded file: {e}")
+            logger.exception(e)
             return
 
         try:
