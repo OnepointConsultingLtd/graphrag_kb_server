@@ -1090,8 +1090,8 @@ async def validate_token(request: web.Request) -> web.Response:
                 "Invalid token", "Please specify a valid token", headers=CORS_HEADERS
             )
         token_dict = await _validate_token(token)
-
-        if token_dict.get("permissions", ["read", "write"]) == ["read", "write"]:
+        permissions = token_dict.get("permissions", ["read", "write"])
+        if permissions == ["read", "write"] or permissions == ["read"]:
             return web.json_response(
                 {"message": "Token is valid", **token_dict}, headers=CORS_HEADERS
             )
@@ -1099,8 +1099,7 @@ async def validate_token(request: web.Request) -> web.Response:
             return invalid_response(
                 "Invalid token",
                 "Please specify a valid token",
-                status=401,
-                headers=CORS_HEADERS,
+                status=401
             )
 
     return await handle_error(handle_request, request=request)
