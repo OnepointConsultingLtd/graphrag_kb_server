@@ -58,6 +58,7 @@ async def insert_topics_with_centrality(
         simple_project.schema_name,
         simple_project.project_name,
         simple_project.engine.value,
+        create_if_not_exists=True,
     )
     for node_centrality in node_centralities:
         await insert_topic_with_centrality(

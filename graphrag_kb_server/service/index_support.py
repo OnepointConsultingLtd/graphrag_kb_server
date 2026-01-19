@@ -150,8 +150,9 @@ async def convert_to_text(input_folder: Path):
     for file in input_folder.glob("**/*.pdf"):
         try:
             await convert_pdf_to_markdown(file)
-        except Exception:
+        except Exception as e:
             log.error(f"Failed to convert {file} to markdown")
+            log.exception(e)
     for file in input_folder.glob("**/*.md"):
         text = file.read_text(encoding="utf-8")
         file.with_suffix(".txt").write_text(text, encoding="utf-8")

@@ -1,7 +1,6 @@
 from pathlib import Path
-from pdf_to_markdown_llm.service.openai_pdf_to_text import SupportedFormat
+from pdf_to_markdown_llm.service.openai_pdf_to_text import SupportedFormat, convert_file
 from pdf_to_markdown_llm.service.openai_pdf_to_text import (
-    convert_single_file,
     compact_files,
 )
 from graphrag_kb_server.logger import logger
@@ -10,7 +9,7 @@ FINAL_SUFFIX = "_final.txt"
 
 
 async def convert_pdf_to_markdown(local_pdf: Path) -> Path:
-    process_result = await convert_single_file(local_pdf)
+    process_result = await convert_file(local_pdf, SupportedFormat.MARKDOWN)
     if len(process_result.exceptions):
         raise Exception(
             f"Failed to convert PDF to markdown: {process_result.exceptions}"
@@ -28,9 +27,8 @@ async def convert_pdf_to_markdown(local_pdf: Path) -> Path:
                     f.unlink(missing_ok=True)
         except Exception:
             logger.error(f"Failed to delete {local_pdf.stem}*.md files")
-        markdown_file = markdown_file.rename(
-            markdown_file.parent
-            / markdown_file.name.replace("_aggregate.md", FINAL_SUFFIX)
-        )
+        final_file_path = markdown_file.parent / markdown_file.name.replace("_aggregate.md", FINAL_SUFFIX)
+        if not final_file_path.exists():
+            markdown_file = markdown_file.rename(final_file_path)
         return markdown_file
     raise Exception("No file generated")
