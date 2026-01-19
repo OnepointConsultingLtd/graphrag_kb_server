@@ -14,6 +14,8 @@ import RenderReactMarkdown from "./RenderReactMarkdown";
 import ThinkingIndicator from "./ThinkingIndicator";
 import { ButtonLayout } from "../buttons/ButtonLayout";
 import TopicButtons from "../buttons/TopicButtons";
+import { useDashboardStore } from "../../context/dashboardStore";
+import Spinner from "../icons/Spinner";
 
 export function topicQuestionTemplate(topic: Topic) {
   return `Tell me more about this topic: ${topic.name}`;
@@ -112,6 +114,7 @@ function ConversationTopicCommandButtons() {
 }
 
 function ConversationTopics() {
+  const { downloadingTopics, setDownloadingTopics } = useDashboardStore();
   const {
     jwt,
     selectedProject,
@@ -137,6 +140,7 @@ function ConversationTopics() {
 
   useEffect(() => {
     if (jwt && selectedProject) {
+      setDownloadingTopics(true);
       fetchTopics(jwt, selectedProject, conversationTopicsNumber)
         .then(setTopics)
         .then(() => {
@@ -145,7 +149,8 @@ function ConversationTopics() {
             block: "start", // options: 'start', 'center', 'end', 'nearest'
           });
         })
-        .catch(console.error);
+        .catch(console.error)
+        .finally(() => setDownloadingTopics(false));
     }
   }, [jwt, selectedProject, setTopics, conversationTopicsNumber]);
 
@@ -180,7 +185,15 @@ function ConversationTopics() {
         >
           <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
         </svg>
-        {!hasTopics && <p>Start a conversation...</p>}
+        {!hasTopics && !downloadingTopics && <p>Start a conversation...</p>}
+        {downloadingTopics && (
+          <div className="flex justify-center items-center pt-4">
+            <div>
+              <Spinner size={12} />
+              <p>Downloading topics...</p>
+            </div>
+          </div>
+        )}
         {hasTopics && (
           <p className="mb-6">Select a topic for a conversation...</p>
         )}
@@ -295,13 +308,6 @@ export default function Messages() {
                       : "justify-start"
                   } animate-slideIn items-start`}
                 >
-                  {/* {message.type === ChatMessageTypeOptions.AGENT && (
-                    <div className="flex-shrink-0 hidden lg:block mr-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 border border-blue-300">
-                        A
-                      </div>
-                    </div>
-                  )} */}
                   <div
                     className={`text-left ${
                       isFloating ? "p-2" : "p-6"
@@ -331,14 +337,6 @@ export default function Messages() {
                       </ul>
                     ) : null}
                   </div>
-
-                  {/* {message.type === ChatMessageTypeOptions.USER && (
-                    <div className="flex-shrink-0 hidden lg:block ml-2">
-                      <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center font-bold text-purple-700 border border-purple-300">
-                        U
-                      </div>
-                    </div>
-                  )} */}
                 </div>
               );
             })}
