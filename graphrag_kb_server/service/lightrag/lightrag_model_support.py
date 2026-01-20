@@ -165,7 +165,7 @@ async def structured_completion(
                     "schema"
                 ] = ResponseSchema.model_json_schema()
     logger.info(f"Calling structured completion with config: {config_dict['model']}")
-    logger.info(f"Calling structured completion with system prompt: {config_dict['messages'][0]['content']}")
+    logger.debug(f"Calling structured completion with system prompt: {config_dict['messages'][0]['content']}")
     response = await client.chat.completions.create(**config_dict)
     content = response.choices[0].message.content
     return json.loads(content) if structured_output else content
