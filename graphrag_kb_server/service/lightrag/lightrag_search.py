@@ -478,13 +478,6 @@ async def kg_query(
         )
         response = cached_response
     else:
-        # response = await use_model_func(
-        #     user_query,
-        #     system_prompt=sys_prompt,
-        #     history_messages=query_param.conversation_history,
-        #     enable_cot=True,
-        #     stream=query_param.stream,
-        # )
         response = await use_model_func(
             query,
             system_prompt=sys_prompt,

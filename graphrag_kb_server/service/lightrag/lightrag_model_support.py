@@ -13,6 +13,7 @@ from lightrag.types import GPTKeywordExtractionFormat
 
 from graphrag_kb_server.config import cfg, lightrag_cfg
 from graphrag_kb_server.model.chat_response import ResponseSchema
+from graphrag_kb_server.logger import logger
 
 
 def _create_combined_prompt(system_prompt, history_messages, prompt):
@@ -163,6 +164,7 @@ async def structured_completion(
                 config_dict["response_format"][
                     "schema"
                 ] = ResponseSchema.model_json_schema()
+    logger.info(f"Calling structured completion with config: {config_dict}")
     response = await client.chat.completions.create(**config_dict)
     content = response.choices[0].message.content
     return json.loads(content) if structured_output else content

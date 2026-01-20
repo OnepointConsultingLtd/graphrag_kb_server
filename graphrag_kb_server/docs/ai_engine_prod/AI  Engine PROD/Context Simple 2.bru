@@ -1,0 +1,29 @@
+meta {
+  name: Context Simple 2
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://engine.onepointltd.ai/protected/project/context?question=Which+area+of+Responsible+AI+are+you+most+concerned+about%3F%0APredictability+%26+Stakeholder+Focus+-+Are+diverse+stakeholders+%28e.g.%2C+end+users%2C+communities%2C+regulators%29+consulted+in+AI+design+and+deployment+to+ensure+their+concerns+are+addressed%3F%0A%0AWhat+are+your+current+challenges+or+concerns+when+it+comes+to+involving+diverse+stakeholders+such+as+end+users%2C+communities%2C+and+regulators+in+the+design+and+deployment+of+your+AI+systems%3F%0AWe+lack+clarity+on+how+to+incorporate+stakeholder+feedback+into+the+AI+development+process.%0A%0AWhat+specific+difficulties+do+you+encounter+when+attempting+to+gather+and+integrate+feedback+from+diverse+stakeholders%2C+such+as+end+users%2C+communities%2C+and+regulators%2C+during+the+AI+design+and+deployment+process%3F%0AWe+lack+a+structured+process+to+capture%2C+evaluate%2C+and+act+on+the+feedback+received+from+stakeholders.%0A%0ACould+you+describe+any+existing+strategies+or+frameworks+your+organisation+currently+uses+to+engage+and+integrate+feedback+from+diverse+stakeholders+during+the+AI+design+and+deployment+process%3F%0AWe+have+some+informal+practices+but+lack+a+comprehensive+framework.&use_context_records=false&search=local&context_size=3000&project=responsible_ai&engine=lightrag
+  body: none
+  auth: bearer
+}
+
+params:query {
+  question: Which+area+of+Responsible+AI+are+you+most+concerned+about%3F%0APredictability+%26+Stakeholder+Focus+-+Are+diverse+stakeholders+%28e.g.%2C+end+users%2C+communities%2C+regulators%29+consulted+in+AI+design+and+deployment+to+ensure+their+concerns+are+addressed%3F%0A%0AWhat+are+your+current+challenges+or+concerns+when+it+comes+to+involving+diverse+stakeholders+such+as+end+users%2C+communities%2C+and+regulators+in+the+design+and+deployment+of+your+AI+systems%3F%0AWe+lack+clarity+on+how+to+incorporate+stakeholder+feedback+into+the+AI+development+process.%0A%0AWhat+specific+difficulties+do+you+encounter+when+attempting+to+gather+and+integrate+feedback+from+diverse+stakeholders%2C+such+as+end+users%2C+communities%2C+and+regulators%2C+during+the+AI+design+and+deployment+process%3F%0AWe+lack+a+structured+process+to+capture%2C+evaluate%2C+and+act+on+the+feedback+received+from+stakeholders.%0A%0ACould+you+describe+any+existing+strategies+or+frameworks+your+organisation+currently+uses+to+engage+and+integrate+feedback+from+diverse+stakeholders+during+the+AI+design+and+deployment+process%3F%0AWe+have+some+informal+practices+but+lack+a+comprehensive+framework.
+  use_context_records: false
+  search: local
+  context_size: 3000
+  project: responsible_ai
+  engine: lightrag
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnaWxfZmVybmFuZGVzIiwibmFtZSI6ImdpbF9mZXJuYW5kZXMiLCJpYXQiOjE3Njg4MzM5ODQsImVtYWlsIjoiZ2lsLmZlcm5hbmRlc0BvbmVwb2ludGx0ZC5jb20iLCJwZXJtaXNzaW9ucyI6WyJyZWFkIl19.iK09Zon_LAGBYsps2x-Jv0YAJsc5fRC04ua18HmThhm8EDNY8TxkNJJfYDBr2l8DrxVXny0o8_jdRxWhgkIBew
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
