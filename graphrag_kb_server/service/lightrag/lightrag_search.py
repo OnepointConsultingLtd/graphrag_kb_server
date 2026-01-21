@@ -907,6 +907,13 @@ async def _perform_kg_search(
             except Exception as e:
                 logger.warning(f"Failed to pre-compute query embedding: {e}")
                 query_embedding = None
+    else:
+        logger.warning("No query embedding available")
+        logger.warning(f"Query: {query}")
+        logger.warning(f"kg_chunk_pick_method: {kg_chunk_pick_method}")
+        logger.warning(f"chunks_vdb: {chunks_vdb}")
+        logger.warning(f"embedding_func_config: {embedding_func_config}")
+        logger.warning(f"query_embedding: {query_embedding}")
 
     # Handle local and global modes
     if query_param.mode == "local" and len(ll_keywords) > 0:
