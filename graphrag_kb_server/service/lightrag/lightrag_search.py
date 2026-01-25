@@ -1,4 +1,5 @@
 import time
+import asyncio
 from pathlib import Path
 from dataclasses import asdict, dataclass
 from typing import Any
@@ -44,6 +45,7 @@ from lightrag.base import (
     QueryResult,
 )
 
+from graphrag_kb_server.callbacks.callback_support import BaseCallback
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.model.rag_parameters import (
     ContextFormat,
@@ -389,6 +391,7 @@ async def kg_query(
         text_chunks_db,
         query_param,
         chunks_vdb,
+        query_params.callback
     )
 
     if context_result is None:
@@ -562,6 +565,7 @@ async def _build_query_context(
     text_chunks_db: BaseKVStorage,
     query_param: QueryParam,
     chunks_vdb: BaseVectorStorage = None,
+    callback: BaseCallback | None = None,
 ) -> QueryContextResult | None:
     """
     Main query context building function using the new 4-stage architecture:
@@ -668,6 +672,11 @@ async def _build_query_context(
     logger.debug(
         f"[_build_query_context] Raw data entities: {len(raw_data.get('data', {}).get('entities', []))}, relationships: {len(raw_data.get('data', {}).get('relationships', []))}, chunks: {len(raw_data.get('data', {}).get('chunks', []))}"
     )
+
+    if callback is not None:
+        output = f"""Search result: {len(search_result['final_entities'])} entities and {len(search_result['final_relations'])} relations.
+Context length: {len(context) if context else 0}"""
+        await callback.callback(output)
 
     return QueryContextResult(context=context, raw_data=raw_data)
 
@@ -854,13 +863,6 @@ async def _build_context_str(
     return result, final_data
 
 
-def _shorten_file_path(context_obj: dict, max_depth: int = 20) -> str:
-    return [
-        {**e, "file_path": "<SEP>".join(e["file_path"].split("<SEP>")[:max_depth])}
-        for e in context_obj
-    ]
-
-
 async def _perform_kg_search(
     query: str,
     ll_keywords: str,
@@ -933,20 +935,22 @@ async def _perform_kg_search(
         )
 
     else:  # hybrid or mix mode
-        if len(ll_keywords) > 0:
-            local_entities, local_relations = await _get_node_data(
-                ll_keywords,
-                knowledge_graph_inst,
-                entities_vdb,
-                query_param,
-            )
-        if len(hl_keywords) > 0:
-            global_relations, global_entities = await _get_edge_data(
-                hl_keywords,
-                knowledge_graph_inst,
-                relationships_vdb,
-                query_param,
-            )
+        tasks = []
+        has_ll_keywords = len(ll_keywords) > 0
+        has_hl_keywords = len(hl_keywords) > 0
+        if has_ll_keywords:
+            tasks.append(_get_node_data(ll_keywords, knowledge_graph_inst, entities_vdb, query_param))
+        if has_hl_keywords:
+            tasks.append(_get_edge_data(hl_keywords, knowledge_graph_inst, relationships_vdb, query_param))
+
+        results = await asyncio.gather(*tasks)
+        if has_ll_keywords and has_hl_keywords:
+            local_entities, local_relations = results[0]
+            global_relations, global_entities = results[1]
+        elif has_ll_keywords:
+            local_entities, local_relations = results[0]
+        elif has_hl_keywords:
+            global_relations, global_entities = results[0]
 
         # Get vector chunks for mix mode
         if query_param.mode == "mix" and chunks_vdb:

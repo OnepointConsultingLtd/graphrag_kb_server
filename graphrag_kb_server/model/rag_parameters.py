@@ -117,5 +117,7 @@ def convert_to_lightrag_query_params(
         hl_keywords=query_params.hl_keywords,
         ll_keywords=query_params.ll_keywords,
         conversation_history=query_params.chat_history,
+        max_entity_tokens=40, # TODO: Make this part of configuration
+        max_relation_tokens=200, # TODO: Make this part of configuration
     )
     return param
