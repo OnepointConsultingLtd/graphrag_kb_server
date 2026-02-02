@@ -221,5 +221,5 @@ def write_project_file(project_dir: Path, status: IndexingStatus) -> Project:
     project_file = project_dir / PROJECT_INFO_FILE
     if not project_dir.exists():
         project_dir.mkdir(parents=True, exist_ok=True)
-    project_file.write_text(project.model_dump_json())
+    project_file.write_text(project.model_dump_json(), encoding="utf-8")
     return project

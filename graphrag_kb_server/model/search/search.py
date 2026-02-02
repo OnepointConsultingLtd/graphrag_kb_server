@@ -46,6 +46,10 @@ class DocumentSearchQuery(BaseModel):
         ...,
         description="The business type of the user",
     )
+    industry: str = Field(
+        ...,
+        description="The industry of the user",
+    )
     question: str | None = Field(
         ...,
         description="The question used to search for documentss or none in which case the question will be generated from the keywords",

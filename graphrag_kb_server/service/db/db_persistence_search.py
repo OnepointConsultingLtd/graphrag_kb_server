@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS {schema_name}.{TB_SEARCH_HISTORY} (
     LINKEDIN_PROFILE_URL TEXT NOT NULL,
     USER_ROLE CHARACTER VARYING(128) NOT NULL,
     USER_ORGANISATION_TYPE CHARACTER VARYING(128) NOT NULL,
+    USER_INDUSTRY CHARACTER VARYING(256) NULL,
     USER_BUSINESS_TYPE CHARACTER VARYING(128) NOT NULL,
     TOPIC_1 CHARACTER VARYING(128) NULL,
     TOPIC_2 CHARACTER VARYING(128) NULL,
@@ -105,6 +106,7 @@ async def insert_search_query(
     user_role = document_search_query.organisation_role
     user_organisation_type = document_search_query.organisation_type
     user_business_type = document_search_query.business_type
+    user_industry = document_search_query.industry
     topics_of_interest = document_search_query.topics_of_interest
     category_entities = topics_of_interest.entity_dict.get("category")
     topic_1 = None
@@ -128,14 +130,15 @@ async def insert_search_query(
             organisation_role=user_role,
             organisation_type=user_organisation_type,
             business_type=user_business_type,
+            industry=user_industry,
             topics_of_interest=topics_of_interest,
         )
     )
     search_history_id = await execute_query_with_return(
         f"""
 INSERT INTO {schema_name}.{TB_SEARCH_HISTORY} 
-(PROJECT_ID, REQUEST_ID, LINKEDIN_PROFILE_URL, USER_ROLE, USER_ORGANISATION_TYPE, USER_BUSINESS_TYPE, TOPIC_1, TOPIC_2, TOPIC_3, BIGGEST_CHALLENGE, USER_PROFILE, QUERY_DIGEST_SHA256)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+(PROJECT_ID, REQUEST_ID, LINKEDIN_PROFILE_URL, USER_ROLE, USER_ORGANISATION_TYPE, USER_BUSINESS_TYPE, USER_INDUSTRY, TOPIC_1, TOPIC_2, TOPIC_3, BIGGEST_CHALLENGE, USER_PROFILE, QUERY_DIGEST_SHA256)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 RETURNING ID;
 """,
         project_id,
@@ -144,6 +147,7 @@ RETURNING ID;
         user_role,
         user_organisation_type,
         user_business_type,
+        user_industry,
         topic_1,
         topic_2,
         topic_3,
@@ -232,6 +236,7 @@ async def get_search_results(
             organisation_role=document_search_query.organisation_role,
             organisation_type=document_search_query.organisation_type,
             business_type=document_search_query.business_type,
+            industry=document_search_query.industry,
             topics_of_interest=document_search_query.topics_of_interest,
         )
     )
@@ -250,7 +255,7 @@ WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED
     search_results = await fetch_all(
         f"""
 SELECT ID, DOCUMENT_SUMMARY, DOCUMENT_PATH, DOCUMENT_MAIN_KEYWORD, DOCUMENT_RELEVANCY_SCORE, DOCUMENT_RELEVANCY_SCORE_REASONING FROM {schema_name}.{TB_SEARCH_RESULTS}
-WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} day';
+WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} days' ORDER BY DOCUMENT_RELEVANCY_SCORE DESC
 """,
         search_history_id,
     )

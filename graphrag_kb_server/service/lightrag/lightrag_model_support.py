@@ -125,7 +125,7 @@ async def structured_completion(
     structured_output = "structured_output" in kwargs and kwargs["structured_output"]
     config_dict = {
         "model": lightrag_cfg.lightrag_model,
-        "messages": messages,
+        "messages": messages
     }
     if structured_output:
         # Detect client type to use appropriate format
