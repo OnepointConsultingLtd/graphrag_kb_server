@@ -167,11 +167,17 @@ async def process_search_response(
     return await insert_search_results(project_dir, search_history_id, search_results)
 
 
+def _ensure_valid_utf8(s: str) -> str:
+    """Ensure string is valid UTF-8 for database storage (replaces invalid chars)."""
+    return s.encode("utf-8", errors="replace").decode("utf-8")
+
+
 async def update_search_query_with_response(
     project_dir: Path, search_history_id: int, response: str
 ) -> None:
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
+    sanitized_response = _ensure_valid_utf8(response)
     updated_count = await fetch_all(
         f"""
 UPDATE {schema_name}.{TB_SEARCH_HISTORY}
@@ -179,7 +185,7 @@ SET RESPONSE = $1
 WHERE ID = $2
 RETURNING ID;
 """,
-        response,
+        sanitized_response,
         search_history_id,
     )
     return len(updated_count)
