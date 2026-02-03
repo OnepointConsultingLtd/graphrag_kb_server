@@ -26,6 +26,10 @@ RELEVANCE_SCORE_POINTS_MAP = {
 
 class DocumentSearchQuery(BaseModel):
     model_config = ConfigDict(frozen=True)
+    generated_user_id: str = Field(
+        default="",
+        description="The generated user ID used to track the request",
+    )
     request_id: str = Field(
         default="",
         description="The request ID used to track the request",
@@ -73,6 +77,7 @@ class DocumentSearchQuery(BaseModel):
         default=None,
         description="The biggest challenge that the user is facing",
     )
+
 
     @field_validator("biggest_challenge", mode="before")
     @classmethod

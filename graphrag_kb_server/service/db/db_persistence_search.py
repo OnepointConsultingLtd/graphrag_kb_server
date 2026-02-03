@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS {schema_name}.{TB_SEARCH_HISTORY} (
     ID SERIAL NOT NULL,
     PROJECT_ID INTEGER NOT NULL,
     REQUEST_ID CHARACTER VARYING(128) NOT NULL,
+    GENERATED_USER_ID CHARACTER VARYING(128) NULL,
     LINKEDIN_PROFILE_URL TEXT NOT NULL,
     USER_ROLE CHARACTER VARYING(128) NOT NULL,
     USER_ORGANISATION_TYPE CHARACTER VARYING(128) NOT NULL,
@@ -122,6 +123,7 @@ async def insert_search_query(
     biggest_challenge = document_search_query.biggest_challenge
     _, query_digest_sha256 = content_sha256_combined(
         DocumentSearchQuery(
+            generated_user_id=document_search_query.generated_user_id,
             request_id="",
             question=document_search_query.question,
             user_profile=document_search_query.user_profile,
@@ -137,12 +139,13 @@ async def insert_search_query(
     search_history_id = await execute_query_with_return(
         f"""
 INSERT INTO {schema_name}.{TB_SEARCH_HISTORY} 
-(PROJECT_ID, REQUEST_ID, LINKEDIN_PROFILE_URL, USER_ROLE, USER_ORGANISATION_TYPE, USER_BUSINESS_TYPE, USER_INDUSTRY, TOPIC_1, TOPIC_2, TOPIC_3, BIGGEST_CHALLENGE, USER_PROFILE, QUERY_DIGEST_SHA256)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+(PROJECT_ID, REQUEST_ID, GENERATED_USER_ID, LINKEDIN_PROFILE_URL, USER_ROLE, USER_ORGANISATION_TYPE, USER_BUSINESS_TYPE, USER_INDUSTRY, TOPIC_1, TOPIC_2, TOPIC_3, BIGGEST_CHALLENGE, USER_PROFILE, QUERY_DIGEST_SHA256)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 RETURNING ID;
 """,
         project_id,
         document_search_query.request_id,
+        document_search_query.generated_user_id,
         linkedin_profile_url,
         user_role,
         user_organisation_type,
@@ -234,6 +237,7 @@ async def get_search_results(
     project_id = await get_project_id_from_path(project_dir)
     _, query_digest_sha256 = content_sha256_combined(
         DocumentSearchQuery(
+            generated_user_id=document_search_query.generated_user_id,
             request_id="",
             question=document_search_query.question,
             user_profile=document_search_query.user_profile,

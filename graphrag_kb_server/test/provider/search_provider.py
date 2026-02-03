@@ -15,6 +15,7 @@ COMMON_REQUEST_ID = "1234567890"
 
 def create_document_search_query() -> DocumentSearchQuery:
     return DocumentSearchQuery(
+        generated_user_id="1234567890",
         question="How can I use AI to improve my automation and achieve truly autonomous systems?",
         user_profile="I am a software engineer with a passion for building scalable and efficient systems.",
         biggest_challenge="I want to improve my automation and achieve truly autonomous systems.",

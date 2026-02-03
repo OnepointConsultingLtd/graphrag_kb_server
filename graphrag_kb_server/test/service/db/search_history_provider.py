@@ -6,6 +6,7 @@ from graphrag_kb_server.model.search.search import DocumentSearchQuery, Relevanc
 
 def create_search_history() -> DocumentSearchQuery:
     return DocumentSearchQuery(
+        generated_user_id="test_generated_user_id",
         request_id="test_request_id",
         linkedin_profile_url="test_linkedin_profile_url",
         organisation_role="test_organisation_role",
