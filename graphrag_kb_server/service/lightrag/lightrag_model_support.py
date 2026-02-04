@@ -11,9 +11,11 @@ from lightrag.utils import TokenTracker
 from lightrag.llm.openai import openai_complete_if_cache
 from lightrag.types import GPTKeywordExtractionFormat
 
-from graphrag_kb_server.config import cfg, lightrag_cfg
+from graphrag_kb_server.config import LightRAGModelType, cfg, lightrag_cfg
 from graphrag_kb_server.model.chat_response import ResponseSchema
 from graphrag_kb_server.logger import logger
+
+from openrouter import OpenRouter
 
 
 def _create_combined_prompt(system_prompt, history_messages, prompt):
@@ -109,7 +111,7 @@ async def gemini_model_func(
 
 
 async def structured_completion(
-    client: AsyncTogether | AsyncOpenAI,
+    client: AsyncTogether | AsyncOpenAI | OpenRouter,
     prompt,
     system_prompt=None,
     history_messages=[],
@@ -127,11 +129,16 @@ async def structured_completion(
         "model": lightrag_cfg.lightrag_model,
         "messages": messages
     }
+    # Detect client type to use appropriate format
+    is_openai = isinstance(client, AsyncOpenAI)
+    is_openrouter = isinstance(client, OpenRouter)
+    
+    # Add provider parameter for OpenRouter if specified in config
+    # OpenRouter expects provider as a dictionary matching ChatGenerationParamsProvider
+    if is_openrouter and cfg.openrouter_provider:
+        config_dict["provider"] = {"name": cfg.openrouter_provider}
     if structured_output:
-        # Detect client type to use appropriate format
-        is_openai = isinstance(client, AsyncOpenAI)
-
-        if is_openai:
+        if is_openai or is_openrouter:
             # OpenAI requires nested json_schema structure with name
             if (
                 "structured_output_format" in kwargs
@@ -150,6 +157,8 @@ async def structured_completion(
                 "type": "json_schema",
                 "json_schema": {"name": schema_name, "schema": schema_dict},
             }
+            if is_openrouter:
+                config_dict["response_format"]["json_schema"]["strict"] = True
         else:
             # Together AI uses simpler format
             config_dict["response_format"] = {"type": "json_schema"}
@@ -166,7 +175,10 @@ async def structured_completion(
                 ] = ResponseSchema.model_json_schema()
     logger.info(f"Calling structured completion with config: {config_dict['model']}")
     logger.debug(f"Calling structured completion with system prompt: {config_dict['messages'][0]['content']}")
-    response = await client.chat.completions.create(**config_dict)
+    if is_openrouter:
+        response = await client.chat.send_async(**config_dict)
+    else:
+        response = await client.chat.completions.create(**config_dict)
     content = response.choices[0].message.content
     return json.loads(content) if structured_output else content
 
@@ -188,6 +200,16 @@ async def openai_model_func(
         client, prompt, system_prompt, history_messages, **kwargs
     )
 
+
+async def openrouter_model_func(
+    prompt, system_prompt=None, history_messages=[], **kwargs
+) -> str:
+    with OpenRouter(
+        api_key=cfg.openrouter_api_key
+    ) as client:
+        return await structured_completion(
+            client, prompt, system_prompt, history_messages, **kwargs
+        )
 
 def openai_model_func_factory(model: str) -> Callable[..., Awaitable[str]]:
     async def openai_model_func(
@@ -215,9 +237,9 @@ def openai_model_func_factory(model: str) -> Callable[..., Awaitable[str]]:
 
 def select_model_func() -> Callable[..., Awaitable[str]]:
     match lightrag_cfg.lightrag_model_type:
-        case "google":
+        case LightRAGModelType.GOOGLE:
             return gemini_model_func
-        case "openai":
+        case LightRAGModelType.OPENAI:
             match lightrag_cfg.lightrag_model:
                 case "gpt-4o-mini":
                     return openai_model_func
@@ -225,8 +247,10 @@ def select_model_func() -> Callable[..., Awaitable[str]]:
                     return openai_model_func
                 case model if model.startswith("gpt"):
                     return openai_model_func
-        case "togetherai":
+        case LightRAGModelType.TOGETHERAI:
             return togetherai_model_func
+        case LightRAGModelType.OPENROUTER:
+            return openrouter_model_func
         case _:
             raise ValueError(
                 f"Invalid LightRAG model type: {lightrag_cfg.lightrag_model_type}"

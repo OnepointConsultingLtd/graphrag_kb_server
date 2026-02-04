@@ -1,3 +1,4 @@
+from enum import StrEnum
 import os
 import yaml
 import shutil
@@ -102,6 +103,14 @@ class Config:
     server_base_url = os.getenv("SERVER_BASE_URL")
     assert server_base_url is not None, "Please specify the server base URL"
 
+    openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+    assert openrouter_api_key is not None, "Please specify the OpenRouter API key"
+    openrouter_model = os.getenv("OPENROUTER_MODEL")
+    assert openrouter_model is not None, "Please specify the OpenRouter model"
+    openrouter_model_embedding = os.getenv("OPENROUTER_MODEL_EMBEDDING")
+    assert openrouter_model_embedding is not None, "Please specify the OpenRouter model embedding"
+    openrouter_provider = os.getenv("OPENROUTER_PROVIDER")  # Optional: specify provider (e.g., "openai", "anthropic", "mistral")
+
 
 class WebsocketConfig:
     websocket_server = os.getenv("SERVER")
@@ -145,6 +154,13 @@ class AdminConfig:
         administrators = []
 
 
+class LightRAGModelType(StrEnum):
+    GOOGLE = "google"
+    OPENAI = "openai"
+    TOGETHERAI = "togetherai"
+    OPENROUTER = "openrouter"
+
+
 class LightRAGConfig:
     lightrag_model = os.getenv("LIGHTRAG_MODEL")
     assert lightrag_model is not None, "Please specify the LightRAG model"
@@ -152,11 +168,7 @@ class LightRAGConfig:
     assert lightrag_lite_model is not None, "Please specify the LightRAG quick model"
     lightrag_model_type = os.getenv("LIGHTRAG_MODEL_TYPE", "google")
     assert lightrag_model_type is not None, "Please specify the LightRAG model type"
-    assert lightrag_model_type in [
-        "google",
-        "openai",
-        "togetherai",
-    ], "Invalid LightRAG model type"
+    assert lightrag_model_type in [m.value for m in LightRAGModelType], "Invalid LightRAG model type"
 
 
 class LinkedInConfig:
