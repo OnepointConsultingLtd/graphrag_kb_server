@@ -1,3 +1,5 @@
+docker system prune -f
+
 # Use this script to build the docker image
 # You need to have uv and docker installed
 # You need to have the .env file in the root of the project
