@@ -318,18 +318,7 @@ async def aquery_llm(
 
     except Exception as e:
         logger.error(f"Query failed: {e}")
-        # Return error response
-        return {
-            "status": "failure",
-            "message": f"Query failed: {str(e)}",
-            "data": {},
-            "metadata": {},
-            "llm_response": {
-                "content": None,
-                "response_iterator": None,
-                "is_streaming": False,
-            },
-        }
+        raise e
 
 
 async def kg_query(
