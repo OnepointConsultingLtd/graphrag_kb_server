@@ -3,6 +3,7 @@ from typing import Tuple
 from pathlib import Path
 import shutil
 
+from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg, websocket_cfg
 from graphrag_kb_server.model.jwt_token import JWTToken
 from graphrag_kb_server.model.error import Error, ErrorCode
@@ -50,23 +51,34 @@ async def delete_tennant_folder_by_folder(folder_name: str) -> str | None:
 
 def list_tennants() -> list[Tennant]:
     tennants = []
+    logger.info(f"Listing tennants from {cfg.graphrag_root_dir_path}")
     for d in cfg.graphrag_root_dir_path.glob("*"):
         if d.is_dir():
+            logger.info(f"Tennant folder: {d}")
             tennant_jsons = list(d.glob(TENNANT_JSON))
+            logger.info(f"Tennant JSONs: {len(tennant_jsons)}")
             if len(tennant_jsons) > 0:
+                logger.info(f"Tennant JSON: {tennant_jsons[0]}")
                 tennant_json: Path = tennant_jsons[0]
                 tennant_json_content = tennant_json.read_text(encoding="utf-8")
+                logger.info(f"Tennant JSON content: {tennant_json_content}")
                 tennant_json_dict = json.loads(tennant_json_content)
+                logger.info(f"Tennant JSON dict: {tennant_json_dict}")
                 token = tennant_json_dict["token"]
+                logger.info(f"Tennant token: {token}")
+                creation_timestamp = get_creation_time(d)
+                logger.info(f"Tennant creation timestamp: {creation_timestamp}")
                 tennants.append(
                     Tennant(
                         folder_name=d.name,
-                        creation_timestamp=get_creation_time(d),
+                        creation_timestamp=creation_timestamp,
                         token=token,
                         visualization_url=f"//{websocket_cfg.websocket_server}:{websocket_cfg.websocket_port}/graphrag.html?token={token}",
                         chat_url=f"//{websocket_cfg.websocket_server}:{websocket_cfg.websocket_port}/chat.html?token={token}",
                     )
                 )
+                logger.info(f"Read tennant: {d}")
+    logger.info(f"Found {len(tennants)} tennants")
     return tennants
 
 

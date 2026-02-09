@@ -1,7 +1,5 @@
 from enum import StrEnum
 import os
-import yaml
-import shutil
 from pathlib import Path
 import random
 
@@ -49,10 +47,8 @@ class Config:
         togetherai_model is not None
     ), "Please specify the TOGETHERAI_MODEL environment variable."
 
-    config_dir_str = os.getenv("CONFIG_DIR")
-    assert config_dir_str is not None, "The configuration directory with Swagger files"
-    config_dir = Path(config_dir_str)
-    create_if_not_exists(config_dir)
+    config_dir = Path(__file__).parent.parent / "config"
+    assert config_dir.exists(), "The configuration directory with Swagger files does not exist"
 
     graphrag_root_dir = os.getenv("GRAPHRAG_ROOT_DIR")
     assert graphrag_root_dir is not None, "Please specify the Graphrag root directory."
@@ -142,16 +138,15 @@ cfg = Config()
 
 
 class AdminConfig:
-    admins = cfg.config_dir / "administration.yaml"
-    if not admins.exists():
-        if (cfg.config_dir / "administration_local.yaml").exists():
-            shutil.copyfile(cfg.config_dir / "administration_local.yaml", admins)
-    if admins.exists():
-        yaml_text = admins.read_text()
-        content = yaml.safe_load(yaml_text)
-        administrators = content["administrators"]
-    else:
-        administrators = []
+
+    def __init__(self) -> None:
+        self._administrators = []
+        self._loading = False
+
+    async def get_administrators(self) -> list[str]:
+        from graphrag_kb_server.service.db.db_persistence_admin_user import select_admin_emails
+        
+        return await select_admin_emails()
 
 
 class LightRAGModelType(StrEnum):
@@ -215,8 +210,6 @@ websocket_cfg = WebsocketConfig()
 
 jwt_cfg = JWTConfig()
 
-admin_cfg = AdminConfig()
-
 lightrag_cfg = LightRAGConfig()
 
 linkedin_cfg = LinkedInConfig()
@@ -224,3 +217,5 @@ linkedin_cfg = LinkedInConfig()
 bright_data_cfg = BrightDataConfig()
 
 db_cfg = DBConfig()
+
+admin_cfg = AdminConfig()

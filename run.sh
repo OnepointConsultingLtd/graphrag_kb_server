@@ -6,13 +6,13 @@ source .venv/bin/activate
 /home/ubuntu/.local/bin/uv sync
 
 # Build GraphRAG front end
-# cd front_end
-# cp server_prod.js server.ts
-# yarn
-# yarn build
-# cd ..
+cd front_end
+cp server_prod.js server.ts
+yarn
+yarn build
+cd ..
 
-Build front end chat
+# Build front end chat
 nvm use v22.12.0
 cd front_end_chat
 cp src/lib/server_prod.ts src/lib/server.ts

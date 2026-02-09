@@ -135,10 +135,11 @@ async def extract_keywords_only_lightrag(
     )
 
 
-async def lightrag_search(
+async def _lightrag_search_impl(
     query_params: QueryParameters,
     only_need_context: bool = False,
 ) -> ChatResponse:
+    """Internal implementation of lightrag_search without retry logic."""
     project_folder = query_params.context_params.project_dir
     query = query_params.context_params.query
     system_prompt_additional = query_params.system_prompt_additional or ""
@@ -192,6 +193,45 @@ In case of a coloquial question or non context related sentence you can respond 
         question=query,
         response=await rag.aquery(query, param),
     )
+
+
+async def lightrag_search(
+    query_params: QueryParameters,
+    only_need_context: bool = False,
+) -> ChatResponse:
+    """
+    Execute LightRAG search with automatic retry logic.
+    
+    On failure, retries up to 5 times with reduced parameters:
+    - max_entity_size: reduced to 10
+    - max_relation_size: reduced to 10
+    - max_filepath_depth: reduced to 10
+    """
+    retries = 5
+    current_params = query_params
+    
+    while retries > 0:
+        try:
+            return await _lightrag_search_impl(current_params, only_need_context)
+        except Exception as e:
+            logger.error(f"Error in lightrag_search: {e}")
+            retries -= 1
+            if retries == 0:
+                raise e
+            
+            # Reduce parameters for retry
+            params_dict = current_params.model_dump()
+            params_dict["max_entity_size"] = 10
+            params_dict["max_relation_size"] = 10
+            params_dict["max_filepath_depth"] = 10
+            current_params = QueryParameters(**params_dict)
+            
+            # Notify callback if available
+            if current_params.callback:
+                await current_params.callback.callback(
+                    f"Failed to search documents, retrying {retries} more times."
+                )
+            logger.info(f"Retrying lightrag_search {retries} more times with reduced parameters")
 
 
 async def aquery_llm(
@@ -953,7 +993,7 @@ async def _perform_kg_search(
             global_relations, global_entities = results[0]
 
         # Get vector chunks for mix mode
-        if query_param.mode == "mix" and chunks_vdb:
+        if query_param.mode == "mix" or query_param.mode == "hybrid" and chunks_vdb:
             vector_chunks = await _get_vector_context(
                 query,
                 chunks_vdb,

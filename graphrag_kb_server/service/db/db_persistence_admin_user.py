@@ -94,7 +94,7 @@ SELECT * FROM public.{TB_ADMIN_USERS};
 """,
     )
     return [
-        {"username": result.get("name"), "email": result.get("email")}
+        {"username": result.get("name"), "email": result.get("email"), "jwt_token": result.get("jwt_token")}
         for result in results
     ]
 
@@ -117,3 +117,13 @@ async def create_initial_admin_user():
         raise ValueError(
             "ADMIN_TOKEN_NAME, ADMIN_TOKEN_EMAIL and ADMIN_TOKEN_PASSWORD must be set"
         )
+
+
+async def select_admin_emails() -> list[str]:
+    results = await fetch_all(
+        f"""
+SELECT email FROM public.{TB_ADMIN_USERS};
+""",
+    )
+    return [result.get("email") for result in results]
+

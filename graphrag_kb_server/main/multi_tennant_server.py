@@ -90,7 +90,7 @@ async def auth_middleware(request: web.Request, handler):
         # All tennant routes are only accessible to administrators
         if request_path.startswith("/protected/tennant"):
             email = token_dict["email"]
-            if email not in admin_cfg.administrators:
+            if email not in await admin_cfg.get_administrators():
                 return web.json_response(
                     {"error": "Only administrators can create or delete tennants."},
                     status=UNAUTHORIZED,

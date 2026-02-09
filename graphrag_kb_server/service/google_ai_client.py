@@ -3,6 +3,7 @@ import json
 from google import genai
 from google.genai import types
 from openai import AsyncOpenAI
+from openrouter import OpenRouter
 
 from pydantic import BaseModel
 
@@ -43,3 +44,30 @@ user:{user_message}
                 response_format=response_schema,
             )
             return json.loads(response.choices[0].message.content)
+        case _:
+            # Use OpenRouter as default
+            schema_dict = response_schema.model_json_schema()
+            schema_name = schema_dict.get("title", response_schema.__name__)
+            
+            async with OpenRouter(api_key=cfg.openrouter_api_key) as client:
+                config_dict = {
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": user_message},
+                    ],
+                    "response_format": {
+                        "type": "json_schema",
+                        "json_schema": {
+                            "name": schema_name,
+                            "schema": schema_dict,
+                            "strict": True,
+                        },
+                    },
+                }
+                # Add provider parameter if specified in config
+                if cfg.openrouter_provider:
+                    config_dict["provider"] = {"name": cfg.openrouter_provider}
+                
+                response = await client.chat.send_async(**config_dict)
+                return json.loads(response.choices[0].message.content)

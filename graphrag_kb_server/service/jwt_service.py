@@ -79,49 +79,6 @@ def save_token_file(token: JWTToken, token_file: str, name: str, email: str):
 TOKEN_FILE = "administration_token.txt"
 
 
-def generate_admin_token():
-    jwt_cfg.admin_jwt = os.getenv("ADMIN_JWT")
-    administration_token_file = cfg.config_dir / TOKEN_FILE
-    # Read the already saved token
-    if administration_token_file.exists():
-        with open(administration_token_file, "r", encoding="utf-8") as f:
-            for line in f:
-                if "Token:" in line:
-                    jwt_cfg.admin_jwt = line.split(":")[1].strip()
-                    break
-        return  #
-    logger.warning(
-        f"{administration_token_file.as_posix()} does not exist, generating new token"
-    )
-    # Generate the token from the environment variables
-    if jwt_cfg.admin_jwt is None or jwt_cfg.admin_jwt.strip() == "":
-        logger.warning("ADMIN_JWT is not set, generating")
-        if jwt_cfg.admin_token_name is None or jwt_cfg.admin_token_email is None:
-            raise ValueError(
-                "ADMIN_TOKEN_NAME and ADMIN_TOKEN_EMAIL must be set if ADMIN_JWT is not set."
-            )
-        jwt_token = asyncio.run(
-            generate_token(
-                JWTTokenData(
-                    name=jwt_cfg.admin_token_name, email=jwt_cfg.admin_token_email
-                ),
-                False,
-            )
-        )
-        jwt_cfg.admin_jwt = jwt_token.token
-        administration_yaml = cfg.config_dir / "administration.yaml"
-        with open(administration_yaml, "w") as f:
-            admin = jwt_cfg.admin_token_email
-            f.write(f"administrators:\n  - {admin}\n")
-            admin_cfg.administrators.append(admin)
-        logger.warning(f"ADMIN_JWT is now set to {jwt_cfg.admin_jwt}")
-        save_token_file(
-            jwt_token, TOKEN_FILE, jwt_cfg.admin_token_name, jwt_cfg.admin_token_email
-        )
-    else:
-        logger.warning(f"ADMIN_JWT is already set to {jwt_cfg.admin_jwt}")
-
-
 def save_security_yaml():
     security_yaml = cfg.config_dir / "security.yaml"
     if not security_yaml.exists():

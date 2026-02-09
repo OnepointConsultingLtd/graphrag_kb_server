@@ -17,12 +17,7 @@ def get_creation_time(path: Path) -> float:
 
     # Linux: Fallback options
     if sys.platform.startswith("linux"):
-        # Option 1: Use st_ctime (metadata change time)
-        # return stat.st_ctime
-
-        # Option 2: Use the earliest mtime from files inside the directory
-        mtimes = [f.stat().st_mtime for f in path.glob("**/*") if f.is_file()]
-        return min(mtimes) if mtimes else stat.st_mtime
+        return stat.st_ctime  # Just use this instead of the glob
 
     # For other platforms, use st_ctime as a fallback
     return stat.st_ctime

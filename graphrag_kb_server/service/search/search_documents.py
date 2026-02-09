@@ -59,32 +59,13 @@ async def search_documents(
 ) -> ChatResponse:
     question = generate_question(query)
     query_params = generate_query(project_dir, query, question, callback)
-    retries = 5
-    while retries > 0:
-        try:
-            results = await lightrag_search(query_params)
-            results.response["documents"] = sorted(
-                results.response["documents"],
-                key=lambda r: RELEVANCE_SCORE_POINTS_MAP[r["relevancy_score"]],
-                reverse=True,
-            )
-            return results
-        except Exception as e:
-            logger.error(f"Error searching documents: {e}")
-            retries -= 1
-            if retries == 0:
-                raise e
-            params = {
-                **query_params.model_dump(),
-                "max_entity_size": 10,
-                "max_relation_size": 10,
-                "max_filepath_depth": 10,
-            }
-            await callback.callback(
-                f"Failed to search documents, retrying {retries} more times."
-            )
-            query_params = QueryParameters(**params)
-            logger.info(f"Retrying {retries} times")
+    results = await lightrag_search(query_params)
+    results.response["documents"] = sorted(
+        results.response["documents"],
+        key=lambda r: RELEVANCE_SCORE_POINTS_MAP[r["relevancy_score"]],
+        reverse=True,
+    )
+    return results
 
 
 def get_document_text(project_dir: Path, document_path: Path) -> str:

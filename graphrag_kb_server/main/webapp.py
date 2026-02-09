@@ -13,10 +13,6 @@ from graphrag_kb_server.main import all_routes, sio
 
 from graphrag_kb_server.main.multi_tennant_server import auth_middleware
 from graphrag_kb_server.logger import logger, init_logger
-from graphrag_kb_server.service.jwt_service import (
-    generate_admin_token,
-    save_security_yaml,
-)
 from graphrag_kb_server.service.snippet_generation_service import find_chat_assets
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.websocket_api import *
@@ -172,7 +168,7 @@ def run_server():
 
 if __name__ == "__main__":
     logger.info("Starting server ...")
-    generate_admin_token()
-    save_security_yaml()
+    # generate_admin_token()
+    # save_security_yaml()
     run_server()
     logger.info("Knowledge Base Server stopped.")
