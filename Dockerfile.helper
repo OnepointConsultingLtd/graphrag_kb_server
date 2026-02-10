@@ -1,0 +1,33 @@
+# Helper container for executing commands and managing volumes
+# Usage:
+#   docker build -f Dockerfile.helper -t volume-helper .
+#   docker run -d --name volume-helper -v your-volume:/data volume-helper
+#   docker exec -it volume-helper sh
+
+FROM alpine:latest
+
+# Install common utilities
+RUN apk add --no-cache \
+    bash \
+    curl \
+    wget \
+    tar \
+    gzip \
+    unzip \
+    rsync \
+    vim \
+    nano \
+    tree \
+    findutils \
+    coreutils \
+    vips-dev \
+    python3 \
+    py3-pip
+
+RUN pip3 install --no-cache-dir --break-system-packages gdown
+
+# Create a working directory
+WORKDIR /data
+
+# Keep container running
+CMD ["sleep", "infinity"]
