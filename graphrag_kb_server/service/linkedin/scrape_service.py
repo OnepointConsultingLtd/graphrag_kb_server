@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
+from asyncer import asyncify
 
 from linkedin_scraper import Person
-from asyncer import asyncify
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -359,6 +359,9 @@ class SafePerson(Person):
             logger.error(f"Error getting educations: {e}")
             return []
 
+    def focus(self):
+        pass
+
 
 def _convert_to_profile(person: SafePerson | None) -> Profile | None:
     if not person:
@@ -398,7 +401,7 @@ async def aextract_profile(
     else:
         if profile_data := _cache.get(profile):
             return profile_data
-    profile_data = await asyncify(extract_profile)(
+    profile_data = await extract_profile(
         profile, force_login, extract_educations, extract_experiences_from_homepage
     )
     if project_dir is not None and profile_data is not None:
@@ -421,7 +424,7 @@ def _create_driver() -> webdriver.Chrome:  #
     )
 
 
-def extract_profile(
+async def extract_profile(
     profile: str,
     force_login: bool = False,
     extract_educations: bool = False,
@@ -443,7 +446,7 @@ def extract_profile(
     user, password = linkedin_cfg.get_random_credential()
 
     # Use cookie-based login (will fall back to regular login if cookies don't work)
-    login_with_cookies(driver, user, password, force_login=force_login)
+    await login_with_cookies(driver, user, password, force_login=force_login)
     logger.info("Logged in to LinkedIn")
 
     profile = correct_linkedin_url(profile)

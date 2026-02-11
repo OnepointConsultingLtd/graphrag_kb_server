@@ -1,7 +1,8 @@
 from pathlib import Path
 import json
+from asyncer import asyncify
 
-from linkedin_scraper.person import By
+from selenium.webdriver.common.by import By
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
@@ -97,7 +98,31 @@ def load_cookies(driver: webdriver.Chrome, user: str) -> bool:
         return False
 
 
-def login_with_cookies(
+def _login_with_credentials(driver: webdriver.Chrome, user: str, password: str, timeout: int = 60) -> None:
+    """Login to LinkedIn via credentials. Uses feed link for verification (more stable than global-nav)."""
+    from selenium.webdriver.support.wait import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+
+    driver.get("https://www.linkedin.com/login")
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "username")))
+
+    driver.find_element(By.ID, "username").send_keys(user)
+    driver.find_element(By.ID, "password").send_keys(password)
+    driver.find_element(By.ID, "password").submit()
+
+    # Handle "remember this device" checkpoint if present
+    if driver.current_url == "https://www.linkedin.com/checkpoint/lg/login-submit":
+        remember = driver.find_element(By.ID, "remember-me-prompt__form-primary")
+        if remember:
+            remember.submit()
+
+    # Verify login - use feed link (same as load_cookies) instead of outdated global-nav__primary-link
+    WebDriverWait(driver, timeout).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/feed/']"))
+    )
+
+
+async def login_with_cookies(
     driver: webdriver.Chrome, user: str, password: str, force_login: bool = False
 ) -> None:
     """
@@ -118,10 +143,8 @@ def login_with_cookies(
             "Cookie authentication failed, proceeding with username/password login"
         )
 
-    from linkedin_scraper import actions
-
     # Fall back to regular login
-    actions.login(driver, user, password)
+    await asyncify(_login_with_credentials)(driver, user, password)
     logger.info("Logged in using username and password")
 
     # Save cookies for next time
