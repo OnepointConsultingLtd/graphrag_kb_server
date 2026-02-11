@@ -7,9 +7,6 @@ from graphrag_kb_server.model.topics import Topics, Topic, TopicsRequest
 from graphrag_kb_server.service.lightrag.lightrag_centrality import (
     get_sorted_centrality_scores_as_pd,
 )
-from graphrag_kb_server.service.graphrag.entity_centrality import (
-    get_entity_centrality_as_pd,
-)
 from graphrag_kb_server.service.cag.cag_support import extract_main_topics
 from graphrag_kb_server.service.topics_post_processing import deduplicate_topics
 from graphrag_kb_server.service.db.db_persistence_topics import (
@@ -23,8 +20,6 @@ async def generate_topics(topics_request: TopicsRequest) -> Topics:
     if result is not None and len(result.topics) > 0:
         return result
     match topics_request.engine:
-        case Engine.GRAPHRAG:
-            result = _generate_topics_graphrag(topics_request)
         case Engine.LIGHTRAG:
             result = await _generate_topics_lightrag(topics_request)
         case Engine.CAG:
@@ -106,15 +101,6 @@ if __name__ == "__main__":
         )
         return topics
 
-    def test_graphrag():
-        project_dir = Path("/var/graphrag/tennants\gil_fernandes/graphrag/dwell")
-        topics = asyncio.run(
-            generate_topics(
-                TopicsRequest(project_dir=project_dir, engine=Engine.GRAPHRAG)
-            )
-        )
-        return topics
-
-    topics = test_graphrag()
+    topics = test_lightrag()
     df = convert_topics_to_pandas(topics)
     print(df)

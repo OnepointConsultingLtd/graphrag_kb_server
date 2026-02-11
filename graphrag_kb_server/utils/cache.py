@@ -3,8 +3,6 @@ import time
 import pickle
 from typing import TypeVar, Generic, Dict, Any
 
-from graphrag.query.structured_search.local_search.search import LocalSearch
-
 T = TypeVar("T")
 U = TypeVar("U")
 
@@ -61,9 +59,6 @@ class GenericSimpleCache(Generic[T, U]):
             "value": value,
             "timestamp": time.time(),
         }
-
-
-local_search_mixed_context_cache = GenericProjectSimpleCache[LocalSearch]()
 
 
 class PersistentSimpleCache(Generic[T]):

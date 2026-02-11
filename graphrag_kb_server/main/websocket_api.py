@@ -29,7 +29,6 @@ from graphrag_kb_server.service.search.search_documents import (
 )
 from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.service.cag.cag_support import cag_get_response_stream
-from graphrag_kb_server.service.graphrag.query import rag_local
 from graphrag_kb_server.model.engines import find_engine
 from graphrag_kb_server.service.db.db_persistence_search import (
     insert_search_query,
@@ -126,7 +125,7 @@ async def connect(sid: str, environ):
     logger.info(f"🔥 SERVER: Client connected with SID: {sid}")
     await sio.emit(
         Command.START_SESSION,
-        {"data": "Welcome to graphrag knowledge base server."},
+        {"data": "Welcome to knowledge base server."},
         to=sid,
     )
 
@@ -136,7 +135,7 @@ async def start_session(sid: str, environ):
     # logger.info(f"Client connected: {sio}")
     await sio.emit(
         Command.START_SESSION,
-        {"data": "Welcome to graphrag knowledge base server."},
+        {"data": "Welcome to knowledge base server."},
         to=sid,
     )
 

@@ -39,9 +39,6 @@ async def create_schemas_and_projects(tennants: list[Tennant]):
         await create_tennant_tables(tennant)
         projects = project_listing(cfg.graphrag_root_dir_path / tennant.folder_name)
         await create_projects_and_topics(
-            tennant.folder_name, projects.graphrag_projects.projects, Engine.GRAPHRAG
-        )
-        await create_projects_and_topics(
             tennant.folder_name, projects.lightrag_projects.projects, Engine.LIGHTRAG
         )
         await create_projects_and_topics(

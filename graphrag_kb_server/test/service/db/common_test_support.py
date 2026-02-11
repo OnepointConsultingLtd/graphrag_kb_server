@@ -29,7 +29,7 @@ async def create_test_project_wrapper(
     try:
         full_project = FullProject(
             schema_name=DEFAULT_SCHEMA_NAME,
-            engine=Engine.GRAPHRAG,
+            engine=Engine.LIGHTRAG,
             project=Project(
                 name=project_name,
                 updated_timestamp=datetime.now(),

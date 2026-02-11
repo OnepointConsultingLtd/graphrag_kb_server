@@ -5,14 +5,10 @@ from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.model.context import Search
-from graphrag_kb_server.service.graphrag.query import rag_local, rag_global, rag_drift
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
 from graphrag_kb_server.model.chat_response import ChatResponse
-from graphrag_kb_server.service.graphrag.prompt_factory import (
-    inject_system_prompt_to_query_params,
-)
 from graphrag_kb_server.service.cag.cag_support import cag_get_response
 
 
@@ -24,19 +20,6 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
         query_params.context_params,
     )
     match engine:
-        case Engine.GRAPHRAG:
-            context_params = inject_system_prompt_to_query_params(query_params)
-            match search:
-                case Search.GLOBAL:
-                    response = await rag_global(query_params)
-                case Search.DRIFT:
-                    response = await rag_drift(context_params)
-                case _:
-                    response = await rag_local(query_params)
-            chat_response = ChatResponse(
-                question=context_params.query,
-                response=response,
-            )
         case Engine.LIGHTRAG:
             match search:
                 case Search.GLOBAL | Search.LOCAL | Search.ALL | Search.NAIVE:

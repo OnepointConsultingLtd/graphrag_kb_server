@@ -4,15 +4,12 @@ from graphrag_kb_server.model.web_format import Format
 
 
 class Engine(StrEnum):
-    GRAPHRAG = "graphrag"
     LIGHTRAG = "lightrag"
     CAG = "cag"
 
 
 def find_engine(engine: str) -> Engine:
-    if engine == Engine.GRAPHRAG:
-        return Engine.GRAPHRAG
-    elif engine == Engine.LIGHTRAG:
+    if engine == Engine.LIGHTRAG:
         return Engine.LIGHTRAG
     elif engine == Engine.CAG:
         return Engine.CAG

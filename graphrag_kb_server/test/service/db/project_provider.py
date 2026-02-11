@@ -10,7 +10,7 @@ from graphrag_kb_server.test.service.db.common_test_support import DEFAULT_SCHEM
 def create_test_project():
     return FullProject(
         schema_name=DEFAULT_SCHEMA_NAME,
-        engine=Engine.GRAPHRAG,
+        engine=Engine.LIGHTRAG,
         project=Project(
             name="test_project",
             updated_timestamp=datetime.now(),

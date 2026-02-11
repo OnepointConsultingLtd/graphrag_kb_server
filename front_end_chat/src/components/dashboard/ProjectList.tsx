@@ -23,12 +23,6 @@ export default function ProjectList() {
           </div>
         ) : (
           <>
-            <RenderProjectList
-              title="GraphRAG Projects"
-              projectList={projects?.graphrag_projects?.projects || []}
-              colorScheme="blue"
-              platform="graphrag"
-            />
 
             <RenderProjectList
               title="LightRAG Projects"

@@ -11,7 +11,6 @@ from aiohttp import web
 from yarl import URL
 from markdown import markdown
 from aiohttp.web import Response
-from asyncer import asyncify
 
 from graphrag_kb_server.model.rag_parameters import (
     ContextParameters,
@@ -27,16 +26,8 @@ from graphrag_kb_server.model.topics import (
 )
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
-from graphrag_kb_server.service.graphrag.query import rag_local_simple
-from graphrag_kb_server.service.graphrag.query import (
-    rag_local_build_context,
-    rag_global_build_context,
-    rag_combined_context,
-    rag_drift_context,
-)
 from graphrag_kb_server.service.project import (
     clear_rag,
-    acreate_graph_rag,
     list_projects as project_listing,
     write_project_file,
     single_project_status,
@@ -52,12 +43,6 @@ from graphrag_kb_server.main.project_request_functions import (
     handle_project_folder,
 )
 from graphrag_kb_server.service.index_support import unzip_file
-from graphrag_kb_server.service.community_service import (
-    prepare_community_extraction,
-    generate_gexf_file,
-    find_community,
-    generate_entities_digraph_gexf_file,
-)
 from graphrag_kb_server.utils.file_support import write_uploaded_file
 from graphrag_kb_server.model.engines import find_engine_from_query, find_engine, Engine
 from graphrag_kb_server.service.tennant import find_project_folder
@@ -100,9 +85,6 @@ from graphrag_kb_server.service.cag.cag_support import (
     cag_get_response,
 )
 from graphrag_kb_server.main.project_request_functions import extract_engine_limit
-from graphrag_kb_server.service.graphrag.related_topics import (
-    get_related_topics_graphrag,
-)
 from graphrag_kb_server.service.lightrag.lightrag_related_topics import (
     get_related_topics_lightrag,
 )
@@ -191,7 +173,7 @@ async def about(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
     responses:
       '200':
         description: Expected response to a valid request
@@ -222,8 +204,6 @@ async def about(request: web.Request) -> web.Response:
                             context_size=cfg.local_context_max_tokens,
                         )
                         match engine:
-                            case Engine.GRAPHRAG:
-                                response = await rag_local_simple(search_params)
                             case Engine.LIGHTRAG:
                                 query_params = QueryParameters(
                                     format=Format.HTML.value,
@@ -282,11 +262,11 @@ async def upload_index(request: web.Request) -> web.Response:
               engine:
                 type: string
                 description: The type of engine used to run the RAG system
-                enum: [graphrag, lightrag, cag]
+                enum: [lightrag, cag]
               incremental:
                 type: boolean
                 default: false
-                description: Whether to update the existing index or create a new one. Works only for LightRAG and has no effect on GraphRAG.
+                description: Whether to update the existing index or create a new one. Works only for LightRAG.
               asynchronous:
                 type: boolean
                 default: false
@@ -327,8 +307,6 @@ async def upload_index(request: web.Request) -> web.Response:
 
         try:
             match engine:
-                case Engine.GRAPHRAG:
-                    await acreate_graph_rag(True, project_folder)
                 case Engine.LIGHTRAG:
                     await acreate_lightrag(
                         True, project_folder, incremental, saved_files[0]
@@ -369,7 +347,7 @@ async def upload_index(request: web.Request) -> web.Response:
                 project_folder: Path = find_project_folder(
                     tennant_folder, engine, sanitized_project_name
                 )
-                if engine in [Engine.GRAPHRAG, Engine.CAG] or not incremental:
+                if engine == Engine.CAG or not incremental:
                     clear_rag(project_folder)
 
                 if asynchronous:
@@ -433,7 +411,7 @@ async def query(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
       - name: question
         in: query
         required: true
@@ -450,7 +428,7 @@ async def query(request: web.Request) -> web.Response:
       - name: search
         in: query
         required: false
-        description: The type of the search (local, global, drift). Drift only works with graphrag.
+        description: The type of the search (local, global).
         schema:
           type: string
           enum: [local, global, all, drift, naive]
@@ -539,7 +517,7 @@ async def chat(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
     requestBody:
       required: true
       content:
@@ -553,7 +531,7 @@ async def chat(request: web.Request) -> web.Response:
                 default: "What are the main topics?"
               search:
                 type: string
-                description: The type of the search (local, global, drift). Drift only works with graphrag.
+                description: The type of the search (local, global).
                 enum: [local, global, all, drift, naive]
               format:
                 type: string
@@ -704,7 +682,7 @@ async def project_topics(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
       - name: limit
         in: query
         required: false
@@ -828,7 +806,7 @@ async def project_questions(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
     requestBody:
       required: true
       content:
@@ -947,7 +925,7 @@ async def project_related_topics(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
     requestBody:
       required: true
       content:
@@ -1021,10 +999,6 @@ async def project_related_topics(request: web.Request) -> web.Response:
     ) -> SimilarityTopics | None:
         similarity_topics_result = None
         match engine:
-            case Engine.GRAPHRAG:
-                similarity_topics_result = await asyncify(get_related_topics_graphrag)(
-                    similarity_topics
-                )
             case Engine.LIGHTRAG:
                 similarity_topics_result = await get_related_topics_lightrag(
                     similarity_topics
@@ -1122,7 +1096,7 @@ async def context(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag]
+          enum: [lightrag]
       - name: question
         in: query
         required: true
@@ -1132,7 +1106,7 @@ async def context(request: web.Request) -> web.Response:
       - name: use_context_records
         in: query
         required: false
-        description: Whether to output the context records or not. (Applies only to GraphRAG)
+        description: Whether to output the context records or not.
         schema:
           type: boolean
       - name: search
@@ -1200,51 +1174,6 @@ async def context(request: web.Request) -> web.Response:
                     )
 
                 match engine:
-                    case Engine.GRAPHRAG:
-                        match search:
-                            case Search.GLOBAL:
-                                context_builder_result = await rag_global_build_context(
-                                    context_params
-                                )
-                            case Search.ALL:
-                                context_builder_result = await rag_combined_context(
-                                    context_params
-                                )
-                            case Search.DRIFT:
-                                context_builder_result = await rag_drift_context(
-                                    context_params
-                                )
-                            case _:
-                                context_builder_result = rag_local_build_context(
-                                    context_params
-                                )
-                                if (
-                                    context_builder_result.local_context_records[
-                                        "sources"
-                                    ]
-                                    is not None
-                                ):
-                                    sources = list(
-                                        set(
-                                            context_builder_result.local_context_records[
-                                                "sources"
-                                            ][
-                                                "document_title"
-                                            ].tolist()
-                                        )
-                                    )
-                        return web.json_response(
-                            {
-                                "context_text": context_builder_result.context_text,
-                                "sources": sources,
-                                "local_context_records": process_records(
-                                    context_builder_result.local_context_records
-                                ),
-                                "global_context_records": process_records(
-                                    context_builder_result.global_context_records
-                                ),
-                            }
-                        )
                     case Engine.LIGHTRAG:
                         match search:
                             case Search.GLOBAL | Search.LOCAL | Search.ALL:
@@ -1379,7 +1308,7 @@ async def project_status(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
       - name: project_name
         in: path
         required: true
@@ -1462,7 +1391,7 @@ async def delete_index(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
     security:
       - bearerAuth: []
     responses:
@@ -1510,7 +1439,7 @@ async def download_project(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
       - name: input_only
         in: query
         required: true
@@ -1576,7 +1505,7 @@ async def download_single_file(request: web.Request) -> web.Response:
         description: The type of engine used to run the RAG system
         schema:
           type: string
-          enum: [graphrag, lightrag, cag]
+          enum: [lightrag, cag]
       - name: file
         in: query
         required: true
@@ -1736,96 +1665,6 @@ async def download_single_file(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
-@routes.get("/protected/project/topics_graphrag")
-async def topics(request: web.Request) -> web.Response:
-    """
-    Optional route description
-    ---
-    summary: returns a list of topics based on the level
-    tags:
-      - graphrag-graph
-    parameters:
-      - name: project
-        in: query
-        required: true
-        description: The project name
-        schema:
-          type: string
-      - name: engine
-        in: query
-        required: true
-        description: The project name. Only graphrag is supported for now.
-        schema:
-          type: string
-          enum: [graphrag]
-      - name: levels
-        in: query
-        required: true
-        description: Comma separated list of integers representing the level with 0 as the highest abstraction level. Example '0,1'
-        schema:
-          type: string
-      - name: format
-        in: query
-        required: false
-        description: The format of the output (json, html)
-        schema:
-          type: string
-          enum: [json, html]
-    security:
-      - bearerAuth: []
-    responses:
-      '200':
-        description: A list of topics matching the specified levels either in HTML or JSON format
-    """
-
-    async def handle_request(request: web.Request) -> web.Response:
-        match match_process_dir(request):
-            case Response() as error_response:
-                return error_response
-            case Path() as project_dir:
-                levels_str = request.rel_url.query.get("levels", "0")
-                levels = [int(level.strip()) for level in levels_str.split(",")]
-                community_df = prepare_community_extraction(project_dir, levels)
-                community_list = [
-                    c
-                    for c in zip(
-                        community_df["title_y"],
-                        community_df["summary"],
-                        community_df["rank"],
-                        community_df["level"],
-                    )
-                ]
-                format = request.rel_url.query.get("format", "json")
-                match format:
-                    case Format.HTML:
-                        html_header = "\n".join(
-                            [
-                                f"<th>{t}</th>"
-                                for t in ["Title", "Summary", "Rank", "Level"]
-                            ]
-                        )
-                        html_list = [
-                            f"<tr><td>{c[0]}</td><td>{c[1]}</td><td>{c[2]}</td><td>{c[3]}</td></tr>"
-                            for c in zip(
-                                community_df["title_y"],
-                                community_df["summary"],
-                                community_df["rank"],
-                                community_df["level"],
-                            )
-                        ]
-                        html_table = f"""<table><tr>{html_header}</tr>{"\n".join(html_list)}</table>"""
-                        return web.Response(
-                            text=HTML_CONTENT.format(
-                                question="Topics", response=html_table
-                            ),
-                            content_type="text/html",
-                        )
-                    case _:
-                        return web.json_response(community_list)
-
-    return await handle_error(handle_request, request=request)
-
-
 @routes.options("/protected/project/topics_network")
 async def topics_network_options(_: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
@@ -1853,7 +1692,7 @@ async def topics_network(request: web.Request) -> web.Response:
         schema:
           type: string
           default: graphrag
-          enum: [graphrag,lightrag]
+          enum: [lightrag]
       - name: recreate
         in: query
         required: false
@@ -1881,11 +1720,9 @@ async def topics_network(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                engine = request.rel_url.query.get("engine", "graphrag")
+                engine = request.rel_url.query.get("engine", "lightrag")
                 recreate = request.rel_url.query.get("recreate", "false") == "true"
                 match engine:
-                    case "graphrag":
-                        graph_file = generate_gexf_file(project_dir)
                     case "lightrag":
                         graph_file = await create_communities_gexf_for_project(
                             project_dir, recreate=recreate
@@ -1928,7 +1765,7 @@ async def topics_network_community(request: web.Request) -> web.Response:
         schema:
           type: string
           default: graphrag
-          enum: [graphrag,lightrag]
+          enum: [lightrag]
     security:
       - bearerAuth: []
     responses:
@@ -1959,8 +1796,6 @@ async def topics_network_community(request: web.Request) -> web.Response:
         async def process_community(project_dir: Path, community_id: str):
             engine = request.rel_url.query.get("engine", "graphrag")
             match engine:
-                case "graphrag":
-                    community_report = find_community(project_dir, community_id)
                 case "lightrag":
                     community_report = await find_community_lightrag(
                         project_dir, community_id
@@ -1969,66 +1804,6 @@ async def topics_network_community(request: web.Request) -> web.Response:
                 return web.json_response(
                     community_report.model_dump(), headers=CORS_HEADERS
                 )
-            else:
-                return invalid_response(
-                    "Cannot find community report",
-                    "Please specify another community id.",
-                    status=404,
-                )
-
-        return await process_community_query(request, process_community)
-
-    return await handle_error(handle_request, request=request)
-
-
-@routes.options("/protected/project/topics_network/community_entities/{id}")
-async def topics_network_community_entities_options(_: web.Request) -> web.Response:
-    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
-
-
-@routes.get("/protected/project/topics_network/community_entities/{id}")
-async def topics_network_community_entities(request: web.Request) -> web.Response:
-    """
-    Optional route description
-    ---
-    summary: returns the entities of a single community
-    tags:
-      - graphrag-graph
-    parameters:
-      - name: project
-        in: query
-        required: true
-        description: The project name
-        schema:
-          type: string
-      - name: id
-        in: path
-        required: true
-        description: The community id
-        schema:
-          type: string
-    security:
-      - bearerAuth: []
-    responses:
-      '200':
-        description: A file representing the graph with the entities of a community.
-      '404':
-        description: Bad Request - No community or project found.
-        content:
-          application/json:
-            example:
-              error_code: 1
-              error_name: "No tennant information"
-              error_description: "No tennant information available in request"
-    """
-
-    async def handle_request(request: web.Request) -> web.Response:
-        async def process_community(project_dir: Path, community_id: str):
-            gex_file = generate_entities_digraph_gexf_file(
-                project_dir, int(community_id)
-            )
-            if gex_file:
-                return send_gexf_file(project_dir, gex_file)
             else:
                 return invalid_response(
                     "Cannot find community report",

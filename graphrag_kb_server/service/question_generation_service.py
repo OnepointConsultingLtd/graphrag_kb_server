@@ -16,12 +16,9 @@ from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.lightrag.lightrag_related_topics import (
     get_keywords_from_text,
 )
-from graphrag_kb_server.service.graphrag.query import rag_local_entities
-from graphrag_kb_server.model.rag_parameters import ContextParameters
 from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     create_network_from_project_dir,
 )
-from graphrag_kb_server.service.graphrag.graph_support import read_graphrag_project
 
 
 async def generate_questions_from_topics(
@@ -68,16 +65,6 @@ async def generate_questions_from_topics(
                 topics = [nodes[t]["entity_id"] for t in topics if t in nodes]
 
     match engine:
-        case Engine.GRAPHRAG:
-            nodes = read_graphrag_project(project_dir).nodes
-            topics = [
-                Topic(
-                    name=nodes[t]["name"],
-                    description=nodes[t]["description"],
-                    type=nodes[t]["type"],
-                )
-                for t in topics
-            ]
         case Engine.LIGHTRAG:
             nodes = create_network_from_project_dir(project_dir).nodes
             topics = [

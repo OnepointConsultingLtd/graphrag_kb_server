@@ -1,18 +1,8 @@
 import logging
-import time
-import sys
-import graphrag.api as api
-import asyncio
 import zipfile
 
 from pathlib import Path
 
-from graphrag.config.enums import CacheType
-from graphrag.config.load_config import load_config
-
-from graphrag.index.validate_config import validate_config_names
-from graphrag.utils.cli import redact
-import graphrag.config.defaults as defs
 from graphrag_kb_server.service.file_conversion import convert_pdf_to_markdown
 from graphrag_kb_server.service.file_find_service import (
     ORIGINAL_INPUT_FOLDER,
@@ -20,111 +10,6 @@ from graphrag_kb_server.service.file_find_service import (
 )
 
 log = logging.getLogger(__name__)
-
-
-def _logger():
-    def info(msg: str):
-        log.info(msg)
-
-    def error(msg: str):
-        log.error(msg)
-
-    def success(msg: str):
-        log.info(msg)
-
-    return info, error, success
-
-
-async def index(
-    root_dir: Path,
-    resume: str | None,
-    memprofile: bool,
-    cache: bool,
-    config_filepath: Path | None,
-    dry_run: bool,
-    skip_validation: bool,
-    output_dir: Path | None,
-):
-    """Run the pipeline with the given config."""
-    config = load_config(root_dir, config_filepath)
-
-    await _run_index(
-        config=config,
-        resume=resume,
-        memprofile=memprofile,
-        cache=cache,
-        dry_run=dry_run,
-        skip_validation=skip_validation,
-        output_dir=output_dir,
-    )
-
-
-def _register_signal_handlers():
-    import signal
-
-    def handle_signal(signum, _):
-        # Handle the signal here
-        log.info(f"Received signal {signum}, exiting...")  # noqa: G004
-        for task in asyncio.all_tasks():
-            task.cancel()
-        log.info("All tasks cancelled. Exiting...")
-
-    # Register signal handlers for SIGINT and SIGHUP
-    signal.signal(signal.SIGINT, handle_signal)
-
-    if sys.platform != "win32":
-        signal.signal(signal.SIGHUP, handle_signal)
-
-
-async def _run_index(
-    config,
-    resume,
-    memprofile,
-    cache,
-    dry_run,
-    skip_validation,
-    output_dir,
-):
-    info, error, success = _logger()
-    run_id = resume or time.strftime("%Y%m%d-%H%M%S")
-
-    config.output.type = defs.OutputDefaults.type
-    config.output.base_dir = str(output_dir) if output_dir else config.output.base_dir
-    config.reporting.base_dir = (
-        str(output_dir) if output_dir else config.reporting.base_dir
-    )
-
-    if not cache:
-        config.cache.type = CacheType.none
-
-    if skip_validation:
-        validate_config_names(config)
-
-    info(f"Starting pipeline run for: {run_id}, {dry_run=}")
-    info(f"Using default configuration: {redact(config.model_dump())}")
-
-    if dry_run:
-        info("Dry run complete, exiting...", True)
-        return
-
-    _register_signal_handlers()
-
-    outputs = await api.build_index(
-        config=config,
-        is_update_run=bool(resume),
-        memory_profile=memprofile,
-    )
-
-    encountered_errors = any(
-        output.errors and len(output.errors) > 0 for output in outputs
-    )
-
-    if encountered_errors:
-        error(
-            "Errors occurred during the pipeline run, see logs for more details.", True
-        )
-    else:
-        success("All workflows completed successfully.", True)
 
 
 async def unzip_file(upload_folder: Path, zip_file: Path):

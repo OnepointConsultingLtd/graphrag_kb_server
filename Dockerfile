@@ -114,7 +114,6 @@ COPY .env_docker .env
 RUN uv pip install --system .
 
 RUN uv venv
-RUN uv pip install --no-binary lancedb --force-reinstall lancedb
 
 # Build front_end (GraphRAG) with yarn
 RUN cd /opt/graphrag_kb_server/front_end \

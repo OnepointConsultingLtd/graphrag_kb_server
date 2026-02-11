@@ -29,9 +29,6 @@ def convert_to_similarity_topics(
     # Convert to similarity topics
     similarity_topics = []
     match request.engine:
-        case Engine.GRAPHRAG:
-            entity_name_key = "name"
-            entity_type_key = "type"
         case Engine.LIGHTRAG:
             entity_name_key = "entity_id"
             entity_type_key = "entity_type"

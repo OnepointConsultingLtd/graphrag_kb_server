@@ -5,8 +5,6 @@ import random
 
 from dotenv import load_dotenv
 from graphrag_kb_server.logger import logger
-from graphrag.config.models.language_model_config import LanguageModelConfig
-from graphrag.config.enums import ModelType
 
 load_dotenv()
 
@@ -60,26 +58,6 @@ class Config:
 
     claim_extraction_prompt_file = os.getenv("CLAIM_EXTRACTION_PROMPT_FILE")
 
-    llm_config = LanguageModelConfig(
-        api_key=openai_api_key,
-        model=openai_api_model,
-        type=ModelType.OpenAIChat,
-    )
-    embedding_llm_config = LanguageModelConfig(
-        api_key=openai_api_key,
-        model=openai_api_model_embedding,
-        type=ModelType.OpenAIEmbedding,
-    )
-    from graphrag.language_model.factory import ModelFactory
-
-    llm = ModelFactory.create_chat_model(
-        name="openai-model", model_type=ModelType.OpenAIChat, config=llm_config
-    )
-    embedding_llm = ModelFactory.create_embedding_model(
-        name="openai-embedding-model",
-        model_type=ModelType.OpenAIEmbedding,
-        config=embedding_llm_config,
-    )
     index_verbose = os.getenv("INDEX_VERBOSE") == "true"
 
     claims_enabled = os.getenv("CLAIMS_ENABLED") == "true"

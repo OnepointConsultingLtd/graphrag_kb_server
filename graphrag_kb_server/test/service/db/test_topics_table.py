@@ -60,7 +60,7 @@ async def test_create_topic():
             assert topics.topics[0].questions == topic.questions
             assert topics.topics[0].project_id == found_project.id
             topics_request = TopicsRequest(
-                engine=Engine.GRAPHRAG,
+                engine=Engine.LIGHTRAG,
                 project_dir=project_dir,
                 topics=[],
                 add_questions=False,
