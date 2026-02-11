@@ -411,17 +411,28 @@ async def aextract_profile(
     return profile_data
 
 
-def _create_driver() -> webdriver.Chrome:  #
-    # Configure Chrome options
+def _create_driver() -> webdriver.Chrome:
+    import os
+
     options = Options()
-    options.add_argument("--headless=new")  # 'new' mode for Chrome >= 109
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
-    return webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()), options=options
-    )
+
+    # Use Chromium binary (Debian installs chromium, not google-chrome)
+    if os.path.exists("/usr/bin/chromium"):
+        options.binary_location = "/usr/bin/chromium"
+
+    # Prefer Docker-installed ChromeDriver; fallback to ChromeDriverManager for local dev
+    chromedriver_path = "/usr/local/bin/chromedriver"
+    if os.path.exists(chromedriver_path):
+        service = Service(chromedriver_path)
+    else:
+        service = Service(ChromeDriverManager().install())
+
+    return webdriver.Chrome(service=service, options=options)
 
 
 async def extract_profile(

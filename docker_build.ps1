@@ -1,7 +1,7 @@
 docker system prune -f
 
 $IMAGE_NAME = "graphrag_kb_server"
-$TAG = "v0.5.0"
+$TAG = "v0.9.0"
 
 # Use this script to build the docker image
 # You need to have uv and docker installed
@@ -11,6 +11,7 @@ $TAG = "v0.5.0"
 uv sync
 # Change name according to your name
 docker build -t ${IMAGE_NAME}:${TAG} -f Dockerfile .
+docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:latest
 
 $AWS_REGION = "eu-west-2"
 $REPO_NAME="knowledge_server/${IMAGE_NAME}"

@@ -32,23 +32,6 @@ def _create_combined_prompt(system_prompt, history_messages, prompt):
     return combined_prompt
 
 
-def _store_prompts(system_prompt: str, history_messages: list[dict], prompt: str):
-    from pathlib import Path
-    from datetime import datetime
-
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    prompts_dir = Path(__file__).parent.parent.parent / "docs/prompts"
-    prompts_dir.mkdir(parents=True, exist_ok=True)
-    prompts_file = prompts_dir / f"prompts_{timestamp}.json"
-    prompts = {
-        "system_prompt": system_prompt,
-        "history_messages": history_messages,
-        "prompt": prompt,
-    }
-    with open(prompts_file, "w") as f:
-        json.dump(prompts, f)
-
-
 async def gemini_model_func(
     prompt, system_prompt=None, history_messages=[], **kwargs
 ) -> str:

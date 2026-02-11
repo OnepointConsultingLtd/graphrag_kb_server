@@ -84,7 +84,7 @@ def load_cookies(driver: webdriver.Chrome, user: str) -> bool:
         try:
             driver.implicitly_wait(5)
             # Check if we can find elements that indicate we're logged in
-            driver.find_element(By.CSS_SELECTOR, "a[href*='/feed/']")
+            driver.find_element(By.CSS_SELECTOR, "a[data-view-name=identity-self-profile]")
             logger.info("Successfully authenticated using saved cookies")
             return True
         except Exception as e:
@@ -112,6 +112,16 @@ def _login_with_credentials(driver: webdriver.Chrome, user: str, password: str, 
 
     # Handle "remember this device" checkpoint if present
     if driver.current_url == "https://www.linkedin.com/checkpoint/lg/login-submit":
+        # Uncheck "Remember me" to avoid spamming the user with activation emails
+        try:
+            checkbox = driver.find_element(
+                By.CSS_SELECTOR,
+                "#remember-me-prompt__form-primary input[type='checkbox']"
+            )
+            if checkbox.is_selected():
+                checkbox.click()  # uncheck it
+        except Exception:
+            pass  # checkbox structure may vary
         remember = driver.find_element(By.ID, "remember-me-prompt__form-primary")
         if remember:
             remember.submit()

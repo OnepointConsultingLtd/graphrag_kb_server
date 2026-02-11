@@ -6,7 +6,7 @@ from typing import TypeVar, Generic, Dict, Any
 T = TypeVar("T")
 U = TypeVar("U")
 
-DEFAULT_TIMEOUT = 3600 * 24 * 7  # 7 days
+DEFAULT_TIMEOUT = 3600 * 24 * 14  # 14 days
 
 
 class GenericProjectSimpleCache(Generic[T]):

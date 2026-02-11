@@ -1,8 +1,10 @@
 from pathlib import Path
 import os
 import json
+import asyncio
 
 from lightrag import LightRAG
+from lightrag.base import BaseGraphStorage, BaseKVStorage, BaseVectorStorage, DocStatusStorage
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
 from lightrag.llm.openai import openai_embed
 from lightrag.kg.shared_storage import get_namespace_data, initialize_pipeline_status
@@ -41,6 +43,7 @@ async def initialize_storages(rag: LightRAG):
     Makes sure that the storages are initialized and the data is loaded from the file.
     This fixes problems with non loaded JSON storage data.
     """
+    coroutines = []
     for storage in (
         rag.full_docs,
         rag.text_chunks,
@@ -55,20 +58,28 @@ async def initialize_storages(rag: LightRAG):
         rag.llm_response_cache,
         rag.doc_status,
     ):
-        if not storage:
-            continue
-
-        file_name = getattr(storage, "_file_name", None)
-        if file_name:
-            loaded_data = load_json(file_name) or {}
-            storage._data = await get_namespace_data(storage.final_namespace)
-            storage._data.update(loaded_data)
-        else:
-            await storage.initialize()
+        coroutines.append(_process_single_storage(storage))
+    await asyncio.gather(*coroutines)
 
 
-def load_json(file_name):
-    if not os.path.exists(file_name):
-        return None
-    with open(file_name, encoding="utf-8-sig") as f:
-        return json.load(f)
+async def _process_single_storage(storage: BaseKVStorage | DocStatusStorage | BaseVectorStorage | BaseGraphStorage | None) -> None:
+    if not storage:
+        return
+
+    file_name = getattr(storage, "_file_name", None)
+    if file_name:
+        loaded_data = await load_json(file_name) or {}
+        storage._data = await get_namespace_data(storage.final_namespace)
+        storage._data.update(loaded_data)
+    else:
+        await storage.initialize()
+
+
+async def load_json(file_name):
+    def _load_json_sync():
+        if not os.path.exists(file_name):
+            return None
+        with open(file_name, encoding="utf-8-sig") as f:
+            return json.load(f)
+    
+    return await asyncio.to_thread(_load_json_sync)

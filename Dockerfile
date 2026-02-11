@@ -66,17 +66,13 @@ RUN node --version | grep -E '^v22\.' && \
     corepack prepare yarn@stable --activate && \
     yarn --version
 
-# Install ChromeDriver matching installed Chromium (Debian Chromium version)
-RUN CHROMIUM_VERSION=$(chromium --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1) \
-    && CHROME_MAJOR="${CHROMIUM_VERSION%%.*}" \
-    && CHROMEDRIVER_URL=$(curl -sS "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" | grep -o "\"https://storage.googleapis.com/chrome-for-testing-public/[^\"]*${CHROME_MAJOR}[^\"]*linux64[^\"]*chromedriver[^\"]*\.zip\"" | head -1 | tr -d '"') \
-    && if [ -z "$CHROMEDRIVER_URL" ]; then \
-         CHROMEDRIVER_URL="https://storage.googleapis.com/chrome-for-testing-public/${CHROMIUM_VERSION}/linux64/chromedriver-linux64.zip"; \
-       fi \
-    && wget -q -O /tmp/chromedriver.zip "$CHROMEDRIVER_URL" || true \
-    && if [ -f /tmp/chromedriver.zip ]; then \
-         unzip -o /tmp/chromedriver.zip -d /tmp && mv /tmp/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && chmod +x /usr/local/bin/chromedriver && rm -rf /tmp/chromedriver.zip /tmp/chromedriver-linux64; \
-       fi
+# Install ChromeDriver matching Chromium 144 (Debian Chromium version)
+ARG CHROME_VERSION=144.0.7559.109
+RUN wget -q "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chromedriver-linux64.zip" -O /tmp/chromedriver.zip \
+    && unzip -o /tmp/chromedriver.zip -d /tmp \
+    && mv /tmp/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
+    && chmod +x /usr/local/bin/chromedriver \
+    && rm -rf /tmp/chromedriver.zip /tmp/chromedriver-linux64
 
 # Install uv
 RUN pip install uv
