@@ -21,8 +21,8 @@ async def initialize_rag(project_folder: Path) -> LightRAG:
     if lightrag:
         return lightrag
     working_dir = project_folder / LIGHTRAG_FOLDER
-    if not working_dir.exists():
-        working_dir.mkdir(parents=True, exist_ok=True)
+    if not await asyncio.to_thread(working_dir.exists):
+        await asyncio.to_thread(working_dir.mkdir, parents=True, exist_ok=True)
     llm_model_func = select_model_func()
     rag = LightRAG(
         working_dir=working_dir,
