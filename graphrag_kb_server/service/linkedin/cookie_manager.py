@@ -4,7 +4,7 @@ from asyncer import asyncify
 
 from selenium.webdriver.common.by import By
 
-from graphrag_kb_server.config import cfg
+from graphrag_kb_server.config import cfg, linkedin_cfg
 from graphrag_kb_server.logger import logger
 
 from selenium import webdriver
@@ -80,11 +80,14 @@ def load_cookies(driver: webdriver.Chrome, user: str) -> bool:
         # Refresh to apply cookies
         driver.refresh()
 
-        # Verify if we're logged in by checking for feed or profile link
+        # Verify if we're logged in by checking for text that appears when logged in
         try:
             driver.implicitly_wait(5)
-            # Check if we can find elements that indicate we're logged in
-            driver.find_element(By.CSS_SELECTOR, "a[data-view-name=identity-self-profile]")
+            # Check if we can find text that indicates we're logged in (e.g., "Home", "My Network", "Jobs")
+            # Using XPath to find text content on the page
+            contains_expressions = [f"contains(text(), '{name}')" for name in linkedin_cfg.linkedin_searches]
+            contains_expressions_str = " or ".join(contains_expressions)
+            driver.find_element(By.XPATH, f"//*[{contains_expressions_str}]")
             logger.info("Successfully authenticated using saved cookies")
             return True
         except Exception as e:

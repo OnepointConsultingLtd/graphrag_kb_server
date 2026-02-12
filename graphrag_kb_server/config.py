@@ -146,12 +146,15 @@ class LightRAGConfig:
 
 class LinkedInConfig:
     linkedin_credentials: dict[str, str] = {}
+    linkedin_searches: list[str] = []
     for key, value in os.environ.items():
         if key.startswith("LINKEDIN_USER_"):
             cred_number = key[len("LINKEDIN_USER_") :]
             linkedin_credentials[os.getenv(f"{key}")] = os.getenv(
                 f"LINKEDIN_PASSWORD_{cred_number}"
             )
+        if key.startswith("LINKEDIN_SEARCH_"):
+            linkedin_searches.append(os.getenv(key))
     linkedin_credentials_list = list(linkedin_credentials.items())
 
     def get_random_credential(self) -> tuple[str, str]:
