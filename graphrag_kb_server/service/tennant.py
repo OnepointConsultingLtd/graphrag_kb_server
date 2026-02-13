@@ -3,6 +3,8 @@ from typing import Tuple
 from pathlib import Path
 import shutil
 
+import jiter
+
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.config import cfg, websocket_cfg
 from graphrag_kb_server.model.jwt_token import JWTToken
@@ -62,7 +64,7 @@ def list_tennants() -> list[Tennant]:
                 tennant_json: Path = tennant_jsons[0]
                 tennant_json_content = tennant_json.read_text(encoding="utf-8")
                 logger.info(f"Tennant JSON content: {tennant_json_content}")
-                tennant_json_dict = json.loads(tennant_json_content)
+                tennant_json_dict = jiter.from_json(tennant_json_content.encode(encoding="utf-8"))
                 logger.info(f"Tennant JSON dict: {tennant_json_dict}")
                 token = tennant_json_dict["token"]
                 logger.info(f"Tennant token: {token}")

@@ -2,6 +2,7 @@ import json
 
 from google import genai
 from google.genai import types
+import jiter
 from openai import AsyncOpenAI
 from openrouter import OpenRouter
 
@@ -32,7 +33,7 @@ user:{user_message}
                     response_mime_type="application/json",
                 ),
             )
-            return json.loads(response.text)
+            return jiter.from_json(response.text.encode(encoding="utf-8"))
         case model if model.startswith("gpt"):
             client = AsyncOpenAI()
             response = await client.beta.chat.completions.parse(
@@ -43,7 +44,7 @@ user:{user_message}
                 ],
                 response_format=response_schema,
             )
-            return json.loads(response.choices[0].message.content)
+            return jiter.from_json(response.choices[0].message.content.encode(encoding="utf-8"))
         case _:
             # Use OpenRouter as default
             schema_dict = response_schema.model_json_schema()
@@ -70,4 +71,4 @@ user:{user_message}
                     config_dict["provider"] = {"name": cfg.openrouter_provider}
                 
                 response = await client.chat.send_async(**config_dict)
-                return json.loads(response.choices[0].message.content)
+                return jiter.from_json(response.choices[0].message.content.encode(encoding="utf-8"))

@@ -1,12 +1,15 @@
 import json
+from sched import Event
 import traceback
 from pathlib import Path
 from enum import StrEnum
+import jiter
 from pydantic import Field
 
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.search.keywords import KeywordType, Keywords
+from graphrag_kb_server.model.search.profile import ProfileQuery
 from graphrag_kb_server.model.search.relationships import RelationshipsJSON
 from graphrag_kb_server.model.search.search import DocumentSearchQuery
 from graphrag_kb_server.main import sio
@@ -20,6 +23,7 @@ from graphrag_kb_server.service.lightrag.lightrag_constants import (
     PREFIX_LOW_LEVEL_KEYWORDS,
     PREFIX_RELATIONSHIPS,
 )
+from graphrag_kb_server.service.linkedin.scrape_service import aextract_profile
 from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.engines import Engine
@@ -46,6 +50,9 @@ class Command(StrEnum):
     STREAM_START = "stream_start"
     STREAM_TOKEN = "stream_token"
     STREAM_END = "stream_end"
+    EXTRACT_PROFILE_STREAM = "extract_profile_stream"
+    EXTRACT_PROFILE_STREAM_END = "extract_profile_stream_end"
+    EXTRACT_PROFILE_STREAM_ERROR = "extract_profile_stream_error"
 
 
 class WebsocketCallback(BaseCallback):
@@ -54,10 +61,11 @@ class WebsocketCallback(BaseCallback):
     request_id: str = Field(
         default="", description="The request ID used to track the request"
     )
+    event: str = Field(default=Command.PROGRESS, description="The event to emit")
 
     async def callback(self, message: str):
         await sio.emit(
-            Command.PROGRESS,
+            self.event,
             {"data": message, "request_id": self.request_id},
             to=self.sid,
         )
@@ -151,12 +159,13 @@ async def relevant_documents(
     try:
         logger.debug(f"Document query from {sio}: {document_query}")
         document_search_query = DocumentSearchQuery(
-            **json.loads(document_query),
+            **jiter.from_json(document_query.encode(encoding="utf-8")),
             max_filepath_depth=max_filepath_depth,
             is_search_query=True,
         )
         project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
         callback = PersistentCallback(
+            event=Command.PROGRESS,
             sid=sid,
             request_id=document_search_query.request_id,
             project_dir=project_dir,
@@ -202,12 +211,6 @@ async def chat_stream(sid: str, token: str, project: str, query_parameters: dict
         query_parameters["context_params"]["project_dir"] = project_dir
         query_params = QueryParameters(**query_parameters)
         match query_params.engine:
-            case Engine.GRAPHRAG:
-                await sio.emit(Command.STREAM_START, {"data": "Stream started"}, to=sid)
-                generator = await rag_local(query_params, True)
-                async for event in generator:
-                    await sio.emit(Command.STREAM_TOKEN, event, to=sid)
-                await sio.emit(Command.STREAM_END, {"data": "Stream ended"}, to=sid)
             case Engine.LIGHTRAG:
                 raise ValueError("Lightrag is not supported for chat streaming")
             case Engine.CAG:
@@ -232,8 +235,44 @@ async def chat_stream(sid: str, token: str, project: str, query_parameters: dict
 
 
 @sio.event
+async def extract_profile_stream(sid: str, token: str, project: str, profile_query: str):
+    try:
+        project_dir = await find_project_dir(
+            token, project, Engine.LIGHTRAG
+        )
+        profile_query = ProfileQuery(
+            **jiter.from_json(profile_query.encode(encoding="utf-8"))
+        )
+        callback = WebsocketCallback(
+            sid=sid,
+            request_id=profile_query.request_id,
+            event=Command.EXTRACT_PROFILE_STREAM,
+        )
+        profile_data = await aextract_profile(
+            profile_query.profile_id,
+            force_login=False,
+            extract_educations=False,
+            extract_experiences_from_homepage=True,
+            callback=callback,
+            project_dir=project_dir,
+        )
+        if profile_data is None:
+            await callback.callback("Profile not found. Check the profile ID and try again.")
+            await sio.emit(Command.EXTRACT_PROFILE_STREAM_ERROR, {"data": "Profile not found. Check the profile ID and try again.", "request_id": profile_query.request_id}, to=sid)
+            return
+        await sio.emit(Command.EXTRACT_PROFILE_STREAM_END, {"data": profile_data.model_dump_json(), "request_id": profile_query.request_id}, to=sid)
+        logger.error(f"Profile data sent.")
+    except Exception as e:
+        err_msg = f"Errors: {e}. Please try again."
+        logger.error(err_msg)
+        logger.error(f"Stack trace: {traceback.format_exc()}")
+        await sio.emit(Command.EXTRACT_PROFILE_STREAM_ERROR, {"data": err_msg, "request_id": profile_query.request_id}, to=sid)
+
+
+@sio.event
 async def disconnect(sid: str):
     logger.info(f"Client disconnected: {sio}")
+
 
 
 async def find_project_dir(token: str, project: str, engine: Engine) -> Path:

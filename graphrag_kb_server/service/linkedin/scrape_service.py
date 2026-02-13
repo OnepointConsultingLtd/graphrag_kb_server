@@ -1,3 +1,4 @@
+import asyncio
 import os
 from pathlib import Path
 from asyncer import asyncify
@@ -11,6 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 
+from graphrag_kb_server.callbacks.callback_support import BaseCallback
 from graphrag_kb_server.model.linkedin.profile import (
     Profile,
     Experience,
@@ -39,10 +41,12 @@ class SafePerson(Person):
         driver: webdriver.Chrome,
         extract_educations: bool = True,
         extract_experiences_from_homepage: bool = True,
+        callback: BaseCallback | None = None
     ):
         self.headline = ""
         self.extract_educations = extract_educations
         self.extract_experiences_from_homepage = extract_experiences_from_homepage
+        self.callback = callback
         super().__init__(linkedin_url, driver=driver)
 
     def get_name_and_location(self):
@@ -54,6 +58,8 @@ class SafePerson(Person):
         self.headline = top_panel.find_element(
             By.CSS_SELECTOR, ".ph5 .text-body-medium.break-words"
         ).text
+        if self.callback is not None:
+            self.callback.callback(f"Name: {self.name}, Location: {self.location}")
 
     def scrape_logged_in(self, close_on_complete=True):
         driver = self.driver
@@ -91,10 +97,14 @@ class SafePerson(Person):
         position_elements = position.find_elements(By.XPATH, "*")
         company_logo_elem = position_elements[0] if len(position_elements) > 0 else None
         position_details = position_elements[1] if len(position_elements) > 1 else None
+        if self.callback is not None:
+            self.callback.callback(f"Company logo: {company_logo_elem}, Position details: {position_details}")
         return company_logo_elem, position_details
 
     def _extract_experience(self, position: WebElement) -> Experience | None:
         try:
+            if self.callback is not None:
+                self.callback.callback("Extracting experience...")
             position = position.find_element(
                 By.CSS_SELECTOR, "div[data-view-name='profile-component-entity']"
             )
@@ -224,6 +234,8 @@ class SafePerson(Person):
                             name=company, linkedin_url=company_linkedin_url
                         ),
                     )
+                    if self.callback is not None:
+                        self.callback.callback(f"Experience extracted")
                     return experience
             else:
                 description = (
@@ -239,9 +251,13 @@ class SafePerson(Person):
                     description=description,
                     company=Company(name=company, linkedin_url=company_linkedin_url),
                 )
+                if self.callback is not None:
+                    self.callback.callback(f"Experience extracted")
                 return experience
         except Exception as e:
             logger.error(f"Error extracting experience: {e}")
+            if self.callback is not None:
+                self.callback.callback(f"Error extracting experience: {e}")
             return None
 
     def _extract_experiences_from_parent(
@@ -282,6 +298,8 @@ class SafePerson(Person):
 
     def get_educations(self):
         try:
+            if self.callback is not None:
+                self.callback.callback("Extracting educations...")
             url = os.path.join(self.linkedin_url, "details/education")
             self.driver.get(url)
             self.focus()
@@ -355,8 +373,12 @@ class SafePerson(Person):
                     linkedin_url=institution_linkedin_url,
                 )
                 self.add_education(education)
+                if self.callback is not None:
+                    self.callback.callback(f"Education extracted")
         except Exception as e:
             logger.error(f"Error getting educations: {e}")
+            if self.callback is not None:
+                self.callback.callback(f"Error extracting educations: {e}")
             return []
 
     def focus(self):
@@ -364,7 +386,7 @@ class SafePerson(Person):
 
 
 def _convert_to_profile(person: SafePerson | None) -> Profile | None:
-    if not person:
+    if not person or not person.name:
         return None
     names = person.name.split(" ")
     if len(names) == 0:
@@ -392,17 +414,22 @@ async def aextract_profile(
     extract_educations: bool = False,
     extract_experiences_from_homepage: bool = False,
     project_dir: Path = None,
+    callback: BaseCallback | None = None
 ) -> Profile | None:
     if project_dir is not None:
         if profile_data := await select_profile(
             project_dir, correct_linkedin_url(profile)
         ):
+            if callback is not None:
+                await callback.callback(f"Profile already exists in database")
             return profile_data
     else:
         if profile_data := _cache.get(profile):
             return profile_data
+    if callback is not None:
+        await callback.callback(f"Extracting profile: {profile}")
     profile_data = await extract_profile(
-        profile, force_login, extract_educations, extract_experiences_from_homepage
+        profile, force_login, extract_educations, extract_experiences_from_homepage, callback
     )
     if project_dir is not None and profile_data is not None:
         await insert_profile(project_dir, profile_data)
@@ -440,6 +467,7 @@ async def extract_profile(
     force_login: bool = False,
     extract_educations: bool = False,
     extract_experiences_from_homepage: bool = False,
+    callback: BaseCallback | None = None
 ) -> Profile | None:
     """
     Extract a LinkedIn profile using web scraping with Selenium.
@@ -452,21 +480,34 @@ async def extract_profile(
     Returns:
         Profile object if successful, None otherwise
     """
-    driver = _create_driver()
+    driver = await asyncio.to_thread(_create_driver)
     logger.info(f"Extracting profile: {profile}")
+    if callback is not None:
+        await callback.callback(f"Extracting profile: {profile}")
     user, password = linkedin_cfg.get_random_credential()
 
     # Use cookie-based login (will fall back to regular login if cookies don't work)
     await login_with_cookies(driver, user, password, force_login=force_login)
     logger.info("Logged in to LinkedIn")
+    if callback is not None:
+        await callback.callback("Logged in to LinkedIn")
 
     profile = correct_linkedin_url(profile)
-    logger.info(f"Corrected LinkedIn URL: {profile}")
-    person = SafePerson(
-        profile,
-        driver=driver,
-        extract_educations=extract_educations,
-        extract_experiences_from_homepage=extract_experiences_from_homepage,
-    )
+    logger.info(f"Starting to scrape profile: {profile}")
+    if callback is not None:
+        await callback.callback(f"Starting to scrape profile: {profile}")
+
+    def _scrape_profile():
+        person = SafePerson(
+            profile,
+            driver=driver,
+            extract_educations=extract_educations,
+            extract_experiences_from_homepage=extract_experiences_from_homepage,
+        )
+        return person
+    
+    person = await asyncio.to_thread(_scrape_profile)
     logger.info(f"Extracted profile: {person}")
+    if callback is not None:
+        await callback.callback(f"Extracted profile: {person}")
     return _convert_to_profile(person)

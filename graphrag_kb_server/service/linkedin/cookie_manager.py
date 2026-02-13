@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 from asyncer import asyncify
 
+import jiter
 from selenium.webdriver.common.by import By
 
 from graphrag_kb_server.config import cfg, linkedin_cfg
@@ -62,7 +63,7 @@ def load_cookies(driver: webdriver.Chrome, user: str) -> bool:
         driver.get("https://www.linkedin.com")
 
         with open(cookies_file, "r") as f:
-            cookies = json.load(f)
+            cookies = jiter.from_json(f.read().encode(encoding="utf-8"))
 
         for cookie in cookies:
             # Remove keys that can cause issues when adding cookies

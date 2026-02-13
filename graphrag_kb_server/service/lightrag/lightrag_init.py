@@ -1,6 +1,4 @@
 from pathlib import Path
-import os
-import json
 import asyncio
 
 from lightrag import LightRAG
@@ -11,6 +9,7 @@ from lightrag.kg.shared_storage import get_namespace_data, initialize_pipeline_s
 
 from graphrag_kb_server.service.lightrag.lightrag_model_support import select_model_func
 from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
+from graphrag_kb_server.utils.quick_json_loader import load_json
 
 
 lightrag_cache = GenericProjectSimpleCache[LightRAG]()
@@ -74,12 +73,3 @@ async def _process_single_storage(storage: BaseKVStorage | DocStatusStorage | Ba
     else:
         await storage.initialize()
 
-
-async def load_json(file_name):
-    def _load_json_sync():
-        if not os.path.exists(file_name):
-            return None
-        with open(file_name, encoding="utf-8-sig") as f:
-            return json.load(f)
-    
-    return await asyncio.to_thread(_load_json_sync)

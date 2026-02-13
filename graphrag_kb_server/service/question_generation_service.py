@@ -42,25 +42,13 @@ async def generate_questions_from_topics(
                 topics = await get_keywords_from_text(
                     questions_query.text, project_dir, None
                 )
-            case Engine.GRAPHRAG:
-                topics = rag_local_entities(
-                    ContextParameters(
-                        query=questions_query.text, project_dir=project_dir
-                    )
-                )
-                topics = [t["entity"] for t in topics[:limit]]
             case _:
                 raise ValueError(
                     f"Engine {engine} not supported for text-based question generation"
                 )
     else:
         match engine:
-            case Engine.GRAPHRAG:
-                nodes = read_graphrag_project(project_dir).nodes
-                topics = [
-                    nodes[t.upper()]["name"] for t in topics if t.upper() in nodes
-                ]
-            case Engine.LIGHTRAG:
+            case _:
                 nodes = create_network_from_project_dir(project_dir).nodes
                 topics = [nodes[t]["entity_id"] for t in topics if t in nodes]
 

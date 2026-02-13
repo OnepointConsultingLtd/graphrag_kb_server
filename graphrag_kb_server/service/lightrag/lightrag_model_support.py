@@ -1,6 +1,7 @@
 import json
 from typing import Callable, Awaitable
 
+import jiter
 from together import AsyncTogether
 from google import genai
 from google.genai import types
@@ -88,7 +89,7 @@ async def gemini_model_func(
 
     if structured_output:
         # Simulate error temporarily
-        return json.loads(response.text)
+        return jiter.from_json(response.text.encode(encoding="utf-8"))
     # 5. Return the response text
     return response.text
 
@@ -163,7 +164,7 @@ async def structured_completion(
     else:
         response = await client.chat.completions.create(**config_dict)
     content = response.choices[0].message.content
-    return json.loads(content) if structured_output else content
+    return jiter.from_json(content.encode(encoding="utf-8")) if structured_output else content
 
 
 async def togetherai_model_func(
@@ -251,7 +252,7 @@ if __name__ == "__main__":
     async def main():
         prompts_file = prompts_dir / "prompts_20251029081051.json"
         with open(prompts_file, "r") as f:
-            prompts = json.load(f)
+            prompts = jiter.from_json(f.read().encode(encoding="utf-8"))
         print(prompts)
         response = await togetherai_model_func(
             prompts["prompt"],

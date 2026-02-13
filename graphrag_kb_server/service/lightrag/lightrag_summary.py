@@ -1,6 +1,8 @@
 from pathlib import Path
 import json
 
+import jiter
+
 from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
 
 lightrag_summary_cache = GenericProjectSimpleCache[dict](timeout=3600 * 24)
@@ -14,14 +16,14 @@ def get_summary(project_dir: Path, file_path: str) -> str | None:
     summary_file_path = project_dir / SUMMARY_FILE_NAME
     if summary_file_path.exists():
         with open(summary_file_path, "r", encoding="utf-8") as f:
-            summary_dict = json.load(f)
+            summary_dict = jiter.from_json(f.read().encode(encoding="utf-8"))
             return summary_dict.get(file_path)
     kv_store_doc_status_path = project_dir / "lightrag/kv_store_doc_status.json"
     if not kv_store_doc_status_path.exists():
         return None
     doc_summary_dict = {}
     with open(kv_store_doc_status_path, "r", encoding="utf-8") as f:
-        kv_store_doc_status = json.load(f)
+        kv_store_doc_status = jiter.from_json(f.read().encode(encoding="utf-8"))
         for _, v in kv_store_doc_status.items():
             doc_summary_dict[v["file_path"]] = v["content_summary"]
     lightrag_summary_cache.set(project_dir, doc_summary_dict)

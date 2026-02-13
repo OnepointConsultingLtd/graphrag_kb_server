@@ -9,14 +9,16 @@ from typing import Final
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.main.multi_tennant_server import local_list_tennants
 from graphrag_kb_server.model.project import (
     Project,
     ProjectListing,
     EngineProjectListing,
-    GenerationStatus,
     IndexingStatus,
 )
 from graphrag_kb_server.model.engines import Engine
+from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
+from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 
 
 PROJECT_INFO_FILE: Final = "project.json"
@@ -111,3 +113,16 @@ def write_project_file(project_dir: Path, status: IndexingStatus) -> Project:
         project_dir.mkdir(parents=True, exist_ok=True)
     project_file.write_text(project.model_dump_json(), encoding="utf-8")
     return project
+
+
+async def initialize_projects():
+        # Load all LightRAG projects
+    from graphrag_kb_server.main.project_server import project_listing
+    tennants = local_list_tennants()
+    for tennant in tennants:
+        try:
+            projects = project_listing(cfg.graphrag_root_dir_path / tennant.folder_name)
+            for project in projects.lightrag_projects.projects:
+                await initialize_rag(cfg.graphrag_root_dir_path / tennant.folder_name / LIGHTRAG_FOLDER / project.name)
+        except Exception as e:
+            logger.error(f"Error initializing LightRAG project for tennant {tennant.folder_name}: {e}")

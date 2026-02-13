@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 
+import jiter
 from pydantic.json import pydantic_encoder
 
 from graphrag_kb_server.service.db.connection_pool import execute_query, fetch_one
@@ -57,7 +58,7 @@ async def insert_expanded_entities(
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
-    profile_dict = json.loads(match_query.user_profile)
+    profile_dict = jiter.from_json(match_query.user_profile.encode(encoding="utf-8"))
     linkedin_profile_url = profile_dict.get("linkedin_profile_url")
     digest_sha256, query_digest_sha256 = content_sha256_combined(match_query)
     sql = f"""
@@ -126,7 +127,7 @@ WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED
     )
     if result is None:
         return None
-    data = json.loads(result["match_output"])
+    data = jiter.from_json(result["match_output"].encode(encoding="utf-8"))
     data["id"] = int(result["id"])  # this overwrites any id in the JSON
     match_output = MatchOutput(**data)
     return match_output

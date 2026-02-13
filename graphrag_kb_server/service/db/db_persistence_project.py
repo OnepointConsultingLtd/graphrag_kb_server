@@ -86,7 +86,7 @@ SELECT * FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1;
     return FullProject(
         id=int(row["id"]),
         schema_name=schema_name,
-        engine=Engine.GRAPHRAG,
+        engine=Engine.LIGHTRAG,
         project=Project(
             name=row["name"],
             updated_timestamp=row["updated_at"],
@@ -94,3 +94,5 @@ SELECT * FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1;
             indexing_status=row.get("indexing_status", IndexingStatus.UNKNOWN),
         ),
     )
+
+

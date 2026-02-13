@@ -13,6 +13,7 @@ from graphrag_kb_server.main import all_routes, sio
 
 from graphrag_kb_server.main.multi_tennant_server import auth_middleware
 from graphrag_kb_server.logger import logger, init_logger
+from graphrag_kb_server.service.project import initialize_projects
 from graphrag_kb_server.service.snippet_generation_service import find_chat_assets
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.websocket_api import *
@@ -113,6 +114,7 @@ async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
 
 async def on_startup(app: web.Application):
     await bootstrap_database()
+    await initialize_projects()
 
 
 async def on_cleanup(app: web.Application):
@@ -156,6 +158,8 @@ def run_server():
         app.router.add_get(url, get_chat_ui)
 
     # app.router.add_static('/', GRAPHRAG_INDEX.parent)
+
+    
 
     logger.info("Static files added ...")
     web.run_app(
