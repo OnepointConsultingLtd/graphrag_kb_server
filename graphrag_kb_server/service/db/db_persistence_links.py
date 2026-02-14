@@ -79,3 +79,16 @@ SELECT * FROM {schema_name}.{TB_PATH_LINKS} WHERE PROJECT_ID = $1;
                 )
             )
         return path_links
+
+
+async def get_links_by_path(schema_name: str, project_id: int, path: str) -> list[str]:
+    pool = await init_pool()
+    async with pool.acquire() as conn:
+        results = await conn.fetch(
+            f"""
+            SELECT LINK FROM {schema_name}.{TB_PATH_LINKS} WHERE PROJECT_ID = $1 AND PATH = $2;
+            """,
+            project_id,
+            path,
+        )
+        return [result["link"] for result in results]

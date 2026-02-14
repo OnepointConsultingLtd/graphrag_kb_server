@@ -4,7 +4,7 @@ import re
 from graphrag_kb_server.model.path_link import PathLink
 from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id
 from graphrag_kb_server.service.db.db_persistence_links import save_path_links
-from graphrag_kb_server.service.file_find_service import ORIGINAL_INPUT_FOLDER
+from graphrag_kb_server.service.file_find_service import INPUT_FOLDER
 
 ACCEPTED_EXTENSIONS = set([".txt", ".md"])
 
@@ -30,7 +30,7 @@ def extract_links(project_dir: Path) -> list[tuple[str, list[str]]]:
     Returns:
         List of (file_path, list_of_urls) for each accepted file.
     """
-    original_file_path = project_dir / ORIGINAL_INPUT_FOLDER
+    original_file_path = project_dir / INPUT_FOLDER
     if not original_file_path.exists():
         return []
     result: list[tuple[str, list[str]]] = []

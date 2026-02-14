@@ -1,3 +1,4 @@
+from pathlib import Path
 from aiohttp import web
 from markdown import markdown
 
@@ -5,6 +6,8 @@ from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.model.context import Search
+from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id, get_project_id_from_path
+from graphrag_kb_server.service.db.db_persistence_links import get_links_by_path
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
@@ -28,6 +31,7 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
                             update={"search": "hybrid"}
                         )
                     chat_response = await lightrag_search(query_params)
+                    chat_response = await add_links_to_response(chat_response, query_params.context_params.project_dir)
                 case _:
                     raise web.HTTPBadRequest(
                         text="LightRAG does not support local search",
@@ -65,3 +69,24 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
                 headers=CORS_HEADERS,
             )
     raise web.HTTPBadRequest(text="Please make sure the format is specified.")
+
+
+async def add_links_to_response(chat_response: ChatResponse, project_dir: Path):
+    simple_project = extract_elements_from_path(project_dir)
+    schema_name = simple_project.schema_name
+    project_id = await get_project_id(
+        schema_name, simple_project.project_name, simple_project.engine.value
+    )
+    if chat_response.response is None:
+        return
+    if isinstance(chat_response.response, dict):
+        enhanced_references = []
+        references = chat_response.response["references"]
+        for reference in references:
+            file = reference["file"]
+            if Path(file).exists():
+                links = await get_links_by_path(schema_name, project_id, file)
+                reference["links"] = links
+                enhanced_references.append(reference)
+        chat_response.response["references"] = enhanced_references
+    return chat_response

@@ -44,8 +44,18 @@ class Reference(BaseModel):
     file: str = Field(description="The file of the reference")
 
 
+class ReferenceWithLinks(Reference):
+    links: list[str] = Field(description="The links of the reference")
+
+
 class ResponseSchema(BaseModel):
     response: str = Field(description="The response to the user's question")
     references: list[Reference] = Field(
         description="The references to the user's question which are typically documents or files with a path. If there are no references, return an empty list."
+    )
+
+
+class ExtendedResponseSchema(ResponseSchema):
+    references: list[ReferenceWithLinks] = Field(
+        description="The references to the user's question which are typically documents or files with a path and links. If there are no references, return an empty list."
     )
