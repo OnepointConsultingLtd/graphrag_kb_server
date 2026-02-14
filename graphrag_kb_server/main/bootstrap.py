@@ -3,7 +3,7 @@ from graphrag_kb_server.service.db.db_persistence_admin_user import (
     create_initial_admin_user,
 )
 from graphrag_kb_server.service.db.db_persistence_keywords import create_keywords_table
-from graphrag_kb_server.service.db.db_persistence_links import create_links_table
+from graphrag_kb_server.service.db.db_persistence_links import create_path_links_table
 from graphrag_kb_server.service.db.db_persistence_project import (
     create_project_table,
     create_project,
@@ -59,7 +59,7 @@ async def create_tennant_tables(tennant: Tennant):
     await create_admin_user_table()
     await create_initial_admin_user()
     await create_relationships_table(tennant.folder_name)
-    await create_links_table(tennant.folder_name)
+    await create_path_links_table(tennant.folder_name)
 
 
 async def create_projects_and_topics(

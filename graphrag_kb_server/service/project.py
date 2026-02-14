@@ -17,6 +17,7 @@ from graphrag_kb_server.model.project import (
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
+from graphrag_kb_server.service.link_extraction_service import save_links
 
 
 PROJECT_INFO_FILE: Final = "project.json"
@@ -122,12 +123,9 @@ async def initialize_projects():
         try:
             projects = project_listing(cfg.graphrag_root_dir_path / tennant.folder_name)
             for project in projects.lightrag_projects.projects:
-                await initialize_rag(
-                    cfg.graphrag_root_dir_path
-                    / tennant.folder_name
-                    / LIGHTRAG_FOLDER
-                    / project.name
-                )
+                project_folder = cfg.graphrag_root_dir_path / tennant.folder_name / LIGHTRAG_FOLDER / project.name
+                await initialize_rag(project_folder)
+                await save_links(project_folder, insert_if_not_exists=True)
         except Exception as e:
             logger.error(
                 f"Error initializing LightRAG project for tennant {tennant.folder_name}: {e}"

@@ -12,7 +12,7 @@ from graphrag_kb_server.test.service.db.common_test_support import (
 async def test_create_and_drop_links_table():
     """Create links table then drop it (requires projects table for FK)."""
     from graphrag_kb_server.service.db.db_persistence_links import (
-        create_links_table,
+        create_path_links_table,
         drop_links_table_table,
     )
 
@@ -23,7 +23,7 @@ async def test_create_and_drop_links_table():
         project_name: str,
     ):
         try:
-            await create_links_table(schema_name)
+            await create_path_links_table(schema_name)
             await drop_links_table_table(schema_name)
         except Exception:
             raise
@@ -35,7 +35,7 @@ async def test_create_and_drop_links_table():
 async def test_save_path_links_and_find_path_links():
     """Save path links and retrieve them by project_id."""
     from graphrag_kb_server.service.db.db_persistence_links import (
-        create_links_table,
+        create_path_links_table,
         drop_links_table_table,
         save_path_links,
         find_path_links,
@@ -51,7 +51,7 @@ async def test_save_path_links_and_find_path_links():
         assert project_id is not None
 
         try:
-            await create_links_table(schema_name)
+            await create_path_links_table(schema_name)
             path_links = [
                 PathLink(
                     path="/doc/a", link="https://example.com/a", project_id=project_id
@@ -79,7 +79,7 @@ async def test_save_path_links_empty_list():
     """Saving empty list then find returns empty list."""
 
     from graphrag_kb_server.service.db.db_persistence_links import (
-        create_links_table,
+        create_path_links_table,
         drop_links_table_table,
         save_path_links,
         find_path_links,
@@ -95,7 +95,7 @@ async def test_save_path_links_empty_list():
         assert project_id is not None
 
         try:
-            await create_links_table(schema_name)
+            await create_path_links_table(schema_name)
             await save_path_links(schema_name, [])
             found = await find_path_links(schema_name, project_id)
             assert found == []
@@ -110,7 +110,7 @@ async def test_save_path_links_on_conflict_do_nothing():
     """Saving the same (path, link, project_id) twice does not duplicate due to ON CONFLICT DO NOTHING."""
 
     from graphrag_kb_server.service.db.db_persistence_links import (
-        create_links_table,
+        create_path_links_table,
         drop_links_table_table,
         save_path_links,
         find_path_links,
@@ -126,7 +126,7 @@ async def test_save_path_links_on_conflict_do_nothing():
         assert project_id is not None
 
         try:
-            await create_links_table(schema_name)
+            await create_path_links_table(schema_name)
             link = PathLink(
                 path="/doc/one", link="https://example.com/one", project_id=project_id
             )
@@ -145,7 +145,7 @@ async def test_save_path_links_on_conflict_do_nothing():
 async def test_find_path_links_returns_only_for_project():
     """find_path_links returns only links for the given project_id."""
     from graphrag_kb_server.service.db.db_persistence_links import (
-        create_links_table,
+        create_path_links_table,
         drop_links_table_table,
         save_path_links,
         find_path_links,
@@ -161,7 +161,7 @@ async def test_find_path_links_returns_only_for_project():
         assert project_id is not None
 
         try:
-            await create_links_table(schema_name)
+            await create_path_links_table(schema_name)
             await save_path_links(
                 schema_name,
                 [

@@ -1,11 +1,11 @@
 from graphrag_kb_server.model.path_link import PathLink
-from graphrag_kb_server.service.db.connection_pool import execute_query, init_pool
+from graphrag_kb_server.service.db.connection_pool import execute_query, execute_query_with_return, init_pool
 
 
 TB_PATH_LINKS = "TB_PATH_LINKS"
 
 
-async def create_links_table(schema_name: str):
+async def create_path_links_table(schema_name: str):
     await execute_query(
         f"""
 CREATE TABLE IF NOT EXISTS {schema_name}.{TB_PATH_LINKS} (
@@ -33,8 +33,20 @@ DROP TABLE IF EXISTS {schema_name}.{TB_PATH_LINKS};
     )
 
 
-async def save_path_links(schema_name: str, path_links: list[PathLink]):
+async def save_path_links(schema_name: str, path_links: list[PathLink], insert_if_not_exists: bool = False):
     pool = await init_pool()
+    if insert_if_not_exists and len(path_links) > 0:
+        # check first path link
+        first_path_link = path_links[0]
+        count = await execute_query_with_return(
+            f"""
+            SELECT COUNT(*) FROM {schema_name}.{TB_PATH_LINKS} WHERE PROJECT_ID = $1;
+            """,
+            first_path_link.project_id
+        )
+        if count > 0:
+            return
+
     async with pool.acquire() as conn:
         for link in path_links:
             await conn.execute(
