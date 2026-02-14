@@ -1,24 +1,22 @@
 import pytest
 
 from graphrag_kb_server.model.project import FullProject, Project
-from graphrag_kb_server.service.db.db_persistence_expanded_entities import (
-    create_expanded_entities_table,
-    drop_expanded_entities_table,
-    insert_expanded_entities,
-    get_expanded_entities,
-)
 from graphrag_kb_server.test.model.match_query_provider import (
     create_match_query,
     create_match_output,
 )
-from graphrag_kb_server.test.service.db.test_topics_table import (
-    create_test_project_wrapper,
-)
-from graphrag_kb_server.test.service.db.common_test_support import create_project_dir
 
 
 @pytest.mark.asyncio
 async def test_create_expanded_entities():
+    from graphrag_kb_server.test.service.db.common_test_support import create_project_dir
+    from graphrag_kb_server.service.db.db_persistence_expanded_entities import (
+        create_expanded_entities_table,
+        drop_expanded_entities_table,
+        insert_expanded_entities,
+        get_expanded_entities,
+    )
+    from graphrag_kb_server.test.service.db.common_test_support import create_test_project_wrapper
 
     async def test_function(
         full_project: FullProject, _: Project, schema_name: str, project_name: str

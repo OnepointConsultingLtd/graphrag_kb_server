@@ -1,12 +1,11 @@
 import pytest
 
-from graphrag_kb_server.service.db.connection_pool import (
-    create_connection_pool,
-)
-
 
 @pytest.mark.asyncio
 async def test_create_connection_pool():
+    from graphrag_kb_server.service.db.connection_pool import (
+        create_connection_pool,
+    )
     """Test that connection pool can be created and has valid configuration."""
     connection_pool = await create_connection_pool()
     assert connection_pool is not None
@@ -16,6 +15,9 @@ async def test_create_connection_pool():
 
 @pytest.mark.asyncio
 async def test_connection_pool_singleton():
+    from graphrag_kb_server.service.db.connection_pool import (
+        create_connection_pool,
+    )
     """Test that multiple calls return the same pool instance."""
     pool1 = await create_connection_pool()
     pool2 = await create_connection_pool()

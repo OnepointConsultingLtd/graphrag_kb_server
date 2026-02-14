@@ -35,19 +35,22 @@ Cookies are stored in: {CONFIG_DIR}/linkedin_cookies/cookies_{user_hash}.json
 
 import asyncio
 
-from graphrag_kb_server.service.linkedin.scrape_service import (
-    extract_profile,
-    aextract_profile,
-)
+
 from graphrag_kb_server.model.linkedin.profile import Profile
 
 
 def test_scrape_linkedin_profile():
+    from graphrag_kb_server.service.linkedin.scrape_service import (
+        extract_profile
+    )
     person = extract_profile("gil-palma-fernandes", extract_educations=True)
     _check_person(person)
 
 
 def test_scrape_linkedin_profile_from_homepage():
+    from graphrag_kb_server.service.linkedin.scrape_service import (
+        extract_profile
+    )
     person = extract_profile(
         "gil-palma-fernandes",
         extract_educations=True,
@@ -68,6 +71,9 @@ def _check_person(person: Profile):
 
 
 def test_scrape_linkedin_profile_async():
+    from graphrag_kb_server.service.linkedin.scrape_service import (
+        aextract_profile
+    )
     person = asyncio.run(
         aextract_profile("gil-palma-fernandes", extract_educations=True)
     )
@@ -82,6 +88,9 @@ def test_scrape_linkedin_profile_async():
 
 
 def test_scrape_linkedin_profile_2():
+    from graphrag_kb_server.service.linkedin.scrape_service import (
+        extract_profile
+    )
     person = extract_profile(
         "alexander-polev-cto",
         extract_educations=False,
@@ -98,6 +107,9 @@ def test_scrape_linkedin_profile_2():
 
 
 def test_scrape_linkedin_profile_3():
+    from graphrag_kb_server.service.linkedin.scrape_service import (
+        extract_profile
+    )
     person = extract_profile("tuli-faas", extract_educations=True)
     assert person is not None
     assert person.given_name == "Tuli"
@@ -108,6 +120,9 @@ def test_scrape_linkedin_profile_3():
 
 
 def test_scrape_linkedin_profile_4():
+    from graphrag_kb_server.service.linkedin.scrape_service import (
+        extract_profile
+    )
     person = extract_profile("donna-matthews-a8b0244", extract_educations=False)
     assert person is not None
     assert person.given_name == "Donna"
@@ -121,6 +136,9 @@ def test_scrape_linkedin_profile_4():
 
 
 def test_scrape_linkedin_profile_5():
+    from graphrag_kb_server.service.linkedin.scrape_service import (
+        extract_profile
+    )
     person = extract_profile("murtaza-hassani", extract_educations=False)
     assert person is not None
     assert person.given_name == "Murtaza"
@@ -140,6 +158,9 @@ def test_cookie_management():
     3. Force login bypasses cookies
     4. Clear cookies utility works
     """
+    from graphrag_kb_server.service.linkedin.scrape_service import (
+        extract_profile
+    )
     profile_url = "gil-palma-fernandes"
 
     # First extraction - will login with credentials and save cookies
@@ -170,7 +191,3 @@ def test_cookie_management():
 
     print("\n=== Cookie test completed successfully ===")
 
-
-if __name__ == "__main__":
-    # Run the cookie management test
-    test_cookie_management()

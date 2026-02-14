@@ -1,17 +1,8 @@
 import pytest
 
 from graphrag_kb_server.model.project import FullProject, Project
-from graphrag_kb_server.service.db.db_persistence_profile import (
-    create_profile_table,
-    drop_profile_table,
-    insert_profile,
-    select_profile,
-)
-from graphrag_kb_server.test.service.db.test_topics_table import (
-    create_test_project_wrapper,
-)
 from graphrag_kb_server.model.linkedin.profile import Profile
-from graphrag_kb_server.test.service.db.common_test_support import create_project_dir
+from graphrag_kb_server.test.service.db.common_test_support import create_test_project_wrapper
 
 
 @pytest.mark.asyncio
@@ -20,6 +11,13 @@ async def test_create_profile():
     async def test_function(
         full_project: FullProject, _: Project, schema_name: str, project_name: str
     ):
+        from graphrag_kb_server.service.db.db_persistence_profile import (
+            create_profile_table,
+            drop_profile_table,
+            insert_profile,
+            select_profile,
+        )
+        from graphrag_kb_server.test.service.db.common_test_support import create_project_dir
         try:
             linkedin_profile_url = "test_linkedin_profile_url"
             await create_profile_table(schema_name)

@@ -1,10 +1,9 @@
 import asyncio
 from graphrag_kb_server.model.topics import Topic, Topics
-from graphrag_kb_server.service.question_generation_service import generate_questions
 
 
 def test_generate_questions():
-
+    from graphrag_kb_server.service.question_generation_service import generate_questions
     topics = Topics(
         topics=[
             Topic(

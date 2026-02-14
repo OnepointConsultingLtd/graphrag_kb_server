@@ -1,24 +1,24 @@
 import pytest
 
-from graphrag_kb_server.service.db.db_persistence_topics import (
-    create_topics_table,
-    drop_topics_table,
-    insert_topic,
-    find_topics_by_project_name,
-    save_topics_request,
-    delete_topics_by_project_name,
-)
 from graphrag_kb_server.model.project import FullProject, Project
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.model.topics import Topic, TopicsRequest
-from graphrag_kb_server.test.service.db.common_test_support import (
-    create_test_project_wrapper,
-    create_project_dir,
-)
 
 
 @pytest.mark.asyncio
 async def test_create_topic():
+    from graphrag_kb_server.test.service.db.common_test_support import (
+        create_test_project_wrapper,
+        create_project_dir,
+    )
+    from graphrag_kb_server.service.db.db_persistence_topics import (
+        create_topics_table,
+        drop_topics_table,
+        insert_topic,
+        find_topics_by_project_name,
+        save_topics_request,
+        delete_topics_by_project_name,
+    )
 
     async def test_function(
         full_project: FullProject,
