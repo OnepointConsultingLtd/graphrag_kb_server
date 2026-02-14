@@ -13,8 +13,9 @@ async def test_create_and_drop_links_table():
     """Create links table then drop it (requires projects table for FK)."""
     from graphrag_kb_server.service.db.db_persistence_links import (
         create_links_table,
-        drop_links_table_table
+        drop_links_table_table,
     )
+
     async def test_function(
         full_project: FullProject,
         found_project: FullProject,
@@ -52,8 +53,12 @@ async def test_save_path_links_and_find_path_links():
         try:
             await create_links_table(schema_name)
             path_links = [
-                PathLink(path="/doc/a", link="https://example.com/a", project_id=project_id),
-                PathLink(path="/doc/b", link="https://example.com/b", project_id=project_id),
+                PathLink(
+                    path="/doc/a", link="https://example.com/a", project_id=project_id
+                ),
+                PathLink(
+                    path="/doc/b", link="https://example.com/b", project_id=project_id
+                ),
             ]
             await save_path_links(schema_name, path_links)
             found = await find_path_links(schema_name, project_id)
@@ -122,7 +127,9 @@ async def test_save_path_links_on_conflict_do_nothing():
 
         try:
             await create_links_table(schema_name)
-            link = PathLink(path="/doc/one", link="https://example.com/one", project_id=project_id)
+            link = PathLink(
+                path="/doc/one", link="https://example.com/one", project_id=project_id
+            )
             await save_path_links(schema_name, [link])
             await save_path_links(schema_name, [link])
             found = await find_path_links(schema_name, project_id)
@@ -157,7 +164,13 @@ async def test_find_path_links_returns_only_for_project():
             await create_links_table(schema_name)
             await save_path_links(
                 schema_name,
-                [PathLink(path="/doc/only", link="https://example.com/only", project_id=project_id)],
+                [
+                    PathLink(
+                        path="/doc/only",
+                        link="https://example.com/only",
+                        project_id=project_id,
+                    )
+                ],
             )
             # Query for a different project_id should return empty
             other_id = project_id + 99999

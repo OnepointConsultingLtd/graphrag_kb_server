@@ -1,4 +1,3 @@
-import json
 from typing import Callable, Awaitable
 
 import jiter
@@ -109,14 +108,11 @@ async def structured_completion(
             messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": prompt})
     structured_output = "structured_output" in kwargs and kwargs["structured_output"]
-    config_dict = {
-        "model": lightrag_cfg.lightrag_model,
-        "messages": messages
-    }
+    config_dict = {"model": lightrag_cfg.lightrag_model, "messages": messages}
     # Detect client type to use appropriate format
     is_openai = isinstance(client, AsyncOpenAI)
     is_openrouter = isinstance(client, OpenRouter)
-    
+
     # Add provider parameter for OpenRouter if specified in config
     # OpenRouter expects provider as a dictionary matching ChatGenerationParamsProvider
     if is_openrouter and cfg.openrouter_provider:
@@ -158,13 +154,19 @@ async def structured_completion(
                     "schema"
                 ] = ResponseSchema.model_json_schema()
     logger.info(f"Calling structured completion with config: {config_dict['model']}")
-    logger.debug(f"Calling structured completion with system prompt: {config_dict['messages'][0]['content']}")
+    logger.debug(
+        f"Calling structured completion with system prompt: {config_dict['messages'][0]['content']}"
+    )
     if is_openrouter:
         response = await client.chat.send_async(**config_dict)
     else:
         response = await client.chat.completions.create(**config_dict)
     content = response.choices[0].message.content
-    return jiter.from_json(content.encode(encoding="utf-8")) if structured_output else content
+    return (
+        jiter.from_json(content.encode(encoding="utf-8"))
+        if structured_output
+        else content
+    )
 
 
 async def togetherai_model_func(
@@ -188,12 +190,11 @@ async def openai_model_func(
 async def openrouter_model_func(
     prompt, system_prompt=None, history_messages=[], **kwargs
 ) -> str:
-    with OpenRouter(
-        api_key=cfg.openrouter_api_key
-    ) as client:
+    with OpenRouter(api_key=cfg.openrouter_api_key) as client:
         return await structured_completion(
             client, prompt, system_prompt, history_messages, **kwargs
         )
+
 
 def openai_model_func_factory(model: str) -> Callable[..., Awaitable[str]]:
     async def openai_model_func(

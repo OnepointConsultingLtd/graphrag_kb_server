@@ -128,7 +128,7 @@ async def auth_middleware(request: web.Request, handler):
 
 
 @routes.options(ADMIN_TOKEN_PATH)
-async def read_admin_token(request: web.Request) -> web.Response:
+async def read_admin_token_options(request: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 
@@ -326,7 +326,7 @@ async def delete_admin_user_options(request: web.Request) -> web.Response:
 
 
 @routes.delete(ADMIN_DELETE_PATH)
-async def delete_admin_user_options(request: web.Request) -> web.Response:
+async def delete_admin_user(request: web.Request) -> web.Response:
     """
     Optional route description
     ---
@@ -1097,9 +1097,7 @@ async def validate_token(request: web.Request) -> web.Response:
             )
         else:
             return invalid_response(
-                "Invalid token",
-                "Please specify a valid token",
-                status=401
+                "Invalid token", "Please specify a valid token", status=401
             )
 
     return await handle_error(handle_request, request=request)

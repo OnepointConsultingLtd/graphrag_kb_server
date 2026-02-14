@@ -12,6 +12,7 @@ DEFAULT_SCHEMA_NAME = "public"
 
 def create_project_dir(schema_name: str, engine: Engine, project_name: str) -> Path:
     from graphrag_kb_server.config import cfg
+
     return cfg.graphrag_root_dir_path / schema_name / engine.value / project_name
 
 
@@ -25,6 +26,7 @@ async def create_test_project_wrapper(
         drop_project_table,
         find_project_by_name,
     )
+
     project_name = "test_project"
     try:
         full_project = FullProject(

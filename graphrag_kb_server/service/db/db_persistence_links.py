@@ -1,10 +1,9 @@
-
-
 from graphrag_kb_server.model.path_link import PathLink
 from graphrag_kb_server.service.db.connection_pool import execute_query, init_pool
 
 
 TB_PATH_LINKS = "TB_PATH_LINKS"
+
 
 async def create_links_table(schema_name: str):
     await execute_query(
@@ -45,14 +44,14 @@ async def save_path_links(schema_name: str, path_links: list[PathLink]):
         """,
                 link.path,
                 link.link,
-                link.project_id
+                link.project_id,
             )
 
 
 async def find_path_links(schema_name: str, project_id: int) -> list[PathLink]:
     pool = await init_pool()
     async with pool.acquire() as conn:
-        path_links = [] 
+        path_links = []
         results = await conn.fetch(
             f"""
 SELECT * FROM {schema_name}.{TB_PATH_LINKS} WHERE PROJECT_ID = $1;
@@ -60,5 +59,11 @@ SELECT * FROM {schema_name}.{TB_PATH_LINKS} WHERE PROJECT_ID = $1;
             project_id,
         )
         for result in results:
-            path_links.append(PathLink(path=result["path"], link=result["link"], project_id=result["project_id"]))
+            path_links.append(
+                PathLink(
+                    path=result["path"],
+                    link=result["link"],
+                    project_id=result["project_id"],
+                )
+            )
         return path_links

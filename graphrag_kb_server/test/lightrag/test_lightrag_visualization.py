@@ -5,6 +5,7 @@ def test_lightrag_visualization():
     from graphrag_kb_server.service.lightrag.lightrag_visualization import (
         generate_lightrag_graph_visualization,
     )
+
     test_dir = (
         Path(__file__).parent.parent.parent.parent
         / "docs/dummy_projects/lightrag/dwell1"

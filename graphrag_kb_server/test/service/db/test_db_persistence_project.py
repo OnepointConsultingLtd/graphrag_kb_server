@@ -1,7 +1,5 @@
 import pytest
 
-from graphrag_kb_server.test.service.db.common_test_support import DEFAULT_SCHEMA_NAME
-
 
 async def _create_test_project():
     from graphrag_kb_server.service.db.db_persistence_project import (
@@ -10,6 +8,7 @@ async def _create_test_project():
         delete_project,
     )
     from graphrag_kb_server.test.service.db.project_provider import create_test_project
+
     test_project = create_test_project()
     await create_project(test_project)
     assert await project_exists(test_project) is True

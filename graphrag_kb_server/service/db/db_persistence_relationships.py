@@ -7,6 +7,7 @@ TB_RELATIONSHIPS = "TB_RELATIONSHIPS"
 
 async def create_relationships_table(schema_name: str):
     from graphrag_kb_server.service.db.db_persistence_search import TB_SEARCH_HISTORY
+
     await execute_query(
         f"""
 CREATE TABLE IF NOT EXISTS {schema_name}.{TB_RELATIONSHIPS} (
@@ -40,7 +41,7 @@ INSERT INTO {schema_name}.{TB_RELATIONSHIPS} (RELATIONSHIPS, SEARCH_ID) VALUES (
 ON CONFLICT (SEARCH_ID) DO NOTHING;
 """,
         relationships.relationships,
-        relationships.search_id
+        relationships.search_id,
     )
 
 

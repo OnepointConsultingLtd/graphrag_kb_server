@@ -24,9 +24,7 @@ async def unzip_file(upload_folder: Path, zip_file: Path):
                 try:
                     zip_ref.extract(member, target_folder)
                 except Exception as e:
-                    log.error(
-                        f"Failed to extract {member} from {zip_file.name}: {e}"
-                    )
+                    log.error(f"Failed to extract {member} from {zip_file.name}: {e}")
     await convert_to_text(input_folder)
 
 

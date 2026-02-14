@@ -1,5 +1,3 @@
-import json
-
 from google import genai
 from google.genai import types
 import jiter
@@ -44,12 +42,14 @@ user:{user_message}
                 ],
                 response_format=response_schema,
             )
-            return jiter.from_json(response.choices[0].message.content.encode(encoding="utf-8"))
+            return jiter.from_json(
+                response.choices[0].message.content.encode(encoding="utf-8")
+            )
         case _:
             # Use OpenRouter as default
             schema_dict = response_schema.model_json_schema()
             schema_name = schema_dict.get("title", response_schema.__name__)
-            
+
             async with OpenRouter(api_key=cfg.openrouter_api_key) as client:
                 config_dict = {
                     "model": model,
@@ -69,6 +69,8 @@ user:{user_message}
                 # Add provider parameter if specified in config
                 if cfg.openrouter_provider:
                     config_dict["provider"] = {"name": cfg.openrouter_provider}
-                
+
                 response = await client.chat.send_async(**config_dict)
-                return jiter.from_json(response.choices[0].message.content.encode(encoding="utf-8"))
+                return jiter.from_json(
+                    response.choices[0].message.content.encode(encoding="utf-8")
+                )

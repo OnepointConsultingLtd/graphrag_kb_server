@@ -1,4 +1,3 @@
-
 from graphrag_kb_server.model.context import (
     create_global_context_result,
     ContextResult,

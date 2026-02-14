@@ -6,6 +6,7 @@ from graphrag_kb_server.model.snippet import WidgetType, Project, Platform, Sear
 
 def test_generate_direct_url():
     from graphrag_kb_server.service.generate_url_service import generate_direct_url
+
     url = generate_direct_url(
         WidgetType.FLOATING_CHAT,
         Project(

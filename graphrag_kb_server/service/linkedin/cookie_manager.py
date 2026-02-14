@@ -86,7 +86,9 @@ def load_cookies(driver: webdriver.Chrome, user: str) -> bool:
             driver.implicitly_wait(5)
             # Check if we can find text that indicates we're logged in (e.g., "Home", "My Network", "Jobs")
             # Using XPath to find text content on the page
-            contains_expressions = [f"contains(text(), '{name}')" for name in linkedin_cfg.linkedin_searches]
+            contains_expressions = [
+                f"contains(text(), '{name}')" for name in linkedin_cfg.linkedin_searches
+            ]
             contains_expressions_str = " or ".join(contains_expressions)
             driver.find_element(By.XPATH, f"//*[{contains_expressions_str}]")
             logger.info("Successfully authenticated using saved cookies")
@@ -102,7 +104,9 @@ def load_cookies(driver: webdriver.Chrome, user: str) -> bool:
         return False
 
 
-def _login_with_credentials(driver: webdriver.Chrome, user: str, password: str, timeout: int = 60) -> None:
+def _login_with_credentials(
+    driver: webdriver.Chrome, user: str, password: str, timeout: int = 60
+) -> None:
     """Login to LinkedIn via credentials. Uses feed link for verification (more stable than global-nav)."""
     from selenium.webdriver.support.wait import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
@@ -120,7 +124,7 @@ def _login_with_credentials(driver: webdriver.Chrome, user: str, password: str, 
         try:
             checkbox = driver.find_element(
                 By.CSS_SELECTOR,
-                "#remember-me-prompt__form-primary input[type='checkbox']"
+                "#remember-me-prompt__form-primary input[type='checkbox']",
             )
             if checkbox.is_selected():
                 checkbox.click()  # uncheck it

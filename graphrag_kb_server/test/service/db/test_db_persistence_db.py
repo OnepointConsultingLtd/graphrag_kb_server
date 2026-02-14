@@ -12,6 +12,7 @@ async def test_create_drop_admin_user_table():
         select_admin_user,
         select_all_admin_users,
     )
+
     await create_admin_user_table()
     admin_user_test = AdminUser(
         name="test_admin_user",

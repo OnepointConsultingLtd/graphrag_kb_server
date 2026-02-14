@@ -1,7 +1,6 @@
 from pathlib import Path
 
 
-
 def test_list_projects():
 
     from graphrag_kb_server.service.project import (

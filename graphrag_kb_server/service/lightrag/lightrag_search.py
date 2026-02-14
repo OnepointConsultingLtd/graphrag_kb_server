@@ -201,7 +201,7 @@ async def lightrag_search(
 ) -> ChatResponse:
     """
     Execute LightRAG search with automatic retry logic.
-    
+
     On failure, retries up to 5 times with reduced parameters:
     - max_entity_size: reduced to 10
     - max_relation_size: reduced to 10
@@ -209,7 +209,7 @@ async def lightrag_search(
     """
     retries = 5
     current_params = query_params
-    
+
     while retries > 0:
         try:
             return await _lightrag_search_impl(current_params, only_need_context)
@@ -218,20 +218,22 @@ async def lightrag_search(
             retries -= 1
             if retries == 0:
                 raise e
-            
+
             # Reduce parameters for retry
             params_dict = current_params.model_dump()
             params_dict["max_entity_size"] = 10
             params_dict["max_relation_size"] = 10
             params_dict["max_filepath_depth"] = 10
             current_params = QueryParameters(**params_dict)
-            
+
             # Notify callback if available
             if current_params.callback:
                 await current_params.callback.callback(
                     f"Failed to search documents, retrying {retries} more times."
                 )
-            logger.info(f"Retrying lightrag_search {retries} more times with reduced parameters")
+            logger.info(
+                f"Retrying lightrag_search {retries} more times with reduced parameters"
+            )
 
 
 async def aquery_llm(
@@ -420,7 +422,7 @@ async def kg_query(
         text_chunks_db,
         query_param,
         chunks_vdb,
-        query_params.callback
+        query_params.callback,
     )
 
     if context_result is None:
@@ -968,9 +970,17 @@ async def _perform_kg_search(
         has_ll_keywords = len(ll_keywords) > 0
         has_hl_keywords = len(hl_keywords) > 0
         if has_ll_keywords:
-            tasks.append(_get_node_data(ll_keywords, knowledge_graph_inst, entities_vdb, query_param))
+            tasks.append(
+                _get_node_data(
+                    ll_keywords, knowledge_graph_inst, entities_vdb, query_param
+                )
+            )
         if has_hl_keywords:
-            tasks.append(_get_edge_data(hl_keywords, knowledge_graph_inst, relationships_vdb, query_param))
+            tasks.append(
+                _get_edge_data(
+                    hl_keywords, knowledge_graph_inst, relationships_vdb, query_param
+                )
+            )
 
         results = await asyncio.gather(*tasks)
         if has_ll_keywords and has_hl_keywords:

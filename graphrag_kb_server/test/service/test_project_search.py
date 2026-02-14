@@ -5,6 +5,7 @@ from graphrag_kb_server.model.project import IndexingStatus
 
 def test_write_project_file():
     from graphrag_kb_server.service.project import write_project_file
+
     project_dir = (
         Path(__file__).parent.parent.parent.parent
         / "docs/dummy_projects/lightrag/dwell1"
@@ -19,6 +20,7 @@ def test_write_project_file():
 
 def test_single_project_status():
     from graphrag_kb_server.service.project import single_project_status
+
     project_dir = (
         Path(__file__).parent.parent.parent.parent
         / "docs/dummy_projects/lightrag/dwell1"

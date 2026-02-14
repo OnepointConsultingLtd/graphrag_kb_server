@@ -24,6 +24,7 @@ async def test_create_drop_search_history_tables():
         create_search_history_tables,
         drop_search_history_tables,
     )
+
     schema_name = DEFAULT_SCHEMA_NAME
     try:
         await create_search_history_tables(schema_name)
@@ -55,6 +56,7 @@ async def test_insert_search_query():
         find_keywords,
         save_keywords,
     )
+
     async def test_function(
         full_project: FullProject, _: Project, schema_name: str, project_name: str
     ):

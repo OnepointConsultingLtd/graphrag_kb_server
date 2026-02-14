@@ -8,14 +8,16 @@ from graphrag_kb_server.service.db.db_persistence_project import (
     create_project_table,
     create_project,
 )
-from graphrag_kb_server.service.db.db_persistence_relationships import create_relationships_table
+from graphrag_kb_server.service.db.db_persistence_relationships import (
+    create_relationships_table,
+)
 from graphrag_kb_server.service.db.ddl_operations import create_schema
 from graphrag_kb_server.service.db.db_persistence_topics import create_topics_table
 from graphrag_kb_server.service.db.db_persistence_topics_centrality import (
     create_topics_with_centrality_table,
 )
 from graphrag_kb_server.model.tennant import Tennant
-from graphrag_kb_server.main.project_server import project_listing
+from graphrag_kb_server.service.project import list_projects as project_listing
 from graphrag_kb_server.model.project import FullProject, Project
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.config import cfg

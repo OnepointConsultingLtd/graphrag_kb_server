@@ -29,9 +29,8 @@ sample_topics = SimilarityTopics(
 
 
 def test_post_process_topics():
-    from graphrag_kb_server.service.topics_post_processing import (
-    post_process_topics
-)
+    from graphrag_kb_server.service.topics_post_processing import post_process_topics
+
     topics_prompt = "Please ensure that you deduplicate the topics and remove the duplicates. If a topic is a synonym of another topic, choose the one with the most thourgh description."
     topics = asyncio.run(post_process_topics(sample_topics, topics_prompt))
     assert len(topics.topics) == 2
@@ -41,5 +40,6 @@ def test_post_process_deduplicate_topics():
     from graphrag_kb_server.service.topics_post_processing import (
         deduplicate_topics,
     )
+
     topics = asyncio.run(deduplicate_topics(sample_topics))
     assert len(topics.topics) == 2

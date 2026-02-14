@@ -1,9 +1,6 @@
 import pytest
 
 
-
-
-
 _TEST_SCHEMA = "test_schema"
 
 
@@ -14,6 +11,7 @@ async def _create_check_destroy():
         drop_schema,
         schema_exists,
     )
+
     await create_connection_pool()
     await create_schema(_TEST_SCHEMA)
     assert (

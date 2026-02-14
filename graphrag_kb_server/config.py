@@ -46,7 +46,9 @@ class Config:
     ), "Please specify the TOGETHERAI_MODEL environment variable."
 
     config_dir = Path(__file__).parent.parent / "config"
-    assert config_dir.exists(), "The configuration directory with Swagger files does not exist"
+    assert (
+        config_dir.exists()
+    ), "The configuration directory with Swagger files does not exist"
 
     graphrag_root_dir = os.getenv("GRAPHRAG_ROOT_DIR")
     assert graphrag_root_dir is not None, "Please specify the Graphrag root directory."
@@ -82,8 +84,12 @@ class Config:
     openrouter_model = os.getenv("OPENROUTER_MODEL")
     assert openrouter_model is not None, "Please specify the OpenRouter model"
     openrouter_model_embedding = os.getenv("OPENROUTER_MODEL_EMBEDDING")
-    assert openrouter_model_embedding is not None, "Please specify the OpenRouter model embedding"
-    openrouter_provider = os.getenv("OPENROUTER_PROVIDER")  # Optional: specify provider (e.g., "openai", "anthropic", "mistral")
+    assert (
+        openrouter_model_embedding is not None
+    ), "Please specify the OpenRouter model embedding"
+    openrouter_provider = os.getenv(
+        "OPENROUTER_PROVIDER"
+    )  # Optional: specify provider (e.g., "openai", "anthropic", "mistral")
 
 
 class WebsocketConfig:
@@ -122,8 +128,10 @@ class AdminConfig:
         self._loading = False
 
     async def get_administrators(self) -> list[str]:
-        from graphrag_kb_server.service.db.db_persistence_admin_user import select_admin_emails
-        
+        from graphrag_kb_server.service.db.db_persistence_admin_user import (
+            select_admin_emails,
+        )
+
         return await select_admin_emails()
 
 
@@ -141,7 +149,9 @@ class LightRAGConfig:
     assert lightrag_lite_model is not None, "Please specify the LightRAG quick model"
     lightrag_model_type = os.getenv("LIGHTRAG_MODEL_TYPE", "google")
     assert lightrag_model_type is not None, "Please specify the LightRAG model type"
-    assert lightrag_model_type in [m.value for m in LightRAGModelType], "Invalid LightRAG model type"
+    assert lightrag_model_type in [
+        m.value for m in LightRAGModelType
+    ], "Invalid LightRAG model type"
 
 
 class LinkedInConfig:

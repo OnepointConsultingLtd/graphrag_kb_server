@@ -45,22 +45,6 @@ def _generate_rows(df: pd.DataFrame, limit: int) -> Generator[pd.Series, None, N
 TOP_LEVEL: Final[int] = 0
 
 
-def _generate_topics_graphrag(topics_request: TopicsRequest) -> Topics:
-    df = get_entity_centrality_as_pd(topics_request.project_dir)
-    if topics_request.topics and len(topics_request.topics) > 0:
-        df = df[df["entity_id"].isin(topics_request.topics)]
-    topics = [
-        Topic(
-            name=row["entity_id"],
-            description=row["description"],
-            type=row["entity_type"],
-            questions=[],
-        )
-        for row in _generate_rows(df, topics_request.limit)
-    ]
-    return Topics(topics=topics)
-
-
 async def _generate_topics_lightrag(topics_request: TopicsRequest) -> Topics:
     centrality_scores = await get_sorted_centrality_scores_as_pd(
         topics_request.project_dir

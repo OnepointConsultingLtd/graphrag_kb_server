@@ -26,9 +26,6 @@ from graphrag_kb_server.model.topics import (
 )
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
-from graphrag_kb_server.service.project import (
-    single_project_status,
-)
 from graphrag_kb_server.service.zip_service import zip_input
 from graphrag_kb_server.service.question_generation_service import (
     generate_questions_from_topics,
@@ -289,6 +286,7 @@ async def upload_index(request: web.Request) -> web.Response:
         project_folder: Path, incremental: bool, engine: Engine, saved_files: list[Path]
     ):
         from graphrag_kb_server.service.project import write_project_file
+
         try:
             write_project_file(project_folder, IndexingStatus.PREPARING)
             await unzip_file(project_folder, saved_files[0])
@@ -319,6 +317,7 @@ async def upload_index(request: web.Request) -> web.Response:
 
     async def handle_request(request: web.Request) -> web.Response:
         from graphrag_kb_server.service.project import clear_rag
+
         saved_files = []
         body = request["data"]["body"]
         file = body["file"]
@@ -1161,7 +1160,6 @@ async def context(request: web.Request) -> web.Response:
                 )
                 context_params = create_context_parameters(request.rel_url, project_dir)
                 engine = find_engine_from_query(request)
-                sources = []
 
                 def process_records(records: Optional[dict]):
                     if not records:
@@ -1276,6 +1274,7 @@ async def list_projects(request: web.Request) -> web.Response:
 
     async def handle_request(request: web.Request) -> web.Response:
         from graphrag_kb_server.service.project import list_projects as project_listing
+
         match extract_tennant_folder(request):
             case Response() as error_response:
                 return error_response
@@ -1344,6 +1343,7 @@ async def project_status(request: web.Request) -> web.Response:
 
     async def handle_request(request: web.Request) -> web.Response:
         from graphrag_kb_server.service.project import single_project_status
+
         match extract_tennant_folder(request):
             case Response() as error_response:
                 return error_response
@@ -1410,6 +1410,7 @@ async def delete_index(request: web.Request) -> web.Response:
 
     async def handle_request(request: web.Request) -> web.Response:
         from graphrag_kb_server.service.project import clear_rag
+
         match match_process_dir(request):
             case Response() as error_response:
                 return error_response
