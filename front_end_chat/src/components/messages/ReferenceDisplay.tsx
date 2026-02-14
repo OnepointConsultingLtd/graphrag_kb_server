@@ -3,7 +3,7 @@ import type { Reference } from "../../model/references";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import { downloadFile } from "../../lib/apiClient";
-import { IoDocumentTextOutline } from "react-icons/io5";
+import { IoDocumentTextOutline, IoGlobeOutline } from "react-icons/io5";
 
 export default function ReferenceDisplay({
   reference,
@@ -80,26 +80,51 @@ export default function ReferenceDisplay({
     }
   }
 
+  const hasLinks = reference.links && reference.links.length > 0;
+
   return (
-    <li className="break-all flex">
-      <span className="whitespace-nowrap mr-1">{reference.type} </span>
-      <a
-        href={reference.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={openReference}
-      >
-        {reference.file}
-      </a>
-      <a
-        href={reference.url}
-        className="mt-1.5 ml-1 document-icon"
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={openOriginal}
-      >
-        <IoDocumentTextOutline className="w-4 h-4" />
-      </a>
+    <li className="break-words flex flex-col mb-3 last:mb-0">
+      <div className="flex items-center gap-2 flex-wrap">
+        <a
+          href={reference.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={openReference}
+          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+        >
+          {reference.file}
+        </a>
+        <a
+          href={reference.url}
+          className="shrink-0 text-slate-400 hover:text-slate-600"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={openOriginal}
+          title="Download original file"
+        >
+          <IoDocumentTextOutline className="w-4 h-4" />
+        </a>
+      </div>
+      {hasLinks && (
+        <ul className="list-none pl-4 mt-1.5 flex flex-col gap-1 border-l-2 border-slate-200 ml-0.5">
+          {reference.links!.map((link, i) => (
+            <li key={i} className="flex items-start gap-2 min-w-0">
+              <IoGlobeOutline
+                className="shrink-0 w-4 h-4 mt-0.5 text-blue-500"
+                aria-hidden
+              />
+              <a
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-all text-sm text-blue-500 hover:underline min-w-0"
+              >
+                {link}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </li>
   );
 }

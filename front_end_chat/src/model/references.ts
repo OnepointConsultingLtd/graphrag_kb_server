@@ -3,4 +3,5 @@ export type Reference = {
   url?: string;
   path?: string;
   type: string;
+  links?: string[];
 };

@@ -252,8 +252,8 @@ export function TopicSwitcher() {
   );
 }
 
-export function SingleMessage({ message, index, jwt, selectedProject, chatMessages, isFloating }: { 
-  message: ChatMessage, index: number, jwt: string, selectedProject: Project | undefined, chatMessages: ChatMessage[], isFloating: boolean 
+export function SingleMessage({ message, index, selectedProject, chatMessages, isFloating }: { 
+  message: ChatMessage, index: number, selectedProject: Project | undefined, chatMessages: ChatMessage[], isFloating: boolean 
 }) {
   if (!selectedProject) {
     return null;
@@ -262,11 +262,7 @@ export function SingleMessage({ message, index, jwt, selectedProject, chatMessag
   const [availableReferences, setAvailableReferences] = useState<Reference[]>([]);
 
   useEffect(() => {
-    if (chatMessages.length > 0) {
-      if (jwt && selectedProject && message.references) {
-        filterAvailableReferences(jwt, selectedProject, message.references).then(setAvailableReferences);
-      }
-    }
+    setAvailableReferences(message.references || []);
   }, [message]);
 
   return (
@@ -367,7 +363,7 @@ export default function Messages() {
             }`}
           >
             {chatMessages.map((message, index) => {
-              return <SingleMessage key={message.id} message={message} index={index} jwt={jwt} selectedProject={selectedProject} chatMessages={chatMessages} isFloating={isFloating} />;
+              return <SingleMessage key={message.id} message={message} index={index} selectedProject={selectedProject} chatMessages={chatMessages} isFloating={isFloating} />;
             })}
             <ConversationTopics />
             <TopicSwitcher />
