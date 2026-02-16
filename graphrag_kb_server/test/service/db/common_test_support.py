@@ -1,13 +1,5 @@
 from pathlib import Path
 
-from graphrag_kb_server.config import cfg
-from graphrag_kb_server.service.db.db_persistence_project import (
-    create_project,
-    delete_project,
-    create_project_table,
-    drop_project_table,
-    find_project_by_name,
-)
 from graphrag_kb_server.model.project import FullProject, Project
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.model.project import IndexingStatus
@@ -19,12 +11,22 @@ DEFAULT_SCHEMA_NAME = "public"
 
 
 def create_project_dir(schema_name: str, engine: Engine, project_name: str) -> Path:
+    from graphrag_kb_server.config import cfg
+
     return cfg.graphrag_root_dir_path / schema_name / engine.value / project_name
 
 
 async def create_test_project_wrapper(
     function: Callable[[FullProject, Project, str, str], Awaitable[None]]
 ):
+    from graphrag_kb_server.service.db.db_persistence_project import (
+        create_project,
+        delete_project,
+        create_project_table,
+        drop_project_table,
+        find_project_by_name,
+    )
+
     project_name = "test_project"
     try:
         full_project = FullProject(

@@ -1,17 +1,17 @@
 import pytest
 
-from graphrag_kb_server.service.db.connection_pool import create_connection_pool
-from graphrag_kb_server.service.db.ddl_operations import (
-    create_schema,
-    drop_schema,
-    schema_exists,
-)
-
 
 _TEST_SCHEMA = "test_schema"
 
 
 async def _create_check_destroy():
+    from graphrag_kb_server.service.db.connection_pool import create_connection_pool
+    from graphrag_kb_server.service.db.ddl_operations import (
+        create_schema,
+        drop_schema,
+        schema_exists,
+    )
+
     await create_connection_pool()
     await create_schema(_TEST_SCHEMA)
     assert (

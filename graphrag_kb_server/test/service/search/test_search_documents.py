@@ -1,10 +1,10 @@
 from graphrag_kb_server.test.provider.search_provider import (
     create_document_search_query,
 )
-from graphrag_kb_server.service.search.search_documents import generate_question
 
 
 def test_generate_question():
+    from graphrag_kb_server.service.search.search_documents import generate_question
 
     query = create_document_search_query()
     generated_question = generate_question(query)

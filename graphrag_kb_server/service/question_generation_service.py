@@ -26,7 +26,6 @@ async def generate_questions_from_topics(
 ) -> TopicQuestions:
     project_dir: Path = questions_query.project_dir
     engine: Engine = questions_query.engine
-    limit: int = questions_query.limit
     topics: list[str] = questions_query.topics
     cached_questions = await find_questions(questions_query)
     if cached_questions is not None and len(cached_questions.topic_questions) > 0:

@@ -1,7 +1,10 @@
-
-
 from graphrag_kb_server.model.search.match_query import MatchOutput
-from graphrag_kb_server.model.search.search import DocumentSearchQuery, RelevanceScore, SearchResults, SummarisationResponseWithDocument
+from graphrag_kb_server.model.search.search import (
+    DocumentSearchQuery,
+    RelevanceScore,
+    SearchResults,
+    SummarisationResponseWithDocument,
+)
 
 
 def create_search_history() -> DocumentSearchQuery:
@@ -19,6 +22,7 @@ def create_search_history() -> DocumentSearchQuery:
         is_search_query=True,
         biggest_challenge="test_biggest_challenge",
     )
+
 
 def create_search_results(search_query: DocumentSearchQuery) -> SearchResults:
     return SearchResults(

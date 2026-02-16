@@ -1,4 +1,4 @@
-from graphrag_kb_server.service.db.connection_pool import execute_query
+from graphrag_kb_server.service.db.connection_pool import execute_query, fetch_one
 
 
 async def create_schema(schema_name: str):
@@ -10,11 +10,8 @@ async def drop_schema(schema_name: str):
 
 
 async def schema_exists(schema_name: str) -> bool:
-    result = await execute_query(
-        f"""
-SELECT schema_name
-FROM information_schema.schemata
-WHERE schema_name = '{schema_name}'
-"""
+    row = await fetch_one(
+        "SELECT 1 FROM information_schema.schemata WHERE schema_name = $1",
+        schema_name,
     )
-    return len(result) > 0
+    return row is not None

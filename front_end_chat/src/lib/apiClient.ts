@@ -157,8 +157,17 @@ export async function downloadFile(
   reference: Reference,
   originalFile: boolean = false,
 ): Promise<Response> {
+  return await downloadFilePath(jwt, project, reference.path || "", originalFile);
+}
+
+export async function downloadFilePath(
+  jwt: string,
+  project: Project,
+  path: string,
+  originalFile: boolean = false,
+): Promise<Response> {
   const params = createBaseUrlParams(project);
-  params.set("file", reference.path || "");
+  params.set("file", path);
   params.set("summary", "false");
   if (originalFile) {
     params.set("original_file", "true");

@@ -2,7 +2,12 @@ from pathlib import Path
 import asyncio
 
 from lightrag import LightRAG
-from lightrag.base import BaseGraphStorage, BaseKVStorage, BaseVectorStorage, DocStatusStorage
+from lightrag.base import (
+    BaseGraphStorage,
+    BaseKVStorage,
+    BaseVectorStorage,
+    DocStatusStorage,
+)
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
 from lightrag.llm.openai import openai_embed
 from lightrag.kg.shared_storage import get_namespace_data, initialize_pipeline_status
@@ -61,7 +66,11 @@ async def initialize_storages(rag: LightRAG):
     await asyncio.gather(*coroutines)
 
 
-async def _process_single_storage(storage: BaseKVStorage | DocStatusStorage | BaseVectorStorage | BaseGraphStorage | None) -> None:
+async def _process_single_storage(
+    storage: (
+        BaseKVStorage | DocStatusStorage | BaseVectorStorage | BaseGraphStorage | None
+    ),
+) -> None:
     if not storage:
         return
 
@@ -72,4 +81,3 @@ async def _process_single_storage(storage: BaseKVStorage | DocStatusStorage | Ba
         storage._data.update(loaded_data)
     else:
         await storage.initialize()
-

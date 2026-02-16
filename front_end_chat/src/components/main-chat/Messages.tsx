@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { GiCardJoker } from "react-icons/gi";
 import { useShallow } from "zustand/react/shallow";
 import { SCROLL_TO_BOTTOM_ID } from "../../constants/scroll";
@@ -6,7 +6,7 @@ import useChatStore from "../../context/chatStore";
 import useWebsocket from "../../hooks/useWebsocket";
 import { fetchTopics } from "../../lib/apiClient";
 import { ChatType } from "../../lib/chatTypes";
-import { ChatMessageTypeOptions } from "../../model/message";
+import { ChatMessage, ChatMessageTypeOptions } from "../../model/message";
 import { Topic } from "../../model/topics";
 import { ChatTypeOptions } from "../../model/types";
 import ReferenceDisplay from "../messages/ReferenceDisplay";
@@ -16,6 +16,8 @@ import { ButtonLayout } from "../buttons/ButtonLayout";
 import TopicButtons from "../buttons/TopicButtons";
 import { useDashboardStore } from "../../context/dashboardStore";
 import Spinner from "../icons/Spinner";
+import { Reference } from "../../model/references";
+import { Project } from "../../model/projectCategory";
 
 export function topicQuestionTemplate(topic: Topic) {
   return `Tell me more about this topic: ${topic.name}`;
@@ -249,8 +251,66 @@ export function TopicSwitcher() {
   );
 }
 
+export function SingleMessage({ message, index, selectedProject, chatMessages, isFloating }: { 
+  message: ChatMessage, index: number, selectedProject: Project | undefined, chatMessages: ChatMessage[], isFloating: boolean 
+}) {
+  if (!selectedProject) {
+    return null;
+  }
+
+  const [availableReferences, setAvailableReferences] = useState<Reference[]>([]);
+
+  useEffect(() => {
+    setAvailableReferences(message.references || []);
+  }, [message]);
+
+  return (
+    <div
+      key={message.id}
+      className={`flex ${
+        message.type === ChatMessageTypeOptions.USER
+          ? "justify-end"
+          : "justify-start"
+      } animate-slideIn items-start`}
+    >
+      <div
+        className={`text-left ${
+          isFloating ? "p-2" : "p-6"
+        } relative max-w-full rounded-lg rounded-tr-sm ${
+          message.type === ChatMessageTypeOptions.USER
+            ? isFloating
+              ? "bg-gradient-to-br from-purple-500 to-blue-500 md:max-w-[70%] shadow-lg text-white"
+              : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
+            : isFloating
+              ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
+              : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
+        }`}
+      >
+        {index === chatMessages.length - 1 && (
+          <div id={SCROLL_TO_BOTTOM_ID} />
+        )}
+        <RenderReactMarkdown message={message} />
+        {availableReferences?.length &&
+        availableReferences.length > 0 ? (
+          <ul className="mt-2">
+            {availableReferences.map((reference) => (
+              <ReferenceDisplay
+                key={reference.url}
+                reference={reference}
+              />
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 export default function Messages() {
+
+  
   const {
+    selectedProject,
     chatMessages,
     chatType,
     setChatType,
@@ -260,6 +320,7 @@ export default function Messages() {
     loadingRelatedTopics,
   } = useChatStore(
     useShallow((state) => ({
+      selectedProject: state.selectedProject,
       chatMessages: state.chatMessages,
       chatType: state.chatType,
       showTopics: state.showTopics,
@@ -299,46 +360,7 @@ export default function Messages() {
             }`}
           >
             {chatMessages.map((message, index) => {
-              return (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    message.type === ChatMessageTypeOptions.USER
-                      ? "justify-end"
-                      : "justify-start"
-                  } animate-slideIn items-start`}
-                >
-                  <div
-                    className={`text-left ${
-                      isFloating ? "p-2" : "p-6"
-                    } relative max-w-full rounded-lg rounded-tr-sm ${
-                      message.type === ChatMessageTypeOptions.USER
-                        ? isFloating
-                          ? "bg-gradient-to-br from-purple-500 to-blue-500 md:max-w-[70%] shadow-lg text-white"
-                          : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
-                        : isFloating
-                          ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
-                          : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
-                    }`}
-                  >
-                    {index === chatMessages.length - 1 && (
-                      <div id={SCROLL_TO_BOTTOM_ID} />
-                    )}
-                    <RenderReactMarkdown message={message} />
-                    {message.references?.length &&
-                    message.references.length > 0 ? (
-                      <ul className="mt-2">
-                        {message.references.map((reference) => (
-                          <ReferenceDisplay
-                            key={reference.url}
-                            reference={reference}
-                          />
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                </div>
-              );
+              return <SingleMessage key={message.id} message={message} index={index} selectedProject={selectedProject} chatMessages={chatMessages} isFloating={isFloating} />;
             })}
             <ConversationTopics />
             <TopicSwitcher />

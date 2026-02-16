@@ -1,40 +1,30 @@
 import pytest
 
 from graphrag_kb_server.model.search.keywords import KeywordType
-from graphrag_kb_server.service.db.db_persistence_keywords import (
-    create_keywords_table,
-    drop_keywords_table,
-    find_keywords,
-    save_keywords,
-)
-from graphrag_kb_server.service.db.db_persistence_search import (
-    create_search_history_tables,
-    drop_search_history_tables,
-    get_search_results,
-)
+
 from graphrag_kb_server.test.provider.search_provider import (
     create_document_search_query,
     create_keywords_high_level,
     create_keywords_low_level,
     create_search_results,
 )
-from graphrag_kb_server.test.service.db.test_topics_table import (
-    create_test_project_wrapper,
-)
 from graphrag_kb_server.model.project import FullProject, Project
-from graphrag_kb_server.test.service.db.common_test_support import (
-    create_project_dir,
-    DEFAULT_SCHEMA_NAME,
-)
-from graphrag_kb_server.service.db.db_persistence_search import (
-    insert_search_query,
-    update_search_query_with_response,
-    insert_search_results,
-)
 
 
 @pytest.mark.asyncio
 async def test_create_drop_search_history_tables():
+    from graphrag_kb_server.test.service.db.common_test_support import (
+        DEFAULT_SCHEMA_NAME,
+    )
+    from graphrag_kb_server.service.db.db_persistence_keywords import (
+        create_keywords_table,
+        drop_keywords_table,
+    )
+    from graphrag_kb_server.service.db.db_persistence_search import (
+        create_search_history_tables,
+        drop_search_history_tables,
+    )
+
     schema_name = DEFAULT_SCHEMA_NAME
     try:
         await create_search_history_tables(schema_name)
@@ -46,6 +36,26 @@ async def test_create_drop_search_history_tables():
 
 @pytest.mark.asyncio
 async def test_insert_search_query():
+    from graphrag_kb_server.test.service.db.common_test_support import (
+        create_project_dir,
+        create_test_project_wrapper,
+    )
+    from graphrag_kb_server.service.db.db_persistence_search import (
+        insert_search_query,
+        update_search_query_with_response,
+        insert_search_results,
+    )
+    from graphrag_kb_server.service.db.db_persistence_search import (
+        create_search_history_tables,
+        drop_search_history_tables,
+        get_search_results,
+    )
+    from graphrag_kb_server.service.db.db_persistence_keywords import (
+        create_keywords_table,
+        drop_keywords_table,
+        find_keywords,
+        save_keywords,
+    )
 
     async def test_function(
         full_project: FullProject, _: Project, schema_name: str, project_name: str

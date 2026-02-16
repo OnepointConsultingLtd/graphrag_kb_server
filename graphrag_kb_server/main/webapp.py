@@ -159,8 +159,6 @@ def run_server():
 
     # app.router.add_static('/', GRAPHRAG_INDEX.parent)
 
-    
-
     logger.info("Static files added ...")
     web.run_app(
         app,

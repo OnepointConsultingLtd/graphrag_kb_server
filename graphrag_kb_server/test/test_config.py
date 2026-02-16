@@ -1,4 +1,4 @@
-from graphrag_kb_server.config import jwt_cfg, admin_cfg, db_cfg
+from graphrag_kb_server.config import jwt_cfg, db_cfg
 
 
 def test_jwt_config():

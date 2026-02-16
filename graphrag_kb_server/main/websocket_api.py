@@ -1,5 +1,3 @@
-import json
-from sched import Event
 import traceback
 from pathlib import Path
 from enum import StrEnum
@@ -15,7 +13,9 @@ from graphrag_kb_server.model.search.search import DocumentSearchQuery
 from graphrag_kb_server.main import sio
 from graphrag_kb_server.service.db.common_operations import extract_elements_from_path
 from graphrag_kb_server.service.db.db_persistence_keywords import save_keywords
-from graphrag_kb_server.service.db.db_persistence_relationships import save_relationships
+from graphrag_kb_server.service.db.db_persistence_relationships import (
+    save_relationships,
+)
 from graphrag_kb_server.service.jwt_service import decode_token
 from graphrag_kb_server.service.lightrag.lightrag_constants import (
     KEYWORDS_SEPARATOR,
@@ -87,23 +87,19 @@ class PersistentCallback(WebsocketCallback):
                 await self._save_keywords(message, is_high_level_keywords)
             elif is_relationships:
                 await self._save_relationships(message)
-    
 
     async def _save_relationships(self, message: str):
         simple_project = extract_elements_from_path(self.project_dir)
         schema_name = simple_project.schema_name
         relationships = RelationshipsJSON(
-            relationships=message[len(PREFIX_RELATIONSHIPS):].strip(),
+            relationships=message[len(PREFIX_RELATIONSHIPS) :].strip(),
             search_id=self.search_history_id,
         )
         await save_relationships(schema_name, relationships)
 
-
     async def _save_keywords(self, message: str, is_high_level_keywords: bool):
         keyword_type = (
-            KeywordType.HIGH_LEVEL
-            if is_high_level_keywords
-            else KeywordType.LOW_LEVEL
+            KeywordType.HIGH_LEVEL if is_high_level_keywords else KeywordType.LOW_LEVEL
         )
         simple_project = extract_elements_from_path(self.project_dir)
         schema_name = simple_project.schema_name
@@ -235,11 +231,11 @@ async def chat_stream(sid: str, token: str, project: str, query_parameters: dict
 
 
 @sio.event
-async def extract_profile_stream(sid: str, token: str, project: str, profile_query: str):
+async def extract_profile_stream(
+    sid: str, token: str, project: str, profile_query: str
+):
     try:
-        project_dir = await find_project_dir(
-            token, project, Engine.LIGHTRAG
-        )
+        project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
         profile_query = ProfileQuery(
             **jiter.from_json(profile_query.encode(encoding="utf-8"))
         )
@@ -257,22 +253,41 @@ async def extract_profile_stream(sid: str, token: str, project: str, profile_que
             project_dir=project_dir,
         )
         if profile_data is None:
-            await callback.callback("Profile not found. Check the profile ID and try again.")
-            await sio.emit(Command.EXTRACT_PROFILE_STREAM_ERROR, {"data": "Profile not found. Check the profile ID and try again.", "request_id": profile_query.request_id}, to=sid)
+            await callback.callback(
+                "Profile not found. Check the profile ID and try again."
+            )
+            await sio.emit(
+                Command.EXTRACT_PROFILE_STREAM_ERROR,
+                {
+                    "data": "Profile not found. Check the profile ID and try again.",
+                    "request_id": profile_query.request_id,
+                },
+                to=sid,
+            )
             return
-        await sio.emit(Command.EXTRACT_PROFILE_STREAM_END, {"data": profile_data.model_dump_json(), "request_id": profile_query.request_id}, to=sid)
-        logger.error(f"Profile data sent.")
+        await sio.emit(
+            Command.EXTRACT_PROFILE_STREAM_END,
+            {
+                "data": profile_data.model_dump_json(),
+                "request_id": profile_query.request_id,
+            },
+            to=sid,
+        )
+        logger.error("Profile data sent.")
     except Exception as e:
         err_msg = f"Errors: {e}. Please try again."
         logger.error(err_msg)
         logger.error(f"Stack trace: {traceback.format_exc()}")
-        await sio.emit(Command.EXTRACT_PROFILE_STREAM_ERROR, {"data": err_msg, "request_id": profile_query.request_id}, to=sid)
+        await sio.emit(
+            Command.EXTRACT_PROFILE_STREAM_ERROR,
+            {"data": err_msg, "request_id": profile_query.request_id},
+            to=sid,
+        )
 
 
 @sio.event
 async def disconnect(sid: str):
     logger.info(f"Client disconnected: {sio}")
-
 
 
 async def find_project_dir(token: str, project: str, engine: Engine) -> Path:

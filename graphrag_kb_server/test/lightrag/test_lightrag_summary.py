@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from graphrag_kb_server.service.lightrag.lightrag_summary import get_summary
-
 
 def test_lightrag_summary():
+    from graphrag_kb_server.service.lightrag.lightrag_summary import get_summary
+
     project_dir = Path(__file__).parent.parent.parent.parent / "data"
     assert project_dir.exists()
     summary = get_summary(

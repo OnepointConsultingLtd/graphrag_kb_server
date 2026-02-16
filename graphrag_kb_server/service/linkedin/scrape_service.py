@@ -1,7 +1,6 @@
 import asyncio
 import os
 from pathlib import Path
-from asyncer import asyncify
 
 from linkedin_scraper import Person
 
@@ -41,7 +40,7 @@ class SafePerson(Person):
         driver: webdriver.Chrome,
         extract_educations: bool = True,
         extract_experiences_from_homepage: bool = True,
-        callback: BaseCallback | None = None
+        callback: BaseCallback | None = None,
     ):
         self.headline = ""
         self.extract_educations = extract_educations
@@ -98,7 +97,9 @@ class SafePerson(Person):
         company_logo_elem = position_elements[0] if len(position_elements) > 0 else None
         position_details = position_elements[1] if len(position_elements) > 1 else None
         if self.callback is not None:
-            self.callback.callback(f"Company logo: {company_logo_elem}, Position details: {position_details}")
+            self.callback.callback(
+                f"Company logo: {company_logo_elem}, Position details: {position_details}"
+            )
         return company_logo_elem, position_details
 
     def _extract_experience(self, position: WebElement) -> Experience | None:
@@ -235,7 +236,7 @@ class SafePerson(Person):
                         ),
                     )
                     if self.callback is not None:
-                        self.callback.callback(f"Experience extracted")
+                        self.callback.callback("Experience extracted")
                     return experience
             else:
                 description = (
@@ -252,7 +253,7 @@ class SafePerson(Person):
                     company=Company(name=company, linkedin_url=company_linkedin_url),
                 )
                 if self.callback is not None:
-                    self.callback.callback(f"Experience extracted")
+                    self.callback.callback("Experience extracted")
                 return experience
         except Exception as e:
             logger.error(f"Error extracting experience: {e}")
@@ -374,7 +375,7 @@ class SafePerson(Person):
                 )
                 self.add_education(education)
                 if self.callback is not None:
-                    self.callback.callback(f"Education extracted")
+                    self.callback.callback("Education extracted")
         except Exception as e:
             logger.error(f"Error getting educations: {e}")
             if self.callback is not None:
@@ -414,14 +415,14 @@ async def aextract_profile(
     extract_educations: bool = False,
     extract_experiences_from_homepage: bool = False,
     project_dir: Path = None,
-    callback: BaseCallback | None = None
+    callback: BaseCallback | None = None,
 ) -> Profile | None:
     if project_dir is not None:
         if profile_data := await select_profile(
             project_dir, correct_linkedin_url(profile)
         ):
             if callback is not None:
-                await callback.callback(f"Profile already exists in database")
+                await callback.callback("Profile already exists in database")
             return profile_data
     else:
         if profile_data := _cache.get(profile):
@@ -429,7 +430,11 @@ async def aextract_profile(
     if callback is not None:
         await callback.callback(f"Extracting profile: {profile}")
     profile_data = await extract_profile(
-        profile, force_login, extract_educations, extract_experiences_from_homepage, callback
+        profile,
+        force_login,
+        extract_educations,
+        extract_experiences_from_homepage,
+        callback,
     )
     if project_dir is not None and profile_data is not None:
         await insert_profile(project_dir, profile_data)
@@ -485,7 +490,7 @@ async def extract_profile(
     force_login: bool = False,
     extract_educations: bool = False,
     extract_experiences_from_homepage: bool = False,
-    callback: BaseCallback | None = None
+    callback: BaseCallback | None = None,
 ) -> Profile | None:
     """
     Extract a LinkedIn profile using web scraping with Selenium.
@@ -523,7 +528,7 @@ async def extract_profile(
             extract_experiences_from_homepage=extract_experiences_from_homepage,
         )
         return person
-    
+
     person = await asyncio.to_thread(_scrape_profile)
     logger.info(f"Extracted profile: {person}")
     if callback is not None:

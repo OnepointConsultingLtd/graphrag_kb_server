@@ -94,7 +94,11 @@ SELECT * FROM public.{TB_ADMIN_USERS};
 """,
     )
     return [
-        {"username": result.get("name"), "email": result.get("email"), "jwt_token": result.get("jwt_token")}
+        {
+            "username": result.get("name"),
+            "email": result.get("email"),
+            "jwt_token": result.get("jwt_token"),
+        }
         for result in results
     ]
 
@@ -126,4 +130,3 @@ SELECT email FROM public.{TB_ADMIN_USERS};
 """,
     )
     return [result.get("email") for result in results]
-

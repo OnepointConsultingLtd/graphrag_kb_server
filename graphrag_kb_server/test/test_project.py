@@ -1,10 +1,12 @@
 from pathlib import Path
-from graphrag_kb_server.service.project import (
-    list_projects,
-)
 
 
 def test_list_projects():
+
+    from graphrag_kb_server.service.project import (
+        list_projects,
+    )
+
     projects_dir = Path(__file__) / "../../../docs/dummy_projects"
     assert projects_dir.exists(), "The projects directory does not exist."
     engine_project_listing = list_projects(projects_dir)

@@ -2,10 +2,10 @@ import datetime
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.snippet import WidgetType, Project, Platform, SearchType
-from graphrag_kb_server.service.generate_url_service import generate_direct_url
 
 
 def test_generate_direct_url():
+    from graphrag_kb_server.service.generate_url_service import generate_direct_url
 
     url = generate_direct_url(
         WidgetType.FLOATING_CHAT,

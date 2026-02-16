@@ -94,5 +94,3 @@ SELECT * FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1;
             indexing_status=row.get("indexing_status", IndexingStatus.UNKNOWN),
         ),
     )
-
-

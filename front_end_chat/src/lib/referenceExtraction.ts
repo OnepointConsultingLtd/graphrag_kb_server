@@ -76,6 +76,7 @@ export function extractSimpleReferences(
       path: r.file,
       url: `${getBaseServer()}/protected/project/download/single_file?file=${encodeURI(r.file)}`,
       type: `[${r.type}]`,
+      links: r.links,
     };
   });
 }

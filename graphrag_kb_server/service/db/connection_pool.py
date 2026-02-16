@@ -69,18 +69,22 @@ async def close_connection_pool() -> None:
         logger.info("Database connection pool closed")
 
 
-async def execute_query(sql: str, *args: Sequence[Any]) -> list[dict]:
+async def init_pool() -> asyncpg.Pool:
     await create_connection_pool()
     if _connection_pool is None:
         raise ValueError("Connection pool is not created")
+    return _connection_pool
+
+
+async def execute_query(sql: str, *args: Sequence[Any]) -> str:
+    """Execute a statement (INSERT/UPDATE/DELETE/DDL). Returns asyncpg status string (e.g. 'INSERT 0 1')."""
+    await init_pool()
     async with _connection_pool.acquire() as conn:
         return await conn.execute(sql, *args)
 
 
 async def fetch_all(sql: str, *args: Sequence[Any]) -> list[asyncpg.Record]:
-    await create_connection_pool()
-    if _connection_pool is None:
-        raise ValueError("Connection pool is not created")
+    await init_pool()
     async with _connection_pool.acquire() as conn:
         return await conn.fetch(sql, *args)
 
@@ -91,16 +95,12 @@ async def fetch_one(sql: str, *args: Sequence[Any]) -> Optional[asyncpg.Record]:
     Returns:
         asyncpg.Record or None: The single record, or None if no records found
     """
-    await create_connection_pool()
-    if _connection_pool is None:
-        raise ValueError("Connection pool is not created")
+    await init_pool()
     async with _connection_pool.acquire() as conn:
         return await conn.fetchrow(sql, *args)
 
 
 async def execute_query_with_return(sql: str, *args: Sequence[Any]) -> int:
-    await create_connection_pool()
-    if _connection_pool is None:
-        raise ValueError("Connection pool is not created")
+    await init_pool()
     async with _connection_pool.acquire() as conn:
         return int(await conn.fetchval(sql, *args))

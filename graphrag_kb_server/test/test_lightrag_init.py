@@ -4,9 +4,6 @@ import os
 
 import pytest
 
-from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
-from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
-
 
 @pytest.mark.asyncio
 async def test_initialize_rag_openai():
@@ -23,6 +20,9 @@ async def test_initialize_rag_gemini():
 
 
 async def create_test_project(project_name: str):
+    from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
+    from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
+
     project_folder = Path(project_name)
     rag = await initialize_rag(project_folder)
     assert rag is not None

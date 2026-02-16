@@ -20,7 +20,9 @@ from graphrag_kb_server.service.db.common_operations import (
     DB_CACHE_EXPIRATION_TIME,
 )
 from graphrag_kb_server.model.digest_functions import content_sha256_combined
-from graphrag_kb_server.service.db.db_persistence_relationships import find_relationships
+from graphrag_kb_server.service.db.db_persistence_relationships import (
+    find_relationships,
+)
 
 TB_SEARCH_HISTORY = "TB_SEARCH_HISTORY"
 TB_SEARCH_RESULTS = "TB_SEARCH_RESULTS"

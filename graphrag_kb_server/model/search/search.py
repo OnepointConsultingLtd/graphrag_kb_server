@@ -78,7 +78,6 @@ class DocumentSearchQuery(BaseModel):
         description="The biggest challenge that the user is facing",
     )
 
-
     @field_validator("biggest_challenge", mode="before")
     @classmethod
     def clean_biggest_challenge(cls, v: str | None) -> str | None:

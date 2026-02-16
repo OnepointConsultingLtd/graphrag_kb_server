@@ -132,7 +132,10 @@ async def match_entities(
     while retries > 0:
         try:
             entities = await structured_completion(
-                system_prompt, user_contents, EntityList, model=lightrag_cfg.lightrag_lite_model
+                system_prompt,
+                user_contents,
+                EntityList,
+                model=lightrag_cfg.lightrag_lite_model,
             )
             break  # Success - exit retry loop
         except Exception as e:
@@ -142,7 +145,7 @@ async def match_entities(
                 raise e
             await asyncio.sleep(1)
             continue
-        
+
     entities_with_score = [
         EntityWithScore(
             entity=e["entity"],
