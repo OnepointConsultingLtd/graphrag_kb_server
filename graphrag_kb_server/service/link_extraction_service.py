@@ -47,7 +47,10 @@ def _extract_links_from_text(text: str) -> list[str]:
         r'https?://[^\s<>"{}|\\^`\[\]]+',
         re.IGNORECASE
     )
-    return url_pattern.findall(text)
+    # if url ends with . or ; remove it
+    urls = url_pattern.findall(text)
+    urls = [url.rstrip(".;") for url in urls]
+    return urls
 
 
 if __name__ == "__main__":

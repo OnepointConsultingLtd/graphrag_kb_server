@@ -42,7 +42,7 @@ export default function ChatInput() {
 
   return (
     <div className="sticky bottom-0">
-      <div className="mx-auto w-full py-2 lg:py-3">
+      <div className="mx-auto w-full pt-1">
         <div className="flex flex-col gap-2 mx-0">
           <form onSubmit={onSubmit} className="relative">
             <textarea
