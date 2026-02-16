@@ -440,13 +440,26 @@ async def aextract_profile(
 
 def _create_driver() -> webdriver.Chrome:
     import os
+    import tempfile
+    import random
 
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
+    options.add_argument("--disable-setuid-sandbox")  # Add this
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
+    # Use random port to avoid conflicts with multiple instances
+    options.add_argument(f"--remote-debugging-port={random.randint(9000, 9999)}")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--disable-background-timer-throttling")
+    options.add_argument("--disable-backgrounding-occluded-windows")
+    options.add_argument("--disable-renderer-backgrounding")
+    # Add user data dir to avoid permission issues
+    user_data_dir = tempfile.mkdtemp(prefix="chrome_user_data_")
+    options.add_argument(f"--user-data-dir={user_data_dir}")
 
     # Use Chromium binary (Debian installs chromium, not google-chrome)
     if os.path.exists("/usr/bin/chromium"):
@@ -459,7 +472,12 @@ def _create_driver() -> webdriver.Chrome:
     else:
         service = Service(ChromeDriverManager().install())
 
-    return webdriver.Chrome(service=service, options=options)
+    try:
+        driver = webdriver.Chrome(service=service, options=options)
+        return driver
+    except Exception as e:
+        logger.error(f"Failed to create Chrome driver: {e}")
+        raise
 
 
 async def extract_profile(
