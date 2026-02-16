@@ -83,14 +83,15 @@ export default function ReferenceDisplay({
   const hasLinks = reference.links && reference.links.length > 0;
 
   return (
-    <li className="break-words flex flex-col mb-3 last:mb-0">
-      <div className="flex items-center gap-2 flex-wrap">
+    <li className="break-words flex flex-col mb-1 last:mb-0 min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
         <a
           href={reference.url}
           target="_blank"
           rel="noopener noreferrer"
           onClick={openReference}
-          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+          title={reference.file}
+          className="min-w-0 truncate text-blue-600 hover:text-blue-800 hover:underline font-medium overflow-hidden text-ellipsis whitespace-nowrap"
         >
           {reference.file}
         </a>

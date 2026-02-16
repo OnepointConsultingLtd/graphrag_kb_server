@@ -17,7 +17,6 @@ import TopicButtons from "../buttons/TopicButtons";
 import { useDashboardStore } from "../../context/dashboardStore";
 import Spinner from "../icons/Spinner";
 import { Reference } from "../../model/references";
-import { filterAvailableReferences } from "../../lib/checkAvailableReferences";
 import { Project } from "../../model/projectCategory";
 
 export function topicQuestionTemplate(topic: Topic) {
@@ -311,7 +310,6 @@ export default function Messages() {
 
   
   const {
-    jwt,
     selectedProject,
     chatMessages,
     chatType,
@@ -322,7 +320,6 @@ export default function Messages() {
     loadingRelatedTopics,
   } = useChatStore(
     useShallow((state) => ({
-      jwt: state.jwt,
       selectedProject: state.selectedProject,
       chatMessages: state.chatMessages,
       chatType: state.chatType,
