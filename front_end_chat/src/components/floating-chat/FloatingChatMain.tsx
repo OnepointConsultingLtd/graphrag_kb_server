@@ -39,12 +39,12 @@ export default function FloatingChatMain({
                 {organisation_name}{" "}
               </span>
             </span>
-            <h1
-              className="!text-sm md:!text-base font-bold text-white"
+            <div
+              className="text-sm md:text-base font-bold text-white"
               id="project-name"
             >
               {selectedProject?.name.replace(/_/g, " ") || "Unknown Project"}
-            </h1>
+            </div>
           </div>
 
           <div className="flex items-center justify-between space-x-4">
