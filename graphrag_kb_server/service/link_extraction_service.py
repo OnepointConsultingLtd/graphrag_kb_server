@@ -49,7 +49,7 @@ def _extract_links_from_text(text: str) -> list[str]:
     )
     # if url ends with . or ; remove it
     urls = url_pattern.findall(text)
-    urls = [url.rstrip(".;") for url in urls]
+    urls = [url.rstrip(".;)") for url in urls]
     return urls
 
 

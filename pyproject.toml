@@ -26,7 +26,7 @@ dependencies = [
     "webdriver-manager>=4.0.2",
     "asyncpg>=0.30.0",
     "together>=1.5.29",
-    "openrouter>=0.1.3",
+    "openrouter>=0.6.0",
     "scikit-learn>=1.8.0",
     "linkedin-scraper==2.11.2",
 ]

@@ -62,11 +62,17 @@ function TopicDescription({
 function TopicQuestions({topic}: {topic: Topic}) {
   const {
     selectTopicQuestion,
+    chatType,
   } = useChatStore(
     useShallow((state) => ({
       selectTopicQuestion: state.selectTopicQuestion,
+      chatType: state.chatType,
     })),
   );
+  const isFloating = chatType === ChatType.FLOATING;
+  if (isFloating) {
+    return null;
+  }
   return (
     <div className="w-full text-white text-sm mt-2">
       <ul>
@@ -120,9 +126,9 @@ export default function TopicButtons({
           return (
             <div
               className={`flex flex-col items-left justify-top text-left 
-                hover:bg-[var(--color-secondary)] focus:bg-[var(--color-secondary)] 
-                active:bg-[var(--color-secondary)] p-2 rounded-lg 
-                ${selectedTopic?.name === topic.name ? "bg-[var(--color-secondary)]" : related ? "bg-[var(--color-info-content)]" : "bg-[var(--color-primary)]"}`}
+                hover:bg-[#0992C2] focus:bg-[#0992C2] 
+                active:bg-[#0992C2] p-2 rounded-lg 
+                ${selectedTopic?.name === topic.name ? "bg-[#0992C2]" : related ? "bg-[var(--color-info-content)]" : "bg-[#0B2D72]"}`}
               key={`topic-${topic.name}-${topic.type}`}
               title={isFloating ? topic.description : ""}
             >
@@ -159,7 +165,7 @@ export default function TopicButtons({
                     />
                   )}
                 </div>
-                <div>
+                {!isFloating && <div>
                   {(!hasQuestions && topicQuestionsLoading !== index) && (
                     <MdOutlineQuestionMark
                       className="cursor-pointer w-3 h-3"
@@ -179,7 +185,7 @@ export default function TopicButtons({
                     />
                   )}
                   {topicQuestionsLoading === index && <MdHourglassEmpty className="w-5 h-5" fill="white" color="white" title="Generating questions" />}
-                </div>
+                </div>}
               </div>
             </div>
           );

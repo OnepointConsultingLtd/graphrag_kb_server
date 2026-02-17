@@ -52,3 +52,12 @@ export default tseslint.config({
   },
 });
 ```
+
+### Color Palette
+
+https://colorhunt.co/palette/0b2d720992c20ac4e0f6e7bc
+
+#0B2D72
+#0992C2
+#0AC4E0
+#F6E7BC

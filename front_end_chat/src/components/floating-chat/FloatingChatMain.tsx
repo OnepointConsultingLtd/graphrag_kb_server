@@ -32,10 +32,10 @@ export default function FloatingChatMain({
     >
       <div className="flex flex-col flex-1 min-h-0 ">
         {/* Header */}
-        <header className="sticky justify-between top-0 z-10 w-full sm:rounded-xl px-4 py-4 bg-gradient-to-r from-[#e0f2fe] via-[#38bdf8] to-[#0284c7] !flex items-center">
+        <header className="sticky justify-between top-0 z-10 w-full sm:rounded-xl px-4 py-4 bg-gradient-to-r from-[#2ba7fb] via-[#38bdf8] to-[#0284c7] !flex items-center">
           <div className="flex flex-col">
             <span className="text-2xl font-bold mr-3 select-none">
-              <span className="text-[#0284c7]" id="organisation-name">
+              <span className="text-white" id="organisation-name">
                 {organisation_name}{" "}
               </span>
             </span>
@@ -65,7 +65,7 @@ export default function FloatingChatMain({
         <div className="chat-box flex-1 overflow-y-auto min-h-0">
           <Messages />
         </div>
-        <div className="mt-1 px-1 pb-1">
+        <div className="mt-1 px-1 pb-0">
           <ChatInput />
         </div>
       </div>

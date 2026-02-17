@@ -57,12 +57,12 @@ function JokerButton() {
 
   return (
     <button
-      className={`w-11 h-11 -mt-1 cursor-pointer filter hue-rotate-120 saturate-200 brightness-155 ${!isFloating ? "tooltip" : ""}`}
+      className={`w-11 h-11 -mt-1 cursor-pointer ${!isFloating ? "tooltip" : ""}`}
       data-tip="Click for random topic"
       title={`${isFloating ? "Click for random topic" : ""}`}
       onClick={handleClick}
     >
-      <GiCardJoker className="h-12 w-12" />
+      <GiCardJoker className="h-12 w-12 bg-[#0992C2] border-[#0992C2] rounded-sm text-white" />
     </button>
   );
 }
@@ -85,7 +85,7 @@ function ConversationTopicCommandButtons() {
       <div className="flex flex-row gap-2">
         {conversationTopicsNumber > INCREMENT_TOPICS_NUMBER && (
           <button
-            className="btn btn-secondary"
+            className="btn btn-neutral bg-[#0992C2] border-[#0992C2]"
             onClick={() =>
               setConversationTopicsNumber(
                 conversationTopicsNumber - INCREMENT_TOPICS_NUMBER,
@@ -98,7 +98,7 @@ function ConversationTopicCommandButtons() {
         )}
 
         <button
-          className="btn btn-success"
+          className="btn btn-neutral bg-[#0992C2] border-[#0992C2]"
           id={INCREMENT_TOPICS_BUTTON_ID}
           onClick={() =>
             setConversationTopicsNumber(
@@ -279,7 +279,7 @@ export function SingleMessage({ message, index, selectedProject, chatMessages, i
         } relative max-w-full rounded-lg rounded-tr-sm ${
           message.type === ChatMessageTypeOptions.USER
             ? isFloating
-              ? "bg-gradient-to-br from-purple-500 to-blue-500 md:max-w-[70%] shadow-lg text-white"
+              ? "bg-[#0992C2] md:max-w-[70%] shadow-lg text-white"
               : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
             : isFloating
               ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"

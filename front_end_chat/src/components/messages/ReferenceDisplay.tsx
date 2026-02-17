@@ -1,15 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Reference } from "../../model/references";
 import { useShallow } from "zustand/shallow";
 import useChatStore from "../../context/chatStore";
 import { downloadFile } from "../../lib/apiClient";
 import { IoDocumentTextOutline, IoGlobeOutline } from "react-icons/io5";
 
+const MAX_LINKS = 5;
+
 export default function ReferenceDisplay({
   reference,
 }: {
   reference: Reference;
 }) {
+  const [showAllLinks, setShowAllLinks] = useState(false);
   const [jwt, project, setMarkdownDialogueContent] = useChatStore(
     useShallow((state) => [
       state.jwt,
@@ -83,7 +86,7 @@ export default function ReferenceDisplay({
   const hasLinks = reference.links && reference.links.length > 0;
 
   return (
-    <li className="break-words flex flex-col mb-1 last:mb-0 min-w-0">
+    <li className="flex flex-col mb-1 last:mb-0 min-w-0 overflow-hidden">
       <div className="flex items-center gap-2 min-w-0">
         <a
           href={reference.url}
@@ -107,9 +110,9 @@ export default function ReferenceDisplay({
         </a>
       </div>
       {hasLinks && (
-        <ul className="list-none pl-4 mt-1.5 flex flex-col gap-1 border-l-2 border-slate-200 ml-0.5">
-          {reference.links!.map((link, i) => (
-            <li key={i} className="flex items-start gap-2 min-w-0">
+        <ul className="list-none pl-4 mt-1.5 flex flex-col gap-1 border-l-2 border-slate-200 ml-0.5 overflow-hidden">
+          {reference.links!.slice(0, showAllLinks ? reference.links!.length : MAX_LINKS).map((link, i) => {
+            const res = (<li key={i} className="flex items-start gap-2 min-w-0 overflow-hidden">
               <IoGlobeOutline
                 className="shrink-0 w-4 h-4 mt-0.5 text-blue-500"
                 aria-hidden
@@ -118,12 +121,23 @@ export default function ReferenceDisplay({
                 href={link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-all text-sm text-blue-500 hover:underline min-w-0"
+                className="block truncate text-sm text-[#0992C2] hover:underline min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+                title={link}
               >
                 {link}
               </a>
-            </li>
-          ))}
+            </li>)
+            if (i === MAX_LINKS - 1 && reference.links!.length > MAX_LINKS) {
+              return (
+                <li key={i} className="flex items-start gap-2 min-w-0">
+                  <button onClick={() => setShowAllLinks(!showAllLinks)} className="text-sm text-blue-500 hover:underline min-w-0 cursor-pointer">
+                    {showAllLinks ? "Show less" : `${reference.links!.length - MAX_LINKS} more`}
+                  </button>
+                </li>
+              )
+            }
+            return res
+          })}
         </ul>
       )}
     </li>

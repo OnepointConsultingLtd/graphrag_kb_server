@@ -1,8 +1,19 @@
 export default function Spinner({ size = 16 }: { size?: number }) {
+  const dotSize = Math.max(Math.round(size / 4), 4);
+  const ringSize = size;
+
   return (
-    <div className="relative mb-6">
-      <div className={`w-${size} h-${size} border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin mx-auto`}></div>
-      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-400 rounded-full animate-ping mx-auto"></div>
+    <div className="relative flex items-center justify-center mx-auto mb-6" style={{ width: `${ringSize * 4}px`, height: `${ringSize * 4}px` }}>
+      {/* Outer ring */}
+      <div
+        className="absolute rounded-full border-2 border-[#0992C2]/30 breathing-ring"
+        style={{ width: `${ringSize * 4}px`, height: `${ringSize * 4}px` }}
+      />
+      {/* Inner dot */}
+      <div
+        className="rounded-full bg-gradient-to-br from-[#0992C2] to-[#066a8f] shadow-lg shadow-[#0992C2]/40 breathing-dot"
+        style={{ width: `${dotSize * 4}px`, height: `${dotSize * 4}px` }}
+      />
     </div>
   );
 }
