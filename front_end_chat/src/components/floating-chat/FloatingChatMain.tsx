@@ -32,7 +32,7 @@ export default function FloatingChatMain({
     >
       <div className="flex flex-col flex-1 min-h-0 ">
         {/* Header */}
-        <header className="sticky justify-between top-0 z-10 w-full sm:rounded-xl px-4 py-4 bg-gradient-to-r from-[#2ba7fb] via-[#38bdf8] to-[#0284c7] !flex items-center">
+        <header className="sticky justify-between top-0 z-10 w-full sm:rounded-t-xl px-4 py-4 bg-gradient-to-r from-[#2ba7fb] via-[#38bdf8] to-[#0284c7] !flex items-center">
           <div className="flex flex-col">
             <span className="text-2xl font-bold mr-3 select-none">
               <span className="text-white" id="organisation-name">

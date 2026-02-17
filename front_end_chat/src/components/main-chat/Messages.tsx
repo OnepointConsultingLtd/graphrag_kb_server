@@ -85,7 +85,7 @@ function ConversationTopicCommandButtons() {
       <div className="flex flex-row gap-2">
         {conversationTopicsNumber > INCREMENT_TOPICS_NUMBER && (
           <button
-            className="btn btn-neutral bg-[#0992C2] border-[#0992C2]"
+            className="topic-button btn btn-neutral bg-[#0992C2] border-[#0992C2]"
             onClick={() =>
               setConversationTopicsNumber(
                 conversationTopicsNumber - INCREMENT_TOPICS_NUMBER,
@@ -98,7 +98,7 @@ function ConversationTopicCommandButtons() {
         )}
 
         <button
-          className="btn btn-neutral bg-[#0992C2] border-[#0992C2]"
+          className="topic-button btn btn-neutral bg-[#0992C2] border-[#0992C2]"
           id={INCREMENT_TOPICS_BUTTON_ID}
           onClick={() =>
             setConversationTopicsNumber(
@@ -233,7 +233,7 @@ export function TopicSwitcher() {
   return (
     <div className="flex flex-row gap-2 justify-end -mt-2">
       <button
-        className={`w-5 h-5 filter brightness-150 cursor-pointer mr-3 ${!isFloating ? "tooltip" : ""}`}
+        className={`topic-button w-5 h-5 filter brightness-150 cursor-pointer mr-3 ${!isFloating ? "tooltip" : ""}`}
         data-tip={title}
         title={title}
         onClick={() => setShowTopics(!showTopics)}
