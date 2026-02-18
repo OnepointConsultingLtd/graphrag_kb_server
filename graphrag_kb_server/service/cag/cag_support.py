@@ -5,7 +5,7 @@ from google import genai
 from google.genai import types
 
 
-from graphrag_kb_server.config import cfg, lightrag_cfg
+from graphrag_kb_server.config import cfg, cag_cfg
 from graphrag_kb_server.utils.cache import GenericSimpleCache, PersistentSimpleCache
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.topics import Topics
@@ -35,7 +35,7 @@ async def _create_chat(
     client: genai.Client, cache: types.CachedContent
 ) -> genai.chats.Chat:
     chat = client.aio.chats.create(
-        model=lightrag_cfg.lightrag_model,
+        model=cag_cfg.cag_model,
         config=types.GenerateContentConfig(cached_content=cache.name),
     )
     return chat
@@ -67,8 +67,8 @@ async def acreate_cag(
             await client.aio.caches.delete(name=cache_name)
     except Exception as e:
         logger.warning(f"Error deleting cache {cache_name}: {e}")
-    cache = await client.aio.caches.create(
-        model=lightrag_cfg.lightrag_model,
+        cache = await client.aio.caches.create(
+        model=cag_cfg.cag_model,
         config=types.CreateCachedContentConfig(
             ttl=f"{CAG_TTL}s",
             display_name=cache_name,
@@ -101,7 +101,7 @@ async def extract_main_topics(project_dir: Path) -> Topics:
     """
     contents = _create_content(project_dir)
     response = await client.aio.models.generate_content(
-        model=lightrag_cfg.lightrag_model,
+        model=cag_cfg.cag_model,
         contents=[contents],
         config=types.GenerateContentConfig(
             response_schema=Topics,

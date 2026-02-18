@@ -422,7 +422,7 @@ async def query(request: web.Request) -> web.Response:
         description: The format of the output (json, html)
         schema:
           type: string
-          enum: [json, html, markdown]
+          enum: [json, json_string, json_string_with_json]
       - name: search
         in: query
         required: false

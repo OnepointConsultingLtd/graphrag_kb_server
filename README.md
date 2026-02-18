@@ -55,6 +55,9 @@ LIGHTRAG_MODEL=gemini-2.5-flash
 # LIGHTRAG_MODEL=gpt-4o-mini
 LIGHTRAG_LITE_MODEL=gemini-2.5-flash-lite
 
+# The CAG (Cached Augmented Generation) model - uses Gemini API
+CAG_MODEL=gemini-3-flash-preview
+
 # The configuration directory. Here you can find the administration.yaml file which has the administrators JWT email addresses.
 CONFIG_DIR=/development/onepoint/thinqwin/graphrag_kb_server/config
 

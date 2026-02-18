@@ -77,7 +77,7 @@ async def _process_single_storage(
     file_name = getattr(storage, "_file_name", None)
     if file_name:
         loaded_data = await load_json(file_name) or {}
-        storage._data = await get_namespace_data(storage.final_namespace)
+        storage._data = await get_namespace_data(storage.namespace)
         storage._data.update(loaded_data)
     else:
         await storage.initialize()

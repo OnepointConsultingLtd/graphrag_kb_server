@@ -154,6 +154,11 @@ class LightRAGConfig:
     ], "Invalid LightRAG model type"
 
 
+class CAGConfig:
+    cag_model = os.getenv("CAG_MODEL")
+    assert cag_model is not None, "Please specify the CAG model"
+
+
 class LinkedInConfig:
     linkedin_credentials: dict[str, str] = {}
     linkedin_searches: list[str] = []
@@ -202,6 +207,8 @@ websocket_cfg = WebsocketConfig()
 jwt_cfg = JWTConfig()
 
 lightrag_cfg = LightRAGConfig()
+
+cag_cfg = CAGConfig()
 
 linkedin_cfg = LinkedInConfig()
 
