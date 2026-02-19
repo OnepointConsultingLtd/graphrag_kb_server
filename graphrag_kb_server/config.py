@@ -90,6 +90,7 @@ class Config:
     openrouter_provider = os.getenv(
         "OPENROUTER_PROVIDER"
     )  # Optional: specify provider (e.g., "openai", "anthropic", "mistral")
+    extract_links_on_start = os.getenv("EXTRACT_LINKS_ON_START", "false") == "true"
 
 
 class WebsocketConfig:

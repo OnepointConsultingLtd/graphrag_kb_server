@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from aiohttp import web
 from markdown import markdown
@@ -84,8 +85,10 @@ async def add_links_to_response(chat_response: ChatResponse, project_dir: Path):
         references = chat_response.response["references"]
         for reference in references:
             file = reference["file"]
-            if Path(file).exists():
-                links = await get_links_by_path(schema_name, project_id, file)
+            file_path = Path(file)
+            if file_path.exists():
+                file_path_str = re.sub(r"^[^/]*/", "/", file_path.as_posix())
+                links = await get_links_by_path(schema_name, project_id, file_path_str)
                 reference["links"] = links
                 enhanced_references.append(reference)
         chat_response.response["references"] = enhanced_references

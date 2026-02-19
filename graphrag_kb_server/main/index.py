@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     indexed_path = Path(indexed_folder)
 
-    clear_rag(indexed_path)
+    asyncio.run(clear_rag(indexed_path))
 
     indexed_path.mkdir(parents=True)
     asyncio.run(unzip_file(indexed_path, zip_file))

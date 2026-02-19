@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import zipfile
 from lightrag import LightRAG
 
@@ -6,6 +7,16 @@ from graphrag_kb_server.model.project import GenerationStatus
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
+
+TIKTOKEN_SPECIAL_TOKENS = re.compile(
+    r"<\|endoftext\|>|<\|fim_prefix\|>|<\|fim_middle\|>|<\|fim_suffix\|>"
+    r"|<\|endofprompt\|>|<\|im_start\|>|<\|im_end\|>|<\|im_sep\|>"
+)
+
+
+def _sanitize_for_tiktoken(text: str) -> str:
+    """Remove tiktoken special tokens from text to prevent encoding errors."""
+    return TIKTOKEN_SPECIAL_TOKENS.sub("", text)
 
 
 async def acreate_lightrag(
@@ -18,7 +29,8 @@ async def acreate_lightrag(
         if project_folder.exists():
             return GenerationStatus.EXISTS
     rag = await initialize_rag(project_folder)
-    input_folder = rag.working_dir.parent / INPUT_FOLDER
+    working_dir = Path(rag.working_dir)
+    input_folder = working_dir.parent / INPUT_FOLDER
     assert input_folder.exists(), f"Input folder does not exist: {input_folder}"
     all_files = list(input_folder.rglob("**/*.txt"))
     if incremental:
@@ -49,9 +61,8 @@ async def lightrag_index(rag: LightRAG, files_to_index: list[Path]):
     tolerance = 3
     for i, file in enumerate(files_to_index):
         try:
-            await rag.ainsert(
-                file.read_text(encoding="utf-8"), file_paths=file.as_posix()
-            )
+            content = _sanitize_for_tiktoken(file.read_text(encoding="utf-8"))
+            await rag.ainsert(content, file_paths=file.as_posix())
             logger.info("########################################################")
             logger.info(f"Indexed {i+1}/{count} files: {file}")
             logger.info("########################################################")

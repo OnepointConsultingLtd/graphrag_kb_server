@@ -9,14 +9,17 @@ from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.main.multi_tennant_server import local_list_tennants
 from graphrag_kb_server.model.project import (
+    FullProject,
     Project,
     ProjectListing,
     EngineProjectListing,
     IndexingStatus,
 )
 from graphrag_kb_server.model.engines import Engine
+from graphrag_kb_server.service.db.common_operations import extract_elements_from_path
+from graphrag_kb_server.service.db.db_persistence_project import delete_project
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
-from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
+from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag, lightrag_cache
 from graphrag_kb_server.service.link_extraction_service import save_links
 
 
@@ -29,11 +32,28 @@ INPUT_DIR: Final = ROOT_DIR / "input"
 create_folder_props = {"parents": True, "exist_ok": True}
 
 
-def clear_rag(rag_folder: Path) -> bool:
+async def clear_rag(rag_folder: Path) -> bool:
     deleted = False
     if rag_folder.exists():
         shutil.rmtree(rag_folder, ignore_errors=True)
         deleted = True
+    # Delete also the project in the database
+    simple_project = extract_elements_from_path(rag_folder)
+    await delete_project(
+        FullProject(
+            id=None,
+            schema_name=simple_project.schema_name, 
+            engine=simple_project.engine, 
+            project=Project(
+                name=simple_project.project_name,
+                updated_timestamp=datetime.now(),
+                input_files=[],
+                indexing_status=IndexingStatus.UNKNOWN,
+            )
+        )
+    )
+    # Delete also the cache
+    lightrag_cache.clear(rag_folder)
     return deleted
 
 
@@ -125,8 +145,9 @@ async def initialize_projects():
             for project in projects.lightrag_projects.projects:
                 project_folder = cfg.graphrag_root_dir_path / tennant.folder_name / LIGHTRAG_FOLDER / project.name
                 await initialize_rag(project_folder)
-                await save_links(project_folder, insert_if_not_exists=True)
+                if cfg.extract_links_on_start:
+                    await save_links(project_folder, insert_if_not_exists=True)
         except Exception as e:
-            logger.error(
+            logger.exception(
                 f"Error initializing LightRAG project for tennant {tennant.folder_name}: {e}"
             )

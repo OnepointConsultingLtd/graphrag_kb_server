@@ -313,6 +313,7 @@ async def upload_index(request: web.Request) -> web.Response:
         except Exception as e:
             write_project_file(project_folder, IndexingStatus.FAILED)
             logger.error(f"Failed to process uploaded file: {e}")
+            logger.exception(e)
             return
 
     async def handle_request(request: web.Request) -> web.Response:
@@ -346,7 +347,7 @@ async def upload_index(request: web.Request) -> web.Response:
                     tennant_folder, engine, sanitized_project_name
                 )
                 if engine == Engine.CAG or not incremental:
-                    clear_rag(project_folder)
+                    await clear_rag(project_folder)
 
                 if asynchronous:
                     asyncio.create_task(
@@ -1415,7 +1416,7 @@ async def delete_index(request: web.Request) -> web.Response:
             case Response() as error_response:
                 return error_response
             case Path() as project_dir:
-                deleted = clear_rag(project_dir)
+                deleted = await clear_rag(project_dir)
                 return web.json_response({"deleted": deleted}, headers=CORS_HEADERS)
 
     return await handle_error(handle_request, request=request)

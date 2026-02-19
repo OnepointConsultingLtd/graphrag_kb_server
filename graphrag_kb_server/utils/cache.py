@@ -32,6 +32,9 @@ class GenericProjectSimpleCache(Generic[T]):
             "timestamp": time.time(),
         }
 
+    def clear(self, project_dir: Path):
+        self.cache.pop(project_dir.as_posix(), None)
+
 
 class GenericSimpleCache(Generic[T, U]):
 
