@@ -1,5 +1,5 @@
-from enum import StrEnum
 import os
+from enum import StrEnum
 from pathlib import Path
 import random
 
@@ -91,6 +91,8 @@ class Config:
         "OPENROUTER_PROVIDER"
     )  # Optional: specify provider (e.g., "openai", "anthropic", "mistral")
     extract_links_on_start = os.getenv("EXTRACT_LINKS_ON_START", "false") == "true"
+    apify_token = os.getenv("APIFY_TOKEN")
+    assert apify_token is not None, "Please specify the Apify token"
 
 
 class WebsocketConfig:

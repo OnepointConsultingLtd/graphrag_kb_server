@@ -19,7 +19,10 @@ from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.db.common_operations import extract_elements_from_path
 from graphrag_kb_server.service.db.db_persistence_project import delete_project
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
-from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag, lightrag_cache
+from graphrag_kb_server.service.lightrag.lightrag_init import (
+    initialize_rag,
+    lightrag_cache,
+)
 from graphrag_kb_server.service.link_extraction_service import save_links
 
 
@@ -42,14 +45,14 @@ async def clear_rag(rag_folder: Path) -> bool:
     await delete_project(
         FullProject(
             id=None,
-            schema_name=simple_project.schema_name, 
-            engine=simple_project.engine, 
+            schema_name=simple_project.schema_name,
+            engine=simple_project.engine,
             project=Project(
                 name=simple_project.project_name,
                 updated_timestamp=datetime.now(),
                 input_files=[],
                 indexing_status=IndexingStatus.UNKNOWN,
-            )
+            ),
         )
     )
     # Delete also the cache
@@ -143,7 +146,12 @@ async def initialize_projects():
         try:
             projects = project_listing(cfg.graphrag_root_dir_path / tennant.folder_name)
             for project in projects.lightrag_projects.projects:
-                project_folder = cfg.graphrag_root_dir_path / tennant.folder_name / LIGHTRAG_FOLDER / project.name
+                project_folder = (
+                    cfg.graphrag_root_dir_path
+                    / tennant.folder_name
+                    / LIGHTRAG_FOLDER
+                    / project.name
+                )
                 await initialize_rag(project_folder)
                 if cfg.extract_links_on_start:
                     await save_links(project_folder, insert_if_not_exists=True)

@@ -5,8 +5,14 @@ import httpx
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.path_link import PathLink
-from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id
-from graphrag_kb_server.service.db.db_persistence_links import find_path_links, save_path_links
+from graphrag_kb_server.service.db.common_operations import (
+    extract_elements_from_path,
+    get_project_id,
+)
+from graphrag_kb_server.service.db.db_persistence_links import (
+    find_path_links,
+    save_path_links,
+)
 from graphrag_kb_server.service.file_find_service import INPUT_FOLDER
 
 ACCEPTED_EXTENSIONS = set([".txt", ".md"])
@@ -30,8 +36,9 @@ async def save_links(project_dir: Path, insert_if_not_exists: bool = False):
     links = extract_links(project_dir)
     verified_links = await verify_links(links)
     path_links = [
-        PathLink(path=file_path, link=link, project_id=project_id) 
-            for file_path, links in verified_links for link in links
+        PathLink(path=file_path, link=link, project_id=project_id)
+        for file_path, links in verified_links
+        for link in links
     ]
     await save_path_links(simple_project.schema_name, path_links, insert_if_not_exists)
 
@@ -89,17 +96,20 @@ def extract_links(project_dir: Path) -> DocLinks:
 
 
 def _extract_links_from_text(text: str) -> list[str]:
-    url_pattern = re.compile(
-        r'https?://[^\s<>"{}|\\^`\[\]]+',
-        re.IGNORECASE
-    )
+    url_pattern = re.compile(r'https?://[^\s<>"{}|\\^`\[\]]+', re.IGNORECASE)
     # if url ends with . or ; remove it
     urls = url_pattern.findall(text)
     urls = [url.rstrip(".;)") for url in urls]
-    urls = list(set(urls)) # deduplicate
+    urls = list(set(urls))  # deduplicate
     return urls
 
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(save_links(Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/lmo2"), insert_if_not_exists=True))
+
+    asyncio.run(
+        save_links(
+            Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/lmo2"),
+            insert_if_not_exists=True,
+        )
+    )

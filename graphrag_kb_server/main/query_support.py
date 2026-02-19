@@ -7,7 +7,10 @@ from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.model.context import Search
-from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id, get_project_id_from_path
+from graphrag_kb_server.service.db.common_operations import (
+    extract_elements_from_path,
+    get_project_id,
+)
 from graphrag_kb_server.service.db.db_persistence_links import get_links_by_path
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 from graphrag_kb_server.main.cors import CORS_HEADERS
@@ -32,7 +35,9 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
                             update={"search": "hybrid"}
                         )
                     chat_response = await lightrag_search(query_params)
-                    chat_response = await add_links_to_response(chat_response, query_params.context_params.project_dir)
+                    chat_response = await add_links_to_response(
+                        chat_response, query_params.context_params.project_dir
+                    )
                 case _:
                     raise web.HTTPBadRequest(
                         text="LightRAG does not support local search",

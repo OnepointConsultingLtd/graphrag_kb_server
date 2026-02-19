@@ -23,7 +23,7 @@ from graphrag_kb_server.service.lightrag.lightrag_constants import (
     PREFIX_LOW_LEVEL_KEYWORDS,
     PREFIX_RELATIONSHIPS,
 )
-from graphrag_kb_server.service.linkedin.scrape_service import aextract_profile
+from graphrag_kb_server.service.linkedin.apify_service import apify_extract_profile
 from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.model.engines import Engine
@@ -244,13 +244,10 @@ async def extract_profile_stream(
             request_id=profile_query.request_id,
             event=Command.EXTRACT_PROFILE_STREAM,
         )
-        profile_data = await aextract_profile(
+        profile_data = await apify_extract_profile(
             profile_query.profile_id,
-            force_login=False,
-            extract_educations=False,
-            extract_experiences_from_homepage=True,
-            callback=callback,
             project_dir=project_dir,
+            callback=callback,
         )
         if profile_data is None:
             await callback.callback(

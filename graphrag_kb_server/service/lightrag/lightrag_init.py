@@ -38,6 +38,7 @@ def chunking_with_special_tokens(
     Uses the raw tiktoken encoder with allowed_special="all" when available,
     so content with special tokens does not raise ValueError.
     """
+
     # LightRAG's Tokenizer.encode() does not accept allowed_special; the underlying
     # tiktoken does. TiktokenTokenizer stores the raw encoder in .tokenizer.
     class SafeTokenizer:

@@ -106,7 +106,8 @@ async def login(email: str, password: str) -> None:
 
 
 # Example usage:
-# asyncio.run(login("you@example.com", "your-password"))
+# source .venv/bin/activate
+# uv run python graphrag_kb_server/cli/linkedin_login.py
 
 if __name__ == "__main__":
     import asyncio

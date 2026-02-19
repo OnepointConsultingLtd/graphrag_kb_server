@@ -1,5 +1,9 @@
 from graphrag_kb_server.model.path_link import PathLink
-from graphrag_kb_server.service.db.connection_pool import execute_query, execute_query_with_return, init_pool
+from graphrag_kb_server.service.db.connection_pool import (
+    execute_query,
+    execute_query_with_return,
+    init_pool,
+)
 
 
 TB_PATH_LINKS = "TB_PATH_LINKS"
@@ -33,7 +37,9 @@ DROP TABLE IF EXISTS {schema_name}.{TB_PATH_LINKS};
     )
 
 
-async def save_path_links(schema_name: str, path_links: list[PathLink], insert_if_not_exists: bool = False):
+async def save_path_links(
+    schema_name: str, path_links: list[PathLink], insert_if_not_exists: bool = False
+):
     pool = await init_pool()
     if insert_if_not_exists and len(path_links) > 0:
         # check first path link
@@ -42,7 +48,7 @@ async def save_path_links(schema_name: str, path_links: list[PathLink], insert_i
             f"""
             SELECT COUNT(*) FROM {schema_name}.{TB_PATH_LINKS} WHERE PROJECT_ID = $1;
             """,
-            first_path_link.project_id
+            first_path_link.project_id,
         )
         if count > 0:
             return

@@ -68,14 +68,14 @@ async def acreate_cag(
     except Exception as e:
         logger.warning(f"Error deleting cache {cache_name}: {e}")
         cache = await client.aio.caches.create(
-        model=cag_cfg.cag_model,
-        config=types.CreateCachedContentConfig(
-            ttl=f"{CAG_TTL}s",
-            display_name=cache_name,
-            system_instruction=(system_instruction),
-            contents=[contents],
-        ),
-    )
+            model=cag_cfg.cag_model,
+            config=types.CreateCachedContentConfig(
+                ttl=f"{CAG_TTL}s",
+                display_name=cache_name,
+                system_instruction=(system_instruction),
+                contents=[contents],
+            ),
+        )
     logger.info(f"Created cache {cache.display_name}")
     logger.info(f"Cache contents: {cache.usage_metadata.total_token_count}")
     chat = await _create_chat(client, cache)
