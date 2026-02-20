@@ -17,6 +17,7 @@ from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
 from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.service.cag.cag_support import cag_get_response
+from graphrag_kb_server.logger import logger
 
 
 async def execute_query(query_params: QueryParameters) -> web.Response:
@@ -91,10 +92,60 @@ async def add_links_to_response(chat_response: ChatResponse, project_dir: Path):
         for reference in references:
             file = reference["file"]
             file_path = Path(file)
-            if file_path.exists():
-                file_path_str = re.sub(r"^[^/]*/", "/", file_path.as_posix())
-                links = await get_links_by_path(schema_name, project_id, file_path_str)
-                reference["links"] = links
+            links, image_path = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+            reference["links"] = links
+            if image_path is not None:
+                reference["image"] = image_path
                 enhanced_references.append(reference)
         chat_response.response["references"] = enhanced_references
     return chat_response
+
+
+async def enrich_text_units_context(text_units_context: list[dict], project_dir: Path) -> list[dict]:
+    simple_project = extract_elements_from_path(project_dir)
+    schema_name = simple_project.schema_name
+    project_id = await get_project_id(
+        schema_name, simple_project.project_name, simple_project.engine.value
+    )
+    for text_unit in text_units_context:
+        file = text_unit.get("file_path")
+        if file is not None:    
+            file_path = Path(file)
+            links, image_path = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+            text_unit["links"] = links
+            if image_path is not None:
+                text_unit["image"] = image_path
+
+
+async def get_links_and_image_by_path(file_path: Path, schema_name: str, project_id: int, project_dir: Path) -> tuple[list[str], str | None]:
+    if file_path.exists():
+        file_path = Path(_convert_path_to_text(file_path))
+        file_path_str = _convert_path_to_text(file_path)
+        links = await get_links_by_path(schema_name, project_id, file_path_str)
+        original_input = project_dir / "original_input"
+        input = project_dir / "input"
+        try:
+            # Extract from file_path the path after input
+            relative_path = file_path.relative_to(input).as_posix()
+            pdf_path = original_input / relative_path
+            # Now change the txt to pdf and verify if the pdf exists
+            pdf_path = pdf_path.with_suffix(".pdf")
+            if not pdf_path.exists():
+                pdf_path = pdf_path.parent / pdf_path.name.replace("_", " ")
+                if not pdf_path.exists():
+                    return links, None
+            # Now get the image
+            image_path = pdf_path.with_suffix(".png")
+            if image_path.exists():
+                image_path = image_path.relative_to(project_dir)
+                return links, image_path.as_posix()
+            else:
+                return links, None
+        except Exception as e:
+            logger.error(f"Error getting image by path: {e}")
+            return links, None
+    return [], None
+
+
+def _convert_path_to_text(file_path: Path) -> str:
+    return re.sub(r"^[^/]*/", "/", file_path.as_posix())

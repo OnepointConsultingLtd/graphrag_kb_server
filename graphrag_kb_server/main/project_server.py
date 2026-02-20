@@ -26,6 +26,7 @@ from graphrag_kb_server.model.topics import (
 )
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
+from graphrag_kb_server.service.project import prepare_project_extras
 from graphrag_kb_server.service.zip_service import zip_input
 from graphrag_kb_server.service.question_generation_service import (
     generate_questions_from_topics,
@@ -60,7 +61,7 @@ from graphrag_kb_server.service.lightrag.lightrag_clustering import (
     generate_communities_json,
 )
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
-from graphrag_kb_server.main.query_support import execute_query
+from graphrag_kb_server.main.query_support import enrich_text_units_context, execute_query
 from graphrag_kb_server.service.lightrag.lightrag_summary import get_summary
 from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     create_communities_gexf_for_project,
@@ -307,6 +308,7 @@ async def upload_index(request: web.Request) -> web.Response:
                     await acreate_lightrag(
                         True, project_folder, incremental, saved_files[0]
                     )
+                    await prepare_project_extras(project_folder)
                 case Engine.CAG:
                     await acreate_cag(project_folder, INITIAL_CONVERSATION_ID)
             write_project_file(project_folder, IndexingStatus.COMPLETED)
@@ -420,10 +422,10 @@ async def query(request: web.Request) -> web.Response:
       - name: format
         in: query
         required: false
-        description: The format of the output (json, html)
+        description: The format of the output (json, html, markdown)
         schema:
           type: string
-          enum: [json, json_string, json_string_with_json]
+          enum: [json, html, markdown]
       - name: search
         in: query
         required: false
@@ -1162,15 +1164,6 @@ async def context(request: web.Request) -> web.Response:
                 context_params = create_context_parameters(request.rel_url, project_dir)
                 engine = find_engine_from_query(request)
 
-                def process_records(records: Optional[dict]):
-                    if not records:
-                        return {}
-                    return (
-                        {kv[0]: kv[1].to_dict() for kv in records.items()}
-                        if use_context_records
-                        else None
-                    )
-
                 match engine:
                     case Engine.LIGHTRAG:
                         match search:
@@ -1187,8 +1180,7 @@ async def context(request: web.Request) -> web.Response:
                                     search=actual_search,
                                     engine=Engine.LIGHTRAG.value,
                                     context_params=context_params,
-                                    include_context=context_params.context_format
-                                    == ContextFormat.JSON,
+                                    include_context=context_params.context_format == ContextFormat.JSON,
                                     keywords=keywords,
                                     context_format=context_params.context_format,
                                 )
@@ -1206,17 +1198,16 @@ async def context(request: web.Request) -> web.Response:
                                 )
                                 match context_params.context_format:
                                     case (
-                                        ContextFormat.JSON
-                                        | ContextFormat.JSON_STRING_WITH_JSON
+                                        ContextFormat.JSON | ContextFormat.JSON_STRING_WITH_JSON
                                     ):
                                         context_data = {
                                             "entities_context": context_builder_result.entities_context,
                                             "relations_context": context_builder_result.relations_context,
                                             "text_units_context": context_builder_result.text_units_context,
                                         }
+                                        await enrich_text_units_context(context_data["text_units_context"], project_dir)
                                         if (
-                                            context_params.context_format
-                                            == ContextFormat.JSON_STRING_WITH_JSON
+                                            context_params.context_format == ContextFormat.JSON_STRING_WITH_JSON
                                         ):
                                             return web.json_response(
                                                 {
@@ -1996,7 +1987,6 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
-      - name: engine
         in: query
         required: true
         description: The type of engine used to run the RAG system
@@ -2168,5 +2158,94 @@ async def lightrag_communities_report(request: web.Request) -> web.Response:
                             status=400,
                             text="Invalid format",
                         )
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.options("/protected/project/image")
+async def project_image_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.get("/protected/project/image")
+async def project_image(request: web.Request) -> web.Response:
+    """
+    Optional route description
+    ---
+    summary: returns a PNG image so it can be embedded in a browser
+    tags:
+      - project management
+    security: []  # Empty security array indicates no authentication required
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: image_path
+        in: query
+        required: true
+        description: The relative path of the PNG image inside the project
+        schema:
+          type: string
+      - name: token
+        in: query
+        required: false
+        description: The token to use to access the file.
+        schema:
+          type: string
+    responses:
+      '200':
+        description: The PNG image
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+      '400':
+        description: Bad Request - Missing or invalid image path.
+      '404':
+        description: Image not found.
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                image_path_str = request.rel_url.query.get("image_path", None)
+                if not image_path_str:
+                    return invalid_response(
+                        "No image path",
+                        "Please specify an image_path query parameter.",
+                        status=400,
+                    )
+                image_path = (project_dir / image_path_str).resolve()
+                if not image_path.is_relative_to(project_dir.resolve()):
+                    return invalid_response(
+                        "Invalid image path",
+                        "The image path must be within the project directory.",
+                        status=404,
+                    )
+                if not image_path.exists() or not image_path.is_file():
+                    return invalid_response(
+                        "Image not found",
+                        f"The image '{image_path_str}' does not exist.",
+                        status=404,
+                    )
+                if image_path.suffix.lower() != ".png":
+                    return invalid_response(
+                        "Invalid image format",
+                        "Only PNG images are supported.",
+                        status=400,
+                    )
+                return web.FileResponse(
+                    image_path,
+                    headers={
+                        "Content-Type": "image/png",
+                        **CORS_HEADERS,
+                    },
+                )
 
     return await handle_error(handle_request, request=request)

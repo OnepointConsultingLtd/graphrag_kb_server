@@ -24,6 +24,7 @@ from graphrag_kb_server.service.lightrag.lightrag_init import (
     lightrag_cache,
 )
 from graphrag_kb_server.service.link_extraction_service import save_links
+from graphrag_kb_server.service.pdf_image_extraction import extract_images_from_pdfs
 
 
 PROJECT_INFO_FILE: Final = "project.json"
@@ -154,8 +155,13 @@ async def initialize_projects():
                 )
                 await initialize_rag(project_folder)
                 if cfg.extract_links_on_start:
-                    await save_links(project_folder, insert_if_not_exists=True)
+                    await prepare_project_extras(project_folder)
         except Exception as e:
             logger.exception(
                 f"Error initializing LightRAG project for tennant {tennant.folder_name}: {e}"
             )
+
+
+async def prepare_project_extras(project_folder: Path):
+    await save_links(project_folder, insert_if_not_exists=True)
+    await extract_images_from_pdfs(project_folder)

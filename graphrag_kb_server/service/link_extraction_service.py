@@ -105,11 +105,10 @@ def _extract_links_from_text(text: str) -> list[str]:
 
 
 if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(
-        save_links(
-            Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/lmo2"),
-            insert_if_not_exists=True,
-        )
-    )
+    links = _extract_links_from_text("""
+Metadata
+URL: https://www.onepointltd.com/onepoint-labs/
+Last Scraped: 2025-08-09 14:11:04
+Content Type: Web Page
+""")
+    print(links)

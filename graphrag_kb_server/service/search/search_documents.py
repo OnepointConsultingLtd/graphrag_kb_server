@@ -1,6 +1,7 @@
 from pathlib import Path
 import asyncio
 
+from graphrag_kb_server.main.query_support import add_links_to_response
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
 )
@@ -41,6 +42,9 @@ async def retrieve_relevant_documents(
         A list of summarization responses with document paths
     """
     chat_response = await search_documents(project_dir, query, callback)
+    chat_response = await add_links_to_response(
+        chat_response, project_dir
+    )
     documents = chat_response.response["documents"]
     if callback is not None:
         await callback.callback(chat_response.response["response"])
