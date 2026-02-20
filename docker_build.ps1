@@ -1,7 +1,7 @@
 docker system prune -f
 
 $IMAGE_NAME = "graphrag_kb_server"
-$TAG = "v0.10.0"
+$TAG = "v0.10.1"
 
 # Use this script to build the docker image
 # You need to have uv and docker installed
