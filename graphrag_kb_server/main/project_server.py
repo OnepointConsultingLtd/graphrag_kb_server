@@ -4,7 +4,7 @@ import io
 import re
 import uuid
 from pathlib import Path
-from typing import Optional, Callable, Awaitable
+from typing import Callable, Awaitable
 
 from aiohttp import web
 

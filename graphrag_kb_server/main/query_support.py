@@ -87,16 +87,20 @@ async def add_links_to_response(chat_response: ChatResponse, project_dir: Path):
     if chat_response.response is None:
         return
     if isinstance(chat_response.response, dict):
-        enhanced_references = []
         if chat_response.response.get("references"):
+            # If the reference is type KG remove it from the response.
+            chat_response.response["references"] = [
+                ref for ref in chat_response.response["references"]
+                if ref["type"] != "KG"
+            ]
+            # Dedupe the references based on the "file" field.
+            chat_response.response["references"] = list({r["file"]: r for r in chat_response.response["references"]}.values())
             for reference in chat_response.response["references"]:
                 file_path = Path(reference["file"])
                 links, image_path = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
                 reference["links"] = links
                 if image_path is not None:
                     reference["image"] = image_path
-                    enhanced_references.append(reference)
-            chat_response.response["references"] = enhanced_references
         elif chat_response.response.get("documents"):
             for document in chat_response.response["documents"]:
                 file_path = Path(document["document_path"])
