@@ -117,6 +117,14 @@ class SummarisationResponseWithDocument(SummarisationResponse):
     document_path: str = Field(
         ..., description="The document path that the user is asking about"
     )
+    image: str | None = Field(
+        default=None,
+        description="The image of the document",
+    )
+    links: list[str] = Field(
+        ...,
+        description="The links of the document",
+    )
 
 
 class AbstractSummarizationRequest(BaseModel, ABC):

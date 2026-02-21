@@ -88,16 +88,23 @@ async def add_links_to_response(chat_response: ChatResponse, project_dir: Path):
         return
     if isinstance(chat_response.response, dict):
         enhanced_references = []
-        references = chat_response.response["references"]
-        for reference in references:
-            file = reference["file"]
-            file_path = Path(file)
-            links, image_path = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
-            reference["links"] = links
-            if image_path is not None:
-                reference["image"] = image_path
-                enhanced_references.append(reference)
-        chat_response.response["references"] = enhanced_references
+        if chat_response.response.get("references"):
+            for reference in chat_response.response["references"]:
+                file_path = Path(reference["file"])
+                links, image_path = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+                reference["links"] = links
+                if image_path is not None:
+                    reference["image"] = image_path
+                    enhanced_references.append(reference)
+            chat_response.response["references"] = enhanced_references
+        elif chat_response.response.get("documents"):
+            for document in chat_response.response["documents"]:
+                file_path = Path(document["document_path"])
+                links, image_path = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+                document["links"] = links
+                if image_path is not None:
+                    document["image"] = image_path
+        
     return chat_response
 
 

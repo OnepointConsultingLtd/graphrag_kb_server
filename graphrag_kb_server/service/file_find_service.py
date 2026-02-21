@@ -18,7 +18,7 @@ def convert_file_name(file: Path) -> str:
     return re.sub(r"\s+", "_", file.stem)
 
 
-EXCLUDED_EXTENSIONS = set([".txt", ".md", ".jpg"])
+EXCLUDED_EXTENSIONS = set([".txt", ".md", ".jpg", ".png"])
 
 
 def create_conversion_map(project_dir: Path) -> dict[str, str]:
