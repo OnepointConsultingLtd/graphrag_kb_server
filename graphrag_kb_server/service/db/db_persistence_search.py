@@ -70,6 +70,8 @@ CREATE TABLE IF NOT EXISTS {schema_name}.{TB_SEARCH_RESULTS} (
     DOCUMENT_MAIN_KEYWORD CHARACTER VARYING(128) NOT NULL,
     DOCUMENT_RELEVANCY_SCORE CHARACTER VARYING(12) NOT NULL,
     DOCUMENT_RELEVANCY_SCORE_REASONING CHARACTER VARYING(16384) NOT NULL,
+    DOCUMENT_IMAGE CHARACTER VARYING(8192) NULL,
+    DOCUMENT_LINKS TEXT[] NULL,
     ACTIVE BOOLEAN NOT NULL DEFAULT TRUE,
     CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -209,12 +211,15 @@ async def insert_search_results(
         document_main_keyword = document.main_keyword
         document_relevancy_score = document.relevancy_score
         document_relevancy_score_reasoning = document.relevance
+        document_image = document.image[:8192] if document.image else None
+        document_links = document.links if document.links else None
         active = True
         search_results_id = await execute_query_with_return(
             f"""
 INSERT INTO {schema_name}.{TB_SEARCH_RESULTS}
-(PROJECT_ID, SEARCH_HISTORY_ID, REQUEST_ID, DOCUMENT_SUMMARY, DOCUMENT_PATH, DOCUMENT_MAIN_KEYWORD, DOCUMENT_RELEVANCY_SCORE, DOCUMENT_RELEVANCY_SCORE_REASONING, ACTIVE)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+(PROJECT_ID, SEARCH_HISTORY_ID, REQUEST_ID, DOCUMENT_SUMMARY, DOCUMENT_PATH, DOCUMENT_MAIN_KEYWORD, 
+DOCUMENT_RELEVANCY_SCORE, DOCUMENT_RELEVANCY_SCORE_REASONING, DOCUMENT_IMAGE, DOCUMENT_LINKS, ACTIVE)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING ID;
 """,
             project_id,
@@ -225,6 +230,8 @@ RETURNING ID;
             document_main_keyword,
             document_relevancy_score.value,
             document_relevancy_score_reasoning,
+            document_image,
+            document_links,
             active,
         )
         search_results_ids.append(search_results_id)
@@ -266,7 +273,7 @@ WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED
     response = history_result.get("response")
     search_results = await fetch_all(
         f"""
-SELECT ID, DOCUMENT_SUMMARY, DOCUMENT_PATH, DOCUMENT_MAIN_KEYWORD, DOCUMENT_RELEVANCY_SCORE, DOCUMENT_RELEVANCY_SCORE_REASONING FROM {schema_name}.{TB_SEARCH_RESULTS}
+SELECT ID, DOCUMENT_SUMMARY, DOCUMENT_PATH, DOCUMENT_MAIN_KEYWORD, DOCUMENT_RELEVANCY_SCORE, DOCUMENT_RELEVANCY_SCORE_REASONING, DOCUMENT_IMAGE, DOCUMENT_LINKS FROM {schema_name}.{TB_SEARCH_RESULTS}
 WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} days' ORDER BY DOCUMENT_RELEVANCY_SCORE DESC
 """,
         search_history_id,
@@ -282,6 +289,8 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval
         document_relevancy_score_reasoning = result.get(
             "document_relevancy_score_reasoning"
         )
+        document_image = result.get("document_image")
+        document_links = result.get("document_links") or []
         documents.append(
             SummarisationResponseWithDocument(
                 summary=document_summary,
@@ -289,6 +298,8 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval
                 relevancy_score=document_relevancy_score,
                 document_path=document_path,
                 main_keyword=document_main_keyword,
+                image=document_image,
+                links=document_links,
             )
         )
     from graphrag_kb_server.service.db.db_persistence_keywords import find_keywords

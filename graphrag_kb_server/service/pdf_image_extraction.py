@@ -8,6 +8,7 @@ from graphrag_kb_server.logger import logger
 
 
 async def extract_images_from_pdfs(project_folder: Path, image_format: str = "png") -> list[str | None]:
+    logger.info(f"Extracting images from PDFs in {project_folder}")
     pdf_paths = list(project_folder.glob("**/original_input/**/*.pdf"))
     tasks = [_extract_image_from_pdf(pdf_path, image_format) for pdf_path in pdf_paths]
     results = await asyncio.gather(*tasks)
@@ -28,10 +29,9 @@ def _sync_extract_image(pdf_path: Path, image_format: str) -> str | None:
         )
         if len(images) == 0:
             raise Exception(f"No images found in {pdf_path}")
-        image_path_str = get_image_by_path(pdf_path, image_format)
-        images[0].save(image_path_str)
-        logger.info(f"Extracted front page image from {pdf_path} to {image_path_str}")
-        return image_path_str
+        images[0].save(image_path)
+        logger.info(f"Extracted front page image from {pdf_path} to {image_path}")
+        return get_image_by_path(pdf_path, image_format)
     except Exception as e:
         logger.error(f"Error extracting image from {pdf_path}: {e}")
         error_file.write_text(str(e), encoding="utf-8")
