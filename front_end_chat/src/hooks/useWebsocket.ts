@@ -4,6 +4,7 @@ import { ErrorMessage } from "../model/error";
 import { WebsocketServerEventOptions } from "../model/websocket";
 import { useShallow } from "zustand/react/shallow";
 import { createChatMessage } from "../factory/chatMessageFactory";
+import { Reference } from "../model/references";
 
 export default function useWebsocket() {
   const {
@@ -40,9 +41,9 @@ export default function useWebsocket() {
       appendToLastChatMessage(token);
     }
 
-    function onStreamEnd(data: string) {
-      console.info(`Stream ended: ${data}`);
-      streamEnded();
+    function onStreamEnd(data: { data: string; references?: Reference[] }) {
+      console.info(`Stream ended: ${data.data}`);
+      streamEnded(data.references || []);
     }
 
     function onError(error: ErrorMessage) {

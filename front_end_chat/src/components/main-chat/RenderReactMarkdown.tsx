@@ -3,6 +3,7 @@ import { useShallow } from "zustand/react/shallow";
 import useChatStore from "../../context/chatStore";
 import type { ChatMessage } from "../../model/message";
 import { ChatMessageTypeOptions } from "../../model/message";
+import partialJsonExtractor from "../../lib/partialJsonExtractor";
 import MessageTimestamp from "../messages/MessageTimestamp";
 import CopyButton from "./CopyButton";
 
@@ -34,6 +35,12 @@ export default function RenderReactMarkdown({
   const setCopiedMessageId = useChatStore(
     useShallow((state) => state.setCopiedMessageId),
   );
+
+  const isAgent = message.type !== ChatMessageTypeOptions.USER;
+  const looksLikeJson = isAgent && message.text.trimStart().startsWith("{");
+  const displayText = looksLikeJson
+    ? partialJsonExtractor(message.text) || message.text
+    : message.text;
 
   return (
     <>
@@ -74,7 +81,7 @@ export default function RenderReactMarkdown({
           ),
         }}
       >
-        {message.text}
+        {displayText}
       </ReactMarkdown>
 
       {/* Date and copy button */}
@@ -97,10 +104,10 @@ export default function RenderReactMarkdown({
 
         <CopyButton
           isUser={message.type === ChatMessageTypeOptions.USER}
-          text={message.text}
+          text={displayText}
           id={message.id}
           onCopy={() => {
-            copyToClipboard(message.text);
+            copyToClipboard(displayText);
             setCopiedMessageId(message.id);
             setTimeout(() => setCopiedMessageId(""), 1500);
           }}

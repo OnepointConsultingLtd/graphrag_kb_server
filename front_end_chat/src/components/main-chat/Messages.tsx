@@ -281,9 +281,11 @@ export function SingleMessage({ message, index, selectedProject, chatMessages, i
             ? isFloating
               ? "bg-[#0992C2] md:max-w-[70%] shadow-lg text-white"
               : "bg-gradient-to-br from-sky-500 to-blue-500 md:max-w-[50%] shadow-lg text-white"
-            : isFloating
-              ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
-              : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
+            : message.type === ChatMessageTypeOptions.AGENT_ERROR
+              ? "bg-amber-50 text-amber-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-amber-200"
+              : isFloating
+                ? "bg-white text-slate-800 rounded-2xl rounded-tl-sm w-full border border-purple-100"
+                : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
         }`}
       >
         {index === chatMessages.length - 1 && (

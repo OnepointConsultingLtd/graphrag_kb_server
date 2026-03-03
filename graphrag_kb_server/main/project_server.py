@@ -1990,10 +1990,6 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
         in: query
         required: true
         description: The type of engine used to run the RAG system
-        schema:
-          type: string
-          default: lightrag
-          enum: [lightrag]
       - name: format
         in: query
         required: true

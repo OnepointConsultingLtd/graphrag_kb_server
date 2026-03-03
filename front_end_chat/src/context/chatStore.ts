@@ -36,6 +36,7 @@ import { supportsStreaming } from "../lib/streamingUtils";
 import { sendWebsocketQuery } from "../lib/websocketClient";
 import { sendQuery } from "../lib/apiClient";
 import { extractSimpleReferences } from "../lib/referenceExtraction";
+import { Reference } from "../model/references";
 
 if (getParameterFromUrl("token")) {
   localStorage.removeItem("chat-store");
@@ -96,7 +97,7 @@ type ChatStore = {
   setUseStreaming: (useStreaming: boolean) => void;
   setConversationTopicsNumber: (conversationTopicsNumber: number) => void;
   setShowTopics: (showTopics: boolean) => void;
-  streamEnded: () => void;
+  streamEnded: (references: Reference[]) => void;
   selectTopicQuestion: (question: string) => void;
   setRole: (role: Role) => void;
 };
@@ -164,7 +165,7 @@ function initStreaming(): boolean {
   if (streaming) {
     return streaming === "true";
   }
-  return false;
+  return true;
 }
 
 const useChatStore = create<ChatStore>()(
@@ -220,6 +221,25 @@ const useChatStore = create<ChatStore>()(
 
       function sendUserMessage() {
         const state = get();
+        const wantsStreaming =
+          state.useStreaming &&
+          supportsStreaming(state.selectedProject?.platform ?? undefined);
+        if (wantsStreaming && !state.socket?.connected) {
+          state.addChatMessage({
+            id: uuidv4(),
+            text: state.inputText,
+            type: ChatMessageTypeOptions.USER,
+            timestamp: new Date(),
+          });
+          state.setInputText("");
+          state.addChatMessage({
+            id: uuidv4(),
+            text: "You are currently disconnected from the server. Please check your connection and try again.",
+            type: ChatMessageTypeOptions.AGENT_ERROR,
+            timestamp: new Date(),
+          });
+          return;
+        }
         state.setIsThinking(true);
         state.setInputText("");
         state.addChatMessage({
@@ -236,7 +256,7 @@ const useChatStore = create<ChatStore>()(
             chatHistory: state.chatMessages,
             conversationId: state.conversationId ?? uuidv4(),
           };
-          if (state.useStreaming && supportsStreaming(state.selectedProject?.platform ?? "")) {
+          if (wantsStreaming) {
             sendWebsocketQuery(state.socket, state.jwt, query);
           } else {
             sendQuery(query)
@@ -405,7 +425,7 @@ const useChatStore = create<ChatStore>()(
             copiedMessageId: null,
             topics: null,
             inputText: "",
-            useStreaming: false,
+            useStreaming: initStreaming(),
             showTopics: false,
             relatedTopics: null,
             selectedTopic: null,
@@ -533,14 +553,16 @@ const useChatStore = create<ChatStore>()(
           set(() => {
             return { showTopics };
           }),
-        streamEnded: () =>
+        streamEnded: (references: Reference[]) =>
           set(() => {
             const state = get();
             state.scrollToBottom();
+            const lastMessage = state.chatMessages.slice(-1)[0];
+            const updatedMessage = { ...lastMessage, references };
             if (state.chatMessages.length > 0) {
               loadRelatedTopics(state.chatMessages.slice(-1)[0]);
             }
-            return { isThinking: false };
+            return { isThinking: false, chatMessages: [...state.chatMessages.slice(0, -1), updatedMessage] };
           }),
         selectTopicQuestion: (question: string) => {
           set(() => {
@@ -559,7 +581,6 @@ const useChatStore = create<ChatStore>()(
         selectedProject: state.selectedProject,
         chatMessages: state.chatMessages,
         topics: state.topics,
-        useStreaming: state.useStreaming,
         relatedTopics: state.relatedTopics,
         role: state.role,
       }),

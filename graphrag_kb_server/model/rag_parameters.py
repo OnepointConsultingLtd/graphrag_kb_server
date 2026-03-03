@@ -112,12 +112,13 @@ def convert_to_lightrag_query_params(
     query_params: QueryParameters, only_need_context: bool = False
 ) -> QueryParam:
     param = QueryParam(
-        mode=query_params.search,
+        mode="hybrid" if query_params.search == "all" else query_params.search,
         only_need_context=only_need_context,
         hl_keywords=query_params.hl_keywords,
         ll_keywords=query_params.ll_keywords,
         conversation_history=query_params.chat_history,
         max_entity_tokens=40,  # TODO: Make this part of configuration
         max_relation_tokens=200,  # TODO: Make this part of configuration
+        stream=query_params.stream or False,
     )
     return param

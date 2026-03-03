@@ -96,7 +96,7 @@ export default function ReferenceDisplay({
           title={reference.file}
           className="min-w-0 truncate text-blue-600 hover:text-blue-800 hover:underline font-medium overflow-hidden text-ellipsis whitespace-nowrap"
         >
-          {reference.file}
+          {reference.file ? reference.file?.split("/").pop() : ""}
         </a>
         <a
           href={reference.url}

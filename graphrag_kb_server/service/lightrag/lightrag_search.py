@@ -188,6 +188,7 @@ In case of a coloquial question or non context related sentence you can respond 
             text_units_context=(text_units_context if include_context_data else None),
             hl_keywords=hl_keywords if query_params.keywords else None,
             ll_keywords=ll_keywords if query_params.keywords else None,
+            response_iterator=response_dict["llm_response"].get("response_iterator", None),
         )
     return ChatResponse(
         question=query,

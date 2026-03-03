@@ -1,7 +1,6 @@
 import { ENGINES } from "../constants/engines";
 
 export const Platform = {
-  GRAPHRAG: ENGINES.GRAPHRAG,
   LIGHTRAG: ENGINES.LIGHTRAG,
   CAG: ENGINES.CAG,
 } as const;

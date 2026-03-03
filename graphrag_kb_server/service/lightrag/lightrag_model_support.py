@@ -1,4 +1,4 @@
-from typing import Callable, Awaitable
+from typing import AsyncIterator, Callable, Awaitable, Union
 
 import jiter
 from together import AsyncTogether
@@ -99,7 +99,7 @@ async def structured_completion(
     system_prompt=None,
     history_messages=[],
     **kwargs,
-) -> str:
+) -> Union[str, dict, AsyncIterator[str]]:
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
@@ -108,6 +108,7 @@ async def structured_completion(
             messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": prompt})
     structured_output = "structured_output" in kwargs and kwargs["structured_output"]
+    stream = kwargs.get("stream", False)
     config_dict = {"model": lightrag_cfg.lightrag_model, "messages": messages}
     # Detect client type to use appropriate format
     is_openai = isinstance(client, AsyncOpenAI)
@@ -153,6 +154,10 @@ async def structured_completion(
                 config_dict["response_format"][
                     "schema"
                 ] = ResponseSchema.model_json_schema()
+
+    if stream:
+        config_dict["stream"] = True
+
     logger.info(f"Calling structured completion with config: {config_dict['model']}")
     logger.debug(
         f"Calling structured completion with system prompt: {config_dict['messages'][0]['content']}"
@@ -161,6 +166,10 @@ async def structured_completion(
         response = await client.chat.send_async(**config_dict)
     else:
         response = await client.chat.completions.create(**config_dict)
+
+    if stream:
+        return _stream_tokens(response, _client_ref=client)
+
     content = response.choices[0].message.content
     return (
         jiter.from_json(content.encode(encoding="utf-8"))
@@ -169,9 +178,27 @@ async def structured_completion(
     )
 
 
+async def _stream_tokens(response_stream, _client_ref=None) -> AsyncIterator[str]:
+    """Extract text content from streaming API response chunks.
+
+    _client_ref prevents the API client from being garbage-collected
+    while the async generator is alive (important for OpenRouter).
+    """
+    async for chunk in response_stream:
+        choices = getattr(chunk, "choices", None)
+        if not choices:
+            continue
+        delta = getattr(choices[0], "delta", None)
+        if delta is None:
+            continue
+        content = getattr(delta, "content", None)
+        if content:
+            yield content
+
+
 async def togetherai_model_func(
     prompt, system_prompt=None, history_messages=[], **kwargs
-) -> str:
+) -> Union[str, dict, AsyncIterator[str]]:
     client = AsyncTogether(api_key=cfg.togetherai_api_key)
     return await structured_completion(
         client, prompt, system_prompt, history_messages, **kwargs
@@ -180,7 +207,7 @@ async def togetherai_model_func(
 
 async def openai_model_func(
     prompt, system_prompt=None, history_messages=[], **kwargs
-) -> str:
+) -> Union[str, dict, AsyncIterator[str]]:
     client = AsyncOpenAI()
     return await structured_completion(
         client, prompt, system_prompt, history_messages, **kwargs
@@ -189,7 +216,12 @@ async def openai_model_func(
 
 async def openrouter_model_func(
     prompt, system_prompt=None, history_messages=[], **kwargs
-) -> str:
+) -> Union[str, dict, AsyncIterator[str]]:
+    if kwargs.get("stream", False):
+        client = OpenRouter(api_key=cfg.openrouter_api_key)
+        return await structured_completion(
+            client, prompt, system_prompt, history_messages, **kwargs
+        )
     with OpenRouter(api_key=cfg.openrouter_api_key) as client:
         return await structured_completion(
             client, prompt, system_prompt, history_messages, **kwargs

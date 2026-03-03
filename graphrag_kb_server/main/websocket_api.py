@@ -23,6 +23,7 @@ from graphrag_kb_server.service.lightrag.lightrag_constants import (
     PREFIX_LOW_LEVEL_KEYWORDS,
     PREFIX_RELATIONSHIPS,
 )
+from graphrag_kb_server.service.lightrag.lightrag_streaming import lightrag_get_response_stream
 from graphrag_kb_server.service.linkedin.apify_service import apify_extract_profile
 from graphrag_kb_server.service.tennant import find_project_folder
 from graphrag_kb_server.config import cfg
@@ -208,7 +209,21 @@ async def chat_stream(sid: str, token: str, project: str, query_parameters: dict
         query_params = QueryParameters(**query_parameters)
         match query_params.engine:
             case Engine.LIGHTRAG:
-                raise ValueError("Lightrag is not supported for chat streaming")
+                token_iter, resolver = await lightrag_get_response_stream(
+                    project_dir,
+                    query_params.conversation_id,
+                    query_params.context_params.query,
+                    search=query_params.search,
+                )
+                await sio.emit(Command.STREAM_START, {"data": "Stream started"}, to=sid)
+                async for token in token_iter:
+                    await sio.emit(Command.STREAM_TOKEN, token, to=sid)
+                references = await resolver.resolve()
+                await sio.emit(
+                    Command.STREAM_END,
+                    {"data": "Stream ended", "references": references},
+                    to=sid,
+                )
             case Engine.CAG:
                 text_response = await cag_get_response_stream(
                     project_dir,
@@ -270,7 +285,7 @@ async def extract_profile_stream(
             },
             to=sid,
         )
-        logger.error("Profile data sent.")
+        logger.info("Profile data sent.")
     except Exception as e:
         err_msg = f"Errors: {e}. Please try again."
         logger.error(err_msg)
