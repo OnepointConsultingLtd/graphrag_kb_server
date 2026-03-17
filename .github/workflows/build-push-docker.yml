@@ -44,7 +44,9 @@ jobs:
       - name: Tag image for ECR
         run: |
           docker tag ${{ env.IMAGE_NAME }}:deploy-${{ github.run_number }} ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:deploy-${{ github.run_number }}
+          docker tag ${{ env.IMAGE_NAME }}:deploy-${{ github.run_number }} ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Push image to ECR
         run: |
           docker push ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:deploy-${{ github.run_number }}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
