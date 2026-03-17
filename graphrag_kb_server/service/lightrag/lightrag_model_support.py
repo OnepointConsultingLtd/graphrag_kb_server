@@ -93,6 +93,13 @@ async def gemini_model_func(
     return response.text
 
 
+def _is_anthropic_model(model_name: str) -> bool:
+    """Anthropic models require explicit cache_control on OpenRouter.
+    Other providers (Gemini, OpenAI, DeepSeek) use automatic caching."""
+    name = model_name.lower()
+    return name.startswith("anthropic/") or name.startswith("claude")
+
+
 async def structured_completion(
     client: AsyncTogether | AsyncOpenAI | OpenRouter,
     prompt,
@@ -101,18 +108,30 @@ async def structured_completion(
     **kwargs,
 ) -> Union[str, dict, AsyncIterator[str]]:
     messages = []
+    is_openai = isinstance(client, AsyncOpenAI)
+    is_openrouter = isinstance(client, OpenRouter)
+    model_name = lightrag_cfg.lightrag_model
+    needs_explicit_cache = is_openrouter and _is_anthropic_model(model_name)
+
     if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
+        if needs_explicit_cache:
+            messages.append({
+                "role": "system",
+                "content": [{
+                    "type": "text",
+                    "text": system_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                }],
+            })
+        else:
+            messages.append({"role": "system", "content": system_prompt})
     for msg in history_messages:
         if "role" in msg and "content" in msg:
             messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": prompt})
     structured_output = "structured_output" in kwargs and kwargs["structured_output"]
     stream = kwargs.get("stream", False)
-    config_dict = {"model": lightrag_cfg.lightrag_model, "messages": messages}
-    # Detect client type to use appropriate format
-    is_openai = isinstance(client, AsyncOpenAI)
-    is_openrouter = isinstance(client, OpenRouter)
+    config_dict = {"model": model_name, "messages": messages}
 
     # Add provider parameter for OpenRouter if specified in config
     # OpenRouter expects provider as a dictionary matching ChatGenerationParamsProvider

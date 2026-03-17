@@ -430,15 +430,19 @@ async def kg_query(
         logger.info("[kg_query] No query context could be built; returning no-result.")
         return None
 
-    entities_context = context_result.raw_data["data"]["entities"]
     relations_context = context_result.raw_data["data"]["relationships"]
     text_units_context = context_result.raw_data["data"]["chunks"]
     if query_params.callback is not None:
         if query_params.max_relation_size > 0:
             relations_context = relations_context[: query_params.max_relation_size]
-        await query_params.callback.callback(
-            f"Retrieved overall context with {len(entities_context)} entities and {len(relations_context)} relations and {len(text_units_context)} text units"
-        )
+        if len(text_units_context) > 0:
+            await query_params.callback.callback(
+                f"Search has found multiple documents."
+            )
+        else:
+            await query_params.callback.callback(
+                f"No documents found."
+            )
         await query_params.callback.callback(
             f"{PREFIX_RELATIONSHIPS} {json.dumps(relations_context, ensure_ascii=False)}"
         )
@@ -706,8 +710,7 @@ async def _build_query_context(
     )
 
     if callback is not None:
-        output = f"""Search result: {len(search_result['final_entities'])} entities and {len(search_result['final_relations'])} relations.
-Context length: {len(context) if context else 0}"""
+        output = f"""Search completed."""
         await callback.callback(output)
 
     return QueryContextResult(context=context, raw_data=raw_data)
