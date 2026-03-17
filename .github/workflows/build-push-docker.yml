@@ -6,9 +6,9 @@ on:
       - deployment
 
 env:
-  IMAGE_NAME: graphrag_kb_server
+  IMAGE_NAME: knowledge_server/graphrag_kb_server
   AWS_REGION: eu-west-2
-  ECR_REGISTRY: knowledge_server/303872128380.dkr.ecr.eu-west-2.amazonaws.com
+  ECR_REGISTRY: 303872128380.dkr.ecr.eu-west-2.amazonaws.com
 
 jobs:
   build-and-push:
