@@ -192,3 +192,10 @@ class SearchResults(BaseModel):
         default=None,
         description="The relationships that were used to search for the documents",
     )
+
+
+class SearchHistory(BaseModel):
+    results: list[SearchResults] = Field(
+        ...,
+        description="The results of the search",
+    )

@@ -26,7 +26,7 @@ from graphrag_kb_server.model.topics import (
 )
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
-from graphrag_kb_server.service.project import prepare_project_extras
+
 from graphrag_kb_server.service.zip_service import zip_input
 from graphrag_kb_server.service.question_generation_service import (
     generate_questions_from_topics,
@@ -307,7 +307,8 @@ async def upload_index(request: web.Request) -> web.Response:
                 case Engine.LIGHTRAG:
                     await acreate_lightrag(
                         True, project_folder, incremental, saved_files[0]
-                    )
+                    )#
+                    from graphrag_kb_server.service.project import prepare_project_extras
                     await prepare_project_extras(project_folder)
                 case Engine.CAG:
                     await acreate_cag(project_folder, INITIAL_CONVERSATION_ID)

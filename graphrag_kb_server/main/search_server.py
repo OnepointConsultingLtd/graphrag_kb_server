@@ -10,6 +10,7 @@ from graphrag_kb_server.main.project_request_functions import (
     handle_project_folder,
 )
 from graphrag_kb_server.model.search.match_query import MatchQuery
+from graphrag_kb_server.service.db.db_persistence_search import get_search_history
 from graphrag_kb_server.service.search.matching import (
     match_entities_with_lightrag,
 )
@@ -275,4 +276,68 @@ async def relevant_documents(request: web.Request) -> web.Response:
 
     return await handle_error(
         await _handle_request(request, handle_search_documents), request=request
+    )
+
+
+@routes.options("/protected/search/search_history")
+async def search_history_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.post("/protected/search/search_history")
+async def search_history(request: web.Request) -> web.Response:
+    """
+    Get the search history for a given generated user ID
+    ---
+    summary: returns the search history for a given generated user ID
+    tags:
+      - search
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - generated_user_id
+            properties:
+              generated_user_id:
+                type: string
+                description: The generated user ID
+              offset:
+                type: integer
+                description: The offset of the search history
+                default: 0
+              limit:
+                type: integer
+                description: The limit of the search history
+                default: 10
+    responses:
+      '200':
+        description: The search history for a given generated user ID
+      '404':
+        description: Not Found - No search history found.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No search history found"
+    """
+    async def handle_search_history(_project_dir: Path, body: dict) -> web.Response:
+        search_history = await get_search_history(
+          body["generated_user_id"], body.get("offset", 0), body.get("limit", 10)
+        )
+        return web.json_response(search_history.model_dump(), headers=CORS_HEADERS)
+
+    return await handle_error(
+        await _handle_request(request, handle_search_history), request=request
     )

@@ -1,6 +1,7 @@
 from pathlib import Path
-
+import json
 from graphrag_kb_server.model.search.keywords import KeywordType
+from graphrag_kb_server.model.search.relationships import RelationshipsJSON
 from graphrag_kb_server.service.db.connection_pool import (
     execute_query,
     execute_query_with_return,
@@ -11,6 +12,7 @@ from graphrag_kb_server.service.db.connection_pool import (
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
+    SearchHistory,
     SearchResults,
     SummarisationResponseWithDocument,
 )
@@ -319,3 +321,73 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval
         high_level_keywords=high_level_keywords,
         relationships=relationships,
     )
+
+
+async def get_search_history(generated_user_id: str, offset: int = 0, limit: int = 10) -> SearchHistory | None:
+    search_history = await fetch_all(
+        f"""
+select
+  h.id,
+  h.request_id,
+  h.linkedin_profile_url,
+  h.user_role,
+  h.user_organisation_type,
+  h.user_business_type,
+  h.topic_1,
+  h.topic_2,
+  h.topic_3,
+  h.generated_user_id,
+  h.response,
+  json_agg(
+    json_build_object(
+      'document_summary', s.document_summary,
+      'document_path', s.document_path,
+      'document_main_keyword', s.document_main_keyword,
+      'document_relevancy_score', s.document_relevancy_score,
+      'document_relevancy_score_reasoning', s.document_relevancy_score_reasoning,
+      'active', s.active,
+      'created_at', s.created_at,
+      'document_image', s.document_image,
+      'document_links', s.document_links
+    ) order by s.created_at desc
+  ) as search_results,
+  (select relationships from gil_fernandes.tb_relationships r where r.search_id = h.id limit 1) relationships
+  from gil_fernandes.tb_search_history h
+  inner join gil_fernandes.tb_search_results s on h.request_id = s.request_id
+  where h.generated_user_id = $1
+  group by h.id, h.request_id, h.linkedin_profile_url, h.user_role,
+           h.user_organisation_type, h.user_business_type,
+           h.topic_1, h.topic_2, h.topic_3,
+           h.generated_user_id, h.response, h.created_at
+  order by h.created_at desc
+  offset $2 limit $3;
+""",
+        generated_user_id, offset, limit,
+    )
+    if len(search_history) == 0:
+        return None
+    results = []
+    for row in search_history:
+        documents = []
+        search_results = json.loads(row["search_results"])
+        for doc in search_results:
+            documents.append(
+                SummarisationResponseWithDocument(
+                    summary=doc.get("document_summary", ""),
+                    relevance=doc.get("document_relevancy_score_reasoning", ""),
+                    relevancy_score=doc.get("document_relevancy_score", "not_relevant"),
+                    document_path=doc.get("document_path", ""),
+                    main_keyword=doc.get("document_main_keyword", ""),
+                    image=doc.get("document_image"),
+                    links=doc.get("document_links") or [],
+                )
+            )
+        results.append(
+            SearchResults(
+                request_id=row["request_id"],
+                documents=documents,
+                response=row["response"],
+                relationships=RelationshipsJSON(relationships=row["relationships"], search_id=row["id"]),
+            )
+        )
+    return SearchHistory(results=results)

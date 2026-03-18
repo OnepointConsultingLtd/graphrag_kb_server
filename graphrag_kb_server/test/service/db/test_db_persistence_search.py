@@ -2,6 +2,7 @@ import pytest
 
 from graphrag_kb_server.model.search.keywords import KeywordType
 
+from graphrag_kb_server.service.db.connection_pool import fetch_all
 from graphrag_kb_server.test.provider.search_provider import (
     create_document_search_query,
     create_keywords_high_level,
@@ -118,3 +119,40 @@ async def test_insert_search_query():
             await drop_keywords_table(schema_name)
 
     await create_test_project_wrapper(test_function)
+
+
+@pytest.mark.asyncio
+async def test_get_search_history_no_results():
+    from graphrag_kb_server.service.db.db_persistence_search import (
+        get_search_history,
+    )
+
+    search_history = await get_search_history("test_generated_user_id")
+    assert search_history is None
+
+
+@pytest.mark.asyncio
+async def test_get_search_history_by_most_active_request_id():
+    from graphrag_kb_server.service.db.db_persistence_search import (
+        get_search_history,
+    )
+
+    all_results = await fetch_all(
+        """
+select generated_user_id, count(*) from gil_fernandes.tb_search_history h 
+where generated_user_id is not null
+group by generated_user_id order by 2 desc limit 1
+        """
+    )
+    if len(all_results) == 0:
+        return
+    most_active_request_id = all_results[0].get("generated_user_id")
+    if most_active_request_id is None:
+        return
+
+    search_history = await get_search_history(most_active_request_id)
+    assert search_history is not None
+    assert len(search_history.results) > 0
+    for result in search_history.results:
+        assert result.request_id is not None
+        assert result.response is not None

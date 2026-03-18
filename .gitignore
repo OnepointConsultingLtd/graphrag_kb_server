@@ -22,6 +22,7 @@ venv/
 .tmp
 
 .env
+.env.docker.secrets
 build.zip
 
 .turbo
