@@ -13,6 +13,7 @@ from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
     SearchHistory,
+    SearchHistoryItem,
     SearchResults,
     SummarisationResponseWithDocument,
 )
@@ -333,11 +334,14 @@ select
   h.user_role,
   h.user_organisation_type,
   h.user_business_type,
+  h.user_industry,
   h.topic_1,
   h.topic_2,
   h.topic_3,
+  h.biggest_challenge,
   h.generated_user_id,
   h.response,
+  h.created_at,
   json_agg(
     json_build_object(
       'document_summary', s.document_summary,
@@ -383,11 +387,23 @@ select
                 )
             )
         results.append(
-            SearchResults(
+            SearchHistoryItem(
                 request_id=row["request_id"],
+                linkedin_profile_url=row["linkedin_profile_url"],
+                user_role=row["user_role"],
+                user_organisation_type=row["user_organisation_type"],
+                user_business_type=row["user_business_type"],
+                user_industry=row["user_industry"],
+                topic_1=row["topic_1"],
+                topic_2=row["topic_2"],
+                topic_3=row["topic_3"],
+                biggest_challenge=row["biggest_challenge"],
                 documents=documents,
                 response=row["response"],
                 relationships=RelationshipsJSON(relationships=row["relationships"], search_id=row["id"]),
+                created_at=row["created_at"],
             )
         )
-    return SearchHistory(results=results)
+    return SearchHistory(
+        results=results
+    )

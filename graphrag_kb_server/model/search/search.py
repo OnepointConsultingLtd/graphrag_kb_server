@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import StrEnum
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from abc import ABC
@@ -194,8 +195,51 @@ class SearchResults(BaseModel):
     )
 
 
+class SearchHistoryItem(SearchResults):
+    linkedin_profile_url: str = Field(
+        ...,
+        description="The LinkedIn profile URL of the user",
+    )
+    user_role: str = Field(
+        ...,
+        description="The role of the user",
+    )
+    user_organisation_type: str = Field(
+        ...,
+        description="The organisation type of the user",
+    )
+    user_business_type: str = Field(
+        ...,
+        description="The business type of the user",
+    )
+    user_industry: str = Field(
+        ...,
+        description="The industry of the user",
+    )
+    topic_1: str | None = Field(
+        default="",
+        description="The first topic of the user",
+    )
+    topic_2: str | None = Field(
+        default="",
+        description="The second topic of the user",
+    )
+    topic_3: str | None = Field(
+        default="",
+        description="The third topic of the user",
+    )
+    biggest_challenge: str | None = Field(
+        default="",
+        description="The biggest challenge that the user is facing",
+    )
+    created_at: datetime = Field(
+        ...,
+        description="The timestamp of the search history item",
+    )
+
+
 class SearchHistory(BaseModel):
-    results: list[SearchResults] = Field(
+    results: list[SearchHistoryItem] = Field(
         ...,
         description="The results of the search",
     )

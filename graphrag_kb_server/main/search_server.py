@@ -336,7 +336,7 @@ async def search_history(request: web.Request) -> web.Response:
         search_history = await get_search_history(
           body["generated_user_id"], body.get("offset", 0), body.get("limit", 10)
         )
-        return web.json_response(search_history.model_dump(), headers=CORS_HEADERS)
+        return web.json_response(search_history.model_dump(mode="json"), headers=CORS_HEADERS)
 
     return await handle_error(
         await _handle_request(request, handle_search_history), request=request
