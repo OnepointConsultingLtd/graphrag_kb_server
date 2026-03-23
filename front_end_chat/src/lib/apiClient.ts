@@ -157,7 +157,8 @@ export async function downloadFile(
   reference: Reference,
   originalFile: boolean = false,
 ): Promise<Response> {
-  return await downloadFilePath(jwt, project, reference.path || "", originalFile);
+  debugger
+  return await downloadFilePath(jwt, project, reference.path || reference.file || "", originalFile);
 }
 
 export async function downloadFilePath(

@@ -12,6 +12,7 @@ from yarl import URL
 from markdown import markdown
 from aiohttp.web import Response
 
+from graphrag_kb_server.callbacks.callback_support import InfoCallback
 from graphrag_kb_server.model.rag_parameters import (
     ContextParameters,
     QueryParameters,
@@ -37,7 +38,7 @@ from graphrag_kb_server.main.project_request_functions import (
     extract_tennant_folder,
     handle_project_folder,
 )
-from graphrag_kb_server.service.index_support import unzip_file
+from graphrag_kb_server.service.index_support import save_webpage_to_text, unzip_file
 from graphrag_kb_server.utils.file_support import write_uploaded_file
 from graphrag_kb_server.model.engines import find_engine_from_query, find_engine, Engine
 from graphrag_kb_server.service.tennant import find_project_folder
@@ -379,6 +380,100 @@ async def upload_index(request: web.Request) -> web.Response:
                     status=500,
                     headers=CORS_HEADERS,
                 )
+
+    return await handle_error(
+        handle_request, request=request, response_format=Format.JSON.value
+    )
+
+
+@routes.options("/protected/project/index_webpage")
+async def index_webpage_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.post("/protected/project/index_webpage")
+async def index_webpage(request: web.Request) -> web.Response:
+    """
+    Webpage scrape and index
+    ---
+    summary: Scrapes a webpage and indexes the content
+    tags:
+      - project
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              webpage_url:
+                type: string
+                description: The URL of the webpage to be scraped.
+              project:
+                type: string
+                description: The name of the project
+              max_crawl_pages:
+                type: integer
+                description: The maximum number of pages to crawl.
+                default: 100
+              engine:
+                type: string
+                description: The type of engine used to run the RAG system. Only LightRAG is supported.
+                enum: [lightrag]
+    responses:
+      "200":
+        description: Successful upload
+        content:
+          application/json:
+            example:
+              status: "success"
+              message: "1 website has been scraped and indexed."
+      "400":
+        description: Bad Request - No file uploaded or invalid file format.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "No file was uploaded"
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+
+        body = request["data"]["body"]
+        webpage_url = body["webpage_url"]
+        engine_str = body["engine"]
+        max_crawl_pages = body["max_crawl_pages"] or 100
+        sanitized_project_name = re.sub(r"[^a-z0-9_-]", "_", body["project"].lower())
+
+        match extract_tennant_folder(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as tennant_folder:
+                project_folder: Path = find_project_folder(
+                    tennant_folder, find_engine(engine_str), sanitized_project_name
+                )
+                engine = find_engine(engine_str)
+                match engine:
+                    case Engine.LIGHTRAG:
+                        from graphrag_kb_server.service.project import write_project_file
+                        write_project_file(project_folder, IndexingStatus.PREPARING)
+                        await save_webpage_to_text(project_folder, webpage_url, max_crawl_pages, InfoCallback())
+                        write_project_file(project_folder, IndexingStatus.IN_PROGRESS)
+                        await acreate_lightrag(True, project_folder, False, None)
+                        write_project_file(project_folder, IndexingStatus.COMPLETED)
+                        return web.json_response(
+                            {"message": "1 website has been scraped and indexed."},
+                            status=200,
+                            headers=CORS_HEADERS,
+                        )
+                    case _:
+                        return web.json_response(
+                            {"error": "Invalid engine."},
+                            status=400,
+                            headers=CORS_HEADERS,
+                        )
 
     return await handle_error(
         handle_request, request=request, response_format=Format.JSON.value
