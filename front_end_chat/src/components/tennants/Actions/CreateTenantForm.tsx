@@ -28,13 +28,13 @@ export default function CreateTenantForm({
   const { jwt } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
-    }))
+    })),
   );
 
   const { createTenant } = useAdminStore(
     useShallow((state) => ({
       createTenant: state.createTenant,
-    }))
+    })),
   );
 
   const handleSubmit = async (e: React.FormEvent) => {

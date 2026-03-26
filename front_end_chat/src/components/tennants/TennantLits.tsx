@@ -23,14 +23,14 @@ export default function TennantLits({
     useShallow((state) => ({
       jwt: state.jwt,
       role: state.role,
-    }))
+    })),
   );
 
   const { tennants, loadTennants } = useAdminStore(
     useShallow((state) => ({
       tennants: state.tennants,
       loadTennants: state.loadTennants,
-    }))
+    })),
   );
 
   const handleLoadTennants = useCallback(async () => {
@@ -189,12 +189,12 @@ export default function TennantLits({
                       <div className="flex flex-col space-y-1">
                         <div className="text-sm font-medium text-gray-900">
                           {new Date(
-                            tennant.creation_timestamp
+                            tennant.creation_timestamp,
                           ).toLocaleDateString()}
                         </div>
                         <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block w-fit">
                           {new Date(
-                            tennant.creation_timestamp
+                            tennant.creation_timestamp,
                           ).toLocaleTimeString()}
                         </div>
                       </div>

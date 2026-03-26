@@ -53,7 +53,11 @@ export async function validateToken(token: string) {
   return await response.json();
 }
 
-export async function validateAdminToken(name: string, email: string, password: string) {
+export async function validateAdminToken(
+  name: string,
+  email: string,
+  password: string,
+) {
   const params = new URLSearchParams();
   params.set("name", name);
   params.set("email", email);
@@ -157,8 +161,12 @@ export async function downloadFile(
   reference: Reference,
   originalFile: boolean = false,
 ): Promise<Response> {
-  debugger
-  return await downloadFilePath(jwt, project, reference.path || reference.file || "", originalFile);
+  return await downloadFilePath(
+    jwt,
+    project,
+    reference.path || reference.file || "",
+    originalFile,
+  );
 }
 
 export async function downloadFilePath(
@@ -303,7 +311,7 @@ export async function fetchRelatedTopics(
     source: source,
     text,
     limit: limit,
-    similarity_topics_method: "nearest_neighbors"
+    similarity_topics_method: "nearest_neighbors",
   };
 
   const response = await fetch(
@@ -375,7 +383,10 @@ export async function tennantApiTemplate(
     ...createHeaders(jwt),
   };
 
-  if (requestBody && (method === "POST" || method === "PUT" || method === "DELETE")) {
+  if (
+    requestBody &&
+    (method === "POST" || method === "PUT" || method === "DELETE")
+  ) {
     config.body = JSON.stringify(requestBody);
   }
 
@@ -402,7 +413,7 @@ export async function listTennants(jwt: string) {
 // Create tenant
 export async function createTenant(
   jwt: string,
-  tenantData: { tennant_name: string; email: string }
+  tenantData: { tennant_name: string; email: string },
 ) {
   return await tennantApiTemplate(jwt, "create", "POST", tenantData);
 }
@@ -410,8 +421,45 @@ export async function createTenant(
 // Delete tenant
 export async function deleteTenant(
   jwt: string,
-  tenantData: { tennant_folder: string }
+  tenantData: { tennant_folder: string },
 ) {
   console.log("deleteTenant", tenantData);
   return await tennantApiTemplate(jwt, "delete_tennant", "DELETE", tenantData);
+}
+
+export async function indexWebpage(
+  jwt: string,
+  webpage_url: string,
+  project: string,
+  max_crawl_pages: number,
+  engine: string,
+): Promise<any> {
+  const formData = new FormData();
+  formData.append("webpage_url", webpage_url);
+  formData.append("project", project);
+  formData.append("max_crawl_pages", String(max_crawl_pages));
+  formData.append("engine", engine);
+  formData.append("asynchronous", "true");
+
+  const response = await fetch(
+    `${getBaseServer()}/protected/project/index_webpage`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        // 'Content-Type' is intentionally not set for multipart/form-data when using FormData
+        accept: "application/json",
+      },
+      body: formData,
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    throw new Error(
+      `Failed to index webpage. Error code: ${response.status}. Error: ${errorText}`,
+    );
+  }
+
+  return await response.json();
 }

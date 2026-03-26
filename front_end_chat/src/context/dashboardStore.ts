@@ -11,6 +11,7 @@ import { persist } from "zustand/middleware";
 import { GENERATE_SNIPPET_MODAL_ID } from "../components/dashboard/GenerateSnippetModal";
 import { showCloseModal } from "../lib/dialog";
 import { GENERATE_URL_MODAL_ID } from "../components/dashboard/GenerateURLModal";
+import { SCRAPE_WEBSITE_DIALOG_ID } from "../components/dashboard/ScrapeWebsiteDialog";
 
 function openSnippetModalDialogue(open: boolean) {
   showCloseModal(open, GENERATE_SNIPPET_MODAL_ID);
@@ -56,6 +57,18 @@ export type DashboardState = {
   generateUrlError: string | null;
   expandedSections: Record<string, boolean>;
   downloadingTopics: boolean;
+  webpageForScrapingDialogOpen: boolean;
+  webpageProject: string;
+  webpageProjectTouched: boolean;
+  webpageProjectValid: boolean;
+  webpageForScraping: string | null;
+  webpageForScrapingTouched: boolean;
+  webpageForScrapingValid: boolean;
+  maxScrollPages: number;
+  maxScrollPagesValid: boolean;
+  webpageScrapeSuccessMessage: string | null;
+  webpageScrapeErrorMessage: string | null;
+  webpageScrapeIsSubmitting: boolean;
   setUserData: (userData: UserData | null) => void;
   setEmail: (email: string) => void;
   setWidgetType: (widgetType: string) => void;
@@ -106,6 +119,20 @@ export type DashboardState = {
 
   // Download Topics
   setDownloadingTopics: (downloadingTopics: boolean) => void;
+  setWebpageForScrapingDialogOpen: (
+    webpageForScrapingDialogOpen: boolean,
+  ) => void;
+  setWebpageForScraping: (webpageForScraping: string) => void;
+  setMaxScrollPages: (maxScrollPages: number) => void;
+  setWebpageProject: (webpageProject: string) => void;
+  resetScrapeWebsiteForm: () => void;
+  setWebpageScrapeSuccessMessage: (
+    webpageScrapeSuccessMessage: string | null,
+  ) => void;
+  setWebpageScrapeErrorMessage: (
+    webpageScrapeErrorMessage: string | null,
+  ) => void;
+  setWebpageScrapeIsSubmitting: (webpageScrapeIsSubmitting: boolean) => void;
 };
 
 export const useDashboardStore = create<DashboardState>()(
@@ -147,6 +174,18 @@ export const useDashboardStore = create<DashboardState>()(
         generateUrlError: null,
         expandedSections: {},
         downloadingTopics: false,
+        webpageForScrapingDialogOpen: false,
+        webpageForScraping: null,
+        webpageForScrapingTouched: false,
+        webpageForScrapingValid: false,
+        webpageProject: "",
+        webpageProjectTouched: false,
+        webpageProjectValid: false,
+        maxScrollPages: 100,
+        maxScrollPagesValid: true,
+        webpageScrapeSuccessMessage: null,
+        webpageScrapeErrorMessage: null,
+        webpageScrapeIsSubmitting: false,
         setUserData: (userData: UserData | null) =>
           set(() => ({ userData, email: userData?.email ?? "" })),
         setEmail: (email: string) => set({ email }),
@@ -279,6 +318,30 @@ export const useDashboardStore = create<DashboardState>()(
             error: null,
             expandedSections: {},
             downloadingTopics: false,
+            webpageForScrapingDialogOpen: false,
+            webpageForScrapingTouched: false,
+            webpageForScraping: null,
+            webpageProjectTouched: false,
+            webpageForScrapingValid: false,
+            webpageProject: "",
+            webpageProjectValid: false,
+            maxScrollPages: 100,
+            maxScrollPagesValid: true,
+            webpageScrapeSuccessMessage: null,
+            webpageScrapeErrorMessage: null,
+            webpageScrapeIsSubmitting: false,
+          }),
+        resetScrapeWebsiteForm: () =>
+          set({
+            webpageForScraping: null,
+            webpageForScrapingValid: false,
+            webpageProjectTouched: false,
+            webpageProject: "",
+            webpageProjectValid: false,
+            maxScrollPages: 100,
+            maxScrollPagesValid: true,
+            webpageScrapeErrorMessage: null,
+            webpageScrapeIsSubmitting: false,
           }),
         setSnippetModalDialogueOpen: (snippetModalDialogueOpen: boolean) =>
           set(() => {
@@ -297,6 +360,48 @@ export const useDashboardStore = create<DashboardState>()(
           set({ generateUrlError }),
         setDownloadingTopics: (downloadingTopics: boolean) =>
           set({ downloadingTopics }),
+        setWebpageForScrapingDialogOpen: (
+          webpageForScrapingDialogOpen: boolean,
+        ) =>
+          set(() => {
+            showCloseModal(
+              webpageForScrapingDialogOpen,
+              SCRAPE_WEBSITE_DIALOG_ID,
+            );
+            return { webpageForScrapingDialogOpen };
+          }),
+        setWebpageForScraping: (webpageForScraping: string) =>
+          set({
+            webpageForScraping,
+            webpageForScrapingValid:
+              webpageForScraping.length > 0 &&
+              webpageForScraping.startsWith("https://"),
+            webpageForScrapingTouched: true,
+          }),
+        setMaxScrollPages: (maxScrollPages: number) =>
+          set({
+            maxScrollPages,
+            maxScrollPagesValid: maxScrollPages > 0 && maxScrollPages <= 100,
+          }),
+        setWebpageProject: (webpageProject: string) =>
+          set({
+            webpageProject,
+            webpageProjectTouched: true,
+            webpageProjectValid: webpageProject.length > 2,
+          }),
+        setWebpageScrapeSuccessMessage: (
+          webpageScrapeSuccessMessage: string | null,
+        ) =>
+          set({
+            webpageScrapeSuccessMessage,
+            webpageScrapeIsSubmitting: false,
+          }),
+        setWebpageScrapeErrorMessage: (
+          webpageScrapeErrorMessage: string | null,
+        ) =>
+          set({ webpageScrapeErrorMessage, webpageScrapeIsSubmitting: false }),
+        setWebpageScrapeIsSubmitting: (webpageScrapeIsSubmitting: boolean) =>
+          set({ webpageScrapeIsSubmitting }),
       };
     },
     {

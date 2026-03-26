@@ -1,5 +1,5 @@
 export type decodedJwt = {
-	name: string;
-	email: string;
-	permissions: string[];
+  name: string;
+  email: string;
+  permissions: string[];
 };

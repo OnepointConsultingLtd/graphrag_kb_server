@@ -5,21 +5,16 @@ import Send from "../icons/Send";
 import { ChatType } from "../../lib/chatTypes";
 
 export default function ChatInput() {
-  const [
-    inputText,
-    isThinking,
-    sendUserMessage,
-    setInputText,
-    chatType
-  ] = useChatStore(
-    useShallow((state) => [
-      state.inputText,
-      state.isThinking,
-      state.sendUserMessage,
-      state.setInputText,
-      state.chatType,
-    ]),
-  );
+  const [inputText, isThinking, sendUserMessage, setInputText, chatType] =
+    useChatStore(
+      useShallow((state) => [
+        state.inputText,
+        state.isThinking,
+        state.sendUserMessage,
+        state.setInputText,
+        state.chatType,
+      ]),
+    );
 
   const isFloating = chatType === ChatType.FLOATING;
 

@@ -5,6 +5,7 @@ import useChatStore from "../../context/chatStore";
 import { useDashboardStore } from "../../context/dashboardStore";
 import { uploadIndex } from "../../lib/apiClient";
 import { Engine, ModalType } from "../../model/types";
+import FormAlert from "./Form/FormAlert";
 import RenderLabel from "./Form/RenderLabel";
 import Modal from "./Modal";
 
@@ -177,10 +178,8 @@ export default function CreateProjectModal() {
           </div>
         </div>
 
-        {error && <div className="alert alert-error">{error}</div>}
-        {uploadSuccessMessage && (
-          <div className="alert alert-success">{uploadSuccessMessage}</div>
-        )}
+        <FormAlert message={error} type="error" />
+        <FormAlert message={uploadSuccessMessage} type="success" />
 
         <div className="modal-action mt-6">
           <button

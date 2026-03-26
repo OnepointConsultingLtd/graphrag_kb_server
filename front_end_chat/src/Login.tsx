@@ -18,13 +18,13 @@ export default function Login() {
       setRole: state.setRole,
       jwt: state.jwt,
       role: state.role,
-    }))
+    })),
   );
 
   const { setUserData } = useDashboardStore(
     useShallow((state) => ({
       setUserData: state.setUserData,
-    }))
+    })),
   );
 
   const [errorMessage, setErrorMessage] = useState("");

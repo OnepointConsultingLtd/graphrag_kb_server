@@ -1,7 +1,8 @@
 import logging
 import zipfile
-
+import re
 from pathlib import Path
+from urllib.parse import unquote
 
 from graphrag_kb_server.callbacks.callback_support import BaseCallback, InfoCallback
 from graphrag_kb_server.service.file_conversion import convert_pdf_to_markdown
@@ -31,18 +32,29 @@ async def save_webpage_to_text(project_folder: Path, webpage_url: str, max_crawl
     url_text_records = [(record["url"], record["markdown"]) for record in records if record["markdown"] is not None]
     for target_folder in [input_folder, original_folder]:
         for i, (url, text) in enumerate(url_text_records):
-            url_splited = url.split("/")
+            url_splitted = url.split("/")
             doc_name = ""
-            for _ in range (len(url_splited)):
-                doc_name = url_splited.pop().strip()
+            for _ in range(len(url_splitted)):
+                doc_name = url_splitted.pop().strip()
                 if doc_name != "":
                     break
+            # Strip query string and fragment from the last URL segment
+            doc_name = re.split(r"[?#]", doc_name)[0]
+            # Decode percent-encoded characters (e.g. %20 -> space)
+            doc_name = unquote(doc_name)
+            # Replace any remaining characters invalid in file names
+            doc_name = re.sub(r'[<>:"/\\|*]', "_", doc_name).strip() or f"page_{i}"
             doc_path = target_folder / f"{doc_name}_{i}.txt"
             if len(text) > 0:
                 final_text = f"""{text}
-                Source: {url}
-                """
-                doc_path.write_text(final_text, encoding="utf-8")
+
+Source: {url}
+"""
+                try:
+                    doc_path.write_text(final_text, encoding="utf-8")
+                except Exception as e:
+                    log.error(f"Failed to write {doc_path}: {e}")
+                    log.exception(e)
             else:
                 log.warning(f"No text found for {url}")
 

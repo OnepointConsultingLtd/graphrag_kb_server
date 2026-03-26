@@ -422,6 +422,10 @@ async def index_webpage(request: web.Request) -> web.Response:
                 type: string
                 description: The type of engine used to run the RAG system. Only LightRAG is supported.
                 enum: [lightrag]
+              asynchronous:
+                type: boolean
+                default: false
+                description: Whether to run the scraping and indexing asynchronously.
     responses:
       "200":
         description: Successful upload
@@ -439,32 +443,60 @@ async def index_webpage(request: web.Request) -> web.Response:
               message: "No file was uploaded"
     """
 
+    async def handle_webpage_indexing(project_folder: Path, webpage_url: str, max_crawl_pages: int):
+        from graphrag_kb_server.service.project import write_project_file
+
+        try:
+            write_project_file(project_folder, IndexingStatus.PREPARING)
+            await save_webpage_to_text(project_folder, webpage_url, max_crawl_pages, InfoCallback())
+            write_project_file(project_folder, IndexingStatus.IN_PROGRESS)
+        except Exception as e:
+            write_project_file(project_folder, IndexingStatus.FAILED)
+            logger.error(f"Failed to scrape webpage: {e}")
+            logger.exception(e)
+            return
+
+        try:
+            await acreate_lightrag(True, project_folder, False, None)
+            write_project_file(project_folder, IndexingStatus.COMPLETED)
+        except Exception as e:
+            write_project_file(project_folder, IndexingStatus.FAILED)
+            logger.error(f"Failed to index scraped webpage: {e}")
+            logger.exception(e)
+
     async def handle_request(request: web.Request) -> web.Response:
 
         body = request["data"]["body"]
         webpage_url = body["webpage_url"]
         engine_str = body["engine"]
         max_crawl_pages = body["max_crawl_pages"] or 100
+        asynchronous = body.get("asynchronous", False)
         sanitized_project_name = re.sub(r"[^a-z0-9_-]", "_", body["project"].lower())
 
         match extract_tennant_folder(request):
             case Response() as error_response:
                 return error_response
             case Path() as tennant_folder:
-                project_folder: Path = find_project_folder(
-                    tennant_folder, find_engine(engine_str), sanitized_project_name
-                )
                 engine = find_engine(engine_str)
                 match engine:
                     case Engine.LIGHTRAG:
-                        from graphrag_kb_server.service.project import write_project_file
-                        write_project_file(project_folder, IndexingStatus.PREPARING)
-                        await save_webpage_to_text(project_folder, webpage_url, max_crawl_pages, InfoCallback())
-                        write_project_file(project_folder, IndexingStatus.IN_PROGRESS)
-                        await acreate_lightrag(True, project_folder, False, None)
-                        write_project_file(project_folder, IndexingStatus.COMPLETED)
+                        project_folder: Path = find_project_folder(
+                            tennant_folder, engine, sanitized_project_name
+                        )
+                        if asynchronous:
+                            asyncio.create_task(
+                                handle_webpage_indexing(project_folder, webpage_url, max_crawl_pages)
+                            )
+                        else:
+                            await handle_webpage_indexing(project_folder, webpage_url, max_crawl_pages)
                         return web.json_response(
-                            {"message": "1 website has been scraped and indexed."},
+                            {
+                                "message": (
+                                    "Indexing in progress..."
+                                    if asynchronous
+                                    else "1 website has been scraped and indexed."
+                                )
+                            },
                             status=200,
                             headers=CORS_HEADERS,
                         )

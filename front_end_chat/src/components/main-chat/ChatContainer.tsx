@@ -3,7 +3,6 @@ import Messages from "./Messages";
 import ChatInput from "./ChatInput";
 
 export default function ChatContainer() {
-
   return (
     <main className="flex h-screen">
       <div className="flex flex-col flex-1">

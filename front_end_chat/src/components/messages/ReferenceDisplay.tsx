@@ -94,7 +94,7 @@ export default function ReferenceDisplay({
           rel="noopener noreferrer"
           onClick={openReference}
           title={reference.file}
-          className="min-w-0 truncate text-blue-600 hover:text-blue-800 hover:underline font-medium overflow-hidden text-ellipsis whitespace-nowrap"
+          className="min-w-0 truncate text-blue-600 hover:text-blue-800 hover:underline font-medium overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer"
         >
           {reference.file ? reference.file?.split("/").pop() : ""}
         </a>
@@ -111,33 +111,45 @@ export default function ReferenceDisplay({
       </div>
       {hasLinks && (
         <ul className="list-none pl-4 mt-1.5 flex flex-col gap-1 border-l-2 border-slate-200 ml-0.5 overflow-hidden">
-          {reference.links!.slice(0, showAllLinks ? reference.links!.length : MAX_LINKS).map((link, i) => {
-            const res = (<li key={i} className="flex items-start gap-2 min-w-0 overflow-hidden">
-              <IoGlobeOutline
-                className="shrink-0 w-4 h-4 mt-0.5 text-blue-500"
-                aria-hidden
-              />
-              <a
-                href={link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block truncate text-sm text-[#0992C2] hover:underline min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
-                title={link}
-              >
-                {link}
-              </a>
-            </li>)
-            if (i === MAX_LINKS - 1 && reference.links!.length > MAX_LINKS) {
-              return (
-                <li key={i} className="flex items-start gap-2 min-w-0">
-                  <button onClick={() => setShowAllLinks(!showAllLinks)} className="text-sm text-blue-500 hover:underline min-w-0 cursor-pointer">
-                    {showAllLinks ? "Show less" : `${reference.links!.length - MAX_LINKS} more`}
-                  </button>
+          {reference
+            .links!.slice(0, showAllLinks ? reference.links!.length : MAX_LINKS)
+            .map((link, i) => {
+              const res = (
+                <li
+                  key={i}
+                  className="flex items-start gap-2 min-w-0 overflow-hidden"
+                >
+                  <IoGlobeOutline
+                    className="shrink-0 w-4 h-4 mt-0.5 text-blue-500"
+                    aria-hidden
+                  />
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate text-sm text-[#0992C2] hover:underline min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+                    title={link}
+                  >
+                    {link}
+                  </a>
                 </li>
-              )
-            }
-            return res
-          })}
+              );
+              if (i === MAX_LINKS - 1 && reference.links!.length > MAX_LINKS) {
+                return (
+                  <li key={i} className="flex items-start gap-2 min-w-0">
+                    <button
+                      onClick={() => setShowAllLinks(!showAllLinks)}
+                      className="text-sm text-blue-500 hover:underline min-w-0 cursor-pointer"
+                    >
+                      {showAllLinks
+                        ? "Show less"
+                        : `${reference.links!.length - MAX_LINKS} more`}
+                    </button>
+                  </li>
+                );
+              }
+              return res;
+            })}
         </ul>
       )}
     </li>

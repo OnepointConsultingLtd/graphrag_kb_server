@@ -8,7 +8,7 @@ export default function ProjectList() {
     useShallow((state) => ({
       projects: state.projects,
       jwt: state.jwt,
-    }))
+    })),
   );
 
   const isLoading = jwt && !projects;
@@ -23,7 +23,6 @@ export default function ProjectList() {
           </div>
         ) : (
           <>
-
             <RenderProjectList
               title="LightRAG Projects"
               projectList={projects?.lightrag_projects?.projects || []}

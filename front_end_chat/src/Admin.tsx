@@ -16,13 +16,13 @@ export default function Admin() {
     useShallow((state) => ({
       setJwt: state.setJwt,
       setRole: state.setRole,
-    }))
+    })),
   );
 
   const { setUserData } = useDashboardStore(
     useShallow((state) => ({
       setUserData: state.setUserData,
-    }))
+    })),
   );
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -65,7 +65,7 @@ export default function Admin() {
       const data = await validateAdminToken(
         adminForm.name,
         adminForm.email,
-        adminForm.password
+        adminForm.password,
       );
 
       setJwt(data.token);
@@ -79,7 +79,7 @@ export default function Admin() {
     } catch (error) {
       console.error("Admin login error:", error);
       setErrorMessage(
-        "Admin login failed. Please check your credentials and try again."
+        "Admin login failed. Please check your credentials and try again.",
       );
     }
   }

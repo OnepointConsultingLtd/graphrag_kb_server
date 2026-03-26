@@ -47,8 +47,7 @@ describe("partialJsonExtractor", () => {
   });
 
   it("handles JSON with additional fields after response", () => {
-    const json =
-      '{"response": "the answer", "references": [{"type": "DC"}]}';
+    const json = '{"response": "the answer", "references": [{"type": "DC"}]}';
     expect(partialJsonExtractor(json)).toBe("the answer");
   });
 

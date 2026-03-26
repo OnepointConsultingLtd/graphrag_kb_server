@@ -1,9 +1,4 @@
-import {
-  FaCheckCircle,
-  FaEnvelope,
-  FaUser,
-  FaFolder,
-} from "react-icons/fa";
+import { FaCheckCircle, FaEnvelope, FaUser, FaFolder } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import Loading from "../Loading";
 import { useShallow } from "zustand/shallow";

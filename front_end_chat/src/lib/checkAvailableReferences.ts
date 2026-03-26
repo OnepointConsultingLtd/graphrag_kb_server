@@ -6,13 +6,17 @@ import { downloadFilePath } from "./apiClient";
  * Given a list of references, checks if the reference url exists (returns non-404 status).
  * Returns a Promise that resolves to a filtered reference array with only available references.
  */
-export async function filterAvailableReferences(jwt: string, project: Project, references: Reference[]): Promise<Reference[]> {
+export async function filterAvailableReferences(
+  jwt: string,
+  project: Project,
+  references: Reference[],
+): Promise<Reference[]> {
   const MAX_CONCURRENCY = 6;
 
   async function checkReference(url: string): Promise<boolean | null> {
     try {
-        const response = await downloadFilePath(jwt, project, url, false)
-        return response.ok;
+      const response = await downloadFilePath(jwt, project, url, false);
+      return response.ok;
     } catch (e) {
       // Ignore error (CORS, timeout, network error), treat as unavailable
       return null;
@@ -21,7 +25,7 @@ export async function filterAvailableReferences(jwt: string, project: Project, r
 
   // Process references with proper concurrency control
   const results: (Reference | null)[] = new Array(references.length).fill(null);
-  
+
   async function processBatch(batch: Array<{ index: number; ref: Reference }>) {
     const promises = batch.map(async ({ index, ref }) => {
       if (!ref.path) {

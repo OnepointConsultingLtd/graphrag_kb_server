@@ -6,7 +6,7 @@ import {
   MdExpandLess,
   MdExpandMore,
   MdOutlineQuestionMark,
-  MdHourglassEmpty 
+  MdHourglassEmpty,
 } from "react-icons/md";
 
 function splitDescription(description: string): string[] {
@@ -59,11 +59,8 @@ function TopicDescription({
   );
 }
 
-function TopicQuestions({topic}: {topic: Topic}) {
-  const {
-    selectTopicQuestion,
-    chatType,
-  } = useChatStore(
+function TopicQuestions({ topic }: { topic: Topic }) {
+  const { selectTopicQuestion, chatType } = useChatStore(
     useShallow((state) => ({
       selectTopicQuestion: state.selectTopicQuestion,
       chatType: state.chatType,
@@ -77,12 +74,16 @@ function TopicQuestions({topic}: {topic: Topic}) {
     <div className="w-full text-white text-sm mt-2">
       <ul>
         {topic.questions?.map((question, index) => (
-          <li className="dash-marker ml-2.5 cursor-pointer hover:underline" key={`${index}-${question}`} 
-          onClick={(e) => {
-            e.stopPropagation();
-            selectTopicQuestion(question)
-            
-          }}>{question}</li>
+          <li
+            className="dash-marker ml-2.5 cursor-pointer hover:underline"
+            key={`${index}-${question}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              selectTopicQuestion(question);
+            }}
+          >
+            {question}
+          </li>
         ))}
       </ul>
     </div>
@@ -122,7 +123,7 @@ export default function TopicButtons({
         ?.filter((topic) => topic.type)
         .map((topic, index) => {
           const isDescription = topic.showDescription;
-          const hasQuestions = (topic.questions && topic.questions.length > 0)
+          const hasQuestions = topic.questions && topic.questions.length > 0;
           return (
             <div
               className={`flex flex-col items-left justify-top text-left 
@@ -165,27 +166,36 @@ export default function TopicButtons({
                     />
                   )}
                 </div>
-                {!isFloating && <div>
-                  {(!hasQuestions && topicQuestionsLoading !== index) && (
-                    <MdOutlineQuestionMark
-                      className="cursor-pointer w-3 h-3"
-                      fill="white"
-                      color="white"
-                      onClick={() => injectTopicQuestions(index, related)}
-                      title="Show questions"
-                    />
-                  )}
-                  {(hasQuestions && topicQuestionsLoading !== index) && (
-                    <MdOutlineQuestionMark
-                      className="inline-block rotate-180 cursor-pointer w-3 h-3"
-                      fill="white"
-                      color="white"
-                      onClick={() => removeTopicQuestions(index, related)}
-                      title="Show questions"
-                    />
-                  )}
-                  {topicQuestionsLoading === index && <MdHourglassEmpty className="w-5 h-5" fill="white" color="white" title="Generating questions" />}
-                </div>}
+                {!isFloating && (
+                  <div>
+                    {!hasQuestions && topicQuestionsLoading !== index && (
+                      <MdOutlineQuestionMark
+                        className="cursor-pointer w-3 h-3"
+                        fill="white"
+                        color="white"
+                        onClick={() => injectTopicQuestions(index, related)}
+                        title="Show questions"
+                      />
+                    )}
+                    {hasQuestions && topicQuestionsLoading !== index && (
+                      <MdOutlineQuestionMark
+                        className="inline-block rotate-180 cursor-pointer w-3 h-3"
+                        fill="white"
+                        color="white"
+                        onClick={() => removeTopicQuestions(index, related)}
+                        title="Show questions"
+                      />
+                    )}
+                    {topicQuestionsLoading === index && (
+                      <MdHourglassEmpty
+                        className="w-5 h-5"
+                        fill="white"
+                        color="white"
+                        title="Generating questions"
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );

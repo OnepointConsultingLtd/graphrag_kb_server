@@ -44,7 +44,7 @@ export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
 export const Role = {
   ADMIN: "ADMIN",
-  TENNANT: "TENNANT"
+  TENNANT: "TENNANT",
 } as const;
 
 export type Role = (typeof Role)[keyof typeof Role];

@@ -15,6 +15,7 @@ export default function Actions() {
     setSnippetModalDialogueOpen,
     setGenerateUrlDialogOpen,
     setDownloadingTopics,
+    setWebpageForScrapingDialogOpen,
   } = useDashboardStore();
   const selectionProject = useProjectSelectionStore(
     useShallow((state) => state.selectionProject),
@@ -49,6 +50,13 @@ export default function Actions() {
       >
         <FaPlus className="mr-2 group-hover:rotate-90 transition-transform" />
         Create New Project
+      </button>
+      <button
+        onClick={() => setWebpageForScrapingDialogOpen(true)}
+        className="btn btn-primary btn-lg w-full group hover:scale-105 transition-transform"
+      >
+        <FaPlus className="mr-2 group-hover:rotate-90 transition-transform" />
+        Scrape and Index Website
       </button>
 
       <button

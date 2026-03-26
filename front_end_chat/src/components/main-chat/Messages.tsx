@@ -251,14 +251,26 @@ export function TopicSwitcher() {
   );
 }
 
-export function SingleMessage({ message, index, selectedProject, chatMessages, isFloating }: { 
-  message: ChatMessage, index: number, selectedProject: Project | undefined, chatMessages: ChatMessage[], isFloating: boolean 
+export function SingleMessage({
+  message,
+  index,
+  selectedProject,
+  chatMessages,
+  isFloating,
+}: {
+  message: ChatMessage;
+  index: number;
+  selectedProject: Project | undefined;
+  chatMessages: ChatMessage[];
+  isFloating: boolean;
 }) {
   if (!selectedProject) {
     return null;
   }
 
-  const [availableReferences, setAvailableReferences] = useState<Reference[]>([]);
+  const [availableReferences, setAvailableReferences] = useState<Reference[]>(
+    [],
+  );
 
   useEffect(() => {
     setAvailableReferences(message.references || []);
@@ -288,29 +300,21 @@ export function SingleMessage({ message, index, selectedProject, chatMessages, i
                 : "bg-white text-slate-800 rounded-2xl rounded-tl-sm md:!max-w-[70%] border border-sky-100"
         }`}
       >
-        {index === chatMessages.length - 1 && (
-          <div id={SCROLL_TO_BOTTOM_ID} />
-        )}
+        {index === chatMessages.length - 1 && <div id={SCROLL_TO_BOTTOM_ID} />}
         <RenderReactMarkdown message={message} />
-        {availableReferences?.length &&
-        availableReferences.length > 0 ? (
+        {availableReferences?.length && availableReferences.length > 0 ? (
           <ul className="mt-2">
             {availableReferences.map((reference) => (
-              <ReferenceDisplay
-                key={reference.url}
-                reference={reference}
-              />
+              <ReferenceDisplay key={reference.url} reference={reference} />
             ))}
           </ul>
         ) : null}
       </div>
     </div>
-  )
+  );
 }
 
 export default function Messages() {
-
-  
   const {
     selectedProject,
     chatMessages,
@@ -362,7 +366,16 @@ export default function Messages() {
             }`}
           >
             {chatMessages.map((message, index) => {
-              return <SingleMessage key={message.id} message={message} index={index} selectedProject={selectedProject} chatMessages={chatMessages} isFloating={isFloating} />;
+              return (
+                <SingleMessage
+                  key={message.id}
+                  message={message}
+                  index={index}
+                  selectedProject={selectedProject}
+                  chatMessages={chatMessages}
+                  isFloating={isFloating}
+                />
+              );
             })}
             <ConversationTopics />
             <TopicSwitcher />

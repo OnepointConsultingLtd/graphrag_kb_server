@@ -28,7 +28,7 @@ export default function DeleteTenantForm({
   const { jwt } = useChatStore(
     useShallow((state) => ({
       jwt: state.jwt,
-    }))
+    })),
   );
 
   const handleDelete = async () => {

@@ -8,7 +8,11 @@ import type {
 } from "../model/projectCategory";
 
 import { ENGINES } from "../constants/engines";
-import { type ChatMessage, type QueryResponse, ChatMessageTypeOptions } from "../model/message";
+import {
+  type ChatMessage,
+  type QueryResponse,
+  ChatMessageTypeOptions,
+} from "../model/message";
 import {
   fetchProjects,
   fetchRelatedTopics,
@@ -302,7 +306,8 @@ const useChatStore = create<ChatStore>()(
             const newTopics = [...currentTopics];
             newTopics[index].questions = [];
             if (questions.topic_questions.length > 0) {
-              newTopics[index].questions = questions.topic_questions[0].questions;
+              newTopics[index].questions =
+                questions.topic_questions[0].questions;
             }
             if (related) {
               set({ relatedTopics: { topics: newTopics } });
@@ -528,9 +533,15 @@ const useChatStore = create<ChatStore>()(
             const newTopics = [...currentTopics];
             newTopics[index].questions = [];
             if (related) {
-              return { topicQuestionsLoading: null, relatedTopics: { topics: newTopics } };
+              return {
+                topicQuestionsLoading: null,
+                relatedTopics: { topics: newTopics },
+              };
             } else {
-              return { topicQuestionsLoading: null, topics: { topics: newTopics } };
+              return {
+                topicQuestionsLoading: null,
+                topics: { topics: newTopics },
+              };
             }
           }),
         setInputText: (inputText: string) =>
@@ -562,7 +573,13 @@ const useChatStore = create<ChatStore>()(
             if (state.chatMessages.length > 0) {
               loadRelatedTopics(state.chatMessages.slice(-1)[0]);
             }
-            return { isThinking: false, chatMessages: [...state.chatMessages.slice(0, -1), updatedMessage] };
+            return {
+              isThinking: false,
+              chatMessages: [
+                ...state.chatMessages.slice(0, -1),
+                updatedMessage,
+              ],
+            };
           }),
         selectTopicQuestion: (question: string) => {
           set(() => {

@@ -12,6 +12,7 @@ import Header from "./Header";
 import ProjectList from "./ProjectList";
 import UserProfile from "./UserProfile";
 import { useNavigate } from "react-router-dom";
+import ScrapeWebsiteDialog from "./ScrapeWebsiteDialog";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export default function Dashboard() {
       jwt: state.jwt,
       role: state.role,
       logout: state.logout,
-    }))
+    })),
   );
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function Dashboard() {
 
       <ChatConfigDialog />
       <CreateProjectModal />
+      <ScrapeWebsiteDialog />
       <GenerateSnippetModal />
       <GenerateURLModal />
       <DeleteConfirmation />

@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { listTennants, createTenant as createTenantApi, deleteTenant as deleteTenantApi } from "../lib/apiClient";
+import {
+  listTennants,
+  createTenant as createTenantApi,
+  deleteTenant as deleteTenantApi,
+} from "../lib/apiClient";
 import type { AdminStore } from "../type/adminStore";
 
 const useAdminStore = create<AdminStore>()(
@@ -9,7 +13,7 @@ const useAdminStore = create<AdminStore>()(
       async function loadTennants(jwt: string) {
         try {
           const tennants = await listTennants(jwt);
-          console.log("tennants", tennants)
+          console.log("tennants", tennants);
           set({ tennants });
         } catch (error) {
           console.error("Failed to load tennants:", error);
@@ -17,7 +21,10 @@ const useAdminStore = create<AdminStore>()(
         }
       }
 
-      async function createTenant(jwt: string, tenantData: { tennant_name: string; email: string }) {
+      async function createTenant(
+        jwt: string,
+        tenantData: { tennant_name: string; email: string },
+      ) {
         try {
           await createTenantApi(jwt, tenantData);
           await loadTennants(jwt);
@@ -27,7 +34,10 @@ const useAdminStore = create<AdminStore>()(
         }
       }
 
-      async function deleteTenant(jwt: string, tenantData: { tennant_folder: string }) {
+      async function deleteTenant(
+        jwt: string,
+        tenantData: { tennant_folder: string },
+      ) {
         try {
           await deleteTenantApi(jwt, tenantData);
           await loadTennants(jwt);

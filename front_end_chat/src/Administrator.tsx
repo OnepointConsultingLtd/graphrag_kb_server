@@ -29,13 +29,13 @@ export default function Administrator() {
       logout: state.logout,
       jwt: state.jwt,
       role: state.role,
-    }))
+    })),
   );
 
   const { deleteTenant } = useAdminStore(
     useShallow((state) => ({
       deleteTenant: state.deleteTenant,
-    }))
+    })),
   );
 
   if (!!jwt && role != Role.ADMIN) {
