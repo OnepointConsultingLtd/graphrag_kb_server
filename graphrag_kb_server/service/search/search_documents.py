@@ -1,13 +1,15 @@
 from pathlib import Path
 import asyncio
+import json
 
 from graphrag_kb_server.main.query_support import add_links_to_response
+from graphrag_kb_server.model.search.relationships import RelationshipsJSON
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
 )
 from graphrag_kb_server.model.search.match_query import MatchOutput
 from graphrag_kb_server.model.search.entity import Abstraction
-from graphrag_kb_server.model.rag_parameters import QueryParameters, ContextParameters
+from graphrag_kb_server.model.rag_parameters import ContextFormat, QueryParameters, ContextParameters
 from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search, PROMPTS
@@ -55,6 +57,7 @@ async def retrieve_relevant_documents(
         request_id=query.request_id,
         documents=documents,
         response=chat_response.response["response"],
+        relationships=RelationshipsJSON(relationships=json.dumps(chat_response.relations_context), search_id=-1) if chat_response.relations_context else None,
     )
 
 
@@ -169,6 +172,7 @@ def generate_query(
         max_filepath_depth=query.max_filepath_depth,
         is_search_query=query.is_search_query,
         callback=callback,
+        context_format=ContextFormat.JSON,
     )
     return query_params
 
