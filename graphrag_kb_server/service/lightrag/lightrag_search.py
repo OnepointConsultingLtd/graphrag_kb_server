@@ -437,7 +437,7 @@ async def kg_query(
             relations_context = relations_context[: query_params.max_relation_size]
         if len(text_units_context) > 0:
             await query_params.callback.callback(
-                f"Search has found multiple documents."
+                f"Search has found multiple documents. Summarizing and re-ranking the documents..."
             )
         else:
             await query_params.callback.callback(
@@ -1125,7 +1125,7 @@ async def _apply_token_truncation(
 
     # Generate entities context for truncation
     entities_context = []
-    for i, entity in enumerate(final_entities):
+    for _, entity in enumerate(final_entities):
         entity_name = entity["entity_name"]
         created_at = entity.get("created_at", "UNKNOWN")
         if isinstance(created_at, (int, float)):

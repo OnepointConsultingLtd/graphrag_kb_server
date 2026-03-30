@@ -1,4 +1,5 @@
 import uuid
+import os
 from enum import StrEnum
 from pathlib import Path
 from pydantic import BaseModel, Field
@@ -100,7 +101,7 @@ class QueryParameters(BaseModel):
         description="The maximum number of entities to include in the context.",
     )
     max_relation_size: int = Field(
-        default=60,
+        default=80,
         description="The maximum number of relations to include in the context.",
     )
     context_format: ContextFormat = Field(
@@ -117,8 +118,8 @@ def convert_to_lightrag_query_params(
         hl_keywords=query_params.hl_keywords,
         ll_keywords=query_params.ll_keywords,
         conversation_history=query_params.chat_history,
-        max_entity_tokens=40,  # TODO: Make this part of configuration
-        max_relation_tokens=200,  # TODO: Make this part of configuration
+        max_entity_tokens=int(os.getenv("MAX_ENTITY_TOKENS", "100")),
+        max_relation_tokens=int(os.getenv("MAX_RELATION_TOKENS", "800")),
         stream=query_params.stream or False,
     )
     return param
