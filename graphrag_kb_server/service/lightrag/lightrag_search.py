@@ -90,13 +90,13 @@ You are a helpful assistant responding to user query about Knowledge Graph and D
 
 ---Goal---
 
-Generate a concise response based on Knowledge Base and follow Response Rules, considering both the conversation history and the current query. Summarize all information in the provided Knowledge Base, and incorporating general knowledge relevant to the Knowledge Base. Do not include information not provided by Knowledge Base.
+Generate a concise response based on Knowledge Base and follow Response Rules, considering both the conversation history and the current query. Summarise all information in the provided Knowledge Base, and incorporating general knowledge relevant to the Knowledge Base. Do not include information not provided by Knowledge Base.
 
 When handling relationships with timestamps:
 1. Each relationship has a "created_at" timestamp indicating when we acquired this knowledge
 2. When encountering conflicting relationships, consider both the semantic content and the timestamp
 3. Don't automatically prefer the most recently created relationships - use judgment based on the context
-4. For time-specific queries, prioritize temporal information in the content before considering creation timestamps
+4. For time-specific queries, prioritise temporal information in the content before considering creation timestamps
 
 ---Knowledge Graph and Document Chunks---
 {context_data}
@@ -437,7 +437,7 @@ async def kg_query(
             relations_context = relations_context[: query_params.max_relation_size]
         if len(text_units_context) > 0:
             await query_params.callback.callback(
-                f"Search has found multiple documents. Summarizing and re-ranking the documents..."
+                f"Search has found multiple documents. Summarising and re-ranking the documents..."
             )
         else:
             await query_params.callback.callback(

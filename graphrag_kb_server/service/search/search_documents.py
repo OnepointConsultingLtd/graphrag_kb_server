@@ -129,7 +129,7 @@ async def summarize_document(request: SummarisationRequest) -> SummarisationResp
             )
             return SummarisationResponse(**summarisation_response_dict)
         except Exception as e:
-            logger.error(f"Error summarizing document: {e}")
+            logger.error(f"Error summarising document: {e}")
             retries -= 1
             if retries == 0:
                 raise e

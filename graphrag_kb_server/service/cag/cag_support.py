@@ -173,6 +173,6 @@ if __name__ == "__main__":
             Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/gothic/input"),
             "What can you tell me about the phantom of the opera?",
             "Which was my previous question?",
-            "Can you summarize the plot of Carmilla?",
+            "Can you summarise the plot of Carmilla?",
         )
     )

@@ -43,7 +43,7 @@ user_prompt = """Select and rank the most relevant entities for the user describ
 
 [document-retrieval]
 system_prompt_additional = """
-Also summarize each document that you retrieve based on the user's interests and the question they are asking. Make sure that the summary is at most 60 words or three paragraphs at most.
+Also summarise each document that you retrieve based on the user's interests and the question they are asking. Make sure that the summary is at most 60 words or three paragraphs at most.
 Also describe why a specific document is relevant to the user's interests and the question they are asking. Make sure that the relevance explanation is at most 60 words or three paragraphs at most.
 
 Make sure that the documents sorting order is based on the relevance of the document to the user's interests and the question they are asking. The most relevant document should be at the top of the list.
