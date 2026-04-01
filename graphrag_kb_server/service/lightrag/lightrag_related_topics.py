@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 import networkx as nx
@@ -64,7 +65,7 @@ async def get_keywords_from_text(
 async def get_related_topics_lightrag(
     request: SimilarityTopicsRequest,
 ) -> SimilarityTopics | None:
-    G = create_network_from_project_dir(request.project_dir)
+    G = await asyncio.to_thread(create_network_from_project_dir, request.project_dir)
     if not request.source and request.text:
         existing_keywords = await get_keywords_from_text(
             request.text, request.project_dir, G
@@ -76,7 +77,9 @@ async def get_related_topics_lightrag(
             return None
     if request.source not in G.nodes():
         return None
-    similarity_topics = get_sorted_related_entities_simple_rerank(G, request)
+    similarity_topics = await asyncio.to_thread(
+        get_sorted_related_entities_simple_rerank, G, request
+    )
     return similarity_topics
 
 

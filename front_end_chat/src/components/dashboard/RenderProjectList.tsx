@@ -108,7 +108,7 @@ export default function RenderProjectList({
         name: project.name,
         updated_timestamp: project.updated_timestamp,
         input_files: project.input_files,
-        search_type: SearchType.LOCAL,
+        search_type: SearchType.ALL,
         platform: platform as Platform,
         additional_prompt_instructions: "",
       });

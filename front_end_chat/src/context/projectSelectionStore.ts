@@ -36,12 +36,12 @@ function toggleChatConfigDialog(isOpen: boolean) {
 const useProjectSelectionStore = create<ProjectSelectionStore>((set) => ({
   selectionPlatform: "",
   selectionProject: "",
-  searchType: SearchType.LOCAL,
+  searchType: SearchType.ALL,
   additionalPromptInstructions: "",
   isChatConfigDialogOpen: false,
   localChatType: null,
   setSelectionProject: (project: string) =>
-    set({ selectionProject: project, searchType: SearchType.LOCAL }),
+    set({ selectionProject: project, searchType: SearchType.ALL }),
   setSearchType: (searchType: SearchType) => set({ searchType: searchType }),
   setAdditionalPromptInstructions: (additionalPromptInstructions: string) =>
     set({ additionalPromptInstructions: additionalPromptInstructions }),
@@ -60,14 +60,14 @@ const useProjectSelectionStore = create<ProjectSelectionStore>((set) => ({
         return {
           selectionPlatform: "",
           selectionProject: "",
-          searchType: SearchType.LOCAL,
+          searchType: SearchType.ALL,
         };
       }
 
       return {
         selectionProject,
         selectionPlatform,
-        searchType: SearchType.LOCAL,
+        searchType: SearchType.ALL,
       };
     }),
   setIsChatConfigDialogOpen: (

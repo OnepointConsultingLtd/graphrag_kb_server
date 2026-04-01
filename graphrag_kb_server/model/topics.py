@@ -10,7 +10,7 @@ DEFAULT_TOPIC_LIMIT: Final[int] = 20
 
 
 class Topic(BaseModel):
-    id: int | None = Field(default=None, description="The id of the topic")
+    id: int | str | None = Field(default=None, description="The integer or string id of the topic")
     name: str = Field(..., description="The name of the topic")
     description: str = Field(..., description="The description of the topic")
     type: str = Field(..., description="The type of th topic")
