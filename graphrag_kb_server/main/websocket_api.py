@@ -292,7 +292,7 @@ async def extract_profile_stream(
         logger.error(f"Stack trace: {traceback.format_exc()}")
         await sio.emit(
             Command.EXTRACT_PROFILE_STREAM_ERROR,
-            {"data": err_msg, "request_id": profile_query.request_id},
+            {"data": "Failed to extract profile. Please try again later."},
             to=sid,
         )
 

@@ -93,7 +93,7 @@ async def apify_extract_from_url(run_input: dict, actor_id: str, callback: BaseC
 
     if status != "SUCCEEDED":
         msg = f"Apify run {run_id} ended with status: {status}"
-        logger.error(msg)
+        logger.info(msg)
         if callback:
             await callback.callback(msg)
         return []

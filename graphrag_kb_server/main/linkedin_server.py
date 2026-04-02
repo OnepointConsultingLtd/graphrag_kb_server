@@ -4,6 +4,7 @@ import json
 
 from aiohttp.web import Response
 
+from graphrag_kb_server import logger
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.service.linkedin.brightdata_service import (
@@ -103,12 +104,18 @@ async def linkedin_profile(request: web.Request) -> web.Response:
                         from graphrag_kb_server.service.linkedin.apify_service import (
                             apify_extract_profile,
                         )
-
-                        profile = await apify_extract_profile(
-                            profile_id,
-                            project_dir=project_dir,
-                            callback=None,
-                        )
+                        try:
+                            profile = await apify_extract_profile(
+                                profile_id,
+                                project_dir=project_dir,
+                                callback=None,
+                            )
+                        except Exception as e:
+                            logger.error(f"Error extracting profile: {e}")
+                            return web.json_response(
+                                {"error": f"Failed to extract profile ({profile_id}). Please try again later."},
+                                status=500,
+                            )
                         if profile is None:
                             return invalid_response(
                                 "Cannot find profile",
