@@ -62,6 +62,11 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-noto \
+    fonts-noto-core \
+    && rm -rf /var/lib/apt/lists/*
+
 # Verify Node.js 22 is installed and enable Yarn
 RUN node --version | grep -E '^v22\.' && \
     corepack enable && \
