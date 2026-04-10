@@ -118,6 +118,9 @@ class SummarisationResponseWithDocument(SummarisationResponse):
     document_path: str = Field(
         ..., description="The document path that the user is asking about"
     )
+    last_modified: str | None = Field(
+        default=None, description="The last modified date of the document",
+    )
     image: str | None = Field(
         default=None,
         description="The image of the document",

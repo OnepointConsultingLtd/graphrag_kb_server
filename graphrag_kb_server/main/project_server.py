@@ -458,6 +458,8 @@ async def index_webpage(request: web.Request) -> web.Response:
 
         try:
             await acreate_lightrag(True, project_folder, False, None)
+            from graphrag_kb_server.service.project import prepare_project_extras
+            await prepare_project_extras(project_folder)
             write_project_file(project_folder, IndexingStatus.COMPLETED)
         except Exception as e:
             write_project_file(project_folder, IndexingStatus.FAILED)

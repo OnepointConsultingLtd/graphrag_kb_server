@@ -18,6 +18,7 @@ from graphrag_kb_server.model.project import (
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.db.common_operations import extract_elements_from_path
 from graphrag_kb_server.service.db.db_persistence_project import delete_project
+from graphrag_kb_server.service.last_updated_service import save_path_properties
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
 from graphrag_kb_server.service.lightrag.lightrag_init import (
     initialize_rag,
@@ -165,3 +166,4 @@ async def initialize_projects():
 async def prepare_project_extras(project_folder: Path):
     await save_links(project_folder, insert_if_not_exists=True)
     await extract_images_from_pdfs(project_folder)
+    await save_path_properties(project_folder, insert_if_not_exists=True)

@@ -9,6 +9,7 @@ from graphrag_kb_server.service.db.connection_pool import (
     fetch_one,
 )
 
+from graphrag_kb_server.service.db.db_persistence_path_properties import TB_PATH_PROPERTIES
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
@@ -276,7 +277,17 @@ WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED
     response = history_result.get("response")
     search_results = await fetch_all(
         f"""
-SELECT ID, DOCUMENT_SUMMARY, DOCUMENT_PATH, DOCUMENT_MAIN_KEYWORD, DOCUMENT_RELEVANCY_SCORE, DOCUMENT_RELEVANCY_SCORE_REASONING, DOCUMENT_IMAGE, DOCUMENT_LINKS FROM {schema_name}.{TB_SEARCH_RESULTS}
+SELECT ID, 
+    DOCUMENT_SUMMARY, 
+    DOCUMENT_PATH, 
+    DOCUMENT_MAIN_KEYWORD, 
+    DOCUMENT_RELEVANCY_SCORE, 
+    DOCUMENT_RELEVANCY_SCORE_REASONING, 
+    DOCUMENT_IMAGE, 
+    DOCUMENT_LINKS,
+    P.LAST_MODIFIED
+FROM {schema_name}.{TB_SEARCH_RESULTS} 
+    INNER JOIN {schema_name}.{TB_PATH_PROPERTIES} P ON {schema_name}.{TB_SEARCH_RESULTS}.DOCUMENT_PATH = {schema_name}.{TB_PATH_PROPERTIES}.PATH
 WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} days' ORDER BY DOCUMENT_RELEVANCY_SCORE DESC
 """,
         search_history_id,
@@ -294,6 +305,7 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval
         )
         document_image = result.get("document_image")
         document_links = result.get("document_links") or []
+        last_modified = result.get("last_modified")
         documents.append(
             SummarisationResponseWithDocument(
                 summary=document_summary,
@@ -303,6 +315,7 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval
                 main_keyword=document_main_keyword,
                 image=document_image,
                 links=document_links,
+                last_modified=last_modified,
             )
         )
     from graphrag_kb_server.service.db.db_persistence_keywords import find_keywords

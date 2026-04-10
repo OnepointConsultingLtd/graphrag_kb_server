@@ -189,6 +189,10 @@ async def relevant_documents(request: web.Request) -> web.Response:
                 type: string
                 description: The organisation role of the user.
                 default: "CEO"
+              industry:
+                type: string
+                description: The industry of the user.
+                default: "TMT"
               organisation_type:
                 type: string
                 description: The organisation type of the user.

@@ -54,6 +54,7 @@ async def apify_crawl_website(website_url: str, callback: BaseCallback | None = 
     run_input = {
         "startUrls": [{"url": website_url}],
         "maxCrawlPages": max_crawl_pages,
+        # "globs": [{"glob": f"{website_url}*"}]
     }
     return await apify_extract_from_url(run_input, WEBSITE_CRAWLER_ACTOR_ID, callback)
 
