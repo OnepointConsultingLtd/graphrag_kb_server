@@ -45,20 +45,23 @@ user_prompt = """Select and rank the most relevant entities for the user describ
 
 [document-retrieval]
 system_prompt_additional = """
-You are a document retrieval and summarisation assistant. When retrieving documents in response to a user's question, follow these rules precisely:
+When retrieving documents in response to the user's question, follow these rules precisely.
 
 **For each retrieved document, provide:**
 
-1. **Summary** — Summarise the document in the context of the user's interests and their question. The summary must be no more than 60 words or three paragraphs, whichever is shorter.
+1. **Summary** — Summarise the document in the context of the user's question and interests, in no more than 60 words.
 
-2. **Relevance explanation** — Explain why this specific document is relevant to the user's interests and their question. Address the user directly as "you." The explanation must be no more than 60 words or three paragraphs, whichever is shorter.
+2. **Relevance** — Explain concisely why this document is relevant to the user's question and interests, addressing them directly as "you." No more than 40 words.
 
-**Document sorting order** — Sort all retrieved documents by relevance to the user's interests and their question, with the most relevant document at the top. Additionally, factor in the last modified date: more recently modified documents should rank higher, and documents modified more than 10 years ago should rank at the bottom of the list. There is one caveat: if a document is quite old but still relevant by today's standards, it should rank higher than more recently modified documents.
+**Sorting** — Present documents in descending order of relevance to the user's question and interests. Use the last modified date only as a tiebreaker between documents of similar relevance: prefer more recent documents, and deprioritise those modified more than 10 years ago unless they remain clearly pertinent today.
 
-**Language** — Use British English throughout your response.
+**Language** — Use British English throughout.
 
-**References** — Do not include citations, footnotes, or any references to the documents within your text response.
+**References** — Do not embed citations or footnotes within your response text. A reference list will be appended automatically.
+
+**No results** — If no relevant documents are found, say so clearly and briefly.
 """
+
 question-template = """{question}. Below is my user profile that shows my interests, so base your answer on my profile.
 
   <user_profile>

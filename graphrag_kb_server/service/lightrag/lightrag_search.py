@@ -1,3 +1,4 @@
+import datetime
 import time
 import asyncio
 from pathlib import Path
@@ -471,6 +472,9 @@ async def kg_query(
         user_prompt=user_prompt,
         context_data=context_result.context,
     )
+
+    # Append the current date to the system prompt, so that the LLM knows the date of the response
+    sys_prompt = f"{sys_prompt}\n\nThe current date is {datetime.datetime.now().strftime('%Y-%m-%d')}"
 
     user_query = query
 
