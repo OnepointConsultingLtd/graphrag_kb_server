@@ -152,9 +152,7 @@ async def get_links_and_image_by_path(file_path: Path, schema_name: str, project
         file_path_str = _convert_path_to_text(file_path)
         file_path = Path(file_path_str)
         links = await get_links_by_path(schema_name, project_id, file_path_str)
-        original_file = find_original_file(project_dir, file_path)
-        original_file_path_str = original_file.as_posix() if original_file is not None else None
-        last_modified = await get_lastmodified_by_path(schema_name, original_file_path_str, project_id) if original_file_path_str is not None else None
+        last_modified = await get_lastmodified_by_path(schema_name, file_path_str, project_id)
         original_input = project_dir / "original_input"
         input_dir = project_dir / "input"
         try:

@@ -13,9 +13,9 @@ from graphrag_kb_server.test.service.db.common_test_support import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _props(path: str, project_id: int, *, days_ago: int = 0) -> PathProperties:
+def _props(path: str, project_id: int, *, days_ago: int = 0, original_path: str | None = None) -> PathProperties:
     modified = datetime(2024, 6, 1, 12, 0, 0, tzinfo=timezone.utc) - timedelta(days=days_ago)
-    return PathProperties(path=path, project_id=project_id, last_modified=modified)
+    return PathProperties(path=path, original_path=original_path, project_id=project_id, last_modified=modified)
 
 
 # ---------------------------------------------------------------------------
@@ -303,6 +303,57 @@ async def test_last_modified_timezone_roundtrip():
             assert found.last_modified.month == expected_utc.month
             assert found.last_modified.day == expected_utc.day
             assert found.last_modified.hour == expected_utc.hour
+        finally:
+            await drop_path_properties_table(schema_name)
+
+    await create_test_project_wrapper(test_function)
+
+
+# ---------------------------------------------------------------------------
+# original_path round-trip
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_original_path_roundtrip():
+    """original_path is persisted and retrieved correctly, including NULL."""
+    from graphrag_kb_server.service.db.db_persistence_path_properties import (
+        create_path_properties_table,
+        drop_path_properties_table,
+        upsert_path_properties,
+        find_path_properties,
+    )
+
+    async def test_function(
+        full_project: FullProject,
+        found_project: FullProject,
+        schema_name: str,
+        project_name: str,
+    ):
+        project_id = found_project.id
+
+        try:
+            await create_path_properties_table(schema_name)
+
+            # Record with an original_path set
+            props_with = _props("/docs/report.pdf", project_id, original_path="report.pdf")
+            await upsert_path_properties(schema_name, [props_with])
+            found = await find_path_properties(schema_name, "/docs/report.pdf", project_id)
+            assert found is not None
+            assert found.original_path == "report.pdf"
+
+            # Record with original_path left as None
+            props_null = _props("/docs/notes.docx", project_id)
+            await upsert_path_properties(schema_name, [props_null])
+            found_null = await find_path_properties(schema_name, "/docs/notes.docx", project_id)
+            assert found_null is not None
+            assert found_null.original_path is None
+
+            # Upsert updates original_path on conflict
+            props_updated = _props("/docs/report.pdf", project_id, original_path="subdir/report.pdf")
+            await upsert_path_properties(schema_name, [props_updated])
+            found_updated = await find_path_properties(schema_name, "/docs/report.pdf", project_id)
+            assert found_updated is not None
+            assert found_updated.original_path == "subdir/report.pdf"
         finally:
             await drop_path_properties_table(schema_name)
 

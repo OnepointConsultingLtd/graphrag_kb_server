@@ -14,9 +14,10 @@ from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.path_properties import PathProperties
 from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id
 from graphrag_kb_server.service.db.db_persistence_path_properties import upsert_path_properties
-from graphrag_kb_server.service.file_find_service import ORIGINAL_INPUT_FOLDER
+from graphrag_kb_server.service.file_find_service import INPUT_FOLDER, find_original_file
+from graphrag_kb_server.service.link_extraction_service import ACCEPTED_EXTENSIONS
 
-_ACCEPTED_EXTENSIONS = set([".docx", ".pdf"])
+_ACCEPTED_EXTENSIONS = set([".docx", ".pptx", ".pdf"])
 
 # Matches the PDF date format: D:YYYYMMDDHHmmSS followed by optional timezone
 # e.g. D:20240315143022+01'00' or D:20240315143022Z or D:20240315143022
@@ -63,7 +64,21 @@ def _last_updated_pdf(path: Path) -> datetime | None:
     raw = meta.get("/ModDate") or meta.get("ModDate")
     if not raw:
         return None
+    # Resolve indirect object references
+    if hasattr(raw, "get_object"):
+        raw = raw.get_object()
     return _parse_pdf_date(str(raw))
+
+
+def _last_updated_pptx(path: Path) -> datetime | None:
+    """Return the last modified date stored in a .pptx file's core properties."""
+    from pptx import Presentation
+
+    prs = Presentation(path)
+    modified: datetime | None = prs.core_properties.modified
+    if modified is not None and modified.tzinfo is None:
+        modified = modified.replace(tzinfo=timezone.utc)
+    return modified
 
 
 def _last_updated_filesystem(path: Path) -> datetime:
@@ -72,19 +87,34 @@ def _last_updated_filesystem(path: Path) -> datetime:
     return datetime.fromtimestamp(mtime, tz=timezone.utc)
 
 
+async def extract_last_modified_only(project_dir: Path, file_path: Path) -> datetime | None:
+    original_file_path = find_original_file(
+        project_dir, Path(file_path.as_posix())
+    )
+    if original_file_path is None:
+        return None
+    return get_last_updated(original_file_path)
+    
+
 async def _extract_path_properties(project_dir: Path, project_id: int) -> list[PathProperties]:
-    original_file_path = project_dir / ORIGINAL_INPUT_FOLDER
+    original_file_path = project_dir / INPUT_FOLDER
     if not original_file_path.exists():
         return []
     result: list[PathProperties] = []
-    for original_file in original_file_path.rglob("*"):
-        if original_file.is_file() and original_file.suffix in _ACCEPTED_EXTENSIONS:
-            last_modified = get_last_updated(original_file)
+    for file in original_file_path.rglob("*"):
+        if file.is_file() and file.suffix in ACCEPTED_EXTENSIONS:
+            original_file_path = find_original_file(
+                project_dir, Path(file.as_posix())
+            )
+            if original_file_path is None:
+                continue
+            last_modified = get_last_updated(original_file_path)
             if last_modified is None:
-                last_modified = original_file.stat().st_mtime
+                last_modified = file.stat().st_mtime
             result.append(
                 PathProperties(
-                    path=original_file.as_posix(),
+                    path=file.as_posix(),
+                    original_path=original_file_path.as_posix(),
                     project_id=project_id,
                     last_modified=last_modified
                 )
@@ -124,6 +154,13 @@ def get_last_updated(path: Path) -> datetime | None:
                 return _last_updated_filesystem(path)
             return result
 
+        if suffix == ".pptx":
+            result = _last_updated_pptx(path)
+            if result is None:
+                logger.warning("No modified date in pptx properties, falling back to filesystem: %s", path)
+                return _last_updated_filesystem(path)
+            return result
+
     except Exception:
         logger.exception("Failed to read document-internal date for %s, falling back to filesystem", path)
         return _last_updated_filesystem(path)
@@ -141,3 +178,14 @@ async def save_path_properties(project_dir: Path, insert_if_not_exists: bool = F
     )
     path_properties = await _extract_path_properties(project_dir, project_id)
     await upsert_path_properties(simple_project.schema_name, path_properties, insert_if_not_exists)
+
+
+if __name__ == "__main__":
+    last_modified = _last_updated_pdf(Path("C:/Users/gilfe/Downloads/Matter Overview .pdf"))
+    print(last_modified)
+    last_modified = get_last_updated(Path("C:/Users/gilfe/Downloads/Matter Overview .pdf"))
+    print(last_modified)
+    last_modified = _last_updated_docx(Path("C:/Users/gilfe/Downloads/January 2018 CIC - Apps v Bots - Executive Summary.docx"))
+    print(last_modified)
+    last_modified = _last_updated_docx(Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full/original_input/clustre/Articles and PoVs/AS - Sustainability.docx"))
+    print(last_modified)

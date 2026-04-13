@@ -192,7 +192,7 @@ function ConversationTopics() {
           <div className="flex justify-center items-center pt-4">
             <div>
               <Spinner size={12} />
-              <p>Downloading topics...</p>
+              <p>Downloading topics (Takes some time initially)...</p>
             </div>
           </div>
         )}

@@ -54,6 +54,8 @@ from graphrag_kb_server.model.rag_parameters import (
 )
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.chat_response import ChatResponse
+from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id_from_path
+from graphrag_kb_server.service.db.db_persistence_path_properties import get_lastmodified_by_path
 from graphrag_kb_server.service.lightrag.lightrag_constants import (
     KEYWORDS_SEPARATOR,
     PREFIX_HIGH_LEVEL_KEYWORDS,
@@ -423,7 +425,7 @@ async def kg_query(
         text_chunks_db,
         query_param,
         chunks_vdb,
-        query_params.callback,
+        query_params,
     )
 
     if context_result is None:
@@ -601,7 +603,7 @@ async def _build_query_context(
     text_chunks_db: BaseKVStorage,
     query_param: QueryParam,
     chunks_vdb: BaseVectorStorage = None,
-    callback: BaseCallback | None = None,
+    query_params: QueryParameters = None,
 ) -> QueryContextResult | None:
     """
     Main query context building function using the new 4-stage architecture:
@@ -609,6 +611,8 @@ async def _build_query_context(
 
     Returns unified QueryContextResult containing both context and raw_data.
     """
+
+    callback = query_params.callback
 
     if not query:
         logger.warning("Query is empty, skipping context building")
@@ -674,6 +678,7 @@ async def _build_query_context(
         chunk_tracking=search_result["chunk_tracking"],
         entity_id_to_original=truncation_result["entity_id_to_original"],
         relation_id_to_original=truncation_result["relation_id_to_original"],
+        query_params=query_params,
     )
 
     # Convert keywords strings to lists and add complete metadata to raw_data
@@ -726,12 +731,14 @@ async def _build_context_str(
     chunk_tracking: dict = None,
     entity_id_to_original: dict = None,
     relation_id_to_original: dict = None,
+    query_params: QueryParameters = None,
 ) -> tuple[str, dict[str, Any]]:
     """
     Build the final LLM context string with token processing.
     This includes dynamic token calculation and final chunk truncation.
     """
     tokenizer = global_config.get("tokenizer")
+
     if not tokenizer:
         logger.error("Missing tokenizer, cannot build LLM context")
         # Return empty raw data structure when no tokenizer
@@ -830,10 +837,23 @@ async def _build_context_str(
     text_units_str = "\n".join(
         json.dumps(text_unit, ensure_ascii=False) for text_unit in chunks_context
     )
+
+    simple_project = extract_elements_from_path(query_params.context_params.project_dir)
+    project_id = await get_project_id_from_path(query_params.context_params.project_dir)
+
+    async def _fmt_ref(ref: dict) -> str:
+        last_modified = await get_lastmodified_by_path(
+            simple_project.schema_name, ref["file_path"], project_id
+        )
+        ts = f" (last_modified: {last_modified.isoformat()})" if last_modified else ""
+        return f"[{ref['reference_id']}] {ref['file_path']}{ts}"
+
     reference_list_str = "\n".join(
-        f"[{ref['reference_id']}] {ref['file_path']}"
-        for ref in reference_list
-        if ref["reference_id"]
+        await asyncio.gather(*[
+            _fmt_ref(ref)
+            for ref in reference_list
+            if ref["reference_id"]
+        ])
     )
 
     logger.info(
@@ -872,6 +892,8 @@ async def _build_context_str(
         if chunk_tracking_log:
             logger.info(f"Final chunks S+F/O: {' '.join(chunk_tracking_log)}")
 
+    
+
     result = kg_context_template.format(
         entities_str=entities_str,
         relations_str=relations_str,
@@ -896,6 +918,9 @@ async def _build_context_str(
         f"[_build_context_str] Final data after conversion: {len(final_data.get('entities', []))} entities, {len(final_data.get('relationships', []))} relationships, {len(final_data.get('chunks', []))} chunks"
     )
     return result, final_data
+
+
+
 
 
 async def _perform_kg_search(

@@ -20,6 +20,7 @@ async def create_path_properties_table(schema_name: str):
 CREATE TABLE IF NOT EXISTS {schema_name}.{TB_PATH_PROPERTIES} (
     ID SERIAL NOT NULL,
     PATH CHARACTER VARYING(4096) NOT NULL,
+    ORIGINAL_PATH CHARACTER VARYING(4096) NULL,
     LAST_MODIFIED TIMESTAMP,
     PROJECT_ID INTEGER NOT NULL,
     CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -71,13 +72,15 @@ async def upsert_path_properties(schema_name: str, path_properties: list[PathPro
                 last_modified = last_modified.astimezone(timezone.utc).replace(tzinfo=None)
             await conn.execute(
                 f"""
-INSERT INTO {schema_name}.{TB_PATH_PROPERTIES} (PATH, LAST_MODIFIED, PROJECT_ID)
-VALUES ($1, $2, $3)
+INSERT INTO {schema_name}.{TB_PATH_PROPERTIES} (PATH, ORIGINAL_PATH, LAST_MODIFIED, PROJECT_ID)
+VALUES ($1, $2, $3, $4)
 ON CONFLICT (PATH, PROJECT_ID) DO UPDATE
-    SET LAST_MODIFIED = EXCLUDED.LAST_MODIFIED,
+    SET ORIGINAL_PATH = EXCLUDED.ORIGINAL_PATH,
+        LAST_MODIFIED = EXCLUDED.LAST_MODIFIED,
         UPDATED_AT    = now();
 """,
                 props.path,
+                props.original_path,
                 last_modified,
                 props.project_id,
             )
@@ -89,7 +92,7 @@ async def find_path_properties(
     """Return the PathProperties for a given path and project, or None if absent."""
     row = await fetch_one(
         f"""
-SELECT PATH, LAST_MODIFIED, PROJECT_ID
+SELECT PATH, ORIGINAL_PATH, LAST_MODIFIED, PROJECT_ID
 FROM {schema_name}.{TB_PATH_PROPERTIES}
 WHERE PATH = $1 AND PROJECT_ID = $2;
 """,
@@ -103,6 +106,7 @@ WHERE PATH = $1 AND PROJECT_ID = $2;
         last_modified = last_modified.replace(tzinfo=timezone.utc)
     return PathProperties(
         path=row["path"],
+        original_path=row["original_path"],
         project_id=row["project_id"],
         last_modified=last_modified,
     )
@@ -119,7 +123,7 @@ async def find_all_path_properties(schema_name: str, project_id: int) -> list[Pa
     """Return all PathProperties records for a given project."""
     rows = await fetch_all(
         f"""
-SELECT PATH, LAST_MODIFIED, PROJECT_ID
+SELECT PATH, ORIGINAL_PATH, LAST_MODIFIED, PROJECT_ID
 FROM {schema_name}.{TB_PATH_PROPERTIES}
 WHERE PROJECT_ID = $1;
 """,
@@ -133,6 +137,7 @@ WHERE PROJECT_ID = $1;
         result.append(
             PathProperties(
                 path=row["path"],
+                original_path=row["original_path"],
                 project_id=row["project_id"],
                 last_modified=last_modified,
             )

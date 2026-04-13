@@ -277,18 +277,19 @@ WHERE PROJECT_ID = $1 AND QUERY_DIGEST_SHA256 = $2 AND ACTIVE = TRUE AND UPDATED
     response = history_result.get("response")
     search_results = await fetch_all(
         f"""
-SELECT ID, 
-    DOCUMENT_SUMMARY, 
-    DOCUMENT_PATH, 
-    DOCUMENT_MAIN_KEYWORD, 
-    DOCUMENT_RELEVANCY_SCORE, 
-    DOCUMENT_RELEVANCY_SCORE_REASONING, 
-    DOCUMENT_IMAGE, 
-    DOCUMENT_LINKS,
+SELECT R.ID, 
+    R.DOCUMENT_SUMMARY, 
+    R.DOCUMENT_PATH, 
+    R.DOCUMENT_MAIN_KEYWORD, 
+    R.DOCUMENT_RELEVANCY_SCORE, 
+    R.DOCUMENT_RELEVANCY_SCORE_REASONING, 
+    R.DOCUMENT_IMAGE, 
+    R.DOCUMENT_LINKS,
     P.LAST_MODIFIED
-FROM {schema_name}.{TB_SEARCH_RESULTS} 
-    INNER JOIN {schema_name}.{TB_PATH_PROPERTIES} P ON {schema_name}.{TB_SEARCH_RESULTS}.DOCUMENT_PATH = {schema_name}.{TB_PATH_PROPERTIES}.PATH
-WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} days' ORDER BY DOCUMENT_RELEVANCY_SCORE DESC
+FROM {schema_name}.{TB_SEARCH_RESULTS} R
+    LEFT JOIN {schema_name}.{TB_PATH_PROPERTIES} P 
+    ON R.DOCUMENT_PATH = P.PATH
+WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND R.UPDATED_AT > now() - interval '{DB_CACHE_EXPIRATION_TIME} days' ORDER BY DOCUMENT_RELEVANCY_SCORE DESC
 """,
         search_history_id,
     )
@@ -315,7 +316,7 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND UPDATED_AT > now() - interval
                 main_keyword=document_main_keyword,
                 image=document_image,
                 links=document_links,
-                last_modified=last_modified,
+                last_modified=last_modified.isoformat() if last_modified else None,
             )
         )
     from graphrag_kb_server.service.db.db_persistence_keywords import find_keywords
