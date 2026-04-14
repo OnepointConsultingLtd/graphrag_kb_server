@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
@@ -37,6 +38,16 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": ["generate-admin-token", "--name", "Gil Fernandes", "--email", "gil.fernandes@onepointltd.com", "--token_file", "admin_token.md", "--docker"]
+        },
+        {
+            "name": "Python Debugger: MCP Server (uvicorn)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/graphrag_kb_server/main/mcp_server.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["--factory"]
         }
+   
     ]
 }
