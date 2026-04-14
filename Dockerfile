@@ -104,6 +104,7 @@ COPY run.sh .
 COPY README.md .
 COPY config/security.yaml config/security.yaml
 COPY docker/run.sh docker/run.sh
+COPY templates/ ./templates/
 
 # Convert line endings and make scripts executable
 RUN dos2unix run.sh && chmod +x run.sh && \
