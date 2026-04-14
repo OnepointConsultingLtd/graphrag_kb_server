@@ -8,6 +8,5 @@ export const ENGINES = {
 
 export const ENGINE_OPTIONS = [
   { value: ENGINES.LIGHTRAG, label: "LightRAG" },
-  { value: ENGINES.GRAPHRAG, label: "GraphRAG" },
   { value: ENGINES.CAG, label: "CAG" },
 ];

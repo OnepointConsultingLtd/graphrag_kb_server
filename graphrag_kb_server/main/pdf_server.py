@@ -5,7 +5,7 @@ import uuid
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.utils.file_support import write_uploaded_file
 from graphrag_kb_server.main.error_handler import handle_error
-from graphrag_kb_server.service.file_conversion import convert_pdf_to_markdown
+from graphrag_kb_server.service.file_conversion import convert_pdf_or_docx_to_markdown
 from graphrag_kb_server.service.html_to_pdf import async_convert_html_to_pdf
 
 from graphrag_kb_server.logger import logger
@@ -61,7 +61,7 @@ async def convert_single_pdf(request: web.Request) -> web.Response:
                 pdf_dir.mkdir(parents=True, exist_ok=True)
             local_pdf: Path = write_uploaded_file(file, pdf_dir / file_name)
             try:
-                markdown_file = await convert_pdf_to_markdown(local_pdf)
+                markdown_file = await convert_pdf_or_docx_to_markdown(local_pdf)
                 return web.FileResponse(
                     markdown_file,
                     headers={

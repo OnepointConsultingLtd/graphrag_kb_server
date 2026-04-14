@@ -4,7 +4,7 @@ from pdf_to_markdown_llm.service.openai_pdf_to_text import SupportedFormat, conv
 FINAL_SUFFIX = "_final.txt"
 
 
-async def convert_pdf_to_markdown(local_pdf: Path) -> Path:
+async def convert_pdf_or_docx_to_markdown(local_pdf: Path) -> Path:
     process_result = await convert_file(local_pdf, SupportedFormat.MARKDOWN)
     if len(process_result.exceptions):
         raise Exception(
