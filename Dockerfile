@@ -1,5 +1,5 @@
 # Use Python 3.14 as the base image
-FROM python:3.14
+FROM python:3.14.1-slim
 
 # 1. Prepare frpc
 RUN mkdir -p /frpc/
