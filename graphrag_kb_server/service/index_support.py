@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from graphrag_kb_server.callbacks.callback_support import BaseCallback, InfoCallback
-from graphrag_kb_server.service.file_conversion import convert_pdf_or_docx_to_markdown
+from graphrag_kb_server.service.file_conversion import convert_pdf_docx_ppt_to_markdown
 from graphrag_kb_server.service.file_find_service import (
     ORIGINAL_INPUT_FOLDER,
     INPUT_FOLDER,
@@ -77,7 +77,7 @@ async def convert_to_text(input_folder: Path):
     """Convert all markdown files to text files."""
     for file in chain(input_folder.glob("**/*.pdf"), input_folder.glob("**/*.docx")):
         try:
-            await convert_pdf_or_docx_to_markdown(file)
+            await convert_pdf_docx_ppt_to_markdown(file)
         except Exception as e:
             log.error(f"Failed to convert {file} to markdown")
             log.exception(e)
