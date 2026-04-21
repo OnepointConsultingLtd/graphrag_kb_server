@@ -79,7 +79,7 @@ export default function CreateProjectModal() {
       await uploadIndex(jwt, formData);
       refreshProjects();
       setUploadSuccessMessage(
-        `Index (${projectName}) uploaded successfully. Please wait for the index to be ready.`,
+        `Index (${projectName}) uploaded successfully. Please wait for the index to be ready. You can close this dialogue.`,
       );
     } catch (err) {
       if (err instanceof Error) {

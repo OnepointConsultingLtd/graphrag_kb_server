@@ -147,10 +147,13 @@ async def enrich_text_units_context(text_units_context: list[dict], project_dir:
                 text_unit["last_modified"] = last_modified.isoformat()
 
 
+
 async def get_links_and_image_by_path(file_path: Path, schema_name: str, project_id: int, project_dir: Path) -> LinksImageLastModified:
     if file_path.exists():
         file_path_str = _convert_path_to_text(file_path)
         file_path = Path(file_path_str)
+        if not file_path.exists():
+            return [], None, None
         links = await get_links_by_path(schema_name, project_id, file_path_str)
         last_modified = await get_lastmodified_by_path(schema_name, file_path_str, project_id)
         original_input = project_dir / "original_input"
@@ -158,15 +161,30 @@ async def get_links_and_image_by_path(file_path: Path, schema_name: str, project
         try:
             # Extract from file_path the path after input
             relative_path = file_path.relative_to(input_dir).as_posix()
-            pdf_path = original_input / relative_path
+            original_file_path = original_input / relative_path
             # Now change the txt to pdf and verify if the pdf exists
-            pdf_path = pdf_path.with_suffix(".pdf")
+            pdf_path = original_file_path.with_suffix(".pdf")
+            docx_path = original_file_path.with_suffix(".docx")
             if not pdf_path.exists():
                 pdf_path = pdf_path.parent / pdf_path.name.replace("_", " ")
                 if not pdf_path.exists():
-                    return links, None, last_modified
+                    pdf_exists = False
+                else:
+                    pdf_exists = True
+            else:
+                pdf_exists = True
+            if not docx_path.exists():
+                docx_path = docx_path.parent / docx_path.name.replace("_", " ")
+                if not docx_path.exists():
+                    docx_exists = False
+                else:
+                    docx_exists = True
+            else:
+                docx_exists = True
+            if not pdf_exists and not docx_exists:
+                return links, None, last_modified
             # Now get the image
-            image_path = pdf_path.with_suffix(".png")
+            image_path = pdf_path.with_suffix(".png") if pdf_exists else docx_path.with_suffix(".png")
             if image_path.exists():
                 image_path = image_path.relative_to(project_dir)
                 return links, image_path.as_posix(), last_modified

@@ -5,8 +5,8 @@ from itertools import chain
 from pathlib import Path
 from urllib.parse import unquote
 
-from graphrag_kb_server.callbacks.callback_support import BaseCallback, InfoCallback
-from graphrag_kb_server.service.file_conversion import convert_pdf_docx_ppt_to_markdown
+from graphrag_kb_server.callbacks.callback_support import BaseCallback
+from graphrag_kb_server.service.file_conversion import convert_audio, convert_pdf_docx_pptx_to_markdown
 from graphrag_kb_server.service.file_find_service import (
     ORIGINAL_INPUT_FOLDER,
     INPUT_FOLDER,
@@ -77,13 +77,20 @@ async def convert_to_text(input_folder: Path):
     """Convert all markdown files to text files."""
     for file in chain(input_folder.glob("**/*.pdf"), input_folder.glob("**/*.docx")):
         try:
-            await convert_pdf_docx_ppt_to_markdown(file)
+            await convert_pdf_docx_pptx_to_markdown(file)
         except Exception as e:
             log.error(f"Failed to convert {file} to markdown")
             log.exception(e)
     for file in input_folder.glob("**/*.md"):
         text = file.read_text(encoding="utf-8")
         file.with_suffix(".txt").write_text(text, encoding="utf-8")
+    audio_extensions = ["mp3", "wav", "m4a", "ogg", "flac"]
+    for file in chain.from_iterable(input_folder.glob(f"**/*.{ext}") for ext in audio_extensions):
+        try:
+            await convert_audio(file, language="en") # This is a strong assumption that the audio is in English
+        except Exception as e:
+            log.error(f"Failed to convert {file} to audio")
+            log.exception(e)
 
 
 if __name__ == "__main__":

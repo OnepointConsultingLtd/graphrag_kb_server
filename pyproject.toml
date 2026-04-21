@@ -34,6 +34,8 @@ dependencies = [
     "apify-client>=2.5.0",
     "fastmcp>=2.0",
     "uvicorn>=0.30.0",
+    "pydub>=0.25.1",
+    "audioop-lts>=0.2.2",
 ]
 
 [project.scripts]

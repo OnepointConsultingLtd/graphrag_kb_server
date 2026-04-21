@@ -28,6 +28,18 @@ source .venv/bin/activate
 uv sync
 ```
 
+Also install ffmpeg with:
+
+```
+# Install pydub
+pip install pydub
+
+# Install ffmpeg (pick your OS)
+brew install ffmpeg          # macOS
+sudo apt install ffmpeg      # Ubuntu/Debian
+winget install ffmpeg        # Windows
+```
+
 # Configuration
 
 The application is configured used environment variables which you can set in a `.env` file.

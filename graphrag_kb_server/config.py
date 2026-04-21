@@ -25,6 +25,11 @@ class Config:
         openai_api_model is not None
     ), "Please specify the OPENAI_API_MODEL environment variable."
 
+    audio_model = os.getenv("AUDIO_MODEL")
+    assert (
+        audio_model is not None
+    ), "Please specify the AUDIO_MODEL environment variable."
+
     openai_api_model_embedding = os.getenv("OPENAI_API_MODEL_EMBEDDING")
     assert (
         openai_api_model_embedding is not None

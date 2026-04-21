@@ -38,6 +38,8 @@ RUN apt-get update && apt-get install -y \
     libopenjp2-7-dev \
     # PDF-to-image conversion (pdf2image / poppler)
     poppler-utils \
+    # pydub audio processing
+    ffmpeg \
     # Chromium and dependencies for Selenium (LinkedIn scraping)
     chromium \
     fonts-liberation \

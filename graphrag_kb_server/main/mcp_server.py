@@ -60,6 +60,25 @@ _session_tokens: dict[str, str] = {}
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _server_base_url() -> str:
+    return os.getenv("SERVER_BASE_URL", "http://localhost:9999")
+
+
+def _resolve_token(ctx: Context) -> str:
+    token = _request_token.get() or _session_tokens.get(ctx.client_id or "")
+    if not token:
+        raise ValueError(
+            "No authentication token available. "
+            "Either pass 'Authorization: Bearer <token>' as an HTTP header "
+            "when connecting, or call the authenticate(token=...) tool first."
+        )
+    return token
+
+
+# ---------------------------------------------------------------------------
 # Middleware
 # ---------------------------------------------------------------------------
 
@@ -98,6 +117,28 @@ async def authenticate(token: str, ctx: Context) -> str:
 
 
 @mcp.tool()
+async def list_projects(ctx: Context) -> str:
+    """
+    List all projects available to the authenticated tenant.
+
+    Returns a JSON object with two keys:
+      - lightrag_projects: projects indexed with the LightRAG engine.
+      - cag_projects:      projects indexed with the CAG engine.
+    Each entry contains the project name, engine, and indexing status.
+    """
+    token = _resolve_token(ctx)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            f"{_server_base_url()}/protected/projects",
+            headers={"Authorization": f"Bearer {token}"},
+        ) as response:
+            body = await response.text()
+            if response.status != 200:
+                raise ValueError(f"Upstream error [{response.status}]: {body}")
+            return body
+
+
+@mcp.tool()
 async def get_context(
     project: str,
     question: str,
@@ -122,16 +163,7 @@ async def get_context(
         keywords:     If True, append high/low-level keywords to the context
                       (LightRAG only). Default: False.
     """
-    # Resolve token: Option A takes priority over Option B
-    token = _request_token.get() or _session_tokens.get(ctx.client_id or "")
-    if not token:
-        raise ValueError(
-            "No authentication token available. "
-            "Either pass 'Authorization: Bearer <token>' as an HTTP header "
-            "when connecting, or call the authenticate(token=...) tool first."
-        )
-
-    base_url = os.getenv("SERVER_BASE_URL", "http://localhost:9999")
+    token = _resolve_token(ctx)
     params: dict[str, Any] = {
         "project": project,
         "question": question,
@@ -153,7 +185,7 @@ async def get_context(
 
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            f"{base_url}/protected/project/context",
+            f"{_server_base_url()}/protected/project/context",
             params=params,
             headers={"Authorization": f"Bearer {token}"},
         ) as response:
