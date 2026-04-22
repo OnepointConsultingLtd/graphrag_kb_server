@@ -18,7 +18,7 @@ def extract_tennant_folder(request: web.Request) -> Path | Response:
         )
     tennant_folder = cfg.graphrag_root_dir_path / token_data["sub"]
     if not tennant_folder.exists():
-        return invalid_response("No tennant folder", "Tennant folder was deleted.")
+        return invalid_response("No tennant folder", f"Tennant folder was deleted: {tennant_folder.as_posix()}")
     return tennant_folder
 
 

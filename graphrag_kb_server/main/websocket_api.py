@@ -154,7 +154,7 @@ async def relevant_documents(
     max_filepath_depth: int = 1000,
 ):
     try:
-        logger.debug(f"Document query from {sio}: {document_query}")
+        logger.info(f"Document query from websocket: {document_query}")
         document_search_query = DocumentSearchQuery(
             **jiter.from_json(document_query.encode(encoding="utf-8")),
             max_filepath_depth=max_filepath_depth,

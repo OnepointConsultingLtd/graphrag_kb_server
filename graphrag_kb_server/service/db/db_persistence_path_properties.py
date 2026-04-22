@@ -1,3 +1,4 @@
+import logging
 from datetime import timezone
 import datetime
 
@@ -10,6 +11,8 @@ from graphrag_kb_server.service.db.connection_pool import (
     init_pool,
 )
 
+
+logger = logging.getLogger(__name__)
 
 TB_PATH_PROPERTIES = "TB_PATH_PROPERTIES"
 
@@ -89,6 +92,7 @@ ON CONFLICT (PATH, PROJECT_ID) DO UPDATE
 async def find_path_properties(
     schema_name: str, path: str, project_id: int
 ) -> PathProperties | None:
+    logger.info(f"Finding path properties for path {path} for project {project_id} in schema {schema_name}")
     """Return the PathProperties for a given path and project, or None if absent."""
     row = await fetch_one(
         f"""

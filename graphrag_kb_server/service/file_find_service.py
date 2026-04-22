@@ -30,7 +30,7 @@ def create_conversion_map(project_dir: Path) -> dict[str, str]:
     for original_file in original_file_path.glob("**/*"):
         if original_file.is_file() and original_file.suffix not in EXCLUDED_EXTENSIONS:
             copy_path = copy.copy(original_file)
-            for suffix in [".txt", FINAL_SUFFIX]:
+            for suffix in [".txt"]:
                 copy_path = copy_path.parent / f"{convert_file_name(copy_path)}{suffix}"
                 file_splits = (
                     copy_path.as_posix().replace(project_dir.as_posix(), "").split("/")
@@ -40,7 +40,7 @@ def create_conversion_map(project_dir: Path) -> dict[str, str]:
                 if copy_path.exists():
                     conversion_map[copy_path.as_posix()] = original_file
                 else:
-                    logger.warning(f"File {copy_path} does not exist")
+                    logger.warning(f"For original file {original_file} there is no converted file {copy_path}")
     return conversion_map
 
 
