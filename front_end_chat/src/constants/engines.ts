@@ -2,7 +2,6 @@ import { Engine } from "../model/types";
 
 export const ENGINES = {
   LIGHTRAG: "lightrag" as Engine,
-  GRAPHRAG: "graphrag" as Engine,
   CAG: "cag" as Engine,
 };
 

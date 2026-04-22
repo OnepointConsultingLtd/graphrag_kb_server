@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 import base64
+import re
 
 
 def get_creation_time(path: Path) -> float:
@@ -30,3 +31,7 @@ def write_uploaded_file(content: bytes, uploaded_file: Path) -> Path:
     with open(uploaded_file, "wb") as f:
         f.write(base64.b64decode(content))
     return uploaded_file
+
+def strip_drive(posix_path: str) -> str:
+    """Remove a Windows drive prefix (e.g. 'C:') from a POSIX-style path string."""
+    return re.sub(r"^[A-Za-z]:", "", posix_path)

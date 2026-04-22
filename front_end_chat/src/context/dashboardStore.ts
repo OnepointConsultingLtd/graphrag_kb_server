@@ -281,7 +281,7 @@ export const useDashboardStore = create<DashboardState>()(
         resetCreateProjectForm: () =>
           set({
             projectName: "",
-            engine: ENGINES.GRAPHRAG,
+            engine: ENGINES.LIGHTRAG,
             incremental: false,
             file: null,
             error: null,

@@ -27,6 +27,7 @@ from graphrag_kb_server.model.digest_functions import content_sha256_combined
 from graphrag_kb_server.service.db.db_persistence_relationships import (
     find_relationships,
 )
+from graphrag_kb_server.utils.file_support import strip_drive
 
 TB_SEARCH_HISTORY = "TB_SEARCH_HISTORY"
 TB_SEARCH_RESULTS = "TB_SEARCH_RESULTS"
@@ -211,7 +212,7 @@ async def insert_search_results(
     search_results_ids = []
     for document in search_results.documents:
         document_summary = document.summary
-        document_path = document.document_path[:16384]
+        document_path = strip_drive(document.document_path[:16384])
         document_main_keyword = document.main_keyword
         document_relevancy_score = document.relevancy_score
         document_relevancy_score_reasoning = document.relevance

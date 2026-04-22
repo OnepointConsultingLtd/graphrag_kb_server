@@ -6,6 +6,7 @@ from typing import Final
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
 from graphrag_kb_server.service.file_conversion import FINAL_SUFFIX
+from graphrag_kb_server.utils.file_support import strip_drive
 
 
 ORIGINAL_INPUT_FOLDER: Final = "original_input"
@@ -49,7 +50,12 @@ def find_original_file(project_dir: Path, file_path: Path) -> Path | None:
         conversion_map = create_conversion_map(project_dir)
         file_conversion_cache.set(project_dir, conversion_map)
 
-    return conversion_map.get(file_path.as_posix())
+    posix = strip_drive(file_path.as_posix())
+    result = conversion_map.get(posix)
+    if result is None:
+        # Fallback: try with the drive prefix intact (map built on Windows)
+        result = conversion_map.get(file_path.as_posix())
+    return result
 
 
 if __name__ == "__main__":

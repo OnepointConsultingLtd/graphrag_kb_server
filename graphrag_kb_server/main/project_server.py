@@ -1738,6 +1738,14 @@ async def download_single_file(request: web.Request) -> web.Response:
                                             **CORS_HEADERS,
                                         },
                                     )
+                                elif Path(file_name).exists():
+                                    return web.FileResponse(
+                                        Path(file_name),
+                                        headers={
+                                            "CONTENT-DISPOSITION": f'attachment; filename="{Path(file_name).name}"',
+                                            **CORS_HEADERS,
+                                        },
+                                    )
                                 else:
                                     return _create_file_not_found_error(
                                         file_name, input_dir
@@ -2142,7 +2150,7 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
         schema:
           type: string
           default: category
-          enum: ["category", "organization", "geo", "person", "equipment", "technology", "event", "economic_policy", "UNKNOWN"]
+          enum: ["category", "concept", "organization", "geo", "person", "equipment", "technology", "event", "economic_policy", "UNKNOWN"]
       - name: categories
         in: query
         required: false
@@ -2185,7 +2193,7 @@ async def lightrag_centrality(request: web.Request) -> web.Response:
                         elif category:
                             df = df[df["entity_type"] == category][:limit]
                         return web.json_response(
-                            df.to_dict(orient="records"), headers=CORS_HEADERS
+                            df.to_dict(orient="records")[:limit], headers=CORS_HEADERS
                         )
                     case "xls":
                         excel_bytes = await get_sorted_centrality_scores_as_xls(
