@@ -1,3 +1,4 @@
+import logging
 from graphrag_kb_server.model.path_link import PathLink
 from graphrag_kb_server.service.db.connection_pool import (
     execute_query,
@@ -7,6 +8,8 @@ from graphrag_kb_server.service.db.connection_pool import (
 
 
 TB_PATH_LINKS = "TB_PATH_LINKS"
+
+logger = logging.getLogger(__name__)
 
 
 async def create_path_links_table(schema_name: str):
@@ -88,6 +91,7 @@ SELECT * FROM {schema_name}.{TB_PATH_LINKS} WHERE PROJECT_ID = $1;
 
 
 async def get_links_by_path(schema_name: str, project_id: int, path: str) -> list[str]:
+    logger.info(f"Getting links by path {path} for project {project_id} in schema {schema_name}")
     pool = await init_pool()
     async with pool.acquire() as conn:
         results = await conn.fetch(
