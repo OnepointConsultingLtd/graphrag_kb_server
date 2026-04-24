@@ -235,7 +235,12 @@ async def get_search_results(
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
-    _, query_digest_sha256 = content_sha256_combined(document_search_query.user_profile, project_dir)
+    search_key = json.dumps(
+        document_search_query.model_dump(mode="json"),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    _, query_digest_sha256 = content_sha256_combined(search_key, project_dir)
     history_result = await fetch_one(
         f"""
 SELECT ID, RESPONSE FROM {schema_name}.{TB_SEARCH_HISTORY}

@@ -280,7 +280,7 @@ async def extract_profile_stream(
         await sio.emit(
             Command.EXTRACT_PROFILE_STREAM_END,
             {
-                "data": profile_data.model_dump_json(),
+                "data": profile_data.profile_json or profile_data.model_dump_json(exclude={"profile_json"}),
                 "request_id": profile_query.request_id,
             },
             to=sid,

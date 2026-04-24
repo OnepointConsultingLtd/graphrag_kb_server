@@ -36,7 +36,7 @@ def _convert_to_profile(items: list[dict], profile: str) -> Profile:
         except Exception as e:
             logger.error(f"Error converting experience: {e}")
             continue
-    return Profile(
+    profile_content = Profile(
         given_name=items.get("firstName", ""),
         surname=items.get("lastName", ""),
         email=f"{profile}@linkedin.com",
@@ -46,6 +46,9 @@ def _convert_to_profile(items: list[dict], profile: str) -> Profile:
         linkedin_profile_url=items.get("linkedinUrl", "") or "",
         skills=[Skill(name=s.get("title", "") or s.get("name", "")) for s in items.get("skills", [])],
         experiences=experiences,
+    )
+    return profile_content.model_copy(
+        update={"profile_json": profile_content.model_dump_json()}
     )
 
 

@@ -44,12 +44,13 @@ async def test_create_profile():
             assert profile_data is not None
             assert profile_data.given_name == profile.given_name
             assert profile_data.surname == profile.surname
-            assert profile_data.email == ""
+            assert profile_data.email == profile.email
             assert profile_data.cv == profile.cv
             assert profile_data.industry_name == profile.industry_name
             assert profile_data.geo_location == profile.geo_location
             assert profile_data.linkedin_profile_url == profile.linkedin_profile_url
             assert profile_data.experiences == profile.experiences
+            assert profile_data.profile_json is not None
         finally:
             await drop_profile_table(schema_name)
 

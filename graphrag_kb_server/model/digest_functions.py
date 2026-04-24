@@ -3,8 +3,8 @@ from pathlib import Path
 from binascii import unhexlify
 
 
-def content_sha256_combined(user_profile: str, project_dir: Path) -> tuple[str, bytes]:
-    content = f"{user_profile}\n{project_dir.as_posix()}"
+def content_sha256_combined(search_key: str, project_dir: Path) -> tuple[str, bytes]:
+    content = f"{search_key}\n{project_dir.as_posix()}"
     return content_sha256(content)
 
 

@@ -88,6 +88,9 @@ class Profile(BaseModel):
     photo_400: str | None = Field(
         default=None, description="The 400x400 photo of the consultant"
     )
+    profile_json: str | None = Field(
+        default=None, description="The raw profile JSON used to create this profile"
+    )
 
     def __str__(self) -> str:
         return f"""{self.given_name} {self.surname}
