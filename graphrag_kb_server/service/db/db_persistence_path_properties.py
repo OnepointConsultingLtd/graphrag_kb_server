@@ -10,6 +10,7 @@ from graphrag_kb_server.service.db.connection_pool import (
     fetch_one,
     init_pool,
 )
+from graphrag_kb_server.utils.file_support import strip_drive
 
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,7 @@ ON CONFLICT (PATH, PROJECT_ID) DO UPDATE
 async def find_path_properties(
     schema_name: str, path: str, project_id: int
 ) -> PathProperties | None:
+    path = strip_drive(path)
     logger.info(f"Finding path properties for path {path} for project {project_id} in schema {schema_name}")
     """Return the PathProperties for a given path and project, or None if absent."""
     row = await fetch_one(
