@@ -8,6 +8,22 @@ from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.lightrag.lightrag_constants import INPUT_FOLDER
 
+
+def override_lightrag_prompt():
+    from lightrag import prompt as lightrag_prompt
+
+    extra = """
+    9.  **Canonicalization Rules:**
+        *   Always use the full, unabbreviated form of an entity name (e.g. "Artificial Intelligence", not "AI"; "United Kingdom", not "UK").
+        *   For people, always use the full formal name (e.g. "Robert Baldock", not "Rob" or "Robert").
+        *   If you are unsure of the full name, use the most complete form present in the text.
+    """
+    lightrag_prompt.PROMPTS["entity_extraction_system_prompt"] += extra
+
+
+override_lightrag_prompt()
+
+
 TIKTOKEN_SPECIAL_TOKENS = re.compile(
     r"<\|endoftext\|>|<\|fim_prefix\|>|<\|fim_middle\|>|<\|fim_suffix\|>"
     r"|<\|endofprompt\|>|<\|im_start\|>|<\|im_end\|>|<\|im_sep\|>"

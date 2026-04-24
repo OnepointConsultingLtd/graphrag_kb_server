@@ -44,7 +44,7 @@ async def _handle_request(request: web.Request, func: Callable) -> web.Response:
 
 
 @routes.options("/protected/search/expand_entities")
-async def match_entities_options(request: web.Request) -> web.Response:
+async def match_entities_options(_request: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 
 

@@ -75,7 +75,7 @@ async def unzip_file(upload_folder: Path, zip_file: Path):
 
 async def convert_to_text(input_folder: Path):
     """Convert all markdown files to text files."""
-    for file in chain(input_folder.glob("**/*.pdf"), input_folder.glob("**/*.docx")):
+    for file in chain(input_folder.glob("**/*.pdf"), input_folder.glob("**/*.docx"), input_folder.glob("**/*.pptx")):
         try:
             await convert_pdf_docx_pptx_to_markdown(file)
         except Exception as e:

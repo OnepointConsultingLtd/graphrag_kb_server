@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from apify_client import ApifyClientAsync
 
@@ -9,7 +10,7 @@ from graphrag_kb_server.service.db.db_persistence_profile import insert_profile,
 from graphrag_kb_server.service.linkedin.linkedin_functions import correct_linkedin_url
 
 
-LINKEDIN_ACTOR_ID = "dev_fusion/linkedin-profile-scraper"
+LINKEDIN_ACTOR_ID = os.getenv("LINKEDIN_ACTOR_ID", "dev_fusion/linkedin-profile-scraper")
 
 WEBSITE_CRAWLER_ACTOR_ID = "apify/website-content-crawler"
 
@@ -41,9 +42,9 @@ def _convert_to_profile(items: list[dict], profile: str) -> Profile:
         email=f"{profile}@linkedin.com",
         cv=items.get("about", "") or "",
         industry_name=items.get("companyIndustry", "") or "",
-        geo_location=items.get("jobLocation", "") or "",
+        geo_location=items.get("jobLocation", "") or items.get("location", {}).get("linkedinText", "") or "",
         linkedin_profile_url=items.get("linkedinUrl", "") or "",
-        skills=[Skill(name=s["title"]) for s in items.get("skills", [])],
+        skills=[Skill(name=s.get("title", "") or s.get("name", "")) for s in items.get("skills", [])],
         experiences=experiences,
     )
 
@@ -67,9 +68,15 @@ async def apify_extract_profile_items(
         await callback.callback(f"Starting extraction for {profile_url}...")
     if not profile_url.startswith("https://www.linkedin.com/in/"):
         profile_url = f"https://www.linkedin.com/in/{profile_url}"
-    run_input = {
-        "profileUrls": [profile_url],
-    }
+    if LINKEDIN_ACTOR_ID == "dev_fusion/linkedin-profile-scraper":
+        run_input = {
+            "profileUrls": [profile_url],
+        }
+    else:
+        run_input = {
+            "profileScraperMode": "Profile details no email ($4 per 1k)",
+            "queries": [profile_url]
+        }
     return await apify_extract_from_url(run_input, LINKEDIN_ACTOR_ID, callback)
 
 
@@ -103,7 +110,8 @@ async def apify_extract_from_url(run_input: dict, actor_id: str, callback: BaseC
         await callback.callback(f"Extraction finished for {label}. Fetching results...")
 
     dataset_id = run["defaultDatasetId"]
-    dataset_items = await client.dataset(dataset_id).list_items()
+    dataset = client.dataset(dataset_id)
+    dataset_items = await dataset.list_items()
     return dataset_items.items
 
 
@@ -136,7 +144,7 @@ async def apify_extract_profile(
     items = await apify_extract_profile_items(profile, callback=callback)
     if len(items) == 0 or items[0].get("error") is not None:
         if callback is not None:
-            await callback.callback(f"Error extracting profile: {profile}: {items[0].get("error")}")
+            await callback.callback(f"Error extracting profile: {profile}")
         return None
     profile_content = _convert_to_profile(items[0], profile)
     if project_dir is not None and profile_content is not None:
@@ -160,13 +168,7 @@ if __name__ == "__main__":
 
     def extract_profiles():
         profiles = [
-            "gil-palma-fernandes",
-            "chrisjwray",
-            "rajoojha",
-            "leshinesbusinessperformancexec",
-            "susan-challenger-a-isp-07585073",
-            "jennie-harnaman-8b1a4019",
-            "alexandru-daniel-tufa-4a9280106"
+            "gil-palma-fernandes"
         ]
 
         async def apify_extract_profile_to_file():
@@ -184,6 +186,6 @@ if __name__ == "__main__":
             await apify_crawl_website(website_url,  max_crawl_pages=20), f"data/onepoint_raw.json"
         )
 
-    asyncio.run(extract_onepoint())
+    extract_profiles()
 
     

@@ -35,6 +35,30 @@ def _convert_df_to_entities(
 SCORE_THRESHOLD = 0.5
 
 
+def is_abbreviation_of(short: str, long: str) -> bool:
+      initials = "".join(w[0].upper() for w in long.split() if w)
+      return short.upper() == initials
+
+
+def remove_abbreviations(entities: list[EntityWithScore]) -> list[EntityWithScore]:
+    final_entities = []
+    for entity in entities:
+        is_abbreviation = False
+        for entity2 in entities:
+            if is_abbreviation_of(entity.entity, entity2.entity) and entity != entity2:
+                is_abbreviation = True
+                break
+        if not is_abbreviation:
+            final_entities.append(entity)
+    return final_entities
+
+
+def remove_abbreviations_from_match_output(match_output: MatchOutput) -> MatchOutput:
+    for _key, entity_list in match_output.entity_dict.items():
+        match_output.entity_dict[_key] = EntityList(entities=remove_abbreviations(entity_list.entities))
+    return match_output
+
+
 async def match_entities_with_lightrag(
     project_dir: Path, query: MatchQuery
 ) -> MatchOutput:
@@ -43,7 +67,7 @@ async def match_entities_with_lightrag(
         matched_output_from_db := await get_expanded_entities(project_dir, query)
     ) is not None:
         if not query.no_cache:
-            return matched_output_from_db
+            return remove_abbreviations_from_match_output(matched_output_from_db)
         else:
             id = matched_output_from_db.id
             deleted_str = await delete_expanded_entities(project_dir, id)
@@ -70,7 +94,7 @@ async def match_entities_with_lightrag(
     entity_dict = {e[0]: EntityList(entities=e[1]) for e in entity_dict.items()}
     matched_output = MatchOutput(entity_dict=entity_dict)
     await insert_expanded_entities(project_dir, query, matched_output)
-    return matched_output
+    return remove_abbreviations_from_match_output(matched_output)
 
 
 async def _dedupe_entities(
