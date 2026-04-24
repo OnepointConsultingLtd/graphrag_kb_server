@@ -130,21 +130,7 @@ async def insert_search_query(
         if len(category_entities.entities) > 2:
             topic_3 = category_entities.entities[2].entity
     biggest_challenge = document_search_query.biggest_challenge
-    _, query_digest_sha256 = content_sha256_combined(
-        DocumentSearchQuery(
-            generated_user_id=document_search_query.generated_user_id,
-            request_id="",
-            question=document_search_query.question,
-            user_profile=document_search_query.user_profile,
-            biggest_challenge=document_search_query.biggest_challenge,
-            linkedin_profile_url=linkedin_profile_url,
-            organisation_role=user_role,
-            organisation_type=user_organisation_type,
-            business_type=user_business_type,
-            industry=user_industry,
-            topics_of_interest=topics_of_interest,
-        )
-    )
+    _, query_digest_sha256 = content_sha256_combined(document_search_query.user_profile, project_dir)
     search_history_id = await execute_query_with_return(
         f"""
 INSERT INTO {schema_name}.{TB_SEARCH_HISTORY} 
@@ -249,21 +235,7 @@ async def get_search_results(
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
-    _, query_digest_sha256 = content_sha256_combined(
-        DocumentSearchQuery(
-            generated_user_id=document_search_query.generated_user_id,
-            request_id="",
-            question=document_search_query.question,
-            user_profile=document_search_query.user_profile,
-            biggest_challenge=document_search_query.biggest_challenge,
-            linkedin_profile_url=document_search_query.linkedin_profile_url,
-            organisation_role=document_search_query.organisation_role,
-            organisation_type=document_search_query.organisation_type,
-            business_type=document_search_query.business_type,
-            industry=document_search_query.industry,
-            topics_of_interest=document_search_query.topics_of_interest,
-        )
-    )
+    _, query_digest_sha256 = content_sha256_combined(document_search_query.user_profile, project_dir)
     history_result = await fetch_one(
         f"""
 SELECT ID, RESPONSE FROM {schema_name}.{TB_SEARCH_HISTORY}
