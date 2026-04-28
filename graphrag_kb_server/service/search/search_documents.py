@@ -30,11 +30,28 @@ DOCUMENT_PATHS_LIMIT = 10
 SEPARATORS = ["<SEP>", ";"]
 
 
+def _is_absolute_path(path: str) -> bool:
+    """Return True if path is absolute on Linux (/...) or Windows (C:/...)."""
+    return path.startswith("/") or (len(path) >= 3 and path[1] == ":" and path[2] in "/\\")
+
+
+def _has_relative_paths(documents: list) -> bool:
+    """Return True if any document has a relative (non-absolute) path."""
+    return any(
+        not _is_absolute_path(doc.get("document_path", ""))
+        for doc in documents
+    )
+
+
 async def retrieve_relevant_documents(
     project_dir: Path, query: DocumentSearchQuery, callback: BaseCallback = None
 ) -> SearchResults:
     """
     Searches documents that are relevant to the query and summarizes them according to the user's profile and question.
+
+    If the first search returns any document with a relative path, the search is
+    retried once. Relative paths cause downstream lookup failures, so this guards
+    against an occasional LLM hallucination in the path field.
 
     Args:
         project_dir: The directory of the project
@@ -44,10 +61,22 @@ async def retrieve_relevant_documents(
         A list of summarization responses with document paths
     """
     chat_response = await search_documents(project_dir, query, callback)
-    chat_response = await add_links_to_response(
-        chat_response, project_dir
-    )
+    chat_response = await add_links_to_response(chat_response, project_dir)
     documents = chat_response.response["documents"]
+
+    if _has_relative_paths(documents):
+        logger.warning(
+            "Search returned %d document(s) with relative paths — retrying search once.",
+            sum(1 for d in documents if not d.get("document_path", "").startswith("/")),
+        )
+        if callback is not None:
+            await callback.callback("Retrying search to obtain absolute document paths…")
+        chat_response = await search_documents(project_dir, query, callback)
+        chat_response = await add_links_to_response(chat_response, project_dir)
+        documents = chat_response.response["documents"]
+        if _has_relative_paths(documents):
+            logger.warning("Retry also returned relative paths — proceeding anyway.")
+
     if callback is not None:
         await callback.callback(chat_response.response["response"])
         logger.info(f"Answer prepared: {chat_response.response['response']}")

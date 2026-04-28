@@ -5,6 +5,7 @@ from pathlib import Path
 from aiohttp import web
 from markdown import markdown
 
+from graphrag_kb_server.model.path_link import LinksImageLastModified
 from graphrag_kb_server.model.web_format import Format
 from graphrag_kb_server.model.rag_parameters import QueryParameters
 from graphrag_kb_server.model.engines import Engine
@@ -22,9 +23,6 @@ from graphrag_kb_server.main.simple_template import HTML_CONTENT
 from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.service.cag.cag_support import cag_get_response
 from graphrag_kb_server.logger import logger
-
-
-type LinksImageLastModified = tuple[list[str], str | None, datetime.datetime | None]
 
 
 async def execute_query(query_params: QueryParameters) -> web.Response:
@@ -110,21 +108,37 @@ async def add_links_to_response(chat_response: ChatResponse, project_dir: Path) 
             chat_response.response["references"] = list({r["file"]: r for r in chat_response.response["references"]}.values())
             for reference in chat_response.response["references"]:
                 file_path = Path(reference["file"])
-                links, image_path, last_modified = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+                links_image_last_modified = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+                links, image_path, last_modified, original_path = (
+                    links_image_last_modified.links, 
+                    links_image_last_modified.image, 
+                    links_image_last_modified.last_modified, 
+                    links_image_last_modified.original_path
+                )
                 reference["links"] = links
                 if image_path is not None:
                     reference["image"] = image_path
                 if last_modified is not None:
                     reference["last_modified"] = last_modified.isoformat()
+                if original_path is not None:
+                    reference["original_path"] = original_path
         elif chat_response.response.get("documents"):
             for document in chat_response.response["documents"]:
                 file_path = Path(document["document_path"])
-                links, image_path, last_modified = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+                links_image_last_modified = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+                links, image_path, last_modified, original_path = (
+                    links_image_last_modified.links,
+                    links_image_last_modified.image,
+                    links_image_last_modified.last_modified,
+                    links_image_last_modified.original_path
+                )
                 document["links"] = links
                 if image_path is not None:
                     document["image"] = image_path
                 if last_modified is not None:
                     document["last_modified"] = last_modified.isoformat()
+                if original_path is not None:
+                    document["original_path"] = original_path
         
     return chat_response
 
@@ -139,7 +153,13 @@ async def enrich_text_units_context(text_units_context: list[dict], project_dir:
         file = text_unit.get("file_path")
         if file is not None:    
             file_path = Path(file)
-            links, image_path, last_modified = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+            links_image_last_modified = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+            links, image_path, last_modified, _original_path = (
+                links_image_last_modified.links,
+                links_image_last_modified.image,
+                links_image_last_modified.last_modified,
+                links_image_last_modified.original_path
+            )
             text_unit["links"] = links
             if image_path is not None:
                 text_unit["image"] = image_path
@@ -148,7 +168,12 @@ async def enrich_text_units_context(text_units_context: list[dict], project_dir:
 
 
 
-async def get_links_and_image_by_path(file_path: Path, schema_name: str, project_id: int, project_dir: Path) -> LinksImageLastModified:
+async def get_links_and_image_by_path(
+    file_path: Path, 
+    schema_name: str, 
+    project_id: int, 
+    project_dir: Path
+) -> LinksImageLastModified:
     # Convert path first (strips Windows drive prefix e.g. C:/ → /) so it
     # resolves correctly on Linux even when the index was built on Windows.
     file_path_str = _convert_path_to_text(file_path)
@@ -160,10 +185,24 @@ async def get_links_and_image_by_path(file_path: Path, schema_name: str, project
 
     # Image lookup requires the file to exist on disk.
     if not file_path.exists():
-        return links, None, last_modified
+        return LinksImageLastModified(
+            links=links, 
+            image=None, 
+            last_modified=last_modified, 
+            original_path=None
+        )
 
     original_input = project_dir / "original_input"
     input_dir = project_dir / "input"
+
+    def _doc_exists(file_path: Path) -> tuple[bool, Path]:
+        if not file_path.exists():
+            file_path = file_path.parent / file_path.name.replace("_", " ")
+            exists = file_path.exists()
+        else:
+            exists = True
+        return exists, file_path
+
     try:
         # Extract from file_path the path after input
         relative_path = file_path.relative_to(input_dir).as_posix()
@@ -171,28 +210,53 @@ async def get_links_and_image_by_path(file_path: Path, schema_name: str, project
         # Now change the txt to pdf and verify if the pdf exists
         pdf_path = original_file_path.with_suffix(".pdf")
         docx_path = original_file_path.with_suffix(".docx")
-        if not pdf_path.exists():
-            pdf_path = pdf_path.parent / pdf_path.name.replace("_", " ")
-            pdf_exists = pdf_path.exists()
-        else:
-            pdf_exists = True
-        if not docx_path.exists():
-            docx_path = docx_path.parent / docx_path.name.replace("_", " ")
-            docx_exists = docx_path.exists()
-        else:
-            docx_exists = True
-        if not pdf_exists and not docx_exists:
-            return links, None, last_modified
+        pptx_path = original_file_path.with_suffix(".pptx")
+        pdf_exists, pdf_path = _doc_exists(pdf_path)
+        docx_exists, docx_path = _doc_exists(docx_path)
+        pptx_exists, pptx_path = _doc_exists(pptx_path)
+        if not pdf_exists and not docx_exists and not pptx_exists:
+            return LinksImageLastModified(
+                links=links, 
+                image=None, 
+                last_modified=last_modified, 
+                original_path=None
+            )
         # Now get the image
-        image_path = pdf_path.with_suffix(".png") if pdf_exists else docx_path.with_suffix(".png")
+        if pdf_exists:
+            original_path = pdf_path
+            image_path = pdf_path.with_suffix(".png")
+        elif docx_exists:
+            original_path = docx_path
+            image_path = docx_path.with_suffix(".png")
+        elif pptx_exists:
+            original_path = pptx_path
+            image_path = pptx_path.with_suffix(".png")
+        else:
+            original_path = pdf_path
+            image_path = pdf_path.with_suffix(".png")
         if image_path.exists():
             image_path = image_path.relative_to(project_dir)
-            return links, image_path.as_posix(), last_modified
+            return LinksImageLastModified(
+                links=links, 
+                image=image_path.as_posix(), 
+                last_modified=last_modified, 
+                original_path=original_path.as_posix()
+            )
         else:
-            return links, None, last_modified
+            return LinksImageLastModified(
+                links=links, 
+                image=None, 
+                last_modified=last_modified, 
+                original_path=original_path.as_posix()
+            )
     except Exception as e:
         logger.error(f"Error getting image by path: {e}")
-        return links, None, last_modified
+        return LinksImageLastModified(
+            links=links, 
+            image=None, 
+            last_modified=last_modified, 
+            original_path=None
+        )
 
 
 def _convert_path_to_text(file_path: Path) -> str:

@@ -15,6 +15,7 @@ For each selected entity you must provide:
 - score: a relevance score between 0 and 1 (1.0 = directly matches a stated interest, 0.7 = clearly related to the user's domain, 0.3 = tangentially relevant).
 - reasoning: a brief explanation (one or two sentences) of why this entity is relevant to the user.
 - abstraction: either "high-level" or "low-level".
+- at least 8 entities should be returned.
 
 # Categorisation framework
 - high-level: broad concepts, themes, or domains that capture overarching ideas (e.g. "AI", "Healthcare", "Finance").

@@ -13,7 +13,7 @@ from graphrag_kb_server.service.lightrag.lightrag_centrality import (
 )
 from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.service.google_ai_client import structured_completion
-from graphrag_kb_server.config import lightrag_cfg
+from graphrag_kb_server.config import lightrag_cfg, cfg
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.db.db_persistence_expanded_entities import (
     get_expanded_entities,
@@ -24,7 +24,7 @@ from graphrag_kb_server.logger import logger
 
 
 def _convert_df_to_entities(
-    df: pd.DataFrame, max_description_length: int = 256
+    df: pd.DataFrame, max_description_length: int = cfg.expand_max_entities
 ) -> list[Entity]:
     return [
         Entity(name=e[0], type=e[1], description=e[2][:max_description_length])
@@ -66,13 +66,13 @@ async def match_entities_with_lightrag(
     if (
         matched_output_from_db := await get_expanded_entities(project_dir, query)
     ) is not None:
-        if not query.no_cache:
-            return remove_abbreviations_from_match_output(matched_output_from_db)
-        else:
-            id = matched_output_from_db.id
-            deleted_str = await delete_expanded_entities(project_dir, id)
-            logger.info(f"Deleted expanded entities for query: {deleted_str}")
+        if query.no_cache:
+            cache_id = matched_output_from_db.id
             logger.info(f"Found cached expanded entities for query: {query}")
+            deleted_str = await delete_expanded_entities(project_dir, cache_id)
+            logger.info(f"Deleted expanded entities: {deleted_str}")
+        elif len(matched_output_from_db.entity_dict) > 0:
+            return remove_abbreviations_from_match_output(matched_output_from_db)
 
     entity_types, entities_limit = query.entity_types, query.entities_limit
     df = await get_sorted_centrality_scores_as_pd(project_dir)
@@ -157,7 +157,7 @@ async def match_entities(
         system_prompt,
         user_contents,
         EntityList,
-        model=lightrag_cfg.lightrag_lite_model,
+        model=lightrag_cfg.lightrag_model,
     )
 
     entities_with_score = [

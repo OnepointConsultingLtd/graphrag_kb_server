@@ -98,6 +98,7 @@ class Config:
     extract_links_on_start = os.getenv("EXTRACT_LINKS_ON_START", "false") == "true"
     apify_token = os.getenv("APIFY_TOKEN")
     assert apify_token is not None, "Please specify the Apify token"
+    expand_max_entities = int(os.getenv("EXPAND_MAX_ENTITIES", "512"))
 
 
 class WebsocketConfig:
