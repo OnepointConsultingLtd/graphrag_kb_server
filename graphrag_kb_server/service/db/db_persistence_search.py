@@ -130,7 +130,7 @@ async def insert_search_query(
         if len(category_entities.entities) > 2:
             topic_3 = category_entities.entities[2].entity
     biggest_challenge = document_search_query.biggest_challenge
-    _, query_digest_sha256 = content_sha256_combined(document_search_query.user_profile, project_dir)
+    _, query_digest_sha256 = content_sha256_combined(create_search_key(document_search_query), project_dir)
     search_history_id = await execute_query_with_return(
         f"""
 INSERT INTO {schema_name}.{TB_SEARCH_HISTORY} 
@@ -229,17 +229,32 @@ RETURNING ID;
     return search_results_ids
 
 
+def create_search_key(document_search_query: DocumentSearchQuery) -> str:
+    data = {
+        "linkedin_profile_url": document_search_query.linkedin_profile_url or "",
+        "organisation_role": document_search_query.organisation_role or "",
+        "organisation_type": document_search_query.organisation_type or "",
+        "business_type": document_search_query.business_type or "",
+        "industry": document_search_query.industry or "",
+        "question": document_search_query.question or "",
+        "biggest_challenge": document_search_query.biggest_challenge or "",
+        "user_profile": document_search_query.user_profile or "",
+        "topics": sorted([
+            i.entity
+            for v in document_search_query.topics_of_interest.entity_dict.values()
+            for i in v.entities
+        ]),
+    }
+    return json.dumps(data, sort_keys=True, separators=(",", ":"))
+
+
 async def get_search_results(
     project_dir: Path, document_search_query: DocumentSearchQuery
 ) -> SearchResults | None:
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
-    search_key = json.dumps(
-        document_search_query.model_dump(mode="json"),
-        sort_keys=True,
-        separators=(",", ":"),
-    )
+    search_key = create_search_key(document_search_query)
     _, query_digest_sha256 = content_sha256_combined(search_key, project_dir)
     history_result = await fetch_one(
         f"""

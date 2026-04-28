@@ -78,7 +78,8 @@ async def lightrag_index(rag: LightRAG, files_to_index: list[Path]):
     for i, file in enumerate(files_to_index):
         try:
             content = _sanitize_for_tiktoken(file.read_text(encoding="utf-8"))
-            await rag.ainsert(content, file_paths=file.as_posix())
+            filename_header = f"Document: {file.stem.replace('_', ' ')}\n\n"
+            await rag.ainsert(filename_header + content, file_paths=file.as_posix())
             logger.info("########################################################")
             logger.info(f"Indexed {i+1}/{count} files: {file}")
             logger.info("########################################################")
