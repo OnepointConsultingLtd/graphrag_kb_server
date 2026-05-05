@@ -10,7 +10,8 @@ from graphrag_kb_server.service.db.db_persistence_profile import insert_profile,
 from graphrag_kb_server.service.linkedin.linkedin_functions import correct_linkedin_url
 
 
-LINKEDIN_ACTOR_ID = os.getenv("LINKEDIN_ACTOR_ID", "dev_fusion/linkedin-profile-scraper")
+LINKEDIN_ACTOR_ID = os.getenv("LINKEDIN_ACTOR_ID", "harvestapi/linkedin-profile-scraper")
+LINKEDIN_ACTOR_ID_2 = os.getenv("LINKEDIN_ACTOR_ID_2", "dev_fusion/linkedin-profile-scraper")
 
 WEBSITE_CRAWLER_ACTOR_ID = "apify/website-content-crawler"
 
@@ -63,6 +64,17 @@ async def apify_crawl_website(website_url: str, callback: BaseCallback | None = 
     return await apify_extract_from_url(run_input, WEBSITE_CRAWLER_ACTOR_ID, callback)
 
 
+def choose_run_input(profile_url: str, actor_id: str) -> dict:
+    if actor_id == "dev_fusion/linkedin-profile-scraper":
+        return {
+            "profileUrls": [profile_url],
+        }
+    else:
+        return {
+            "profileScraperMode": "Profile details no email ($4 per 1k)",
+            "queries": [profile_url]
+        }
+
 async def apify_extract_profile_items(
     profile_url: str,
     callback: BaseCallback | None = None,
@@ -71,16 +83,12 @@ async def apify_extract_profile_items(
         await callback.callback(f"Starting extraction for {profile_url}...")
     if not profile_url.startswith("https://www.linkedin.com/in/"):
         profile_url = f"https://www.linkedin.com/in/{profile_url}"
-    if LINKEDIN_ACTOR_ID == "dev_fusion/linkedin-profile-scraper":
-        run_input = {
-            "profileUrls": [profile_url],
-        }
-    else:
-        run_input = {
-            "profileScraperMode": "Profile details no email ($4 per 1k)",
-            "queries": [profile_url]
-        }
-    return await apify_extract_from_url(run_input, LINKEDIN_ACTOR_ID, callback)
+    run_input = choose_run_input(profile_url, LINKEDIN_ACTOR_ID)
+    res = await apify_extract_from_url(run_input, LINKEDIN_ACTOR_ID, callback)
+    if res is None or len(res) == 0 or res[0].get("error", None) is not None:
+        run_input = choose_run_input(profile_url, LINKEDIN_ACTOR_ID_2)
+        res = await apify_extract_from_url(run_input, LINKEDIN_ACTOR_ID_2, callback)
+    return res
 
 
 async def apify_extract_from_url(run_input: dict, actor_id: str, callback: BaseCallback | None = None) -> list[dict]:

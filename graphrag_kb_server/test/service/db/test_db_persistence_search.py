@@ -123,23 +123,29 @@ async def test_insert_search_query():
 
 @pytest.mark.asyncio
 async def test_get_search_history_no_results():
+    from graphrag_kb_server.test.service.db.common_test_support import (
+        DEFAULT_SCHEMA_NAME,
+    )
     from graphrag_kb_server.service.db.db_persistence_search import (
         get_search_history,
     )
 
-    search_history = await get_search_history("test_generated_user_id")
+    search_history = await get_search_history("test_generated_user_id", DEFAULT_SCHEMA_NAME)
     assert search_history is None
 
 
 @pytest.mark.asyncio
 async def test_get_search_history_by_most_active_request_id():
+    from graphrag_kb_server.test.service.db.common_test_support import (
+        DEFAULT_SCHEMA_NAME,
+    )
     from graphrag_kb_server.service.db.db_persistence_search import (
         get_search_history,
     )
 
     all_results = await fetch_all(
-        """
-select generated_user_id, count(*) from gil_fernandes.tb_search_history h 
+        f"""
+select generated_user_id, count(*) from {DEFAULT_SCHEMA_NAME}.tb_search_history h 
 where generated_user_id is not null
 group by generated_user_id order by 2 desc limit 1
         """
@@ -150,7 +156,7 @@ group by generated_user_id order by 2 desc limit 1
     if most_active_request_id is None:
         return
 
-    search_history = await get_search_history(most_active_request_id)
+    search_history = await get_search_history(most_active_request_id, DEFAULT_SCHEMA_NAME)
     assert search_history is not None
     assert len(search_history.results) > 0
     for result in search_history.results:

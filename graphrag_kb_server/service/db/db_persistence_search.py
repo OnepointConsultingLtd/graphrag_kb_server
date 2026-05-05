@@ -278,7 +278,8 @@ SELECT R.ID,
     R.DOCUMENT_RELEVANCY_SCORE_REASONING, 
     R.DOCUMENT_IMAGE, 
     R.DOCUMENT_LINKS,
-    P.LAST_MODIFIED
+    P.LAST_MODIFIED,
+    P.ORIGINAL_PATH
 FROM {schema_name}.{TB_SEARCH_RESULTS} R
     LEFT JOIN {schema_name}.{TB_PATH_PROPERTIES} P 
     ON R.DOCUMENT_PATH = P.PATH
@@ -300,6 +301,7 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND R.UPDATED_AT > now() - interv
         document_image = result.get("document_image")
         document_links = result.get("document_links") or []
         last_modified = result.get("last_modified")
+        original_path = result.get("original_path")
         documents.append(
             SummarisationResponseWithDocument(
                 summary=document_summary,
@@ -310,6 +312,7 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND R.UPDATED_AT > now() - interv
                 image=document_image,
                 links=document_links,
                 last_modified=last_modified.isoformat() if last_modified else None,
+                original_path=original_path,
             )
         )
     from graphrag_kb_server.service.db.db_persistence_keywords import find_keywords
@@ -331,7 +334,7 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND R.UPDATED_AT > now() - interv
     )
 
 
-async def get_search_history(generated_user_id: str, offset: int = 0, limit: int = 10) -> SearchHistory | None:
+async def get_search_history(generated_user_id: str, schema_name: str, offset: int = 0, limit: int = 10) -> SearchHistory | None:
     search_history = await fetch_all(
         f"""
 select
@@ -353,6 +356,7 @@ select
     json_build_object(
       'document_summary', s.document_summary,
       'document_path', s.document_path,
+      'original_path', (select original_path from {schema_name}.tb_path_properties p where p.path = s.document_path and p.project_id = s.project_id limit 1),
       'document_main_keyword', s.document_main_keyword,
       'document_relevancy_score', s.document_relevancy_score,
       'document_relevancy_score_reasoning', s.document_relevancy_score_reasoning,
@@ -362,9 +366,9 @@ select
       'document_links', s.document_links
     ) order by s.created_at desc
   ) as search_results,
-  (select relationships from gil_fernandes.tb_relationships r where r.search_id = h.id limit 1) relationships
-  from gil_fernandes.tb_search_history h
-  inner join gil_fernandes.tb_search_results s on h.request_id = s.request_id
+  (select relationships from {schema_name}.tb_relationships r where r.search_id = h.id limit 1) relationships
+  from {schema_name}.tb_search_history h
+  inner join {schema_name}.tb_search_results s on h.request_id = s.request_id
   where h.generated_user_id = $1
   group by h.id, h.request_id, h.linkedin_profile_url, h.user_role,
            h.user_organisation_type, h.user_business_type,
@@ -388,6 +392,7 @@ select
                     relevance=doc.get("document_relevancy_score_reasoning", ""),
                     relevancy_score=doc.get("document_relevancy_score", "not_relevant"),
                     document_path=doc.get("document_path", ""),
+                    original_path=doc.get("original_path", ""),
                     main_keyword=doc.get("document_main_keyword", ""),
                     image=doc.get("document_image"),
                     links=doc.get("document_links") or [],
