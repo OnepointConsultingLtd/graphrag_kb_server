@@ -337,14 +337,20 @@ async def search_history(request: web.Request) -> web.Response:
               status: "error"
               message: "No search history found"
     """
+
     async def handle_search_history(project_dir: Path, body: dict) -> web.Response:
         # Get the project details first
         simple_project = extract_elements_from_path(project_dir)
         schema_name = simple_project.schema_name
         search_history = await get_search_history(
-          body["generated_user_id"], schema_name, body.get("offset", 0), body.get("limit", 10)
+            body["generated_user_id"],
+            schema_name,
+            body.get("offset", 0),
+            body.get("limit", 10),
         )
-        return web.json_response(search_history.model_dump(mode="json"), headers=CORS_HEADERS)
+        return web.json_response(
+            search_history.model_dump(mode="json"), headers=CORS_HEADERS
+        )
 
     return await handle_error(
         await _handle_request(request, handle_search_history), request=request

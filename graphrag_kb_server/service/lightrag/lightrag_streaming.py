@@ -100,9 +100,7 @@ def _extract_references_from_response(raw_response: str) -> list[dict]:
     return []
 
 
-async def _enrich_references(
-    references: list[dict], project_dir: Path
-) -> list[dict]:
+async def _enrich_references(references: list[dict], project_dir: Path) -> list[dict]:
     """Take raw reference dicts, filter out KG types, deduplicate, and attach
     links + images via the existing add_links_to_response pipeline."""
     if not references:
@@ -111,9 +109,7 @@ async def _enrich_references(
     references = [ref for ref in references if ref.get("type") != "KG"]
     references = list({r.get("file", ""): r for r in references}.values())
 
-    dummy_response = ChatResponse(
-        response={"references": references}
-    )
+    dummy_response = ChatResponse(response={"references": references})
     enriched = await add_links_to_response(dummy_response, project_dir)
     if enriched and isinstance(enriched.response, dict):
         return enriched.response.get("references", [])

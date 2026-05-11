@@ -36,8 +36,8 @@ SCORE_THRESHOLD = 0.5
 
 
 def is_abbreviation_of(short: str, long: str) -> bool:
-      initials = "".join(w[0].upper() for w in long.split() if w)
-      return short.upper() == initials
+    initials = "".join(w[0].upper() for w in long.split() if w)
+    return short.upper() == initials
 
 
 def remove_abbreviations(entities: list[EntityWithScore]) -> list[EntityWithScore]:
@@ -55,7 +55,9 @@ def remove_abbreviations(entities: list[EntityWithScore]) -> list[EntityWithScor
 
 def remove_abbreviations_from_match_output(match_output: MatchOutput) -> MatchOutput:
     for _key, entity_list in match_output.entity_dict.items():
-        match_output.entity_dict[_key] = EntityList(entities=remove_abbreviations(entity_list.entities))
+        match_output.entity_dict[_key] = EntityList(
+            entities=remove_abbreviations(entity_list.entities)
+        )
     return match_output
 
 

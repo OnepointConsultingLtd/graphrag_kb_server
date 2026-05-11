@@ -9,10 +9,14 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 
-async def extract_images_from_docx(project_folder: Path, image_format: str = "png") -> list[str | None]:
+async def extract_images_from_docx(
+    project_folder: Path, image_format: str = "png"
+) -> list[str | None]:
     logger.info(f"Extracting images from Word documents in {project_folder}")
     docx_paths = list(project_folder.glob("**/original_input/**/*.docx"))
-    tasks = [_extract_image_from_docx(docx_path, image_format) for docx_path in docx_paths]
+    tasks = [
+        _extract_image_from_docx(docx_path, image_format) for docx_path in docx_paths
+    ]
     results = await asyncio.gather(*tasks)
     return [path for path in results if path is not None]
 
@@ -46,11 +50,15 @@ def _sync_extract_image_from_docx(docx_path: Path, image_format: str) -> str | N
         doc.Close()
 
 
-async def _extract_image_from_docx(docx_path: Path, image_format: str = "png") -> str | None:
+async def _extract_image_from_docx(
+    docx_path: Path, image_format: str = "png"
+) -> str | None:
     assert docx_path.exists(), f"DOCX file {docx_path} does not exist"
     if docx_path.suffix.lower() != ".docx":
         return None
-    return await asyncio.to_thread(_sync_extract_image_from_docx, docx_path, image_format)
+    return await asyncio.to_thread(
+        _sync_extract_image_from_docx, docx_path, image_format
+    )
 
 
 def get_docx_image_path(docx_path: Path, image_format: str = "png") -> Path | None:

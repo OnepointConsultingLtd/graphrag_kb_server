@@ -25,6 +25,7 @@ from graphrag_kb_server.service.lightrag.lightrag_init import (
     initialize_rag,
     lightrag_cache,
 )
+from graphrag_kb_server.service.document_chunk_service import save_document_chunks
 from graphrag_kb_server.service.link_extraction_service import save_links
 from graphrag_kb_server.service.pdf_image_extraction import extract_images_from_pdfs
 
@@ -169,3 +170,4 @@ async def prepare_project_extras(project_folder: Path):
     await extract_images_from_pdfs(project_folder)
     await extract_images_from_docx(project_folder, image_format="png")
     await save_path_properties(project_folder, insert_if_not_exists=True)
+    await save_document_chunks(project_folder, insert_if_not_exists=True)

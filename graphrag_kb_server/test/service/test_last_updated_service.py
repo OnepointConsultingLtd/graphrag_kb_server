@@ -5,7 +5,6 @@ Minimal synthetic files are created via tmp_path so the tests have no
 external dependencies on checked-in binary fixtures.
 """
 
-import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -15,6 +14,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_docx(path: Path, modified: datetime) -> Path:
     """Write a minimal .docx file with a specific modified timestamp."""
@@ -38,25 +38,29 @@ def _make_pdf(path: Path, mod_date_str: str | None = None) -> Path:
     content_length = len(content_stream)
 
     pdf = (
-        f"%PDF-1.4\n"
-        f"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-        f"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
-        f"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\nendobj\n"
-        f"4 0 obj\n<< /Length {content_length} >>\nstream\n"
-    ).encode() + content_stream + (
-        f"\nendstream\nendobj\n"
-        f"5 0 obj\n<< /ModDate ({mod_date_str}) >>\nendobj\n"
-        f"xref\n0 6\n"
-        f"0000000000 65535 f \n"
-        f"0000000009 00000 n \n"
-        f"0000000058 00000 n \n"
-        f"0000000115 00000 n \n"
-        f"0000000266 00000 n \n"
-        f"0000000{350 + content_length:06d} 00000 n \n"
-        f"trailer\n<< /Size 6 /Root 1 0 R /Info 5 0 R >>\n"
-        f"startxref\n{400 + content_length}\n"
-        f"%%EOF\n"
-    ).encode()
+        (
+            f"%PDF-1.4\n"
+            f"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+            f"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+            f"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\nendobj\n"
+            f"4 0 obj\n<< /Length {content_length} >>\nstream\n"
+        ).encode()
+        + content_stream
+        + (
+            f"\nendstream\nendobj\n"
+            f"5 0 obj\n<< /ModDate ({mod_date_str}) >>\nendobj\n"
+            f"xref\n0 6\n"
+            f"0000000000 65535 f \n"
+            f"0000000009 00000 n \n"
+            f"0000000058 00000 n \n"
+            f"0000000115 00000 n \n"
+            f"0000000266 00000 n \n"
+            f"0000000{350 + content_length:06d} 00000 n \n"
+            f"trailer\n<< /Size 6 /Root 1 0 R /Info 5 0 R >>\n"
+            f"startxref\n{400 + content_length}\n"
+            f"%%EOF\n"
+        ).encode()
+    )
 
     path.write_bytes(pdf)
     return path
@@ -66,15 +70,19 @@ def _make_pdf(path: Path, mod_date_str: str | None = None) -> Path:
 # _parse_pdf_date
 # ---------------------------------------------------------------------------
 
+
 class TestParsePdfDate:
 
     def _parse(self, raw: str):
         from graphrag_kb_server.service.last_updated_service import _parse_pdf_date
+
         return _parse_pdf_date(raw)
 
     def test_positive_offset(self):
         result = self._parse("D:20240315143022+01'00'")
-        assert result == datetime(2024, 3, 15, 14, 30, 22, tzinfo=timezone(timedelta(hours=1)))
+        assert result == datetime(
+            2024, 3, 15, 14, 30, 22, tzinfo=timezone(timedelta(hours=1))
+        )
 
     def test_utc_z(self):
         result = self._parse("D:20240101120000Z")
@@ -101,6 +109,7 @@ class TestParsePdfDate:
 # ---------------------------------------------------------------------------
 # get_last_updated — text / unknown file type
 # ---------------------------------------------------------------------------
+
 
 class TestGetLastUpdatedFilesystem:
 
@@ -137,6 +146,7 @@ class TestGetLastUpdatedFilesystem:
 # get_last_updated — .docx
 # ---------------------------------------------------------------------------
 
+
 class TestGetLastUpdatedDocx:
 
     def test_reads_modified_property(self, tmp_path):
@@ -168,6 +178,7 @@ class TestGetLastUpdatedDocx:
 # get_last_updated — .pdf
 # ---------------------------------------------------------------------------
 
+
 class TestGetLastUpdatedPdf:
 
     def test_reads_moddate_from_pdf(self, tmp_path):
@@ -183,7 +194,10 @@ class TestGetLastUpdatedPdf:
         assert result.tzinfo is not None
 
     def test_fallback_to_filesystem_when_no_moddate(self, tmp_path):
-        from graphrag_kb_server.service.last_updated_service import get_last_updated, _last_updated_filesystem
+        from graphrag_kb_server.service.last_updated_service import (
+            get_last_updated,
+            _last_updated_filesystem,
+        )
 
         # Write a plain text file renamed to .pdf so there is no /ModDate
         fake_pdf = tmp_path / "empty.pdf"
@@ -202,6 +216,7 @@ class TestGetLastUpdatedPdf:
 # _last_updated_docx / _last_updated_pdf unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestInternalHelpers:
 
     def test_last_updated_docx_returns_datetime(self, tmp_path):
@@ -214,7 +229,9 @@ class TestInternalHelpers:
         assert result.year == 2022
 
     def test_last_updated_filesystem_is_timezone_aware(self, tmp_path):
-        from graphrag_kb_server.service.last_updated_service import _last_updated_filesystem
+        from graphrag_kb_server.service.last_updated_service import (
+            _last_updated_filesystem,
+        )
 
         f = tmp_path / "file.txt"
         f.write_text("x")

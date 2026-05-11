@@ -9,7 +9,9 @@ from graphrag_kb_server.service.db.connection_pool import (
     fetch_one,
 )
 
-from graphrag_kb_server.service.db.db_persistence_path_properties import TB_PATH_PROPERTIES
+from graphrag_kb_server.service.db.db_persistence_path_properties import (
+    TB_PATH_PROPERTIES,
+)
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
@@ -130,7 +132,9 @@ async def insert_search_query(
         if len(category_entities.entities) > 2:
             topic_3 = category_entities.entities[2].entity
     biggest_challenge = document_search_query.biggest_challenge
-    _, query_digest_sha256 = content_sha256_combined(create_search_key(document_search_query), project_dir)
+    _, query_digest_sha256 = content_sha256_combined(
+        create_search_key(document_search_query), project_dir
+    )
     search_history_id = await execute_query_with_return(
         f"""
 INSERT INTO {schema_name}.{TB_SEARCH_HISTORY} 
@@ -239,11 +243,13 @@ def create_search_key(document_search_query: DocumentSearchQuery) -> str:
         "question": document_search_query.question or "",
         "biggest_challenge": document_search_query.biggest_challenge or "",
         "user_profile": document_search_query.user_profile or "",
-        "topics": sorted([
-            i.entity
-            for v in document_search_query.topics_of_interest.entity_dict.values()
-            for i in v.entities
-        ]),
+        "topics": sorted(
+            [
+                i.entity
+                for v in document_search_query.topics_of_interest.entity_dict.values()
+                for i in v.entities
+            ]
+        ),
     }
     return json.dumps(data, sort_keys=True, separators=(",", ":"))
 
@@ -334,7 +340,9 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND R.UPDATED_AT > now() - interv
     )
 
 
-async def get_search_history(generated_user_id: str, schema_name: str, offset: int = 0, limit: int = 10) -> SearchHistory | None:
+async def get_search_history(
+    generated_user_id: str, schema_name: str, offset: int = 0, limit: int = 10
+) -> SearchHistory | None:
     search_history = await fetch_all(
         f"""
 select
@@ -377,7 +385,9 @@ select
   order by h.created_at desc
   offset $2 limit $3;
 """,
-        generated_user_id, offset, limit,
+        generated_user_id,
+        offset,
+        limit,
     )
     if len(search_history) == 0:
         return None
@@ -412,10 +422,10 @@ select
                 biggest_challenge=row["biggest_challenge"],
                 documents=documents,
                 response=row["response"],
-                relationships=RelationshipsJSON(relationships=row["relationships"], search_id=row["id"]),
+                relationships=RelationshipsJSON(
+                    relationships=row["relationships"], search_id=row["id"]
+                ),
                 created_at=row["created_at"],
             )
         )
-    return SearchHistory(
-        results=results
-    )
+    return SearchHistory(results=results)

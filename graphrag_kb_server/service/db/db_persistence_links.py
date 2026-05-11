@@ -91,7 +91,9 @@ SELECT * FROM {schema_name}.{TB_PATH_LINKS} WHERE PROJECT_ID = $1;
 
 
 async def get_links_by_path(schema_name: str, project_id: int, path: str) -> list[str]:
-    logger.info(f"Getting links by path {path} for project {project_id} in schema {schema_name}")
+    logger.info(
+        f"Getting links by path {path} for project {project_id} in schema {schema_name}"
+    )
     pool = await init_pool()
     async with pool.acquire() as conn:
         results = await conn.fetch(

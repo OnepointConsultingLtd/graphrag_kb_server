@@ -1,4 +1,3 @@
-import datetime
 import re
 import json
 from pathlib import Path
@@ -15,8 +14,9 @@ from graphrag_kb_server.service.db.common_operations import (
     get_project_id,
 )
 from graphrag_kb_server.service.db.db_persistence_links import get_links_by_path
-from graphrag_kb_server.service.db.db_persistence_path_properties import get_lastmodified_by_path
-from graphrag_kb_server.service.file_find_service import find_original_file
+from graphrag_kb_server.service.db.db_persistence_path_properties import (
+    get_lastmodified_by_path,
+)
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
@@ -46,7 +46,8 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
                     )
                 case _:
                     raise web.HTTPBadRequest(
-                        text=f"Unsupported search type for LightRAG: {search}", headers=CORS_HEADERS
+                        text=f"Unsupported search type for LightRAG: {search}",
+                        headers=CORS_HEADERS,
                     )
         case Engine.CAG:
             text_response = await cag_get_response(
@@ -89,7 +90,9 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
     raise web.HTTPBadRequest(text="Please make sure the format is specified.")
 
 
-async def add_links_to_response(chat_response: ChatResponse, project_dir: Path) -> ChatResponse:
+async def add_links_to_response(
+    chat_response: ChatResponse, project_dir: Path
+) -> ChatResponse:
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id(
@@ -101,19 +104,24 @@ async def add_links_to_response(chat_response: ChatResponse, project_dir: Path) 
         if chat_response.response.get("references"):
             # If the reference is type KG remove it from the response.
             chat_response.response["references"] = [
-                ref for ref in chat_response.response["references"]
+                ref
+                for ref in chat_response.response["references"]
                 if ref["type"] != "KG"
             ]
             # Dedupe the references based on the "file" field.
-            chat_response.response["references"] = list({r["file"]: r for r in chat_response.response["references"]}.values())
+            chat_response.response["references"] = list(
+                {r["file"]: r for r in chat_response.response["references"]}.values()
+            )
             for reference in chat_response.response["references"]:
                 file_path = Path(reference["file"])
-                links_image_last_modified = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+                links_image_last_modified = await get_links_and_image_by_path(
+                    file_path, schema_name, project_id, project_dir
+                )
                 links, image_path, last_modified, original_path = (
-                    links_image_last_modified.links, 
-                    links_image_last_modified.image, 
-                    links_image_last_modified.last_modified, 
-                    links_image_last_modified.original_path
+                    links_image_last_modified.links,
+                    links_image_last_modified.image,
+                    links_image_last_modified.last_modified,
+                    links_image_last_modified.original_path,
                 )
                 reference["links"] = links
                 if image_path is not None:
@@ -125,12 +133,14 @@ async def add_links_to_response(chat_response: ChatResponse, project_dir: Path) 
         elif chat_response.response.get("documents"):
             for document in chat_response.response["documents"]:
                 file_path = Path(document["document_path"])
-                links_image_last_modified = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+                links_image_last_modified = await get_links_and_image_by_path(
+                    file_path, schema_name, project_id, project_dir
+                )
                 links, image_path, last_modified, original_path = (
                     links_image_last_modified.links,
                     links_image_last_modified.image,
                     links_image_last_modified.last_modified,
-                    links_image_last_modified.original_path
+                    links_image_last_modified.original_path,
                 )
                 document["links"] = links
                 if image_path is not None:
@@ -139,11 +149,13 @@ async def add_links_to_response(chat_response: ChatResponse, project_dir: Path) 
                     document["last_modified"] = last_modified.isoformat()
                 if original_path is not None:
                     document["original_path"] = original_path
-        
+
     return chat_response
 
 
-async def enrich_text_units_context(text_units_context: list[dict], project_dir: Path) -> None:
+async def enrich_text_units_context(
+    text_units_context: list[dict], project_dir: Path
+) -> None:
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id(
@@ -151,14 +163,16 @@ async def enrich_text_units_context(text_units_context: list[dict], project_dir:
     )
     for text_unit in text_units_context:
         file = text_unit.get("file_path")
-        if file is not None:    
+        if file is not None:
             file_path = Path(file)
-            links_image_last_modified = await get_links_and_image_by_path(file_path, schema_name, project_id, project_dir)
+            links_image_last_modified = await get_links_and_image_by_path(
+                file_path, schema_name, project_id, project_dir
+            )
             links, image_path, last_modified, _original_path = (
                 links_image_last_modified.links,
                 links_image_last_modified.image,
                 links_image_last_modified.last_modified,
-                links_image_last_modified.original_path
+                links_image_last_modified.original_path,
             )
             text_unit["links"] = links
             if image_path is not None:
@@ -167,12 +181,8 @@ async def enrich_text_units_context(text_units_context: list[dict], project_dir:
                 text_unit["last_modified"] = last_modified.isoformat()
 
 
-
 async def get_links_and_image_by_path(
-    file_path: Path, 
-    schema_name: str, 
-    project_id: int, 
-    project_dir: Path
+    file_path: Path, schema_name: str, project_id: int, project_dir: Path
 ) -> LinksImageLastModified:
     # Convert path first (strips Windows drive prefix e.g. C:/ → /) so it
     # resolves correctly on Linux even when the index was built on Windows.
@@ -181,15 +191,14 @@ async def get_links_and_image_by_path(
 
     # DB lookups have no filesystem dependency — always run them.
     links = await get_links_by_path(schema_name, project_id, file_path_str)
-    last_modified = await get_lastmodified_by_path(schema_name, file_path_str, project_id)
+    last_modified = await get_lastmodified_by_path(
+        schema_name, file_path_str, project_id
+    )
 
     # Image lookup requires the file to exist on disk.
     if not file_path.exists():
         return LinksImageLastModified(
-            links=links, 
-            image=None, 
-            last_modified=last_modified, 
-            original_path=None
+            links=links, image=None, last_modified=last_modified, original_path=None
         )
 
     original_input = project_dir / "original_input"
@@ -216,10 +225,7 @@ async def get_links_and_image_by_path(
         pptx_exists, pptx_path = _doc_exists(pptx_path)
         if not pdf_exists and not docx_exists and not pptx_exists:
             return LinksImageLastModified(
-                links=links, 
-                image=None, 
-                last_modified=last_modified, 
-                original_path=None
+                links=links, image=None, last_modified=last_modified, original_path=None
             )
         # Now get the image
         if pdf_exists:
@@ -237,25 +243,22 @@ async def get_links_and_image_by_path(
         if image_path.exists():
             image_path = image_path.relative_to(project_dir)
             return LinksImageLastModified(
-                links=links, 
-                image=image_path.as_posix(), 
-                last_modified=last_modified, 
-                original_path=original_path.as_posix()
+                links=links,
+                image=image_path.as_posix(),
+                last_modified=last_modified,
+                original_path=original_path.as_posix(),
             )
         else:
             return LinksImageLastModified(
-                links=links, 
-                image=None, 
-                last_modified=last_modified, 
-                original_path=original_path.as_posix()
+                links=links,
+                image=None,
+                last_modified=last_modified,
+                original_path=original_path.as_posix(),
             )
     except Exception as e:
         logger.error(f"Error getting image by path: {e}")
         return LinksImageLastModified(
-            links=links, 
-            image=None, 
-            last_modified=last_modified, 
-            original_path=None
+            links=links, image=None, last_modified=last_modified, original_path=None
         )
 
 

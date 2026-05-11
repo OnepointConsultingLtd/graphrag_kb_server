@@ -136,9 +136,13 @@ async def structured_completion(
                 logger.error(f"Non-retryable error in structured completion: {e}")
                 raise
             if attempt == MAX_RETRIES - 1:
-                logger.error(f"Structured completion failed after {MAX_RETRIES} attempts: {e}")
+                logger.error(
+                    f"Structured completion failed after {MAX_RETRIES} attempts: {e}"
+                )
                 raise
-            delay = 2 ** attempt
-            logger.warning(f"Retryable error (attempt {attempt + 1}/{MAX_RETRIES}), retrying in {delay}s: {e}")
+            delay = 2**attempt
+            logger.warning(
+                f"Retryable error (attempt {attempt + 1}/{MAX_RETRIES}), retrying in {delay}s: {e}"
+            )
             raw_output = None
             await asyncio.sleep(delay)

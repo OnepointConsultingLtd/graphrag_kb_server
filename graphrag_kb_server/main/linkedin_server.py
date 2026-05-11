@@ -104,6 +104,7 @@ async def linkedin_profile(request: web.Request) -> web.Response:
                         from graphrag_kb_server.service.linkedin.apify_service import (
                             apify_extract_profile,
                         )
+
                         try:
                             profile = await apify_extract_profile(
                                 profile_id,
@@ -113,7 +114,9 @@ async def linkedin_profile(request: web.Request) -> web.Response:
                         except Exception as e:
                             logger.error(f"Error extracting profile: {e}")
                             return web.json_response(
-                                {"error": f"Failed to extract profile ({profile_id}). Please try again later."},
+                                {
+                                    "error": f"Failed to extract profile ({profile_id}). Please try again later."
+                                },
                                 status=500,
                             )
                         if profile is None:

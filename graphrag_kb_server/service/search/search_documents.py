@@ -9,7 +9,11 @@ from graphrag_kb_server.model.search.search import (
 )
 from graphrag_kb_server.model.search.match_query import MatchOutput
 from graphrag_kb_server.model.search.entity import Abstraction
-from graphrag_kb_server.model.rag_parameters import ContextFormat, QueryParameters, ContextParameters
+from graphrag_kb_server.model.rag_parameters import (
+    ContextFormat,
+    QueryParameters,
+    ContextParameters,
+)
 from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search, PROMPTS
@@ -32,15 +36,14 @@ SEPARATORS = ["<SEP>", ";"]
 
 def _is_absolute_path(path: str) -> bool:
     """Return True if path is absolute on Linux (/...) or Windows (C:/...)."""
-    return path.startswith("/") or (len(path) >= 3 and path[1] == ":" and path[2] in "/\\")
+    return path.startswith("/") or (
+        len(path) >= 3 and path[1] == ":" and path[2] in "/\\"
+    )
 
 
 def _has_relative_paths(documents: list) -> bool:
     """Return True if any document has a relative (non-absolute) path."""
-    return any(
-        not _is_absolute_path(doc.get("document_path", ""))
-        for doc in documents
-    )
+    return any(not _is_absolute_path(doc.get("document_path", "")) for doc in documents)
 
 
 async def retrieve_relevant_documents(
@@ -70,7 +73,9 @@ async def retrieve_relevant_documents(
             sum(1 for d in documents if not d.get("document_path", "").startswith("/")),
         )
         if callback is not None:
-            await callback.callback("Retrying search to obtain absolute document paths…")
+            await callback.callback(
+                "Retrying search to obtain absolute document paths…"
+            )
         chat_response = await search_documents(project_dir, query, callback)
         chat_response = await add_links_to_response(chat_response, project_dir)
         documents = chat_response.response["documents"]
@@ -86,7 +91,13 @@ async def retrieve_relevant_documents(
         request_id=query.request_id,
         documents=documents,
         response=chat_response.response["response"],
-        relationships=RelationshipsJSON(relationships=json.dumps(chat_response.relations_context), search_id=-1) if chat_response.relations_context else None,
+        relationships=(
+            RelationshipsJSON(
+                relationships=json.dumps(chat_response.relations_context), search_id=-1
+            )
+            if chat_response.relations_context
+            else None
+        ),
     )
 
 

@@ -3,15 +3,27 @@ from pathlib import Path
 from apify_client import ApifyClientAsync
 
 from graphrag_kb_server.callbacks.callback_support import BaseCallback
-from graphrag_kb_server.model.linkedin.profile import Profile, Skill, Experience, Company
+from graphrag_kb_server.model.linkedin.profile import (
+    Profile,
+    Skill,
+    Experience,
+    Company,
+)
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
-from graphrag_kb_server.service.db.db_persistence_profile import insert_profile, select_profile
+from graphrag_kb_server.service.db.db_persistence_profile import (
+    insert_profile,
+    select_profile,
+)
 from graphrag_kb_server.service.linkedin.linkedin_functions import correct_linkedin_url
 
 
-LINKEDIN_ACTOR_ID = os.getenv("LINKEDIN_ACTOR_ID", "harvestapi/linkedin-profile-scraper")
-LINKEDIN_ACTOR_ID_2 = os.getenv("LINKEDIN_ACTOR_ID_2", "dev_fusion/linkedin-profile-scraper")
+LINKEDIN_ACTOR_ID = os.getenv(
+    "LINKEDIN_ACTOR_ID", "harvestapi/linkedin-profile-scraper"
+)
+LINKEDIN_ACTOR_ID_2 = os.getenv(
+    "LINKEDIN_ACTOR_ID_2", "dev_fusion/linkedin-profile-scraper"
+)
 
 WEBSITE_CRAWLER_ACTOR_ID = "apify/website-content-crawler"
 
@@ -29,9 +41,7 @@ def _convert_to_profile(items: list[dict], profile: str) -> Profile:
                 Experience(
                     location=exp.get("jobLocation", "") or "",
                     description=exp.get("jobDescription", "") or "",
-                    company=Company(
-                        name=exp.get("companyName", "") or ""
-                    ),
+                    company=Company(name=exp.get("companyName", "") or ""),
                 )
             )
         except Exception as e:
@@ -43,9 +53,14 @@ def _convert_to_profile(items: list[dict], profile: str) -> Profile:
         email=f"{profile}@linkedin.com",
         cv=items.get("about", "") or "",
         industry_name=items.get("companyIndustry", "") or "",
-        geo_location=items.get("jobLocation", "") or items.get("location", {}).get("linkedinText", "") or "",
+        geo_location=items.get("jobLocation", "")
+        or items.get("location", {}).get("linkedinText", "")
+        or "",
         linkedin_profile_url=items.get("linkedinUrl", "") or "",
-        skills=[Skill(name=s.get("title", "") or s.get("name", "")) for s in items.get("skills", [])],
+        skills=[
+            Skill(name=s.get("title", "") or s.get("name", ""))
+            for s in items.get("skills", [])
+        ],
         experiences=experiences,
     )
     return profile_content.model_copy(
@@ -53,7 +68,9 @@ def _convert_to_profile(items: list[dict], profile: str) -> Profile:
     )
 
 
-async def apify_crawl_website(website_url: str, callback: BaseCallback | None = None, max_crawl_pages: int = 50) -> list[dict]:
+async def apify_crawl_website(
+    website_url: str, callback: BaseCallback | None = None, max_crawl_pages: int = 50
+) -> list[dict]:
     if callback:
         await callback.callback(f"Starting crawling for {website_url}...")
     run_input = {
@@ -72,8 +89,9 @@ def choose_run_input(profile_url: str, actor_id: str) -> dict:
     else:
         return {
             "profileScraperMode": "Profile details no email ($4 per 1k)",
-            "queries": [profile_url]
+            "queries": [profile_url],
         }
+
 
 async def apify_extract_profile_items(
     profile_url: str,
@@ -91,7 +109,9 @@ async def apify_extract_profile_items(
     return res
 
 
-async def apify_extract_from_url(run_input: dict, actor_id: str, callback: BaseCallback | None = None) -> list[dict]:
+async def apify_extract_from_url(
+    run_input: dict, actor_id: str, callback: BaseCallback | None = None
+) -> list[dict]:
     run = await client.actor(actor_id).start(run_input=run_input)
     run_id = run["id"]
     status = run.get("status", "UNKNOWN")
@@ -178,25 +198,20 @@ if __name__ == "__main__":
             json.dump(profile.model_dump(), f, indent=4)
 
     def extract_profiles():
-        profiles = [
-            "gil-palma-fernandes"
-        ]
+        profiles = ["gil-palma-fernandes"]
 
         async def apify_extract_profile_to_file():
             for profile in profiles:
                 profile_content = await apify_extract_profile(profile)
-                write_to_file_profile(
-                    profile_content, f"data/{profile}_profile.json"
-                )
+                write_to_file_profile(profile_content, f"data/{profile}_profile.json")
 
         asyncio.run(apify_extract_profile_to_file())
 
     async def extract_onepoint():
         website_url = "https://www.onepointltd.com/"
         write_to_file(
-            await apify_crawl_website(website_url,  max_crawl_pages=20), f"data/onepoint_raw.json"
+            await apify_crawl_website(website_url, max_crawl_pages=20),
+            "data/onepoint_raw.json",
         )
 
     extract_profiles()
-
-    

@@ -47,7 +47,11 @@ DROP TABLE IF EXISTS {schema_name}.{TB_PATH_PROPERTIES};
     )
 
 
-async def upsert_path_properties(schema_name: str, path_properties: list[PathProperties], insert_if_not_exists: bool = False):
+async def upsert_path_properties(
+    schema_name: str,
+    path_properties: list[PathProperties],
+    insert_if_not_exists: bool = False,
+):
     """Insert or update a list of PathProperties records.
 
     On conflict (PATH, PROJECT_ID) the LAST_MODIFIED and UPDATED_AT columns
@@ -73,7 +77,9 @@ async def upsert_path_properties(schema_name: str, path_properties: list[PathPro
             # time zone) rejects aware datetimes from asyncpg.
             last_modified = props.last_modified
             if last_modified is not None and last_modified.tzinfo is not None:
-                last_modified = last_modified.astimezone(timezone.utc).replace(tzinfo=None)
+                last_modified = last_modified.astimezone(timezone.utc).replace(
+                    tzinfo=None
+                )
             await conn.execute(
                 f"""
 INSERT INTO {schema_name}.{TB_PATH_PROPERTIES} (PATH, ORIGINAL_PATH, LAST_MODIFIED, PROJECT_ID)
@@ -94,7 +100,9 @@ async def find_path_properties(
     schema_name: str, path: str, project_id: int
 ) -> PathProperties | None:
     path = strip_drive(path)
-    logger.info(f"Finding path properties for path {path} for project {project_id} in schema {schema_name}")
+    logger.info(
+        f"Finding path properties for path {path} for project {project_id} in schema {schema_name}"
+    )
     """Return the PathProperties for a given path and project, or None if absent."""
     row = await fetch_one(
         f"""
@@ -118,14 +126,18 @@ WHERE PATH = $1 AND PROJECT_ID = $2;
     )
 
 
-async def get_lastmodified_by_path(schema_name: str, path: str, project_id: int) -> datetime.datetime | None:
+async def get_lastmodified_by_path(
+    schema_name: str, path: str, project_id: int
+) -> datetime.datetime | None:
     found = await find_path_properties(schema_name, path, project_id)
     if found is None:
         return None
     return found.last_modified
 
 
-async def find_all_path_properties(schema_name: str, project_id: int) -> list[PathProperties]:
+async def find_all_path_properties(
+    schema_name: str, project_id: int
+) -> list[PathProperties]:
     """Return all PathProperties records for a given project."""
     rows = await fetch_all(
         f"""

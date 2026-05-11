@@ -105,10 +105,12 @@ def _extract_links_from_text(text: str) -> list[str]:
 
 
 if __name__ == "__main__":
-    links = _extract_links_from_text("""
+    links = _extract_links_from_text(
+        """
 Metadata
 URL: https://www.onepointltd.com/onepoint-labs/
 Last Scraped: 2025-08-09 14:11:04
 Content Type: Web Page
-""")
+"""
+    )
     print(links)

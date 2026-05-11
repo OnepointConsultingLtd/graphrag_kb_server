@@ -6,7 +6,10 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from graphrag_kb_server.callbacks.callback_support import BaseCallback
-from graphrag_kb_server.service.file_conversion import convert_audio, convert_pdf_docx_pptx_to_markdown
+from graphrag_kb_server.service.file_conversion import (
+    convert_audio,
+    convert_pdf_docx_pptx_to_markdown,
+)
 from graphrag_kb_server.service.file_find_service import (
     ORIGINAL_INPUT_FOLDER,
     INPUT_FOLDER,
@@ -27,10 +30,21 @@ def create_input_folders(project_folder: Path) -> tuple[Path, Path]:
     return input_folder, original_folder
 
 
-async def save_webpage_to_text(project_folder: Path, webpage_url: str, max_crawl_pages=100, callback: BaseCallback | None = None):
+async def save_webpage_to_text(
+    project_folder: Path,
+    webpage_url: str,
+    max_crawl_pages=100,
+    callback: BaseCallback | None = None,
+):
     input_folder, original_folder = create_input_folders(project_folder)
-    records = await apify_crawl_website(webpage_url, max_crawl_pages=max_crawl_pages, callback=callback)
-    url_text_records = [(record["url"], record["markdown"]) for record in records if record["markdown"] is not None]
+    records = await apify_crawl_website(
+        webpage_url, max_crawl_pages=max_crawl_pages, callback=callback
+    )
+    url_text_records = [
+        (record["url"], record["markdown"])
+        for record in records
+        if record["markdown"] is not None
+    ]
     for target_folder in [input_folder, original_folder]:
         for i, (url, text) in enumerate(url_text_records):
             url_splitted = url.split("/")
@@ -75,7 +89,11 @@ async def unzip_file(upload_folder: Path, zip_file: Path):
 
 async def convert_to_text(input_folder: Path):
     """Convert all markdown files to text files."""
-    for file in chain(input_folder.glob("**/*.pdf"), input_folder.glob("**/*.docx"), input_folder.glob("**/*.pptx")):
+    for file in chain(
+        input_folder.glob("**/*.pdf"),
+        input_folder.glob("**/*.docx"),
+        input_folder.glob("**/*.pptx"),
+    ):
         try:
             await convert_pdf_docx_pptx_to_markdown(file)
         except Exception as e:
@@ -85,9 +103,13 @@ async def convert_to_text(input_folder: Path):
         text = file.read_text(encoding="utf-8")
         file.with_suffix(".txt").write_text(text, encoding="utf-8")
     audio_extensions = ["mp3", "wav", "m4a", "ogg", "flac"]
-    for file in chain.from_iterable(input_folder.glob(f"**/*.{ext}") for ext in audio_extensions):
+    for file in chain.from_iterable(
+        input_folder.glob(f"**/*.{ext}") for ext in audio_extensions
+    ):
         try:
-            await convert_audio(file, language="en") # This is a strong assumption that the audio is in English
+            await convert_audio(
+                file, language="en"
+            )  # This is a strong assumption that the audio is in English
         except Exception as e:
             log.error(f"Failed to convert {file} to audio")
             log.exception(e)
@@ -101,4 +123,11 @@ if __name__ == "__main__":
         async def callback(self, message: str):
             print(message)
 
-    asyncio.run(save_webpage_to_text(Path("/tmp/onepointltd"), "https://www.onepointltd.com/", 5, ConsoleCallback()))
+    asyncio.run(
+        save_webpage_to_text(
+            Path("/tmp/onepointltd"),
+            "https://www.onepointltd.com/",
+            5,
+            ConsoleCallback(),
+        )
+    )

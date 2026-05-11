@@ -51,7 +51,6 @@ When retrieving documents in response to the user's question, follow these rules
 **For each retrieved document, provide:**
 
 1. **Summary** — Summarise the document in the context of the user's question and interests, in no more than 60 words.
-
 2. **Relevance** — Explain concisely why this document is relevant to the user's question and interests, addressing them directly as "you." No more than 40 words.
 
 **Sorting** — Present documents in descending order of relevance to the user's question and interests. Use the last modified date only as a tiebreaker between documents of similar relevance: prefer more recent documents, and deprioritise those modified more than 10 years ago unless they remain clearly pertinent today.
@@ -61,6 +60,8 @@ When retrieving documents in response to the user's question, follow these rules
 **References** — Do not embed citations or footnotes within your response text. A reference list will be appended automatically.
 
 **No results** — If no relevant documents are found, say so clearly and briefly.
+
+**Minimum number of documents** — Return at least 6 documents if you have them available in the document chunks.
 """
 
 question-template = """{question}. Below is my user profile that shows my interests, so base your answer on my profile.

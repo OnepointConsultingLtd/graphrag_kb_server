@@ -1,5 +1,8 @@
 from graphrag_kb_server.model.search.entity import Abstraction, EntityWithScore
-from graphrag_kb_server.service.search.matching import is_abbreviation_of, remove_abbreviations
+from graphrag_kb_server.service.search.matching import (
+    is_abbreviation_of,
+    remove_abbreviations,
+)
 
 
 def _entity(name: str, score: float = 1.0) -> EntityWithScore:
@@ -14,6 +17,7 @@ def _entity(name: str, score: float = 1.0) -> EntityWithScore:
 # ---------------------------------------------------------------------------
 # is_abbreviation_of
 # ---------------------------------------------------------------------------
+
 
 def test_abbreviation_match():
     assert is_abbreviation_of("AI", "Artificial Intelligence")
@@ -41,6 +45,7 @@ def test_abbreviation_single_word():
 # ---------------------------------------------------------------------------
 # remove_abbreviations
 # ---------------------------------------------------------------------------
+
 
 def test_empty_list():
     assert remove_abbreviations([]) == []

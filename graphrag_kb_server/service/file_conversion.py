@@ -13,6 +13,7 @@ AUDIO_FILES = [".mp3", ".wav", ".m4a", ".ogg", ".flac"]
 
 log = logging.getLogger(__name__)
 
+
 async def convert_pdf_docx_pptx_to_markdown(local_doc: Path) -> Path:
     process_result = await convert_file(local_doc, SupportedFormat.MARKDOWN)
     if len(process_result.exceptions):
@@ -22,7 +23,9 @@ async def convert_pdf_docx_pptx_to_markdown(local_doc: Path) -> Path:
     return process_result.final_path
 
 
-async def convert_audio(audio_file: Path, language="en", chunk_duration_ms=10 * 60 * 1000) -> Path:
+async def convert_audio(
+    audio_file: Path, language="en", chunk_duration_ms=10 * 60 * 1000
+) -> Path:
     suffix = audio_file.suffix
     audio = AudioSegment.from_file(audio_file)
     client = OpenAI(api_key=cfg.openai_api_key)
@@ -37,7 +40,9 @@ async def convert_audio(audio_file: Path, language="en", chunk_duration_ms=10 * 
 
         chunk_path = audio_file.parent / f"chunk_{i}{suffix}"
         chunk.export(chunk_path, format=suffix[1:])
-        text = await convert_audio_chunked(chunk_path, prompt=previous_text, language=language, client=client)
+        text = await convert_audio_chunked(
+            chunk_path, prompt=previous_text, language=language, client=client
+        )
         full_transcript.append(text)
         # Use the last ~200 words as context for the next chunk
         previous_text = " ".join(text.split()[-200:])
@@ -52,7 +57,9 @@ async def convert_audio(audio_file: Path, language="en", chunk_duration_ms=10 * 
     return output_file
 
 
-async def convert_audio_chunked(audio_file: Path, prompt: str = "", language="en", client: OpenAI = None) -> str:
+async def convert_audio_chunked(
+    audio_file: Path, prompt: str = "", language="en", client: OpenAI = None
+) -> str:
     with open(audio_file, "rb") as f:
         transcript = client.audio.transcriptions.create(
             model=cfg.audio_model,
@@ -70,10 +77,12 @@ if __name__ == "__main__":
         local_doc = Path(__file__).parent.parent.parent / "data/powerpoint/sample1.pptx"
         assert local_doc.exists(), "File does not exist"
         asyncio.run(convert_pdf_docx_pptx_to_markdown(local_doc))
-        
 
     def check_audio_conversion():
-        local_audio = Path(__file__).parent.parent.parent / "data/audio/Clustre Podcast Without Zuhlke mention.mp3"
+        local_audio = (
+            Path(__file__).parent.parent.parent
+            / "data/audio/Clustre Podcast Without Zuhlke mention.mp3"
+        )
         assert local_audio.exists(), "File does not exist"
         asyncio.run(convert_audio(local_audio, language="en"))
 

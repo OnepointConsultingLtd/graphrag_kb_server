@@ -63,6 +63,7 @@ _session_tokens: dict[str, str] = {}
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _server_base_url() -> str:
     return os.getenv("SERVER_BASE_URL", "http://localhost:9999")
 
@@ -81,6 +82,7 @@ def _resolve_token(ctx: Context) -> str:
 # ---------------------------------------------------------------------------
 # Middleware
 # ---------------------------------------------------------------------------
+
 
 class _BearerMiddleware(BaseHTTPMiddleware):
     """Extract JWT from the Authorization header and store it in a ContextVar."""
@@ -191,15 +193,14 @@ async def get_context(
         ) as response:
             body = await response.text()
             if response.status != 200:
-                raise ValueError(
-                    f"Upstream error [{response.status}]: {body}"
-                )
+                raise ValueError(f"Upstream error [{response.status}]: {body}")
             return body
 
 
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def run() -> None:
     host = os.getenv("MCP_HOST", "127.0.0.1")

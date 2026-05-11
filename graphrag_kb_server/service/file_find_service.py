@@ -5,7 +5,6 @@ from typing import Final
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
-from graphrag_kb_server.service.file_conversion import FINAL_SUFFIX
 from graphrag_kb_server.utils.file_support import strip_drive
 
 
@@ -40,7 +39,9 @@ def create_conversion_map(project_dir: Path) -> dict[str, str]:
                 if copy_path.exists():
                     conversion_map[copy_path.as_posix()] = original_file
                 else:
-                    logger.warning(f"For original file {original_file} there is no converted file {copy_path}")
+                    logger.warning(
+                        f"For original file {original_file} there is no converted file {copy_path}"
+                    )
     return conversion_map
 
 

@@ -13,14 +13,25 @@ from graphrag_kb_server.test.service.db.common_test_support import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _props(path: str, project_id: int, *, days_ago: int = 0, original_path: str | None = None) -> PathProperties:
-    modified = datetime(2024, 6, 1, 12, 0, 0, tzinfo=timezone.utc) - timedelta(days=days_ago)
-    return PathProperties(path=path, original_path=original_path, project_id=project_id, last_modified=modified)
+
+def _props(
+    path: str, project_id: int, *, days_ago: int = 0, original_path: str | None = None
+) -> PathProperties:
+    modified = datetime(2024, 6, 1, 12, 0, 0, tzinfo=timezone.utc) - timedelta(
+        days=days_ago
+    )
+    return PathProperties(
+        path=path,
+        original_path=original_path,
+        project_id=project_id,
+        last_modified=modified,
+    )
 
 
 # ---------------------------------------------------------------------------
 # DDL: create / drop
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_create_and_drop_path_properties_table():
@@ -48,6 +59,7 @@ async def test_create_and_drop_path_properties_table():
 # Upsert + find_path_properties
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_upsert_and_find_single_record():
     """A single upserted record can be retrieved by path and project_id."""
@@ -72,7 +84,9 @@ async def test_upsert_and_find_single_record():
             props = _props("/docs/report.pdf", project_id)
             await upsert_path_properties(schema_name, [props])
 
-            found = await find_path_properties(schema_name, "/docs/report.pdf", project_id)
+            found = await find_path_properties(
+                schema_name, "/docs/report.pdf", project_id
+            )
             assert found is not None
             assert found.path == "/docs/report.pdf"
             assert found.project_id == project_id
@@ -153,6 +167,7 @@ async def test_upsert_multiple_records():
 # Upsert updates LAST_MODIFIED on conflict
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_upsert_updates_last_modified_on_conflict():
     """Re-upserting the same path updates LAST_MODIFIED rather than inserting a duplicate."""
@@ -180,11 +195,15 @@ async def test_upsert_updates_last_modified_on_conflict():
             await upsert_path_properties(schema_name, [original])
 
             updated_date = datetime(2025, 1, 15, 8, 0, 0, tzinfo=timezone.utc)
-            updated = PathProperties(path=path, project_id=project_id, last_modified=updated_date)
+            updated = PathProperties(
+                path=path, project_id=project_id, last_modified=updated_date
+            )
             await upsert_path_properties(schema_name, [updated])
 
             all_records = await find_all_path_properties(schema_name, project_id)
-            assert len(all_records) == 1, "ON CONFLICT should update, not insert a duplicate"
+            assert (
+                len(all_records) == 1
+            ), "ON CONFLICT should update, not insert a duplicate"
 
             found = await find_path_properties(schema_name, path, project_id)
             assert found is not None
@@ -200,6 +219,7 @@ async def test_upsert_updates_last_modified_on_conflict():
 # ---------------------------------------------------------------------------
 # find_path_properties — miss cases
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_find_path_properties_returns_none_for_unknown_path():
@@ -220,7 +240,9 @@ async def test_find_path_properties_returns_none_for_unknown_path():
 
         try:
             await create_path_properties_table(schema_name)
-            found = await find_path_properties(schema_name, "/no/such/file.pdf", project_id)
+            found = await find_path_properties(
+                schema_name, "/no/such/file.pdf", project_id
+            )
             assert found is None
         finally:
             await drop_path_properties_table(schema_name)
@@ -267,6 +289,7 @@ async def test_find_path_properties_returns_none_for_wrong_project():
 # Timezone-aware datetime round-trip
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_last_modified_timezone_roundtrip():
     """last_modified survives a round-trip through the database as UTC."""
@@ -291,7 +314,9 @@ async def test_last_modified_timezone_roundtrip():
 
         try:
             await create_path_properties_table(schema_name)
-            props = PathProperties(path=path, project_id=project_id, last_modified=original_dt)
+            props = PathProperties(
+                path=path, project_id=project_id, last_modified=original_dt
+            )
             await upsert_path_properties(schema_name, [props])
 
             found = await find_path_properties(schema_name, path, project_id)
@@ -312,6 +337,7 @@ async def test_last_modified_timezone_roundtrip():
 # ---------------------------------------------------------------------------
 # original_path round-trip
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_original_path_roundtrip():
@@ -335,23 +361,33 @@ async def test_original_path_roundtrip():
             await create_path_properties_table(schema_name)
 
             # Record with an original_path set
-            props_with = _props("/docs/report.pdf", project_id, original_path="report.pdf")
+            props_with = _props(
+                "/docs/report.pdf", project_id, original_path="report.pdf"
+            )
             await upsert_path_properties(schema_name, [props_with])
-            found = await find_path_properties(schema_name, "/docs/report.pdf", project_id)
+            found = await find_path_properties(
+                schema_name, "/docs/report.pdf", project_id
+            )
             assert found is not None
             assert found.original_path == "report.pdf"
 
             # Record with original_path left as None
             props_null = _props("/docs/notes.docx", project_id)
             await upsert_path_properties(schema_name, [props_null])
-            found_null = await find_path_properties(schema_name, "/docs/notes.docx", project_id)
+            found_null = await find_path_properties(
+                schema_name, "/docs/notes.docx", project_id
+            )
             assert found_null is not None
             assert found_null.original_path is None
 
             # Upsert updates original_path on conflict
-            props_updated = _props("/docs/report.pdf", project_id, original_path="subdir/report.pdf")
+            props_updated = _props(
+                "/docs/report.pdf", project_id, original_path="subdir/report.pdf"
+            )
             await upsert_path_properties(schema_name, [props_updated])
-            found_updated = await find_path_properties(schema_name, "/docs/report.pdf", project_id)
+            found_updated = await find_path_properties(
+                schema_name, "/docs/report.pdf", project_id
+            )
             assert found_updated is not None
             assert found_updated.original_path == "subdir/report.pdf"
         finally:

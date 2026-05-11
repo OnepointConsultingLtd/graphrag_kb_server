@@ -62,7 +62,10 @@ from graphrag_kb_server.service.lightrag.lightrag_clustering import (
     generate_communities_json,
 )
 from graphrag_kb_server.main.simple_template import HTML_CONTENT
-from graphrag_kb_server.main.query_support import enrich_text_units_context, execute_query
+from graphrag_kb_server.main.query_support import (
+    enrich_text_units_context,
+    execute_query,
+)
 from graphrag_kb_server.service.lightrag.lightrag_summary import get_summary
 from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     create_communities_gexf_for_project,
@@ -308,8 +311,11 @@ async def upload_index(request: web.Request) -> web.Response:
                 case Engine.LIGHTRAG:
                     await acreate_lightrag(
                         True, project_folder, incremental, saved_files[0]
-                    )#
-                    from graphrag_kb_server.service.project import prepare_project_extras
+                    )  #
+                    from graphrag_kb_server.service.project import (
+                        prepare_project_extras,
+                    )
+
                     await prepare_project_extras(project_folder)
                 case Engine.CAG:
                     await acreate_cag(project_folder, INITIAL_CONVERSATION_ID)
@@ -443,12 +449,16 @@ async def index_webpage(request: web.Request) -> web.Response:
               message: "No file was uploaded"
     """
 
-    async def handle_webpage_indexing(project_folder: Path, webpage_url: str, max_crawl_pages: int):
+    async def handle_webpage_indexing(
+        project_folder: Path, webpage_url: str, max_crawl_pages: int
+    ):
         from graphrag_kb_server.service.project import write_project_file
 
         try:
             write_project_file(project_folder, IndexingStatus.PREPARING)
-            await save_webpage_to_text(project_folder, webpage_url, max_crawl_pages, InfoCallback())
+            await save_webpage_to_text(
+                project_folder, webpage_url, max_crawl_pages, InfoCallback()
+            )
             write_project_file(project_folder, IndexingStatus.IN_PROGRESS)
         except Exception as e:
             write_project_file(project_folder, IndexingStatus.FAILED)
@@ -459,6 +469,7 @@ async def index_webpage(request: web.Request) -> web.Response:
         try:
             await acreate_lightrag(True, project_folder, False, None)
             from graphrag_kb_server.service.project import prepare_project_extras
+
             await prepare_project_extras(project_folder)
             write_project_file(project_folder, IndexingStatus.COMPLETED)
         except Exception as e:
@@ -487,10 +498,14 @@ async def index_webpage(request: web.Request) -> web.Response:
                         )
                         if asynchronous:
                             asyncio.create_task(
-                                handle_webpage_indexing(project_folder, webpage_url, max_crawl_pages)
+                                handle_webpage_indexing(
+                                    project_folder, webpage_url, max_crawl_pages
+                                )
                             )
                         else:
-                            await handle_webpage_indexing(project_folder, webpage_url, max_crawl_pages)
+                            await handle_webpage_indexing(
+                                project_folder, webpage_url, max_crawl_pages
+                            )
                         return web.json_response(
                             {
                                 "message": (
@@ -1310,7 +1325,8 @@ async def context(request: web.Request) -> web.Response:
                                     search=actual_search,
                                     engine=Engine.LIGHTRAG.value,
                                     context_params=context_params,
-                                    include_context=context_params.context_format == ContextFormat.JSON,
+                                    include_context=context_params.context_format
+                                    == ContextFormat.JSON,
                                     keywords=keywords,
                                     context_format=context_params.context_format,
                                 )
@@ -1328,16 +1344,21 @@ async def context(request: web.Request) -> web.Response:
                                 )
                                 match context_params.context_format:
                                     case (
-                                        ContextFormat.JSON | ContextFormat.JSON_STRING_WITH_JSON
+                                        ContextFormat.JSON
+                                        | ContextFormat.JSON_STRING_WITH_JSON
                                     ):
                                         context_data = {
                                             "entities_context": context_builder_result.entities_context,
                                             "relations_context": context_builder_result.relations_context,
                                             "text_units_context": context_builder_result.text_units_context,
                                         }
-                                        await enrich_text_units_context(context_data["text_units_context"], project_dir)
+                                        await enrich_text_units_context(
+                                            context_data["text_units_context"],
+                                            project_dir,
+                                        )
                                         if (
-                                            context_params.context_format == ContextFormat.JSON_STRING_WITH_JSON
+                                            context_params.context_format
+                                            == ContextFormat.JSON_STRING_WITH_JSON
                                         ):
                                             return web.json_response(
                                                 {

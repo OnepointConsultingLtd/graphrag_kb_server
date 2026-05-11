@@ -46,7 +46,6 @@ from lightrag.base import (
     QueryResult,
 )
 
-from graphrag_kb_server.callbacks.callback_support import BaseCallback
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.model.rag_parameters import (
     ContextFormat,
@@ -55,8 +54,13 @@ from graphrag_kb_server.model.rag_parameters import (
 )
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.chat_response import ChatResponse
-from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id_from_path
-from graphrag_kb_server.service.db.db_persistence_path_properties import get_lastmodified_by_path
+from graphrag_kb_server.service.db.common_operations import (
+    extract_elements_from_path,
+    get_project_id_from_path,
+)
+from graphrag_kb_server.service.db.db_persistence_path_properties import (
+    get_lastmodified_by_path,
+)
 from graphrag_kb_server.service.lightrag.lightrag_constants import (
     KEYWORDS_SEPARATOR,
     PREFIX_HIGH_LEVEL_KEYWORDS,
@@ -191,7 +195,9 @@ In case of a coloquial question or non context related sentence you can respond 
             text_units_context=(text_units_context if include_context_data else None),
             hl_keywords=hl_keywords if query_params.keywords else None,
             ll_keywords=ll_keywords if query_params.keywords else None,
-            response_iterator=response_dict["llm_response"].get("response_iterator", None),
+            response_iterator=response_dict["llm_response"].get(
+                "response_iterator", None
+            ),
         )
     return ChatResponse(
         question=query,
@@ -440,12 +446,10 @@ async def kg_query(
             relations_context = relations_context[: query_params.max_relation_size]
         if len(text_units_context) > 0:
             await query_params.callback.callback(
-                f"Search has found multiple documents. Summarising and re-ranking the documents..."
+                "Search has found multiple documents. Summarising and re-ranking the documents..."
             )
         else:
-            await query_params.callback.callback(
-                f"No documents found."
-            )
+            await query_params.callback.callback("No documents found.")
         await query_params.callback.callback(
             f"{PREFIX_RELATIONSHIPS} {json.dumps(relations_context, ensure_ascii=False)}"
         )
@@ -719,7 +723,7 @@ async def _build_query_context(
     )
 
     if callback is not None:
-        output = f"""Search completed."""
+        output = """Search completed."""
         await callback.callback(output)
 
     return QueryContextResult(context=context, raw_data=raw_data)
@@ -853,11 +857,9 @@ async def _build_context_str(
         return f"[{ref['reference_id']}] {ref['file_path']}{ts}"
 
     reference_list_str = "\n".join(
-        await asyncio.gather(*[
-            _fmt_ref(ref)
-            for ref in reference_list
-            if ref["reference_id"]
-        ])
+        await asyncio.gather(
+            *[_fmt_ref(ref) for ref in reference_list if ref["reference_id"]]
+        )
     )
 
     logger.info(
@@ -896,8 +898,6 @@ async def _build_context_str(
         if chunk_tracking_log:
             logger.info(f"Final chunks S+F/O: {' '.join(chunk_tracking_log)}")
 
-    
-
     result = kg_context_template.format(
         entities_str=entities_str,
         relations_str=relations_str,
@@ -922,9 +922,6 @@ async def _build_context_str(
         f"[_build_context_str] Final data after conversion: {len(final_data.get('entities', []))} entities, {len(final_data.get('relationships', []))} relationships, {len(final_data.get('chunks', []))} chunks"
     )
     return result, final_data
-
-
-
 
 
 async def _perform_kg_search(

@@ -7,7 +7,9 @@ import pdf2image
 from graphrag_kb_server.logger import logger
 
 
-async def extract_images_from_pdfs(project_folder: Path, image_format: str = "png") -> list[str | None]:
+async def extract_images_from_pdfs(
+    project_folder: Path, image_format: str = "png"
+) -> list[str | None]:
     logger.info(f"Extracting images from PDFs in {project_folder}")
     pdf_paths = list(project_folder.glob("**/original_input/**/*.pdf"))
     tasks = [_extract_image_from_pdf(pdf_path, image_format) for pdf_path in pdf_paths]
@@ -38,7 +40,9 @@ def _sync_extract_image(pdf_path: Path, image_format: str) -> str | None:
         return None
 
 
-async def _extract_image_from_pdf(pdf_path: Path, image_format: str = "png") -> Path | None:
+async def _extract_image_from_pdf(
+    pdf_path: Path, image_format: str = "png"
+) -> Path | None:
     assert pdf_path.exists(), f"PDF file {pdf_path} does not exist"
     if not pdf_path.suffix.lower() == ".pdf":
         return None

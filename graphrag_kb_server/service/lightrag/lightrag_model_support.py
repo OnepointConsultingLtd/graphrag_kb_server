@@ -115,14 +115,18 @@ async def structured_completion(
 
     if system_prompt:
         if needs_explicit_cache:
-            messages.append({
-                "role": "system",
-                "content": [{
-                    "type": "text",
-                    "text": system_prompt,
-                    "cache_control": {"type": "ephemeral"},
-                }],
-            })
+            messages.append(
+                {
+                    "role": "system",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": system_prompt,
+                            "cache_control": {"type": "ephemeral"},
+                        }
+                    ],
+                }
+            )
         else:
             messages.append({"role": "system", "content": system_prompt})
     for msg in history_messages:

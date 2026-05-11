@@ -1,12 +1,12 @@
 import asyncio
 from pathlib import Path
 
-import pytest
 from PIL import Image
 
 
 def _make_docx(path: Path) -> Path:
     from docx import Document
+
     doc = Document()
     doc.add_heading("Test Document", level=1)
     doc.add_paragraph("This is a sample paragraph for image extraction testing.")
@@ -17,6 +17,7 @@ def _make_docx(path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # get_docx_image_path
 # ---------------------------------------------------------------------------
+
 
 class TestGetDocxImagePath:
 
@@ -45,17 +46,22 @@ class TestGetDocxImagePath:
 # get_docx_image_by_path
 # ---------------------------------------------------------------------------
 
+
 class TestGetDocxImageByPath:
 
     def test_returns_none_when_image_does_not_exist(self, tmp_path):
-        from graphrag_kb_server.service.docs_image_extraction import get_docx_image_by_path
+        from graphrag_kb_server.service.docs_image_extraction import (
+            get_docx_image_by_path,
+        )
 
         docx = _make_docx(tmp_path / "sample.docx")
         result = get_docx_image_by_path(docx, "png")
         assert result is None
 
     def test_returns_path_string_when_image_exists(self, tmp_path):
-        from graphrag_kb_server.service.docs_image_extraction import get_docx_image_by_path
+        from graphrag_kb_server.service.docs_image_extraction import (
+            get_docx_image_by_path,
+        )
 
         docx = _make_docx(tmp_path / "sample.docx")
         image_path = tmp_path / "sample.png"
@@ -71,10 +77,13 @@ class TestGetDocxImageByPath:
 # _sync_extract_image_from_docx
 # ---------------------------------------------------------------------------
 
+
 class TestSyncExtractImageFromDocx:
 
     def test_creates_image_from_docx(self, tmp_path):
-        from graphrag_kb_server.service.docs_image_extraction import _sync_extract_image_from_docx
+        from graphrag_kb_server.service.docs_image_extraction import (
+            _sync_extract_image_from_docx,
+        )
 
         docx = _make_docx(tmp_path / "sample.docx")
         result = _sync_extract_image_from_docx(docx, "png")
@@ -87,7 +96,9 @@ class TestSyncExtractImageFromDocx:
         assert img.height > 0
 
     def test_skips_when_image_already_exists(self, tmp_path):
-        from graphrag_kb_server.service.docs_image_extraction import _sync_extract_image_from_docx
+        from graphrag_kb_server.service.docs_image_extraction import (
+            _sync_extract_image_from_docx,
+        )
 
         docx = _make_docx(tmp_path / "sample.docx")
         sentinel = Image.new("RGB", (1, 1), color="red")
@@ -101,11 +112,15 @@ class TestSyncExtractImageFromDocx:
 
     def test_returns_none_and_writes_error_file_on_failure(self, tmp_path):
         from unittest.mock import patch
-        from graphrag_kb_server.service.docs_image_extraction import _sync_extract_image_from_docx
+        from graphrag_kb_server.service.docs_image_extraction import (
+            _sync_extract_image_from_docx,
+        )
 
         docx = _make_docx(tmp_path / "broken.docx")
 
-        with patch("graphrag_kb_server.service.docs_image_extraction.Image") as mock_pil:
+        with patch(
+            "graphrag_kb_server.service.docs_image_extraction.Image"
+        ) as mock_pil:
             mock_pil.open.side_effect = Exception("simulated PIL failure")
             result = _sync_extract_image_from_docx(docx, "png")
 
@@ -115,7 +130,9 @@ class TestSyncExtractImageFromDocx:
         assert len(error_file.read_text()) > 0
 
     def test_skips_when_error_file_exists(self, tmp_path):
-        from graphrag_kb_server.service.docs_image_extraction import _sync_extract_image_from_docx
+        from graphrag_kb_server.service.docs_image_extraction import (
+            _sync_extract_image_from_docx,
+        )
 
         docx = _make_docx(tmp_path / "sample.docx")
         error_file = tmp_path / "sample.error.txt"
@@ -131,10 +148,13 @@ class TestSyncExtractImageFromDocx:
 # _extract_image_from_docx (async)
 # ---------------------------------------------------------------------------
 
+
 class TestExtractImageFromDocx:
 
     def test_async_wrapper_creates_image(self, tmp_path):
-        from graphrag_kb_server.service.docs_image_extraction import _extract_image_from_docx
+        from graphrag_kb_server.service.docs_image_extraction import (
+            _extract_image_from_docx,
+        )
 
         docx = _make_docx(tmp_path / "sample.docx")
         result = asyncio.run(_extract_image_from_docx(docx, "png"))
@@ -143,7 +163,9 @@ class TestExtractImageFromDocx:
         assert (tmp_path / "sample.png").exists()
 
     def test_returns_none_for_non_docx_extension(self, tmp_path):
-        from graphrag_kb_server.service.docs_image_extraction import _extract_image_from_docx
+        from graphrag_kb_server.service.docs_image_extraction import (
+            _extract_image_from_docx,
+        )
 
         txt = tmp_path / "sample.txt"
         txt.write_text("hello")
@@ -154,6 +176,7 @@ class TestExtractImageFromDocx:
 # ---------------------------------------------------------------------------
 # extract_images_from_docx (async, project-level)
 # ---------------------------------------------------------------------------
+
 
 class TestExtractImagesFromDocx:
 
@@ -166,7 +189,9 @@ class TestExtractImagesFromDocx:
         return paths
 
     def test_extracts_all_docx_in_project_folder(self, tmp_path):
-        from graphrag_kb_server.service.docs_image_extraction import extract_images_from_docx
+        from graphrag_kb_server.service.docs_image_extraction import (
+            extract_images_from_docx,
+        )
 
         self._make_project(tmp_path, ["doc1.docx", "doc2.docx"])
         results = asyncio.run(extract_images_from_docx(tmp_path, "png"))
@@ -177,7 +202,9 @@ class TestExtractImagesFromDocx:
             assert path.endswith(".png")
 
     def test_returns_empty_list_when_no_docx_files(self, tmp_path):
-        from graphrag_kb_server.service.docs_image_extraction import extract_images_from_docx
+        from graphrag_kb_server.service.docs_image_extraction import (
+            extract_images_from_docx,
+        )
 
         (tmp_path / "original_input").mkdir(parents=True)
         results = asyncio.run(extract_images_from_docx(tmp_path, "png"))
@@ -185,7 +212,9 @@ class TestExtractImagesFromDocx:
 
     def test_skips_failed_extractions(self, tmp_path):
         from unittest.mock import patch
-        from graphrag_kb_server.service.docs_image_extraction import extract_images_from_docx
+        from graphrag_kb_server.service.docs_image_extraction import (
+            extract_images_from_docx,
+        )
 
         input_dir = tmp_path / "original_input"
         input_dir.mkdir(parents=True)
@@ -200,9 +229,12 @@ class TestExtractImagesFromDocx:
             if call_count == 1:
                 raise Exception("simulated failure on first file")
             from PIL import Image as RealImage
+
             return RealImage.open(stream)
 
-        with patch("graphrag_kb_server.service.docs_image_extraction.Image") as mock_pil:
+        with patch(
+            "graphrag_kb_server.service.docs_image_extraction.Image"
+        ) as mock_pil:
             mock_pil.open.side_effect = fake_open
             results = asyncio.run(extract_images_from_docx(tmp_path, "png"))
 

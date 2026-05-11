@@ -3,7 +3,9 @@ from asyncer import asyncify
 
 
 def convert_html_to_pdf(html: str) -> bytes:
-    html = html.replace("</head>", """
+    html = html.replace(
+        "</head>",
+        """
 <style>
   @font-face {
     font-family: 'Noto Sans Devanagari';
@@ -11,7 +13,8 @@ def convert_html_to_pdf(html: str) -> bytes:
   }
   body { font-family: 'Noto Sans Devanagari', sans-serif; }
 </style>
-</head>""")
+</head>""",
+    )
     htmldoc = HTML(string=html, base_url="")
     return htmldoc.write_pdf()
 

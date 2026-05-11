@@ -116,10 +116,12 @@ class SummarisationResponse(BaseModel):
 
 class SummarisationResponseWithDocument(SummarisationResponse):
     document_path: str = Field(
-        ..., description="The document path that the user is asking about. This path should be an absolute path, typically starting with /var"
+        ...,
+        description="The document path that the user is asking about. This path should be an absolute path, typically starting with /var",
     )
     last_modified: str | None = Field(
-        default=None, description="The last modified date of the document",
+        default=None,
+        description="The last modified date of the document",
     )
     image: str | None = Field(
         default=None,

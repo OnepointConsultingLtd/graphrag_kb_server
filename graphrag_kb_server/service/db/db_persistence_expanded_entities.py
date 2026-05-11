@@ -60,7 +60,9 @@ async def insert_expanded_entities(
     project_id = await get_project_id_from_path(project_dir)
     profile_dict = jiter.from_json(match_query.user_profile.encode(encoding="utf-8"))
     linkedin_profile_url = profile_dict.get("linkedin_profile_url")
-    digest_sha256, query_digest_sha256 = content_sha256_combined(match_query.user_profile, project_dir)
+    digest_sha256, query_digest_sha256 = content_sha256_combined(
+        match_query.user_profile, project_dir
+    )
     sql = f"""
 MERGE INTO {schema_name}.{TB_EXPANDED_ENTITIES} AS t
 USING (
@@ -116,7 +118,9 @@ async def get_expanded_entities(
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
-    _, query_digest_sha256 = content_sha256_combined(match_query.user_profile, project_dir)
+    _, query_digest_sha256 = content_sha256_combined(
+        match_query.user_profile, project_dir
+    )
     result = await fetch_one(
         f"""
 SELECT ID, MATCH_OUTPUT FROM {schema_name}.{TB_EXPANDED_ENTITIES} 

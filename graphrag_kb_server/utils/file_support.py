@@ -32,6 +32,7 @@ def write_uploaded_file(content: bytes, uploaded_file: Path) -> Path:
         f.write(base64.b64decode(content))
     return uploaded_file
 
+
 def strip_drive(posix_path: str) -> str:
     """Remove a Windows drive prefix (e.g. 'C:') from a POSIX-style path string."""
     return re.sub(r"^[A-Za-z]:", "", posix_path)

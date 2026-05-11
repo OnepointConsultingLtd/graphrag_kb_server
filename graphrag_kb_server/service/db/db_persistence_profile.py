@@ -5,7 +5,12 @@ from graphrag_kb_server.service.db.common_operations import (
     get_project_id_from_path,
     DB_CACHE_EXPIRATION_TIME,
 )
-from graphrag_kb_server.model.linkedin.profile import Education, Experience, Profile, Skill
+from graphrag_kb_server.model.linkedin.profile import (
+    Education,
+    Experience,
+    Profile,
+    Skill,
+)
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 
 TB_PROFILES = "TB_PROFILES"
@@ -63,7 +68,9 @@ async def insert_profile(project_dir: Path, profile: Profile) -> int:
     experiences = [experience.model_dump_json() for experience in profile.experiences]
     educations = [education.model_dump_json() for education in profile.educations]
     skills = [skill.model_dump_json() for skill in profile.skills]
-    profile_json = profile.profile_json or profile.model_dump_json(exclude={"profile_json"})
+    profile_json = profile.profile_json or profile.model_dump_json(
+        exclude={"profile_json"}
+    )
     await execute_query(
         f"""
 MERGE INTO {schema_name}.{TB_PROFILES} AS t
@@ -150,10 +157,7 @@ AND ACTIVE = TRUE AND LINKEDIN_PROFILE_URL = $3 AND UPDATED_AT > now() - interva
         Education.model_validate_json(education)
         for education in result.get("educations", [])
     ]
-    skills = [
-        Skill.model_validate_json(skill)
-        for skill in result.get("skills", [])
-    ]
+    skills = [Skill.model_validate_json(skill) for skill in result.get("skills", [])]
     profile_json = result.get("profile_json")
     if profile_json:
         profile = Profile.model_validate_json(profile_json)

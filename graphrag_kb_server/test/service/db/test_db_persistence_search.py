@@ -130,7 +130,9 @@ async def test_get_search_history_no_results():
         get_search_history,
     )
 
-    search_history = await get_search_history("test_generated_user_id", DEFAULT_SCHEMA_NAME)
+    search_history = await get_search_history(
+        "test_generated_user_id", DEFAULT_SCHEMA_NAME
+    )
     assert search_history is None
 
 
@@ -156,7 +158,9 @@ group by generated_user_id order by 2 desc limit 1
     if most_active_request_id is None:
         return
 
-    search_history = await get_search_history(most_active_request_id, DEFAULT_SCHEMA_NAME)
+    search_history = await get_search_history(
+        most_active_request_id, DEFAULT_SCHEMA_NAME
+    )
     assert search_history is not None
     assert len(search_history.results) > 0
     for result in search_history.results:
