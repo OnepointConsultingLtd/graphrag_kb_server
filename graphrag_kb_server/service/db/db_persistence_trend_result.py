@@ -8,6 +8,7 @@ from graphrag_kb_server.service.db.connection_pool import (
 )
 from graphrag_kb_server.service.db.db_persistence_project import TB_PROJECTS
 from graphrag_kb_server.service.trendiness_research import TrendClass
+from graphrag_kb_server.utils.file_support import strip_drive
 
 
 TB_DOCUMENT_TREND_RESULT = "TB_DOCUMENT_TREND_RESULT"
@@ -112,7 +113,7 @@ WHERE DOCUMENT_PATH = $1 AND P.NAME = $2;
         return None
 
     return DocumentTrendResult(
-        document_path=row["document_path"],
+        document_path=strip_drive(row["document_path"]),
         project_id=row["project_id"],
         main_topics=list(row["main_topics"]),
         trend_class=TrendClass(row["trend_class"]),

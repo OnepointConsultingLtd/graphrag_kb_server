@@ -28,6 +28,7 @@ from graphrag_kb_server.model.search.search import (
 from graphrag_kb_server.service.google_ai_client import structured_completion
 from graphrag_kb_server.callbacks.callback_support import BaseCallback
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.utils.file_support import strip_drive
 
 DOCUMENT_PATHS_LIMIT = 10
 
@@ -79,6 +80,8 @@ async def retrieve_relevant_documents(
         chat_response = await search_documents(project_dir, query, callback)
         chat_response = await add_links_to_response(chat_response, project_dir)
         documents = chat_response.response["documents"]
+        for document in documents:
+            document["document_path"] = strip_drive(document["document_path"])
         if _has_relative_paths(documents):
             logger.warning("Retry also returned relative paths — proceeding anyway.")
 

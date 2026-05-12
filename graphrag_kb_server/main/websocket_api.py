@@ -343,9 +343,7 @@ async def document_trendiness(
         if existing_trend_result is not None:
             await sio.emit(
                 Command.DOCUMENT_TRENDINESS_END,
-                {
-                    "data": existing_trend_result.model_dump_json(),
-                },
+                existing_trend_result.model_dump(),
                 to=sid,
             )
             return
@@ -357,11 +355,10 @@ async def document_trendiness(
                 document_path_key, project_id, trend_result
             ),
         )
+        logger.info(f"Document trendiness result: {trend_result.model_dump()}")
         await sio.emit(
             Command.DOCUMENT_TRENDINESS_END,
-            {
-                "data": trend_result.model_dump_json(),
-            },
+            {**trend_result.model_dump(), "document_path": document_path_key},
             to=sid,
         )
     except Exception as e:

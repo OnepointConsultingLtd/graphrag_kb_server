@@ -298,7 +298,7 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND R.UPDATED_AT > now() - interv
     documents = []
     for result in search_results:
         document_summary = result.get("document_summary")
-        document_path = result.get("document_path")
+        document_path = strip_drive(result.get("document_path"))
         document_main_keyword = result.get("document_main_keyword")
         document_relevancy_score = result.get("document_relevancy_score")
         document_relevancy_score_reasoning = result.get(

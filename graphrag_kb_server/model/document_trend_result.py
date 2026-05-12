@@ -1,17 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from graphrag_kb_server.service.trendiness_research import TrendClass, TrendResult
 
 
 class DocumentTrendResult(BaseModel):
-    document_path: str
-    project_id: int
-    main_topics: list[str]
-    trend_class: TrendClass
-    confidence: float
-    reasoning: str
-    recent_findings: str
-    visited_urls: list[str]
+    document_path: str = Field(description="The path to the document")
+    project_id: int = Field(description="The id of the project")
+    main_topics: list[str] = Field(description="The main topics of the document")
+    trend_class: TrendClass = Field(description="The trend class of the document")
+    confidence: float = Field(description="The confidence in the trend class by the model")
+    reasoning: str = Field(description="The reasoning for the trend class")
+    recent_findings: str = Field(description="The recent findings for the trend class")
+    visited_urls: list[str] = Field(description="The URLs that were visited to find the information")
 
     @classmethod
     def from_trend_result(
