@@ -52,7 +52,9 @@ class TrendResult(BaseModel):
     confidence: float = Field(description="The confidence in the trend class")
     reasoning: str = Field(description="The reasoning for the trend class")
     recent_findings: str = Field(description="The recent findings for the trend class")
-    visited_urls: list[str] = Field(description="The URLs that were visited to find the information")
+    visited_urls: list[str] = Field(
+        description="The URLs that were visited to find the information"
+    )
 
 
 def _strip_code_fences(text: str) -> str:
@@ -101,13 +103,19 @@ async def assess_document_trendiness(
         model=effective_model,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": f"Assess the trendiness of this document:\n\n{snippet}"},
+            {
+                "role": "user",
+                "content": f"Assess the trendiness of this document:\n\n{snippet}",
+            },
         ],
-        plugins=[{ "id": "web" }],
+        plugins=[{"id": "web"}],
         response_format={
             "type": "json_schema",
-            "json_schema": {"name": "TrendResult", "schema": TrendResult.model_json_schema()},
-        }
+            "json_schema": {
+                "name": "TrendResult",
+                "schema": TrendResult.model_json_schema(),
+            },
+        },
     )
 
     raw_text = content = response.choices[0].message.content

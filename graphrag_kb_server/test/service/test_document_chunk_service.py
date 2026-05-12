@@ -4,8 +4,6 @@ Unit tests for document_chunk_service pure helpers.
 These tests do not require a database connection.
 """
 
-import pytest
-
 from graphrag_kb_server.service.document_chunk_service import (
     _load_lightrag_chunks_json,
     _select_first_chunk_per_document,
@@ -103,9 +101,24 @@ def test_select_first_chunk_uses_file_path_when_set():
 def test_select_first_chunk_multiple_documents():
     """Three distinct documents produce three entries."""
     raw = {
-        "chunk-1": {"content": "A", "chunk_order_index": 0, "full_doc_id": "doc-1", "file_path": "/a.txt"},
-        "chunk-2": {"content": "B", "chunk_order_index": 0, "full_doc_id": "doc-2", "file_path": "/b.txt"},
-        "chunk-3": {"content": "C", "chunk_order_index": 0, "full_doc_id": "doc-3", "file_path": "/c.txt"},
+        "chunk-1": {
+            "content": "A",
+            "chunk_order_index": 0,
+            "full_doc_id": "doc-1",
+            "file_path": "/a.txt",
+        },
+        "chunk-2": {
+            "content": "B",
+            "chunk_order_index": 0,
+            "full_doc_id": "doc-2",
+            "file_path": "/b.txt",
+        },
+        "chunk-3": {
+            "content": "C",
+            "chunk_order_index": 0,
+            "full_doc_id": "doc-3",
+            "file_path": "/c.txt",
+        },
     }
     results = _select_first_chunk_per_document(raw)
     assert len(results) == 3
@@ -121,9 +134,24 @@ def test_select_first_chunk_returns_empty_for_empty_input():
 def test_select_first_chunk_highest_order_index_is_not_chosen():
     """Given chunks with indices 2, 1, 0 inserted in that order, index 0 is still selected."""
     raw = {
-        "chunk-last": {"content": "Tail", "chunk_order_index": 2, "full_doc_id": "doc-X", "file_path": "/x.txt"},
-        "chunk-mid": {"content": "Middle", "chunk_order_index": 1, "full_doc_id": "doc-X", "file_path": "/x.txt"},
-        "chunk-first": {"content": "Head", "chunk_order_index": 0, "full_doc_id": "doc-X", "file_path": "/x.txt"},
+        "chunk-last": {
+            "content": "Tail",
+            "chunk_order_index": 2,
+            "full_doc_id": "doc-X",
+            "file_path": "/x.txt",
+        },
+        "chunk-mid": {
+            "content": "Middle",
+            "chunk_order_index": 1,
+            "full_doc_id": "doc-X",
+            "file_path": "/x.txt",
+        },
+        "chunk-first": {
+            "content": "Head",
+            "chunk_order_index": 0,
+            "full_doc_id": "doc-X",
+            "file_path": "/x.txt",
+        },
     }
     results = _select_first_chunk_per_document(raw)
     assert len(results) == 1

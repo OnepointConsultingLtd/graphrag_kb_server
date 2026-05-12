@@ -7,6 +7,9 @@ from graphrag_kb_server.service.db.db_persistence_links import create_path_links
 from graphrag_kb_server.service.db.db_persistence_document_chunks import (
     create_document_chunks_table,
 )
+from graphrag_kb_server.service.db.db_persistence_trend_result import (
+    create_document_trend_result_table,
+)
 from graphrag_kb_server.service.db.db_persistence_path_properties import (
     create_path_properties_table,
 )
@@ -68,6 +71,7 @@ async def create_tennant_tables(tennant: Tennant):
     await create_path_links_table(tennant.folder_name)
     await create_path_properties_table(tennant.folder_name)
     await create_document_chunks_table(tennant.folder_name)
+    await create_document_trend_result_table(tennant.folder_name)
 
 
 async def create_projects_and_topics(
