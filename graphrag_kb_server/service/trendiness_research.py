@@ -6,13 +6,20 @@ and classifies trendiness as HOT, RISING, STABLE, DECLINING, or UNKNOWN.
 """
 
 import json
-from enum import StrEnum
-from typing import Optional
+from pathlib import Path
+from typing import Awaitable, Optional, Callable
 
 from openrouter import OpenRouter
-from pydantic import BaseModel, Field
 
 from graphrag_kb_server.config import cfg
+from graphrag_kb_server.logger import logger
+from graphrag_kb_server.model.document_trend_result import TrendResult, DocumentTrendResult
+from graphrag_kb_server.model.engines import Engine
+from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id_from_path
+from graphrag_kb_server.service.db.db_persistence_trend_result import get_document_trend_result_by_path, insert_document_trend_result
+from graphrag_kb_server.service.tennant import find_project_dir
+from graphrag_kb_server.utils.file_support import strip_drive
+from graphrag_kb_server.model.websocket_commands import Command
 
 SNIPPET_MAX_CHARS = 2000
 REQUEST_TIMEOUT_SECONDS = 120.0
@@ -36,25 +43,6 @@ Trend class definitions:
 - DECLINING: Topic is losing relevance or coverage
 - UNKNOWN: Insufficient web data to classify reliably
 """
-
-
-class TrendClass(StrEnum):
-    HOT = "HOT"
-    RISING = "RISING"
-    STABLE = "STABLE"
-    DECLINING = "DECLINING"
-    UNKNOWN = "UNKNOWN"
-
-
-class TrendResult(BaseModel):
-    main_topics: list[str] = Field(description="The main topics of the document")
-    trend_class: TrendClass = Field(description="The trend class of the document")
-    confidence: float = Field(description="The confidence in the trend class")
-    reasoning: str = Field(description="The reasoning for the trend class")
-    recent_findings: str = Field(description="The recent findings for the trend class")
-    visited_urls: list[str] = Field(
-        description="The URLs that were visited to find the information"
-    )
 
 
 def _strip_code_fences(text: str) -> str:
@@ -118,7 +106,64 @@ async def assess_document_trendiness(
         },
     )
 
-    raw_text = content = response.choices[0].message.content
+    raw_text = response.choices[0].message.content
     json_text = _strip_code_fences(raw_text)
     result_data = json.loads(json_text)
     return TrendResult(**result_data)
+
+
+async def document_trendiness_processor_task(
+    token: str,
+    project: str,
+    document_path_str: str,
+    expiry_period_in_days: int = 30,
+    send_message: Callable[[Command, str | dict, Exception | None], Awaitable[None]] | None = None,
+):
+
+    try:
+        logger.info(f"Document trendiness query from websocket: {document_path_str}")
+        project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
+        document_path = Path(strip_drive(document_path_str))
+        if not document_path.exists():
+            await send_message(
+                Command.DOCUMENT_TRENDINESS_ERROR,
+                "Document not found",
+                ValueError(f"Document not found: {document_path}"),
+            )
+            return
+        document_path_key = strip_drive(document_path.resolve().as_posix())
+        project_id = await get_project_id_from_path(project_dir)
+        simple_project = extract_elements_from_path(project_dir)
+        existing_trend_result = await get_document_trend_result_by_path(
+            simple_project.schema_name,
+            document_path_key,
+            simple_project.project_name,
+            expiry_period_in_days=expiry_period_in_days,
+        )
+        if existing_trend_result is not None:
+            await send_message(
+                Command.DOCUMENT_TRENDINESS_END,
+                existing_trend_result.model_dump(),
+                None,
+            )
+            return
+        content = document_path.read_text(encoding="utf-8")
+        trend_result = await assess_document_trendiness(content)
+        await insert_document_trend_result(
+            simple_project.schema_name,
+            DocumentTrendResult.from_trend_result(
+                document_path_key, project_id, trend_result
+            ),
+        )
+        logger.info(f"Document trendiness result: {trend_result.model_dump()}")
+        await send_message(
+            Command.DOCUMENT_TRENDINESS_END,
+            {**trend_result.model_dump(), "document_path": document_path_key},
+            None,
+        )
+    except Exception as e:
+        await send_message(
+            Command.DOCUMENT_TRENDINESS_ERROR,
+            f"Failed to extract document trendiness: {e}",
+            e,
+        )

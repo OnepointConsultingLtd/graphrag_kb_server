@@ -1,6 +1,24 @@
+from enum import StrEnum
 from pydantic import BaseModel, Field
 
-from graphrag_kb_server.service.trendiness_research import TrendClass, TrendResult
+
+class TrendClass(StrEnum):
+    HOT = "HOT"
+    RISING = "RISING"
+    STABLE = "STABLE"
+    DECLINING = "DECLINING"
+    UNKNOWN = "UNKNOWN"
+
+
+class TrendResult(BaseModel):
+    main_topics: list[str] = Field(description="The main topics of the document")
+    trend_class: TrendClass = Field(description="The trend class of the document")
+    confidence: float = Field(description="The confidence in the trend class")
+    reasoning: str = Field(description="The reasoning for the trend class")
+    recent_findings: str = Field(description="The recent findings for the trend class")
+    visited_urls: list[str] = Field(
+        description="The URLs that were visited to find the information"
+    )
 
 
 class DocumentTrendResult(BaseModel):

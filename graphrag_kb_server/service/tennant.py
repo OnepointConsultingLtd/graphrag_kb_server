@@ -9,6 +9,7 @@ from graphrag_kb_server.config import cfg, websocket_cfg
 from graphrag_kb_server.model.jwt_token import JWTToken
 from graphrag_kb_server.model.error import Error, ErrorCode
 from graphrag_kb_server.model.tennant import Tennant
+from graphrag_kb_server.service.jwt_service import decode_token
 from graphrag_kb_server.utils.file_support import get_creation_time
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.db.ddl_operations import drop_schema
@@ -90,3 +91,10 @@ def find_project_folder(tennant_folder: Path, engine: Engine, project: str) -> P
     if not folder.exists():
         folder.mkdir(parents=True, exist_ok=True)
     return folder
+
+
+async def find_project_dir(token: str, project: str, engine: Engine) -> Path:
+    token_data = await decode_token(token)
+    tennant_folder = cfg.graphrag_root_dir_path / token_data["sub"]
+    project_dir = find_project_folder(tennant_folder, engine, project)
+    return project_dir

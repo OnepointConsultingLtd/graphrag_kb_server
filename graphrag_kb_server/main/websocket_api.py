@@ -20,11 +20,6 @@ from graphrag_kb_server.service.db.db_persistence_keywords import save_keywords
 from graphrag_kb_server.service.db.db_persistence_relationships import (
     save_relationships,
 )
-from graphrag_kb_server.service.db.db_persistence_trend_result import (
-    get_document_trend_result_by_path,
-    insert_document_trend_result,
-)
-from graphrag_kb_server.service.jwt_service import decode_token
 from graphrag_kb_server.service.lightrag.lightrag_constants import (
     KEYWORDS_SEPARATOR,
     PREFIX_HIGH_LEVEL_KEYWORDS,
@@ -35,8 +30,7 @@ from graphrag_kb_server.service.lightrag.lightrag_streaming import (
     lightrag_get_response_stream,
 )
 from graphrag_kb_server.service.linkedin.apify_service import apify_extract_profile
-from graphrag_kb_server.service.tennant import find_project_folder
-from graphrag_kb_server.config import cfg
+from graphrag_kb_server.service.tennant import find_project_dir
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.callbacks.callback_support import BaseCallback
 from graphrag_kb_server.service.search.search_documents import (
@@ -50,25 +44,8 @@ from graphrag_kb_server.service.db.db_persistence_search import (
     process_search_response,
     get_search_results,
 )
-from graphrag_kb_server.service.trendiness_research import assess_document_trendiness
-from graphrag_kb_server.utils.file_support import strip_drive
-
-
-class Command(StrEnum):
-    START_SESSION = "start_session"
-    PROGRESS = "progress"
-    RESPONSE = "response"
-    BUILD_CONTEXT = "build_context"
-    ERROR = "error"
-    STREAM_START = "stream_start"
-    STREAM_TOKEN = "stream_token"
-    STREAM_END = "stream_end"
-    EXTRACT_PROFILE_STREAM = "extract_profile_stream"
-    EXTRACT_PROFILE_STREAM_END = "extract_profile_stream_end"
-    EXTRACT_PROFILE_STREAM_ERROR = "extract_profile_stream_error"
-    DOCUMENT_TRENDINESS = "document_trendiness"
-    DOCUMENT_TRENDINESS_END = "document_trendiness_end"
-    DOCUMENT_TRENDINESS_ERROR = "document_trendiness_error"
+from graphrag_kb_server.service.trendiness_research import document_trendiness_processor_task
+from graphrag_kb_server.model.websocket_commands import Command
 
 
 class WebsocketCallback(BaseCallback):
@@ -319,67 +296,33 @@ async def document_trendiness(
     document_path_str: str,
     expiry_period_in_days: int = 30,
 ):
-    try:
-        logger.info(f"Document trendiness query from websocket: {document_path_str}")
-        project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
-        document_path = Path(strip_drive(document_path_str))
-        if not document_path.exists():
+    async def send_message(command: Command, message: str | dict, error: Exception | None = None):
+        if command == Command.DOCUMENT_TRENDINESS_ERROR:
             await _handle_error(
                 sid,
                 Command.DOCUMENT_TRENDINESS_ERROR,
-                "Document not found",
-                ValueError(f"Document not found: {document_path}"),
+                message,
+                error,
             )
-            return
-        document_path_key = strip_drive(document_path.resolve().as_posix())
-        project_id = await get_project_id_from_path(project_dir)
-        simple_project = extract_elements_from_path(project_dir)
-        existing_trend_result = await get_document_trend_result_by_path(
-            simple_project.schema_name,
-            document_path_key,
-            simple_project.project_name,
-            expiry_period_in_days=expiry_period_in_days,
-        )
-        if existing_trend_result is not None:
+        else:
             await sio.emit(
-                Command.DOCUMENT_TRENDINESS_END,
-                existing_trend_result.model_dump(),
+                command,
+                message,
                 to=sid,
             )
-            return
-        content = document_path.read_text(encoding="utf-8")
-        trend_result = await assess_document_trendiness(content)
-        await insert_document_trend_result(
-            simple_project.schema_name,
-            DocumentTrendResult.from_trend_result(
-                document_path_key, project_id, trend_result
-            ),
-        )
-        logger.info(f"Document trendiness result: {trend_result.model_dump()}")
-        await sio.emit(
-            Command.DOCUMENT_TRENDINESS_END,
-            {**trend_result.model_dump(), "document_path": document_path_key},
-            to=sid,
-        )
-    except Exception as e:
-        await _handle_error(
-            sid,
-            Command.DOCUMENT_TRENDINESS_ERROR,
-            "Failed to extract document trendiness",
-            e,
-        )
+    await document_trendiness_processor_task(
+        token,
+        project,
+        document_path_str,
+        expiry_period_in_days,
+        send_message,
+    )
 
 
 @sio.event
 async def disconnect(sid: str):
     logger.info(f"Client disconnected: {sio}")
 
-
-async def find_project_dir(token: str, project: str, engine: Engine) -> Path:
-    token_data = await decode_token(token)
-    tennant_folder = cfg.graphrag_root_dir_path / token_data["sub"]
-    project_dir = find_project_folder(tennant_folder, engine, project)
-    return project_dir
 
 
 async def _handle_error(
