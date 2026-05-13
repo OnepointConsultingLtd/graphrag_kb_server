@@ -1,8 +1,7 @@
 import pytest
 
-from graphrag_kb_server.model.document_trend_result import DocumentTrendResult
+from graphrag_kb_server.model.document_trend_result import DocumentTrendResult, TrendClass
 from graphrag_kb_server.model.project import FullProject
-from graphrag_kb_server.service.trendiness_research import TrendClass
 from graphrag_kb_server.test.service.db.common_test_support import (
     create_test_project_wrapper,
 )
@@ -121,7 +120,7 @@ async def test_missing_path_returns_none():
             fetched = await get_document_trend_result_by_path(
                 schema_name,
                 "/input/nonexistent.txt",
-                project_id,
+                project_name,
                 expiry_period_in_days=30,
             )
             assert fetched is None
@@ -181,7 +180,7 @@ async def test_insert_is_upsert():
             assert row_count["cnt"] == 1
 
             fetched = await get_document_trend_result_by_path(
-                schema_name, "/input/doc.txt", project_id, expiry_period_in_days=30
+                schema_name, "/input/doc.txt", project_name, expiry_period_in_days=30
             )
             assert fetched is not None
             assert fetched.trend_class == TrendClass.HOT
@@ -230,7 +229,7 @@ async def test_expired_result_is_deleted_and_none_returned():
             )
 
             fetched = await get_document_trend_result_by_path(
-                schema_name, "/input/old.txt", project_id, expiry_period_in_days=30
+                schema_name, "/input/old.txt", project_name, expiry_period_in_days=30
             )
             assert fetched is None
 
@@ -280,7 +279,7 @@ async def test_trend_results_deleted_when_project_is_removed():
             await delete_project(full_project)
 
             fetched = await get_document_trend_result_by_path(
-                schema_name, "/input/doc.txt", project_id, expiry_period_in_days=30
+                schema_name, "/input/doc.txt", project_name, expiry_period_in_days=30
             )
             assert fetched is None
         finally:

@@ -288,14 +288,27 @@ async def extract_profile_stream(
         )
 
 
+DEFAULT_EXPIRY_DAYS = 30
+
+
 @sio.event
 async def document_trendiness(
     sid: str,
     token: str,
     project: str,
     document_path_str: str,
-    expiry_period_in_days: int = 30,
+    expiry_period_in_days: object = DEFAULT_EXPIRY_DAYS,
 ):
+    expiry_days = DEFAULT_EXPIRY_DAYS
+    if isinstance(expiry_period_in_days, bool):
+        expiry_days = DEFAULT_EXPIRY_DAYS
+    else:
+        try:
+            expiry_days = int(expiry_period_in_days)  # JSON may deliver str/float
+        except (TypeError, ValueError):
+            expiry_days = DEFAULT_EXPIRY_DAYS
+    expiry_days = max(0, expiry_days)
+
     async def send_message(command: Command, message: str | dict, error: Exception | None = None):
         if command == Command.DOCUMENT_TRENDINESS_ERROR:
             await _handle_error(
@@ -314,7 +327,7 @@ async def document_trendiness(
         token,
         project,
         document_path_str,
-        expiry_period_in_days,
+        expiry_days,
         send_message,
     )
 
