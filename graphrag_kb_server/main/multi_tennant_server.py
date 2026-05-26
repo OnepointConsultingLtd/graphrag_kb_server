@@ -101,6 +101,7 @@ async def auth_middleware(request: web.Request, handler):
         allowed_post_paths = [
             "/protected/project/chat",
             "/protected/search",
+            "/protected/trendiness",
             "/protected/project/questions",
             "/protected/project/related_topics",
             "/protected/pdf/generate",

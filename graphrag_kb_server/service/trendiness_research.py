@@ -118,20 +118,24 @@ async def document_trendiness_processor_task(
     document_path_str: str,
     expiry_period_in_days: int = 30,
     send_message: Callable[[Command, str | dict, Exception | None], Awaitable[None]] | None = None,
+    content: str | None = None,
 ):
 
     try:
-        logger.info(f"Document trendiness query from websocket: {document_path_str}")
+        logger.info(f"Document trendiness query: {document_path_str}")
         project_dir = await find_project_dir(token, project, Engine.LIGHTRAG)
-        document_path = Path(strip_drive(document_path_str))
-        if not document_path.exists():
-            await send_message(
-                Command.DOCUMENT_TRENDINESS_ERROR,
-                "Document not found",
-                ValueError(f"Document not found: {document_path}"),
-            )
-            return
-        document_path_key = strip_drive(document_path.resolve().as_posix())
+        if content is None:
+            document_path = Path(strip_drive(document_path_str))
+            if not document_path.exists():
+                await send_message(
+                    Command.DOCUMENT_TRENDINESS_ERROR,
+                    "Document not found",
+                    ValueError(f"Document not found: {document_path}"),
+                )
+                return
+            document_path_key = strip_drive(document_path.resolve().as_posix())
+        else:
+            document_path_key = document_path_str
         project_id = await get_project_id_from_path(project_dir)
         simple_project = extract_elements_from_path(project_dir)
         existing_trend_result = await get_document_trend_result_by_path(
@@ -147,7 +151,7 @@ async def document_trendiness_processor_task(
                 None,
             )
             return
-        content = document_path.read_text(encoding="utf-8")
+        content = document_path.read_text(encoding="utf-8") if content is None else content
         trend_result = await assess_document_trendiness(content)
         await insert_document_trend_result(
             simple_project.schema_name,
