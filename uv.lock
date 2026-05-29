@@ -113,26 +113,17 @@ wheels = [
 
 [[package]]
 name = "apify-client"
-version = "2.5.0"
+version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "apify-shared" },
     { name = "colorama" },
     { name = "impit" },
     { name = "more-itertools" },
+    { name = "pydantic", extra = ["email"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/78/6a/b872d6bbc84c6aaf27b455492c6ff1bd057fea302c5d40619c733d48a718/apify_client-2.5.0.tar.gz", hash = "sha256:daa2af6a50e573f78bd46a4728a3f2be76cee93cf5c4ff9d0fd38b6756792689", size = 377916, upload-time = "2026-02-18T13:03:16.083Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/08/5d6c2fa64fd93b837325368aedaa23f57897030eff31a150873f3aa697e3/apify_client-3.0.2.tar.gz", hash = "sha256:e34dc9c8ac951154a0382adfce785d9658639c373425b43ac54df510d076ac0d", size = 122200, upload-time = "2026-05-26T07:23:43.691Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/82/4fe19adfa6b962ab8a740782b6246b7c499f13edccac24733f015d895725/apify_client-2.5.0-py3-none-any.whl", hash = "sha256:4aa6172bed92d83f2d2bbe1f95cfaab2e147a834dfa007e309fd0b4709423316", size = 86996, upload-time = "2026-02-18T13:03:14.891Z" },
-]
-
-[[package]]
-name = "apify-shared"
-version = "2.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ec/88/8833a8bba9044ce134bb2e57fbb626f1ddbeecac964bc2e2b652a50fadd1/apify_shared-2.2.0.tar.gz", hash = "sha256:ad48a96084e3c38faa1bac723a47929a1bb2c771544da2f0cb503eabdecfc79a", size = 45534, upload-time = "2026-01-15T10:17:14.592Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/75/7c/9607852e2bb324fa40a5b967e162dea1b3c76b429cf90b602e4a202c101a/apify_shared-2.2.0-py3-none-any.whl", hash = "sha256:667d4d00ac3cf8091702640547387ac5c72a1df402bbb3923f7a401bc25d9d50", size = 16408, upload-time = "2026-01-15T10:17:13.103Z" },
+    { url = "https://files.pythonhosted.org/packages/d2/32/ac2ab06f8713f9a1313912815f57431d495cf04861a9f9a2436310dcf38e/apify_client-3.0.2-py3-none-any.whl", hash = "sha256:d78e188eb98e8357a21b57d9b31b139410b517eecc2d125c80f054cdc604296f", size = 141197, upload-time = "2026-05-26T07:23:42.039Z" },
 ]
 
 [[package]]
@@ -813,7 +804,7 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.10.11,<4" },
     { name = "aiohttp-swagger3", specifier = ">=0.10.0" },
-    { name = "apify-client", specifier = ">=2.5.0" },
+    { name = "apify-client", specifier = ">=3.0,<4" },
     { name = "asyncer", specifier = ">=0.0.8" },
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "audioop-lts", specifier = ">=0.2.2" },

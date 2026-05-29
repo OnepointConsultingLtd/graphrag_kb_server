@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 from apify_client import ApifyClientAsync
 
@@ -113,8 +114,9 @@ async def apify_extract_from_url(
     run_input: dict, actor_id: str, callback: BaseCallback | None = None
 ) -> list[dict]:
     run = await client.actor(actor_id).start(run_input=run_input)
-    run_id = run["id"]
-    status = run.get("status", "UNKNOWN")
+
+    run_id = run.id
+    status = run.status or "UNKNOWN"
     logger.info(f"Apify run {run_id} started with status: {status}")
 
     label = _extract_url_label(run_input)
@@ -124,10 +126,12 @@ async def apify_extract_from_url(
             await callback.callback(
                 f"Extraction running (status: {status}) for {label}. Waiting..."
             )
-        run = await client.run(run_id).wait_for_finish(wait_secs=POLL_INTERVAL_SECS)
+        run = await client.run(run_id).wait_for_finish(
+            wait_duration=timedelta(seconds=POLL_INTERVAL_SECS)
+        )
         if run is None:
             break
-        status = run.get("status", "UNKNOWN")
+        status = run.status or "UNKNOWN"
         logger.info(f"Apify run {run_id} status: {status}")
 
     if status != "SUCCEEDED":
@@ -140,7 +144,7 @@ async def apify_extract_from_url(
     if callback:
         await callback.callback(f"Extraction finished for {label}. Fetching results...")
 
-    dataset_id = run["defaultDatasetId"]
+    dataset_id = run.default_dataset_id
     dataset = client.dataset(dataset_id)
     dataset_items = await dataset.list_items()
     return dataset_items.items
