@@ -2,7 +2,7 @@ from pathlib import Path
 import asyncio
 import json
 
-from graphrag_kb_server.main.query_support import add_links_to_response
+from graphrag_kb_server.main.query_support import add_links_and_images_to_response
 from graphrag_kb_server.model.search.relationships import RelationshipsJSON
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
@@ -65,7 +65,7 @@ async def retrieve_relevant_documents(
         A list of summarization responses with document paths
     """
     chat_response = await search_documents(project_dir, query, callback)
-    chat_response = await add_links_to_response(chat_response, project_dir)
+    chat_response = await add_links_and_images_to_response(chat_response, project_dir)
     documents = chat_response.response["documents"]
 
     if _has_relative_paths(documents):
@@ -78,7 +78,7 @@ async def retrieve_relevant_documents(
                 "Retrying search to obtain absolute document paths…"
             )
         chat_response = await search_documents(project_dir, query, callback)
-        chat_response = await add_links_to_response(chat_response, project_dir)
+        chat_response = await add_links_and_images_to_response(chat_response, project_dir)
         documents = chat_response.response["documents"]
         for document in documents:
             document["document_path"] = strip_drive(document["document_path"])

@@ -23,6 +23,7 @@ from graphrag_kb_server.main.simple_template import HTML_CONTENT
 from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.service.cag.cag_support import cag_get_response
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.utils.file_support import strip_drive
 
 
 async def execute_query(query_params: QueryParameters) -> web.Response:
@@ -41,7 +42,7 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
                             update={"search": "hybrid"}
                         )
                     chat_response = await lightrag_search(query_params)
-                    chat_response = await add_links_to_response(
+                    chat_response = await add_links_and_images_to_response(
                         chat_response, query_params.context_params.project_dir
                     )
                 case _:
@@ -90,7 +91,76 @@ async def execute_query(query_params: QueryParameters) -> web.Response:
     raise web.HTTPBadRequest(text="Please make sure the format is specified.")
 
 
-async def add_links_to_response(
+def _apply_links_and_metadata(
+    target: dict,
+    links_image_last_modified: LinksImageLastModified,
+    *,
+    include_original_path: bool = True,
+) -> None:
+    target["links"] = links_image_last_modified.links
+    if links_image_last_modified.image is not None:
+        target["image"] = links_image_last_modified.image
+    if links_image_last_modified.last_modified is not None:
+        target["last_modified"] = links_image_last_modified.last_modified.isoformat()
+    if include_original_path and links_image_last_modified.original_path is not None:
+        target["original_path"] = links_image_last_modified.original_path
+
+
+async def _enrich_with_links_and_metadata(
+    target: dict,
+    file_path: Path,
+    schema_name: str,
+    project_id: int,
+    project_dir: Path,
+    *,
+    include_original_path: bool = True,
+) -> None:
+    links_image_last_modified = await get_links_and_image_by_path(
+        file_path, schema_name, project_id, project_dir
+    )
+    _apply_links_and_metadata(
+        target, links_image_last_modified, include_original_path=include_original_path
+    )
+
+
+def _is_absolute_path(path: str) -> bool:
+    return path.startswith("/") or (
+        len(path) >= 3 and path[1] == ":" and path[2] in "/\\"
+    )
+
+
+def _resolve_document_path(path_str: str, project_dir: Path) -> Path:
+    normalized = strip_drive(path_str.replace("\\", "/"))
+    if _is_absolute_path(normalized):
+        return Path(_convert_path_to_text(Path(normalized)))
+    return project_dir / normalized
+
+
+def _path_exists_for_project(path_str: str, project_dir: Path) -> bool:
+    """Return True if the document file exists on disk for this project."""
+    if not path_str or not str(path_str).strip():
+        return False
+    file_path = _resolve_document_path(str(path_str).strip(), project_dir)
+    if file_path.is_file():
+        return True
+    alt_path = file_path.parent / file_path.name.replace("_", " ")
+    return alt_path.is_file()
+
+
+def _filter_items_with_existing_paths(
+    items: list[dict], path_key: str, project_dir: Path
+) -> list[dict]:
+    kept: list[dict] = []
+    for item in items:
+        path_str = item.get(path_key)
+        if path_str is not None and _path_exists_for_project(path_str, project_dir):
+            kept.append(item)
+        elif path_str is not None:
+            logger.debug("Excluding item with missing %s: %s", path_key, path_str)
+    return kept
+
+
+async def add_links_and_images_to_response(
     chat_response: ChatResponse, project_dir: Path
 ) -> ChatResponse:
     simple_project = extract_elements_from_path(project_dir)
@@ -112,43 +182,29 @@ async def add_links_to_response(
             chat_response.response["references"] = list(
                 {r["file"]: r for r in chat_response.response["references"]}.values()
             )
+            chat_response.response["references"] = _filter_items_with_existing_paths(
+                chat_response.response["references"], "file", project_dir
+            )
             for reference in chat_response.response["references"]:
-                file_path = Path(reference["file"])
-                links_image_last_modified = await get_links_and_image_by_path(
-                    file_path, schema_name, project_id, project_dir
+                await _enrich_with_links_and_metadata(
+                    reference,
+                    Path(reference["file"]),
+                    schema_name,
+                    project_id,
+                    project_dir,
                 )
-                links, image_path, last_modified, original_path = (
-                    links_image_last_modified.links,
-                    links_image_last_modified.image,
-                    links_image_last_modified.last_modified,
-                    links_image_last_modified.original_path,
-                )
-                reference["links"] = links
-                if image_path is not None:
-                    reference["image"] = image_path
-                if last_modified is not None:
-                    reference["last_modified"] = last_modified.isoformat()
-                if original_path is not None:
-                    reference["original_path"] = original_path
         elif chat_response.response.get("documents"):
+            chat_response.response["documents"] = _filter_items_with_existing_paths(
+                chat_response.response["documents"], "document_path", project_dir
+            )
             for document in chat_response.response["documents"]:
-                file_path = Path(document["document_path"])
-                links_image_last_modified = await get_links_and_image_by_path(
-                    file_path, schema_name, project_id, project_dir
+                await _enrich_with_links_and_metadata(
+                    document,
+                    Path(document["document_path"]),
+                    schema_name,
+                    project_id,
+                    project_dir,
                 )
-                links, image_path, last_modified, original_path = (
-                    links_image_last_modified.links,
-                    links_image_last_modified.image,
-                    links_image_last_modified.last_modified,
-                    links_image_last_modified.original_path,
-                )
-                document["links"] = links
-                if image_path is not None:
-                    document["image"] = image_path
-                if last_modified is not None:
-                    document["last_modified"] = last_modified.isoformat()
-                if original_path is not None:
-                    document["original_path"] = original_path
 
     return chat_response
 
@@ -164,21 +220,14 @@ async def enrich_text_units_context(
     for text_unit in text_units_context:
         file = text_unit.get("file_path")
         if file is not None:
-            file_path = Path(file)
-            links_image_last_modified = await get_links_and_image_by_path(
-                file_path, schema_name, project_id, project_dir
+            await _enrich_with_links_and_metadata(
+                text_unit,
+                Path(file),
+                schema_name,
+                project_id,
+                project_dir,
+                include_original_path=False,
             )
-            links, image_path, last_modified, _original_path = (
-                links_image_last_modified.links,
-                links_image_last_modified.image,
-                links_image_last_modified.last_modified,
-                links_image_last_modified.original_path,
-            )
-            text_unit["links"] = links
-            if image_path is not None:
-                text_unit["image"] = image_path
-            if last_modified is not None:
-                text_unit["last_modified"] = last_modified.isoformat()
 
 
 async def get_links_and_image_by_path(

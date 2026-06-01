@@ -4,7 +4,7 @@ import jiter
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.rag_parameters import QueryParameters, ContextFormat
-from graphrag_kb_server.main.query_support import add_links_to_response
+from graphrag_kb_server.main.query_support import add_links_and_images_to_response
 from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 
@@ -110,7 +110,7 @@ async def _enrich_references(references: list[dict], project_dir: Path) -> list[
     references = list({r.get("file", ""): r for r in references}.values())
 
     dummy_response = ChatResponse(response={"references": references})
-    enriched = await add_links_to_response(dummy_response, project_dir)
+    enriched = await add_links_and_images_to_response(dummy_response, project_dir)
     if enriched and isinstance(enriched.response, dict):
         return enriched.response.get("references", [])
     return references
