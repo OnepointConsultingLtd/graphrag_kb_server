@@ -50,6 +50,7 @@ DELETE FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1;
 """,
         full_project.project.name,
     )
+    _invalidate_project_id_cache(schema_name, full_project.project.name)
 
 
 async def delete_project(full_project: FullProject):
@@ -60,6 +61,16 @@ DELETE FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1;
 """,
         full_project.project.name,
     )
+    _invalidate_project_id_cache(schema_name, full_project.project.name)
+
+
+def _invalidate_project_id_cache(schema_name: str, project_name: str) -> None:
+    # Function-level import: common_operations imports this module at load time.
+    from graphrag_kb_server.service.db.common_operations import (
+        invalidate_project_id_cache,
+    )
+
+    invalidate_project_id_cache(schema_name, project_name)
 
 
 async def project_exists(full_project: FullProject) -> bool:

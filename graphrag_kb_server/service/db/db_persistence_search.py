@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 import json
 from graphrag_kb_server.model.search.keywords import KeywordType
@@ -199,38 +200,43 @@ async def insert_search_results(
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_id = await get_project_id_from_path(project_dir)
-    search_results_ids = []
-    for document in search_results.documents:
-        document_summary = document.summary
-        document_path = strip_drive(document.document_path[:16384])
-        document_main_keyword = document.main_keyword
-        document_relevancy_score = document.relevancy_score
-        document_relevancy_score_reasoning = document.relevance
-        document_image = document.image[:8192] if document.image else None
-        document_links = document.links if document.links else None
-        active = True
-        search_results_id = await execute_query_with_return(
-            f"""
+    documents = search_results.documents
+    if not documents:
+        return []
+    # Batch all documents into a single multi-row INSERT (one DB round trip).
+    values_clauses: list[str] = []
+    args: list = []
+    for i, document in enumerate(documents):
+        base = i * 11
+        values_clauses.append(
+            "(" + ", ".join(f"${base + j}" for j in range(1, 12)) + ")"
+        )
+        args.extend(
+            [
+                project_id,
+                search_history_id,
+                search_results.request_id,
+                document.summary,
+                strip_drive(document.document_path[:16384]),
+                document.main_keyword,
+                document.relevancy_score.value,
+                document.relevance,
+                document.image[:8192] if document.image else None,
+                document.links if document.links else None,
+                True,
+            ]
+        )
+    rows = await fetch_all(
+        f"""
 INSERT INTO {schema_name}.{TB_SEARCH_RESULTS}
 (PROJECT_ID, SEARCH_HISTORY_ID, REQUEST_ID, DOCUMENT_SUMMARY, DOCUMENT_PATH, DOCUMENT_MAIN_KEYWORD, 
 DOCUMENT_RELEVANCY_SCORE, DOCUMENT_RELEVANCY_SCORE_REASONING, DOCUMENT_IMAGE, DOCUMENT_LINKS, ACTIVE)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+VALUES {", ".join(values_clauses)}
 RETURNING ID;
 """,
-            project_id,
-            search_history_id,
-            search_results.request_id,
-            document_summary,
-            document_path,
-            document_main_keyword,
-            document_relevancy_score.value,
-            document_relevancy_score_reasoning,
-            document_image,
-            document_links,
-            active,
-        )
-        search_results_ids.append(search_results_id)
-    return search_results_ids
+        *args,
+    )
+    return [row["id"] for row in rows]
 
 
 def create_search_key(document_search_query: DocumentSearchQuery) -> str:
@@ -323,13 +329,11 @@ WHERE SEARCH_HISTORY_ID = $1 AND ACTIVE = TRUE AND R.UPDATED_AT > now() - interv
         )
     from graphrag_kb_server.service.db.db_persistence_keywords import find_keywords
 
-    low_level_keywords = await find_keywords(
-        schema_name, KeywordType.LOW_LEVEL, search_history_id
+    low_level_keywords, high_level_keywords, relationships = await asyncio.gather(
+        find_keywords(schema_name, KeywordType.LOW_LEVEL, search_history_id),
+        find_keywords(schema_name, KeywordType.HIGH_LEVEL, search_history_id),
+        find_relationships(schema_name, search_history_id),
     )
-    high_level_keywords = await find_keywords(
-        schema_name, KeywordType.HIGH_LEVEL, search_history_id
-    )
-    relationships = await find_relationships(schema_name, search_history_id)
     return SearchResults(
         request_id=document_search_query.request_id,
         documents=documents,

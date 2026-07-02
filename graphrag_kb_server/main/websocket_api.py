@@ -179,11 +179,17 @@ async def relevant_documents(
         response = await retrieve_relevant_documents(
             project_dir, document_search_query, callback
         )
-        search_results_ids = await process_search_response(
-            project_dir, search_history_id, response
-        )
+        # Emit first so the client is not blocked by persistence.
         await sio.emit(Command.RESPONSE, response.model_dump_json(), to=sid)
-        logger.info(f"Inserted search results IDs: {search_results_ids}")
+        try:
+            search_results_ids = await process_search_response(
+                project_dir, search_history_id, response
+            )
+            logger.info(f"Inserted search results IDs: {search_results_ids}")
+        except Exception as e:
+            # The client already has its response; only log persistence failures.
+            logger.error(f"Failed to persist search results: {e}")
+            logger.error(f"Stack trace: {traceback.format_exc()}")
     except Exception as e:
         err_msg = f"Errors: {e}. Please try again."
         logger.error(err_msg)

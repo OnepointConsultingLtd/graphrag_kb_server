@@ -1,3 +1,4 @@
+import asyncio
 import re
 import json
 from pathlib import Path
@@ -185,26 +186,34 @@ async def add_links_and_images_to_response(
             chat_response.response["references"] = _filter_items_with_existing_paths(
                 chat_response.response["references"], "file", project_dir
             )
-            for reference in chat_response.response["references"]:
-                await _enrich_with_links_and_metadata(
-                    reference,
-                    Path(reference["file"]),
-                    schema_name,
-                    project_id,
-                    project_dir,
+            await asyncio.gather(
+                *(
+                    _enrich_with_links_and_metadata(
+                        reference,
+                        Path(reference["file"]),
+                        schema_name,
+                        project_id,
+                        project_dir,
+                    )
+                    for reference in chat_response.response["references"]
                 )
+            )
         elif chat_response.response.get("documents"):
             chat_response.response["documents"] = _filter_items_with_existing_paths(
                 chat_response.response["documents"], "document_path", project_dir
             )
-            for document in chat_response.response["documents"]:
-                await _enrich_with_links_and_metadata(
-                    document,
-                    Path(document["document_path"]),
-                    schema_name,
-                    project_id,
-                    project_dir,
+            await asyncio.gather(
+                *(
+                    _enrich_with_links_and_metadata(
+                        document,
+                        Path(document["document_path"]),
+                        schema_name,
+                        project_id,
+                        project_dir,
+                    )
+                    for document in chat_response.response["documents"]
                 )
+            )
 
     return chat_response
 
@@ -238,10 +247,10 @@ async def get_links_and_image_by_path(
     file_path_str = _convert_path_to_text(file_path)
     file_path = Path(file_path_str)
 
-    # DB lookups have no filesystem dependency — always run them.
-    links = await get_links_by_path(schema_name, project_id, file_path_str)
-    last_modified = await get_lastmodified_by_path(
-        schema_name, file_path_str, project_id
+    # DB lookups have no filesystem dependency — always run them (in parallel).
+    links, last_modified = await asyncio.gather(
+        get_links_by_path(schema_name, project_id, file_path_str),
+        get_lastmodified_by_path(schema_name, file_path_str, project_id),
     )
 
     # Image lookup requires the file to exist on disk.

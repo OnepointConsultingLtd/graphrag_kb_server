@@ -2,7 +2,10 @@ from pathlib import Path
 import asyncio
 import json
 
-from graphrag_kb_server.main.query_support import add_links_and_images_to_response
+from graphrag_kb_server.main.query_support import (
+    add_links_and_images_to_response,
+    _resolve_document_path,
+)
 from graphrag_kb_server.model.search.relationships import RelationshipsJSON
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
@@ -53,9 +56,10 @@ async def retrieve_relevant_documents(
     """
     Searches documents that are relevant to the query and summarizes them according to the user's profile and question.
 
-    If the first search returns any document with a relative path, the search is
-    retried once. Relative paths cause downstream lookup failures, so this guards
-    against an occasional LLM hallucination in the path field.
+    If the search returns any document with a relative path, those paths are
+    normalized against the project directory. Relative paths cause downstream
+    lookup failures, so this guards against an occasional LLM hallucination in
+    the path field.
 
     Args:
         project_dir: The directory of the project
@@ -65,25 +69,26 @@ async def retrieve_relevant_documents(
         A list of summarization responses with document paths
     """
     chat_response = await search_documents(project_dir, query, callback)
-    chat_response = await add_links_and_images_to_response(chat_response, project_dir)
     documents = chat_response.response["documents"]
 
     if _has_relative_paths(documents):
         logger.warning(
-            "Search returned %d document(s) with relative paths — retrying search once.",
-            sum(1 for d in documents if not d.get("document_path", "").startswith("/")),
+            "Search returned %d document(s) with relative paths — normalizing against the project directory.",
+            sum(
+                1
+                for d in documents
+                if not _is_absolute_path(d.get("document_path", ""))
+            ),
         )
-        if callback is not None:
-            await callback.callback(
-                "Retrying search to obtain absolute document paths…"
-            )
-        chat_response = await search_documents(project_dir, query, callback)
-        chat_response = await add_links_and_images_to_response(chat_response, project_dir)
-        documents = chat_response.response["documents"]
         for document in documents:
-            document["document_path"] = strip_drive(document["document_path"])
-        if _has_relative_paths(documents):
-            logger.warning("Retry also returned relative paths — proceeding anyway.")
+            path_str = document.get("document_path", "")
+            if not _is_absolute_path(path_str):
+                document["document_path"] = strip_drive(
+                    _resolve_document_path(path_str, project_dir).as_posix()
+                )
+
+    chat_response = await add_links_and_images_to_response(chat_response, project_dir)
+    documents = chat_response.response["documents"]
 
     if callback is not None:
         await callback.callback(chat_response.response["response"])
