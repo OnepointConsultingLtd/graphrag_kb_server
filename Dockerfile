@@ -116,8 +116,10 @@ RUN dos2unix run.sh && chmod +x run.sh && \
 # Copy and rename configuration files
 COPY .env_docker .env
 
-# Install Python dependencies using uv
-RUN uv pip install --system .
+# Install Python dependencies using uv, pinned to the versions in uv.lock
+RUN uv export --frozen --no-dev --no-emit-project -o requirements.lock.txt && \
+    uv pip install --system -r requirements.lock.txt && \
+    uv pip install --system --no-deps .
 
 RUN uv venv
 

@@ -811,7 +811,7 @@ requires-dist = [
     { name = "bs4", specifier = ">=0.0.2" },
     { name = "fastmcp", specifier = ">=2.0" },
     { name = "google-genai", specifier = ">=1.39.1" },
-    { name = "lightrag-hku", extras = ["api"], specifier = ">=1.4.9.11" },
+    { name = "lightrag-hku", extras = ["api"], specifier = ">=1.4.9.11,<1.5" },
     { name = "linkedin-scraper", specifier = "==2.11.2" },
     { name = "markdown", specifier = "~=3.7" },
     { name = "nano-vectordb", specifier = ">=0.0.4.3" },
