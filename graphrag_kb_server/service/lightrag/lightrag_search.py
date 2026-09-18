@@ -135,15 +135,16 @@ PROMPTS["document-retrieval"] = "\n".join(
 
 
 def build_static_system_prompt(base_template: str, additional: str = "") -> str:
-    """Assemble a fully static system prompt with additional instructions first.
+    """Assemble a fully static system prompt with Role first.
 
-    The result contains no per-request placeholders so provider prefix caching
-    can reuse the same system tokens across queries.
+    Additional instructions are appended after the base template. The result
+    contains no per-request placeholders so provider prefix caching can reuse
+    the same system tokens across queries.
     """
     additional = (additional or "").strip()
     base = (base_template or "").strip()
     if additional:
-        return f"Additional Instructions:\n{additional}\n\n{base}"
+        return f"{base}\n\nAdditional Instructions:\n{additional}"
     return base
 
 

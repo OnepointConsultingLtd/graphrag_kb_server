@@ -6,14 +6,15 @@ from graphrag_kb_server.service.lightrag.lightrag_search import (
 )
 
 
-def test_static_system_prompt_puts_additional_instructions_first():
+def test_static_system_prompt_puts_role_first():
     additional = "Always use British English."
     result = build_static_system_prompt(PROMPTS["document-retrieval"], additional)
 
     additional_idx = result.index("Always use British English.")
     role_idx = result.index("---Role---")
-    assert additional_idx < role_idx
-    assert result.startswith("Additional Instructions:")
+    assert result.startswith("---Role---")
+    assert role_idx < additional_idx
+    assert result.index("Additional Instructions:") > role_idx
     assert "{context_data}" not in result
     assert "{response_type}" not in result
     assert "{user_prompt}" not in result
@@ -62,6 +63,7 @@ def test_document_retrieval_assembly_keeps_toml_instructions_in_system():
     )
 
     assert "When retrieving documents in response to the user's question" in system
+    assert system.index("---Role---") < system.index("Additional Instructions:")
     assert "{context_data}" not in system
     assert "chunk-json" not in system
     assert "chunk-json" in user
