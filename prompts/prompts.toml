@@ -80,67 +80,6 @@ question-template = """{question}. Below is my user profile that shows my intere
 
 """
 
-[document-summarization]
-system_prompt = """You are a helpful assistant that summarizes documents and uses British English."""
-human_prompt_question = """---Role---
-You are a helpful assistant tasked with summarising a document based on the user's interests and the question they are asking.
---- Goal ---
-The content of the document can be found between the <document> and </document> tags.
-The user's interests and the question they are asking can be found between the <user_profile> and </user_profile> tags.
-The question asked by the user which retrieved the document can be found between the <question> and </question> tags.
-The summary should be at most 60 words or three paragraphs at most.
-
-<document>
-{document}
-</document>
-
-<user_profile>
-{user_profile}
-</user_profile>
-
-<question>
-{question}
-</question>
-
----Instructions---
-
-- The output should be a summary of the document in British English and also a section (paragraph) on how the document relates to the user's interests and the question they are asking, if it is relevant.
-- Use this format:
-
-# Summary
-(paragraph text)
-
-# Relevance
-(paragraph text)
-
-"""
-human_prompt_no_question = """---Role---
-You are a helpful assistant tasked with summarising a document based on the user's interests and the question they are asking.
---- Goal ---
-The content of the document can be found between the <document> and </document> tags.
-The user's interests can be found between the <user_profile> and </user_profile> tags.
-
-<document>
-{document}
-</document>
-
-<user_profile>
-{user_profile}
-</user_profile>
-
----Instructions---
-
-- The output should be a summary of the document in British English and also a section (paragraph) on how the document relates to the user's interests and the question they are asking, if it is relevant.
-- The summary and the relevance paragraph should be at most 60 words or three sentences at most. When talking about the relevance of the document for the user, refer to the user as "you", assuming that the user is reading the summary.
-- Use this format:
-
-# Summary
-(paragraph text)
-
-# Relevance
-(paragraph text)
-"""
-
 [question-generation]
 system_prompt = """You are a Socratic tutor."""
 user_prompt = """

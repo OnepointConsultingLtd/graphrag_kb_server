@@ -22,21 +22,12 @@ from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search, PROMPTS
 from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.model.search.search import (
-    SummarisationRequestWithDocumentPath,
-    SummarisationRequest,
-    SummarisationResponse,
     SearchResults,
     RELEVANCE_SCORE_POINTS_MAP,
 )
-from graphrag_kb_server.service.google_ai_client import structured_completion
 from graphrag_kb_server.callbacks.callback_support import BaseCallback
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.utils.file_support import strip_drive
-
-DOCUMENT_PATHS_LIMIT = 10
-
-SEPARATORS = ["<SEP>", ";"]
-
 
 def _is_absolute_path(path: str) -> bool:
     """Return True if path is absolute on Linux (/...) or Windows (C:/...)."""
@@ -121,66 +112,6 @@ async def search_documents(
         reverse=True,
     )
     return results
-
-
-def get_document_text(project_dir: Path, document_path: Path) -> str:
-    document_text = f"Source not found: {document_path}"
-    if not document_path.is_file():
-        return f"Source not found: {document_path}"
-    if not document_path.exists():
-        file_name = document_path.name
-        similar_files = list(project_dir.rglob(f"**/{file_name}"))
-        if len(similar_files) > 0:
-            document_text = similar_files[0].read_text(encoding="utf-8")
-        else:
-            document_text = f"Source not found: {file_name}"
-    else:
-        document_text = document_path.read_text(encoding="utf-8")
-    return document_text
-
-
-async def summarize_document_with_document_path(
-    project_dir: Path,
-    request: SummarisationRequestWithDocumentPath,
-) -> str:  #
-    document_text = get_document_text(project_dir, Path(request.document_path))
-    return await summarize_document(
-        SummarisationRequest(
-            user_profile=request.user_profile,
-            question=request.question,
-            document=document_text,
-        )
-    )
-
-
-async def summarize_document(request: SummarisationRequest) -> SummarisationResponse:
-    if request.question is None or len(request.question.strip()) == 0:
-        user_prompt = prompts["document-summarization"]["human_prompt_question"].format(
-            user_profile=request.user_profile,
-            question=request.question,
-            document=request.document,
-        )
-    else:
-        user_prompt = prompts["document-summarization"][
-            "human_prompt_no_question"
-        ].format(
-            user_profile=request.user_profile,
-            document=request.document,
-        )
-    retries = 5
-    while retries > 0:
-        try:
-            summarisation_response_dict = await structured_completion(
-                prompts["document-summarization"]["system_prompt"],
-                user_prompt,
-                SummarisationResponse,
-            )
-            return SummarisationResponse(**summarisation_response_dict)
-        except Exception as e:
-            logger.error(f"Error summarising document: {e}")
-            retries -= 1
-            if retries == 0:
-                raise e
 
 
 def generate_query(
@@ -287,22 +218,6 @@ if __name__ == "__main__":
         ), "Chat response is not a ChatResponse"
         print(chat_response)
 
-    def test_get_document_text():
-        document_text = get_document_text(
-            project_dir,
-            Path(
-                "/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full/input/clustre/Case studies/Case_Study_-_AIMIA_and_Zuhlke.txt"
-            ),
-        )
-        print(document_text)
-        document_text = get_document_text(
-            project_dir,
-            Path(
-                "/var/graphrag/tennants/gil_fernandes/lightrag/clustre_2/input/clustre/Case studies/Case_Study_-_AIMIA_and_Zuhlke.txt"
-            ),
-        )
-        print(document_text)
-
     def test_retrieve_relevant_documents():
         search_results = asyncio.run(
             retrieve_relevant_documents(project_dir, create_document_search_query())
@@ -316,5 +231,4 @@ if __name__ == "__main__":
 
     # test_generate_query()
     # test_search_documents()
-    # test_get_document_text()
     test_retrieve_relevant_documents()

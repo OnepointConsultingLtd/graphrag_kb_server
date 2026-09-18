@@ -85,7 +85,7 @@ class ExtendedQueryResult(QueryResult):
 
 
 def _combine_keywords(old_keywords: list[str], new_keywords: list[str]) -> list[str]:
-    return list(set(old_keywords + new_keywords))
+    return list(sorted(set(old_keywords + new_keywords)))
 
 
 PROMPTS[
@@ -93,7 +93,6 @@ PROMPTS[
 ] = """---Role---
 
 You are a helpful assistant responding to user query about Knowledge Graph and Document Chunks provided in JSON format below.
-
 
 ---Goal---
 
@@ -446,7 +445,7 @@ async def kg_query(
             relations_context = relations_context[: query_params.max_relation_size]
         if len(text_units_context) > 0:
             await query_params.callback.callback(
-                "Search has found multiple documents. Summarising and re-ranking the documents..."
+                f"Search has found multiple documents {len(text_units_context)}. Summarising and re-ranking the documents..."
             )
         else:
             await query_params.callback.callback("No documents found.")

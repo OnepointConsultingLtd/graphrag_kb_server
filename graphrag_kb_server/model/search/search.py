@@ -1,7 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
 from pydantic import BaseModel, Field, ConfigDict, field_validator
-from abc import ABC
 
 from graphrag_kb_server.model.search.keywords import Keywords
 from graphrag_kb_server.model.search.match_query import MatchOutput
@@ -135,46 +134,6 @@ class SummarisationResponseWithDocument(SummarisationResponse):
         default=None,
         description="The original path of the document",
     )
-
-
-class AbstractSummarizationRequest(BaseModel, ABC):
-    user_profile: str = Field(
-        ...,
-        description="The user profile with the description of the interests of the user",
-    )
-    question: str | None = Field(
-        ..., description="The question that the user is asking"
-    )
-
-
-class SummarisationRequestWithDocumentPath(AbstractSummarizationRequest):
-    document_path: str = Field(
-        ..., description="The document path that the user is asking about"
-    )
-
-
-class SummarisationRequest(AbstractSummarizationRequest):
-    document: str = Field(
-        ..., description="The document content that the user is asking about"
-    )
-
-
-class SummarisationResponse(BaseModel):
-    summary: str = Field(
-        ...,
-        description="The summary of the document. You can use markdown to highlight the most important keywords of the summary in bold characters.",
-    )
-    relevance: str = Field(
-        ...,
-        description="""An explanation of the relevance of the document in the context of the user's interests and the question they are asking (in case the question is provided)""",
-    )
-    relevancy_score: RelevanceScore = Field(
-        ...,
-        description="The relevancy score of the document in the context of the user's interests and the question they are asking (in case the question is provided)",
-    )
-
-    def get_relevancy_score_points(self) -> int:
-        return RELEVANCE_SCORE_POINTS_MAP[self.relevancy_score]
 
 
 class SearchResults(BaseModel):
