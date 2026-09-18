@@ -88,6 +88,15 @@ def _combine_keywords(old_keywords: list[str], new_keywords: list[str]) -> list[
     return list(sorted(set(old_keywords + new_keywords)))
 
 
+# Reserved for date, section headers, and response parameters in the user message.
+USER_PROMPT_WRAPPER_OVERHEAD_TOKENS = 50
+
+_DEFAULT_FALLBACK_INSTRUCTION = (
+    "In case of a coloquial question or non context related sentence "
+    "you can respond to it without focusing on the context."
+)
+
+
 PROMPTS[
     "rag_response"
 ] = """---Role---
@@ -104,21 +113,15 @@ When handling relationships with timestamps:
 3. Don't automatically prefer the most recently created relationships - use judgment based on the context
 4. For time-specific queries, prioritise temporal information in the content before considering creation timestamps
 
----Knowledge Graph and Document Chunks---
-{context_data}
-
 ---Response Rules---
 
-- Target format and length: {response_type}
 - Use markdown formatting with appropriate section headings
 - Please respond in the same language as the user's question.
 - Ensure the response maintains continuity with the conversation history.
 - List up to 10 most important reference sources at the end under "References" section. Clearly indicating whether each source is from Knowledge Graph (KG) or Document Chunks (DC), and include the file path if available, in the following format: [KG/DC] file_path
 - If you don't know the answer, just say so.
 - Do not make anything up. Do not include information not provided by the Knowledge Base.
-- Addtional user prompt: {user_prompt}
-
-Response:"""
+"""
 
 PROMPTS["document-retrieval"] = "\n".join(
     [
@@ -129,6 +132,43 @@ PROMPTS["document-retrieval"] = "\n".join(
         )
     ]
 )
+
+
+def build_static_system_prompt(base_template: str, additional: str = "") -> str:
+    """Assemble a fully static system prompt with additional instructions first.
+
+    The result contains no per-request placeholders so provider prefix caching
+    can reuse the same system tokens across queries.
+    """
+    additional = (additional or "").strip()
+    base = (base_template or "").strip()
+    if additional:
+        return f"Additional Instructions:\n{additional}\n\n{base}"
+    return base
+
+
+def build_dynamic_user_prompt(
+    context: str,
+    query: str,
+    *,
+    response_type: str,
+    user_prompt: str,
+    date: str,
+) -> str:
+    """Assemble the per-request user message: params, date, context, then query."""
+    return (
+        "---Response Parameters---\n"
+        f"Target format: {response_type}\n"
+        f"Additional user prompt: {user_prompt}\n"
+        "\n"
+        f"The current date is {date}\n"
+        "\n"
+        "---Knowledge Graph and Document Chunks---\n"
+        f"{context}\n"
+        "\n"
+        "---User Query---\n"
+        f"{query}"
+    )
 
 
 async def extract_keywords_only_lightrag(
@@ -152,19 +192,14 @@ async def _lightrag_search_impl(
     rag: LightRAG = await initialize_rag(project_folder)
     param = convert_to_lightrag_query_params(query_params, only_need_context)
     if query_params.system_prompt:
-        system_prompt = query_params.system_prompt
-        if system_prompt_additional:
-            system_prompt = f"""{system_prompt}
-
-Additional Instructions: 
-{system_prompt_additional}
-"""
+        base_template = query_params.system_prompt
     else:
-        system_prompt = f"""{system_prompt_additional}
-
-In case of a coloquial question or non context related sentence you can respond to it without focusing on the context.
-{PROMPTS["rag_response"]}
-"""
+        base_template = (
+            f"{_DEFAULT_FALLBACK_INSTRUCTION}\n{PROMPTS['rag_response']}"
+        )
+    system_prompt = build_static_system_prompt(
+        base_template, system_prompt_additional
+    )
     if param.mode in ["local", "global", "hybrid", "mix"]:
         response_dict = await aquery_llm(rag, query, param, system_prompt, query_params)
         entities_context = response_dict["data"].get("entities", [])
@@ -432,6 +467,7 @@ async def kg_query(
         query_param,
         chunks_vdb,
         query_params,
+        system_prompt=system_prompt,
     )
 
     if context_result is None:
@@ -445,7 +481,7 @@ async def kg_query(
             relations_context = relations_context[: query_params.max_relation_size]
         if len(text_units_context) > 0:
             await query_params.callback.callback(
-                f"Search has found multiple documents {len(text_units_context)}. Summarising and re-ranking the documents..."
+                f"Search has found multiple documents ({len(text_units_context)}). Summarising and re-ranking the documents..."
             )
         else:
             await query_params.callback.callback("No documents found.")
@@ -468,32 +504,29 @@ async def kg_query(
         else "Multiple Paragraphs"
     )
 
-    # Build system prompt
-    sys_prompt_temp = system_prompt if system_prompt else PROMPTS["rag_response"]
-    sys_prompt = sys_prompt_temp.format(
+    sys_prompt = system_prompt if system_prompt else PROMPTS["rag_response"]
+    llm_user_prompt = build_dynamic_user_prompt(
+        context=context_result.context,
+        query=query,
         response_type=response_type,
         user_prompt=user_prompt,
-        context_data=context_result.context,
+        date=datetime.datetime.now().strftime("%Y-%m-%d"),
     )
 
-    # Append the current date to the system prompt, so that the LLM knows the date of the response
-    sys_prompt = f"{sys_prompt}\n\nThe current date is {datetime.datetime.now().strftime('%Y-%m-%d')}"
-
-    user_query = query
-
     if query_param.only_need_prompt:
-        prompt_content = "\n\n".join([sys_prompt, "---User Query---", user_query])
+        prompt_content = "\n\n".join([sys_prompt, llm_user_prompt])
         return ExtendedQueryResult(
             content=prompt_content,
             raw_data=context_result.raw_data,
             context=context_result.context,
         )
 
-    # Call LLM
     tokenizer: Tokenizer = global_config["tokenizer"]
-    len_of_prompts = len(tokenizer.encode(query + sys_prompt))
+    sys_tokens = len(tokenizer.encode(sys_prompt))
+    user_tokens = len(tokenizer.encode(llm_user_prompt))
     logger.debug(
-        f"[kg_query] Sending to LLM: {len_of_prompts:,} tokens (Query: {len(tokenizer.encode(query))}, System: {len(tokenizer.encode(sys_prompt))})"
+        f"[kg_query] Sending to LLM: {sys_tokens + user_tokens:,} tokens "
+        f"(User: {user_tokens}, System: {sys_tokens})"
     )
 
     # Handle cache
@@ -516,7 +549,7 @@ async def kg_query(
     )
 
     cached_result = await handle_cache(
-        hashing_kv, args_hash, user_query, query_param.mode, cache_type="query"
+        hashing_kv, args_hash, query, query_param.mode, cache_type="query"
     )
 
     if cached_result is not None and not query_params.structured_output:
@@ -527,7 +560,7 @@ async def kg_query(
         response = cached_response
     else:
         response = await use_model_func(
-            query,
+            llm_user_prompt,
             system_prompt=sys_prompt,
             stream=query_param.stream,
             history_messages=query_param.conversation_history,
@@ -574,6 +607,7 @@ async def kg_query(
                 response.replace(sys_prompt, "")
                 .replace("user", "")
                 .replace("model", "")
+                .replace(llm_user_prompt, "")
                 .replace(query, "")
                 .replace("<system>", "")
                 .replace("</system>", "")
@@ -611,6 +645,7 @@ async def _build_query_context(
     query_param: QueryParam,
     chunks_vdb: BaseVectorStorage = None,
     query_params: QueryParameters = None,
+    system_prompt: str | None = None,
 ) -> QueryContextResult | None:
     """
     Main query context building function using the new 4-stage architecture:
@@ -686,6 +721,7 @@ async def _build_query_context(
         entity_id_to_original=truncation_result["entity_id_to_original"],
         relation_id_to_original=truncation_result["relation_id_to_original"],
         query_params=query_params,
+        system_prompt=system_prompt,
     )
 
     # Convert keywords strings to lists and add complete metadata to raw_data
@@ -739,6 +775,7 @@ async def _build_context_str(
     entity_id_to_original: dict = None,
     relation_id_to_original: dict = None,
     query_params: QueryParameters = None,
+    system_prompt: str | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """
     Build the final LLM context string with token processing.
@@ -767,18 +804,7 @@ async def _build_context_str(
         global_config.get("max_total_tokens", DEFAULT_MAX_TOTAL_TOKENS),
     )
 
-    # Get the system prompt template from PROMPTS or global_config
-    sys_prompt_template = global_config.get(
-        "system_prompt_template", PROMPTS["rag_response"]
-    )
-
     kg_context_template = PROMPTS["kg_query_context"]
-    user_prompt = query_param.user_prompt if query_param.user_prompt else ""
-    response_type = (
-        query_param.response_type
-        if query_param.response_type
-        else "Multiple Paragraphs"
-    )
 
     entities_str = "\n".join(
         json.dumps(entity, ensure_ascii=False) for entity in entities_context
@@ -796,23 +822,29 @@ async def _build_context_str(
     )
     kg_context_tokens = len(tokenizer.encode(pre_kg_context))
 
-    # Calculate preliminary system prompt tokens
-    pre_sys_prompt = sys_prompt_template.format(
-        context_data="",  # Empty for overhead calculation
-        response_type=response_type,
-        user_prompt=user_prompt,
+    sys_prompt_template = (
+        system_prompt
+        or global_config.get("system_prompt_template")
+        or PROMPTS["rag_response"]
     )
-    sys_prompt_tokens = len(tokenizer.encode(pre_sys_prompt))
+    sys_prompt_tokens = len(tokenizer.encode(sys_prompt_template))
 
     # Calculate available tokens for text chunks
     query_tokens = len(tokenizer.encode(query))
     buffer_tokens = 200  # reserved for reference list and safety buffer
     available_chunk_tokens = max_total_tokens - (
-        sys_prompt_tokens + kg_context_tokens + query_tokens + buffer_tokens
+        sys_prompt_tokens
+        + kg_context_tokens
+        + query_tokens
+        + buffer_tokens
+        + USER_PROMPT_WRAPPER_OVERHEAD_TOKENS
     )
 
     logger.debug(
-        f"Token allocation - Total: {max_total_tokens}, SysPrompt: {sys_prompt_tokens}, Query: {query_tokens}, KG: {kg_context_tokens}, Buffer: {buffer_tokens}, Available for chunks: {available_chunk_tokens}"
+        f"Token allocation - Total: {max_total_tokens}, SysPrompt: {sys_prompt_tokens}, "
+        f"Query: {query_tokens}, KG: {kg_context_tokens}, Buffer: {buffer_tokens}, "
+        f"UserWrapper: {USER_PROMPT_WRAPPER_OVERHEAD_TOKENS}, "
+        f"Available for chunks: {available_chunk_tokens}"
     )
 
     # Apply token truncation to chunks using the dynamic limit

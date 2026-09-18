@@ -18,18 +18,19 @@ from graphrag_kb_server.logger import logger
 from openrouter import OpenRouter
 
 
-def _create_combined_prompt(system_prompt, history_messages, prompt):
-    combined_prompt = ""
-    if system_prompt:
-        combined_prompt += f"{system_prompt}\n"
-
-    for msg in history_messages:
-        # Each msg is expected to be a dict: {"role": "...", "content": "..."}
-        combined_prompt += f"{msg['role']}: {msg['content']}\n"
-
-    # Finally, add the new user prompt
-    combined_prompt += f"user: {prompt}"
-    return combined_prompt
+def _gemini_contents(prompt, history_messages):
+    contents = []
+    for msg in history_messages or []:
+        if "role" not in msg or "content" not in msg:
+            continue
+        role = "model" if msg["role"] in ("assistant", "model") else "user"
+        contents.append(
+            types.Content(role=role, parts=[types.Part.from_text(text=msg["content"])])
+        )
+    contents.append(
+        types.Content(role="user", parts=[types.Part.from_text(text=prompt)])
+    )
+    return contents
 
 
 async def gemini_model_func(
@@ -41,15 +42,14 @@ async def gemini_model_func(
     ), "Please specify the GEMINI_API_KEY environment variable."
     client = genai.Client(api_key=cfg.gemini_api_key)
 
-    # 2. Combine prompts: system prompt, history, and user prompt
     if history_messages is None:
         history_messages = []
 
-    combined_prompt = _create_combined_prompt(system_prompt, history_messages, prompt)
-    # _store_prompts(system_prompt, history_messages, prompt)
-
-    # 3. Call the Gemini model
+    # 2. Call the Gemini model with a separate system instruction so the
+    # static prompt can be cached independently of the per-request user content.
     config_dict = {"max_output_tokens": 65000, "temperature": 0, "top_k": 8}
+    if system_prompt:
+        config_dict["system_instruction"] = system_prompt
 
     structured_output = "structured_output" in kwargs and kwargs["structured_output"]
     if structured_output:
@@ -64,11 +64,11 @@ async def gemini_model_func(
 
     response = await client.aio.models.generate_content(
         model=lightrag_cfg.lightrag_model,
-        contents=[combined_prompt],
+        contents=_gemini_contents(prompt, history_messages),
         config=types.GenerateContentConfig(**config_dict),
     )
 
-    # 4. Get token counts with null safety
+    # 3. Get token counts with null safety
     usage = getattr(response, "usage_metadata", None)
     prompt_tokens = getattr(usage, "prompt_token_count", 0) or 0
     completion_tokens = getattr(usage, "candidates_token_count", 0) or 0

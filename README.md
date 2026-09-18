@@ -62,7 +62,7 @@ OPENAI_API_MODEL_EMBEDDING=text-embedding-3-small
 GEMINI_API_KEY=<key>
 
 # The LightRAG Model
-# Supported models gpt-4o-mini, gpt-4o, gemini-2.0-flash
+# Supported models gpt-4o-mini, gpt-4o, gemini-3.8-flash
 LIGHTRAG_MODEL=gemini-2.5-flash
 # LIGHTRAG_MODEL=gpt-4o-mini
 LIGHTRAG_LITE_MODEL=gemini-2.5-flash-lite
