@@ -116,8 +116,6 @@ ADMIN_TOKEN_NAME=<some name>
 ADMIN_TOKEN_EMAIL=<mail>
 ADMIN_TOKEN_PASSWORD=<pass>
 
-BRIGHT_DATA_API_KEY=<key>
-
 # Database related
 POSTGRES_CONNECTION_STRING=postgresql://<user>:<pass>@127.0.0.1:5432/knowledge_base_server
 POSTGRES_CONNECTION_POOL_MIN_SIZE = 1

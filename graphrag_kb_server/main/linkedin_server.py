@@ -1,16 +1,13 @@
 from pathlib import Path
 from aiohttp import web
-import json
 
 from aiohttp.web import Response
 
 from graphrag_kb_server import logger
 from graphrag_kb_server.main.cors import CORS_HEADERS
 from graphrag_kb_server.main.error_handler import handle_error, invalid_response
-from graphrag_kb_server.service.linkedin.brightdata_service import (
-    scrape_linkedin_profile,
-)
 from graphrag_kb_server.main.project_server import match_process_dir
+from graphrag_kb_server.service.linkedin.apify_service import apify_extract_profile
 
 routes = web.RouteTableDef()
 
@@ -41,15 +38,6 @@ async def linkedin_profile(request: web.Request) -> web.Response:
         description: The project name
         schema:
           type: string
-      - name: source
-        in: query
-        required: true
-        description: The source of the profile
-        schema:
-          type: string
-          enum:
-            - brightdata
-            - web_scraping
     security:
       - bearerAuth: []
     responses:
@@ -88,53 +76,29 @@ async def linkedin_profile(request: web.Request) -> web.Response:
                         "Please specify a profile id.",
                         status=400,
                     )
-                source = request.query.get("source", "brightdata")
-                profile_json: str = ""
-                match source:
-                    case "brightdata":
-                        profile = await scrape_linkedin_profile(profile_id)
-                        if profile is None:
-                            return invalid_response(
-                                "Cannot find profile",
-                                "Please specify another profile id.",
-                                status=404,
-                            )
-                        profile_json = json.dumps(profile)
-                    case "web_scraping":
-                        from graphrag_kb_server.service.linkedin.apify_service import (
-                            apify_extract_profile,
-                        )
-
-                        try:
-                            profile = await apify_extract_profile(
-                                profile_id,
-                                project_dir=project_dir,
-                                callback=None,
-                            )
-                        except Exception as e:
-                            logger.error(f"Error extracting profile: {e}")
-                            return web.json_response(
-                                {
-                                    "error": f"Failed to extract profile ({profile_id}). Please try again later."
-                                },
-                                status=500,
-                            )
-                        if profile is None:
-                            return invalid_response(
-                                "Cannot find profile",
-                                "Please specify another profile id.",
-                                status=404,
-                            )
-                        profile_json = profile.model_dump_json()
-                    case _:
-                        return invalid_response(
-                            "Invalid source",
-                            "Please specify a valid source.",
-                            status=400,
-                        )
+                try:
+                    profile = await apify_extract_profile(
+                        profile_id,
+                        project_dir=project_dir,
+                        callback=None,
+                    )
+                except Exception as e:
+                    logger.error(f"Error extracting profile: {e}")
+                    return web.json_response(
+                        {
+                            "error": f"Failed to extract profile ({profile_id}). Please try again later."
+                        },
+                        status=500,
+                    )
+                if profile is None:
+                    return invalid_response(
+                        "Cannot find profile",
+                        "Please specify another profile id.",
+                        status=404,
+                    )
 
                 return web.Response(
-                    text=profile_json,
+                    text=profile.model_dump_json(),
                     headers={**CORS_HEADERS, "Content-Type": "application/json"},
                 )
 

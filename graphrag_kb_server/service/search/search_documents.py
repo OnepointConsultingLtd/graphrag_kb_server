@@ -41,6 +41,24 @@ def _has_relative_paths(documents: list) -> bool:
     return any(not _is_absolute_path(doc.get("document_path", "")) for doc in documents)
 
 
+def _as_document_search_response(response: str | dict | None) -> dict:
+    """Normalise a LightRAG chat payload into a documents dict.
+
+    Empty retrieval returns a string fail message rather than structured
+    SearchResults JSON. Document search always expects a dict with documents.
+    """
+    if isinstance(response, dict):
+        documents = response.get("documents") or []
+        text = response.get("response") or ""
+        return {**response, "documents": documents, "response": text}
+    message = (
+        response.strip()
+        if isinstance(response, str) and response.strip()
+        else "No relevant documents were found."
+    )
+    return {"documents": [], "response": message}
+
+
 async def retrieve_relevant_documents(
     project_dir: Path, query: DocumentSearchQuery, callback: BaseCallback = None
 ) -> SearchResults:
@@ -106,11 +124,15 @@ async def search_documents(
     question = generate_question(query)
     query_params = generate_query(project_dir, query, question, callback)
     results = await lightrag_search(query_params)
-    results.response["documents"] = sorted(
-        results.response["documents"],
-        key=lambda r: RELEVANCE_SCORE_POINTS_MAP[r["relevancy_score"]],
+    payload = _as_document_search_response(results.response)
+    payload["documents"] = sorted(
+        payload["documents"],
+        key=lambda r: RELEVANCE_SCORE_POINTS_MAP[
+            r["relevancy_score"] if isinstance(r, dict) else r.relevancy_score
+        ],
         reverse=True,
     )
+    results.response = payload
     return results
 
 

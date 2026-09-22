@@ -187,11 +187,6 @@ class LinkedInConfig:
         return user, password
 
 
-class BrightDataConfig:
-    bright_data_api_key = os.getenv("BRIGHT_DATA_API_KEY")
-    assert bright_data_api_key is not None, "Please specify the Bright Data API key"
-
-
 class DBConfig:
     postgres_connection_string = os.getenv("POSTGRES_CONNECTION_STRING")
     assert (
@@ -220,8 +215,6 @@ lightrag_cfg = LightRAGConfig()
 cag_cfg = CAGConfig()
 
 linkedin_cfg = LinkedInConfig()
-
-bright_data_cfg = BrightDataConfig()
 
 db_cfg = DBConfig()
 

@@ -203,10 +203,10 @@ async def _lightrag_search_impl(
     )
     if param.mode in ["local", "global", "hybrid", "mix"]:
         response_dict = await aquery_llm(rag, query, param, system_prompt, query_params)
-        entities_context = response_dict["data"].get("entities", [])
-        relations_context = response_dict["data"].get("relationships", [])
-        text_units_context = response_dict["data"].get("chunks", [])
-        keywords = response_dict["metadata"].get("keywords", {})
+        entities_context = response_dict.get("data", {}).get("entities", [])
+        relations_context = response_dict.get("data", {}).get("relationships", [])
+        text_units_context = response_dict.get("data", {}).get("chunks", [])
+        keywords = response_dict.get("metadata", {}).get("keywords", {})
         hl_keywords = keywords.get("high_level", [])
         ll_keywords = keywords.get("low_level", [])
         include_context_data = (
@@ -331,6 +331,16 @@ async def aquery_llm(
 
         # Check if query_result is None
         if query_result is None:
+            no_result_content: Any = PROMPTS["fail_response"]
+            if query_params is not None and query_params.structured_output:
+                no_result_content = {
+                    "documents": [],
+                    "response": (
+                        no_result_content
+                        if isinstance(no_result_content, str)
+                        else "No relevant documents were found."
+                    ),
+                }
             return {
                 "status": "failure",
                 "message": "Query returned no results",
@@ -340,7 +350,7 @@ async def aquery_llm(
                     "mode": param.mode,
                 },
                 "llm_response": {
-                    "content": PROMPTS["fail_response"],
+                    "content": no_result_content,
                     "response_iterator": None,
                     "is_streaming": False,
                 },
