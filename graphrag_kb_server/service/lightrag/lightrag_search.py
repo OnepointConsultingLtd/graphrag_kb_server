@@ -491,7 +491,7 @@ async def kg_query(
         if query_params.max_relation_size > 0:
             relations_context = relations_context[: query_params.max_relation_size]
         if len(text_units_context) > 0:
-            files = [Path(u["file_path"]).stem.replace("_", " ") for u in text_units_context if Path(u["file_path"]).exists()]
+            files = ["*" + Path(u["file_path"]).stem.replace("_", " ") + "*" for u in text_units_context if Path(u["file_path"]).exists()]
             limit = 5
             files_str = ", ".join(files[:limit])
             if len(files) > limit:
