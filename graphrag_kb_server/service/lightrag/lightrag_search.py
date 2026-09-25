@@ -491,8 +491,15 @@ async def kg_query(
         if query_params.max_relation_size > 0:
             relations_context = relations_context[: query_params.max_relation_size]
         if len(text_units_context) > 0:
+            files = [Path(u["file_path"]).stem.replace("_", " ") for u in text_units_context if Path(u["file_path"]).exists()]
+            limit = 5
+            files_str = ", ".join(files[:limit])
+            if len(files) > limit:
+                files_str += f", and {len(files) - limit} more"
             await query_params.callback.callback(
-                f"Search has found multiple documents ({len(text_units_context)}). Summarising and re-ranking the documents..."
+                f"""Search has found multiple document{f's' if len(files) > 1 else ''} ({files_str}). 
+
+Summarising and re-ranking the documents..."""
             )
         else:
             await query_params.callback.callback("No documents found.")

@@ -1,0 +1,19 @@
+meta {
+  name: Document Trendiness
+  type: ws
+  seq: 4
+}
+
+ws {
+  url: ws://localhost:9999/document_trendiness
+  body: ws
+  auth: inherit
+}
+
+body:ws {
+  name: message 1
+  type: json
+  content: '''
+    {}
+  '''
+}
