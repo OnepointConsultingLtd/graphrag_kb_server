@@ -99,6 +99,13 @@ class Config:
     apify_token = os.getenv("APIFY_TOKEN")
     assert apify_token is not None, "Please specify the Apify token"
     expand_max_entities = int(os.getenv("EXPAND_MAX_ENTITIES", "512"))
+    vimeo_personal_access_token = os.getenv("VIMEO_PERSONAL_ACCESS_TOKEN")
+    clustre_vimeo_sync_enabled = (
+        os.getenv("CLUSTRE_VIMEO_SYNC_ENABLED", "false") == "true"
+    )
+    clustre_vimeo_sync_interval_hours = float(
+        os.getenv("CLUSTRE_VIMEO_SYNC_INTERVAL_HOURS", "4")
+    )
 
 
 class WebsocketConfig:

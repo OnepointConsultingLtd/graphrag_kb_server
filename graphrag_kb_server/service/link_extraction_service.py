@@ -21,7 +21,11 @@ ACCEPTED_EXTENSIONS = set([".txt", ".md"])
 type DocLinks = list[tuple[str, list[str]]]
 
 
-async def save_links(project_dir: Path, insert_if_not_exists: bool = False):
+async def save_links(
+    project_dir: Path,
+    insert_if_not_exists: bool = False,
+    files: list[Path] | None = None,
+):
     simple_project = extract_elements_from_path(project_dir)
     project_id = await get_project_id(
         simple_project.schema_name,
@@ -29,11 +33,16 @@ async def save_links(project_dir: Path, insert_if_not_exists: bool = False):
         simple_project.engine.value,
         create_if_not_exists=True,
     )
-    existing_links = await find_path_links(simple_project.schema_name, project_id)
-    if len(existing_links) > 0:
-        logger.info(f"Links already exist for project {simple_project.project_name}")
-        return
-    links = extract_links(project_dir)
+    if files is None:
+        existing_links = await find_path_links(simple_project.schema_name, project_id)
+        if len(existing_links) > 0:
+            logger.info(
+                f"Links already exist for project {simple_project.project_name}"
+            )
+            return
+        links = extract_links(project_dir)
+    else:
+        links = [extract_links_from_file(file) for file in files]
     verified_links = await verify_links(links)
     path_links = [
         PathLink(path=file_path, link=link, project_id=project_id)
@@ -89,10 +98,13 @@ def extract_links(project_dir: Path) -> DocLinks:
     result: list[tuple[str, list[str]]] = []
     for original_file in original_file_path.rglob("*"):
         if original_file.is_file() and original_file.suffix in ACCEPTED_EXTENSIONS:
-            text = original_file.read_text(encoding="utf-8")
-            file_links = _extract_links_from_text(text)
-            result.append((original_file.as_posix(), file_links))
+            result.append(extract_links_from_file(original_file))
     return result
+
+
+def extract_links_from_file(file: Path) -> tuple[str, list[str]]:
+    text = file.read_text(encoding="utf-8")
+    return file.as_posix(), _extract_links_from_text(text)
 
 
 def _extract_links_from_text(text: str) -> list[str]:

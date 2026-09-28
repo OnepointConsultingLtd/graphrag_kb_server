@@ -136,6 +136,24 @@ class SummarisationResponseWithDocument(SummarisationResponse):
     )
 
 
+class LLMSearchDocument(SummarisationResponse):
+    reference_id: str = Field(
+        ...,
+        description="The reference_id of the document, as listed in the Reference Document List",
+    )
+
+
+class LLMSearchResults(BaseModel):
+    documents: list[LLMSearchDocument] = Field(
+        ...,
+        description="The documents that are relevant to the user's interests and question",
+    )
+    response: str = Field(
+        ...,
+        description="The response to the user's question",
+    )
+
+
 class SearchResults(BaseModel):
     request_id: str = Field(
         default="",

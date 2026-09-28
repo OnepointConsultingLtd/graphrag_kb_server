@@ -106,11 +106,13 @@ COPY run.sh .
 COPY README.md .
 COPY config/security.yaml config/security.yaml
 COPY docker/run.sh docker/run.sh
+COPY docker/parse_clustre_vimeo.sh docker/parse_clustre_vimeo.sh
 COPY templates/ ./templates/
 
 # Convert line endings and make scripts executable
 RUN dos2unix run.sh && chmod +x run.sh && \
     dos2unix docker/run.sh && chmod +x docker/run.sh && \
+    dos2unix docker/parse_clustre_vimeo.sh && chmod +x docker/parse_clustre_vimeo.sh && \
     dos2unix /frpc/run_frpc.sh && chmod +x /frpc/run_frpc.sh
 
 # Copy and rename configuration files

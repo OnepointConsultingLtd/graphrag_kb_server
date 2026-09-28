@@ -105,7 +105,7 @@ You are a helpful assistant responding to user query about Knowledge Graph and D
 
 ---Goal---
 
-Generate a concise response based on Knowledge Base and follow Response Rules, considering both the conversation history and the current query. Summarise all information in the provided Knowledge Base, and incorporating general knowledge relevant to the Knowledge Base. Do not include information not provided by Knowledge Base.
+Generate a concise response with a summary of about 100 words based on Knowledge Base and follow Response Rules, considering both the conversation history and the current query. Summarise all information in the provided Knowledge Base, and incorporating general knowledge relevant to the Knowledge Base. Do not include information not provided by Knowledge Base.
 
 When handling relationships with timestamps:
 1. Each relationship has a "created_at" timestamp indicating when we acquired this knowledge
@@ -206,9 +206,7 @@ async def _lightrag_search_impl(
         entities_context = response_dict.get("data", {}).get("entities", [])
         relations_context = response_dict.get("data", {}).get("relationships", [])
         text_units_context = response_dict.get("data", {}).get("chunks", [])
-        keywords = response_dict.get("metadata", {}).get("keywords", {})
-        hl_keywords = keywords.get("high_level", [])
-        ll_keywords = keywords.get("low_level", [])
+        references = response_dict.get("data", {}).get("references", [])
         include_context_data = (
             query_params.context_format == ContextFormat.JSON
             or query_params.context_format == ContextFormat.JSON_STRING_WITH_JSON
@@ -228,8 +226,9 @@ async def _lightrag_search_impl(
             entities_context=entities_context if include_context_data else None,
             relations_context=(relations_context if include_context_data else None),
             text_units_context=(text_units_context if include_context_data else None),
-            hl_keywords=hl_keywords if query_params.keywords else None,
-            ll_keywords=ll_keywords if query_params.keywords else None,
+            references=references if include_context_data else None,
+            hl_keywords=param.hl_keywords if query_params.keywords else None,
+            ll_keywords=param.ll_keywords if query_params.keywords else None,
             response_iterator=response_dict["llm_response"].get(
                 "response_iterator", None
             ),
@@ -433,8 +432,12 @@ async def kg_query(
         # Apply higher priority (5) to query relation LLM function
         use_model_func = partial(use_model_func, _priority=5)
 
+    start = time.perf_counter()
     hl_keywords, ll_keywords = await extract_keywords_only(
         query, query_param, global_config, rag.llm_response_cache
+    )
+    logger.info(
+        f"[kg_query] extract_keywords_only took {time.perf_counter() - start:.2f}s"
     )
     # Add the keywords to the query parameters
     query_param.hl_keywords = _combine_keywords(query_param.hl_keywords, hl_keywords)
@@ -467,6 +470,7 @@ async def kg_query(
     hl_keywords_str = ", ".join(hl_keywords) if hl_keywords else ""
 
     # Build query context (unified interface)
+    start = time.perf_counter()
     context_result: QueryContextResult | None = await _build_query_context(
         query,
         ll_keywords_str,
@@ -479,6 +483,9 @@ async def kg_query(
         chunks_vdb,
         query_params,
         system_prompt=system_prompt,
+    )
+    logger.info(
+        f"[kg_query] _build_query_context took {time.perf_counter() - start:.2f}s"
     )
 
     if context_result is None:
@@ -577,6 +584,7 @@ Summarising and re-ranking the documents..."""
         )
         response = cached_response
     else:
+        start = time.perf_counter()
         response = await use_model_func(
             llm_user_prompt,
             system_prompt=sys_prompt,
@@ -585,6 +593,10 @@ Summarising and re-ranking the documents..."""
             enable_cot=True,
             structured_output=query_params.structured_output,
             structured_output_format=query_params.structured_output_format,
+        )
+        logger.info(
+            f"[kg_query] use_model_func took {time.perf_counter() - start:.2f}s"
+            f"{' (stream opened only)' if query_param.stream else ''}"
         )
 
         if (

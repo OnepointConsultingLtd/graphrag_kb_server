@@ -3,6 +3,7 @@ from pathlib import Path
 
 import asyncio
 import base64
+import contextlib
 from urllib.parse import urlparse
 
 from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo, SwaggerUiSettings
@@ -21,6 +22,9 @@ from graphrag_kb_server.service.db.connection_pool import (
     close_connection_pool,
 )
 from graphrag_kb_server.main.bootstrap import bootstrap_database
+from graphrag_kb_server.service.parser.clustre_vimeo_parser import (
+    run_clustre_vimeo_sync_loop,
+)
 
 init_logger()
 
@@ -112,12 +116,27 @@ async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
     return d, True
 
 
+CLUSTRE_VIMEO_SYNC_TASK = web.AppKey("clustre_vimeo_sync_task", asyncio.Task)
+
+
 async def on_startup(app: web.Application):
     await bootstrap_database()
     await initialize_projects()
+    if cfg.clustre_vimeo_sync_enabled:
+        logger.info(
+            f"Starting Clustre Vimeo sync every {cfg.clustre_vimeo_sync_interval_hours} hours"
+        )
+        app[CLUSTRE_VIMEO_SYNC_TASK] = asyncio.create_task(
+            run_clustre_vimeo_sync_loop()
+        )
 
 
 async def on_cleanup(app: web.Application):
+    sync_task = app.get(CLUSTRE_VIMEO_SYNC_TASK)
+    if sync_task is not None:
+        sync_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await sync_task
     await close_connection_pool()
 
 

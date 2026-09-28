@@ -47,7 +47,12 @@ async def gemini_model_func(
 
     # 2. Call the Gemini model with a separate system instruction so the
     # static prompt can be cached independently of the per-request user content.
-    config_dict = {"max_output_tokens": 65000, "temperature": 0, "top_k": 8}
+    config_dict = {
+        "max_output_tokens": 65000,
+        "temperature": 0,
+        "top_k": 8,
+        # "thinking_config": types.ThinkingConfig(thinking_level="low")
+    }
     if system_prompt:
         config_dict["system_instruction"] = system_prompt
 
@@ -74,6 +79,13 @@ async def gemini_model_func(
     completion_tokens = getattr(usage, "candidates_token_count", 0) or 0
     total_tokens = getattr(usage, "total_token_count", 0) or (
         prompt_tokens + completion_tokens
+    )
+    thinking_tokens = getattr(usage, "thoughts_token_count", 0) or 0
+    cached_tokens = getattr(usage, "cached_content_token_count", 0) or 0
+    logger.info(
+        f"[gemini] {lightrag_cfg.lightrag_model} tokens - input: {prompt_tokens:,} "
+        f"(cached: {cached_tokens:,}), thinking: {thinking_tokens:,}, "
+        f"output: {completion_tokens:,}, total: {total_tokens:,}"
     )
 
     token_counts = {
@@ -141,6 +153,8 @@ async def structured_completion(
     # OpenRouter expects provider as a dictionary matching ChatGenerationParamsProvider
     if is_openrouter and cfg.openrouter_provider:
         config_dict["provider"] = {"name": cfg.openrouter_provider}
+    if is_openrouter:
+        config_dict["reasoning"] = {"effort": "minimal"}
     if structured_output:
         if is_openai or is_openrouter:
             # OpenAI requires nested json_schema structure with name
@@ -192,6 +206,18 @@ async def structured_completion(
 
     if stream:
         return _stream_tokens(response, _client_ref=client)
+
+    usage = getattr(response, "usage", None)
+    prompt_details = getattr(usage, "prompt_tokens_details", None) or None
+    completion_details = getattr(usage, "completion_tokens_details", None) or None
+    logger.info(
+        f"[structured_completion] {model_name} tokens - "
+        f"input: {int(getattr(usage, 'prompt_tokens', 0) or 0):,} "
+        f"(cached: {int(getattr(prompt_details, 'cached_tokens', 0) or 0):,}), "
+        f"thinking: {int(getattr(completion_details, 'reasoning_tokens', 0) or 0):,}, "
+        f"output: {int(getattr(usage, 'completion_tokens', 0) or 0):,}, "
+        f"total: {int(getattr(usage, 'total_tokens', 0) or 0):,}"
+    )
 
     content = response.choices[0].message.content
     return (

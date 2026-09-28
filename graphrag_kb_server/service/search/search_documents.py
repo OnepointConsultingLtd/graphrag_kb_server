@@ -22,9 +22,11 @@ from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search, PROMPTS
 from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.model.search.search import (
+    LLMSearchResults,
     SearchResults,
     RELEVANCE_SCORE_POINTS_MAP,
 )
+from graphrag_kb_server.model.search.keywords import Keywords, KeywordType
 from graphrag_kb_server.callbacks.callback_support import BaseCallback
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.utils.file_support import strip_drive
@@ -57,6 +59,33 @@ def _as_document_search_response(response: str | dict | None) -> dict:
         else "No relevant documents were found."
     )
     return {"documents": [], "response": message}
+
+
+def _map_reference_ids(documents: list[dict], references: list[dict] | None) -> list[dict]:
+    """Replace the LLM's reference_id with the document path from the reference list.
+
+    Documents whose reference_id is not in the reference list are dropped.
+    """
+    paths_by_id = {
+        str(ref["reference_id"]): ref["file_path"] for ref in references or []
+    }
+    mapped = []
+    for document in documents:
+        reference_id = str(document.pop("reference_id", ""))
+        document_path = paths_by_id.get(reference_id)
+        if document_path is None:
+            logger.warning(f"Dropping document with unknown reference_id: {reference_id}")
+            continue
+        document["document_path"] = document_path
+        document["links"] = []
+        mapped.append(document)
+    return mapped
+
+
+def _as_keywords(keywords: list[str] | None, keyword_type: KeywordType) -> Keywords | None:
+    if not keywords:
+        return None
+    return Keywords(keywords=keywords, keyword_type=keyword_type, search_id=-1)
 
 
 async def retrieve_relevant_documents(
@@ -108,6 +137,12 @@ async def retrieve_relevant_documents(
         request_id=query.request_id,
         documents=documents,
         response=chat_response.response["response"],
+        high_level_keywords=_as_keywords(
+            chat_response.hl_keywords, KeywordType.HIGH_LEVEL
+        ),
+        low_level_keywords=_as_keywords(
+            chat_response.ll_keywords, KeywordType.LOW_LEVEL
+        ),
         relationships=(
             RelationshipsJSON(
                 relationships=json.dumps(chat_response.relations_context), search_id=-1
@@ -125,6 +160,7 @@ async def search_documents(
     query_params = generate_query(project_dir, query, question, callback)
     results = await lightrag_search(query_params)
     payload = _as_document_search_response(results.response)
+    payload["documents"] = _map_reference_ids(payload["documents"], results.references)
     payload["documents"] = sorted(
         payload["documents"],
         key=lambda r: RELEVANCE_SCORE_POINTS_MAP[
@@ -169,7 +205,8 @@ def generate_query(
         include_context=True,
         include_context_as_text=False,
         structured_output=True,
-        structured_output_format=SearchResults,
+        structured_output_format=LLMSearchResults,
+        keywords=True,
         max_filepath_depth=query.max_filepath_depth,
         is_search_query=query.is_search_query,
         callback=callback,

@@ -6,6 +6,12 @@ import datetime
 class PathLink(BaseModel):
     path: str = Field(..., description="The path of the link")
     link: str = Field(..., description="The link of the path")
+    website_link: str | None = Field(
+        default=None, description="The website link of the path"
+    )
+    vimeo_id: str | None = Field(
+        default=None, description="The Vimeo video id extracted from the link"
+    )
     project_id: int = Field(..., description="The project id of the path")
 
 
