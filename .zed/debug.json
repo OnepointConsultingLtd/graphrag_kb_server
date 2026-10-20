@@ -13,5 +13,14 @@
       "CLUSTRE_VIMEO_ENGINE": "lightrag"
     },
     "justMyCode": false
+  },
+  {
+    "label": "Python Debugger: Web App",
+    "adapter": "Debugpy",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/graphrag_kb_server/main/webapp.py",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "python": "$ZED_WORKTREE_ROOT/.venv/Scripts/python.exe",
+    "justMyCode": false
   }
 ]

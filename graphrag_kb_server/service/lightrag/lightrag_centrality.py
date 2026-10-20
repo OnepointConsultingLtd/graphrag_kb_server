@@ -85,6 +85,24 @@ async def get_sorted_centrality_scores_as_pd(project_dir: Path) -> pd.DataFrame:
     return data
 
 
+async def get_top_centrality_scores_by_type_as_pd(
+    project_dir: Path, entity_types: list[str], limit: int
+) -> pd.DataFrame:
+    """
+    Return the most central entities of the given types, filtering and limiting in SQL.
+
+    Falls back to the full (computing) path when nothing is cached yet for the project,
+    so an empty filtered result is never mistaken for a missing cache.
+    """
+    filtered_data = await find_topics_with_centrality_by_project_name(
+        project_dir, limit, entity_types
+    )
+    if filtered_data:
+        return await convert_to_pd(filtered_data)
+    all_scores = await get_sorted_centrality_scores_as_pd(project_dir)
+    return all_scores[all_scores["entity_type"].isin(entity_types)][:limit]
+
+
 async def get_sorted_centrality_scores_as_xls(
     project_dir: Path, limit: int = -1
 ) -> bytes:

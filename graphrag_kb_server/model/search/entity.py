@@ -21,12 +21,36 @@ class EntityWithScore(BaseModel):
         ..., description="The score of the entity according to the user interests"
     )
     reasoning: str = Field(
-        ...,
+        default="",
         description="The reasoning behind the choice of this entity and how why it matches the user interests",
     )
     abstraction: Abstraction = Field(
         ...,
         description="The abstraction of the entity. Whether it is a high-level (overarching topic) or low-level keyword (specific subtopic)",
+    )
+
+
+class LlmEntityWithScore(BaseModel):
+    """Lean LLM response item for entity matching: no reasoning, to reduce output tokens."""
+
+    model_config = ConfigDict(frozen=True)
+    entity: str = Field(..., description="The entity name")
+    score: float = Field(
+        ..., description="The score of the entity according to the user interests"
+    )
+    abstraction: Abstraction = Field(
+        ...,
+        description="The abstraction of the entity. Whether it is a high-level (overarching topic) or low-level keyword (specific subtopic)",
+    )
+
+
+class LlmEntityList(BaseModel):
+    """Response schema sent to the LLM when matching entities."""
+
+    model_config = ConfigDict(frozen=True)
+    entities: list[LlmEntityWithScore] = Field(
+        ...,
+        description="A sorted list of entity names ordered by relevance according to the user interests",
     )
 
 

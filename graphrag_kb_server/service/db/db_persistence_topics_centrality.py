@@ -93,8 +93,15 @@ async def delete_topics_with_centrality_by_project_name(
 
 
 async def find_topics_with_centrality_by_project_name(
-    project_dir: Path, limit: int = -1
+    project_dir: Path, limit: int = -1, entity_types: list[str] | None = None
 ) -> list[NodeCentrality]:
+    """
+    Fetch the cached centrality rows of a project, most central first.
+
+    :param limit: maximum number of rows to return; a non-positive value means no limit.
+    :param entity_types: when given, only rows of these entity types are returned.
+        Filtering in SQL avoids transferring every row of the project.
+    """
     simple_project = extract_elements_from_path(project_dir)
     schema_name = simple_project.schema_name
     project_name = simple_project.project_name
@@ -102,15 +109,17 @@ async def find_topics_with_centrality_by_project_name(
     limit_clause = 1000000
     if limit > 0:
         limit_clause = limit
+    entity_types_clause = "AND ENTITY_TYPE = ANY($4::text[])" if entity_types else ""
+    query_args = [project_name, engine, limit_clause]
+    if entity_types:
+        query_args.append(list(entity_types))
     result = await fetch_all(
         f"""
 SELECT ENTITY_ID, ENTITY_TYPE, DESCRIPTION, FILE_PATH, CENTRALITY
-FROM {schema_name}.{TB_TOPICS_WITH_CENTRALITY} WHERE PROJECT_ID = 
+FROM {schema_name}.{TB_TOPICS_WITH_CENTRALITY} WHERE PROJECT_ID =
 (SELECT ID FROM {schema_name}.{TB_PROJECTS} WHERE NAME = $1 AND ENGINE = $2)
-AND ACTIVE = TRUE ORDER BY CENTRALITY DESC LIMIT $3;
+AND ACTIVE = TRUE {entity_types_clause} ORDER BY CENTRALITY DESC LIMIT $3;
 """,
-        project_name,
-        engine,
-        limit_clause,
+        *query_args,
     )
     return result

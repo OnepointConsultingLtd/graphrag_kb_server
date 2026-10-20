@@ -7,9 +7,14 @@ import pandas as pd
 import numpy as np
 
 from graphrag_kb_server.model.search.match_query import MatchQuery, MatchOutput
-from graphrag_kb_server.model.search.entity import Entity, EntityList, EntityWithScore
+from graphrag_kb_server.model.search.entity import (
+    Entity,
+    EntityList,
+    EntityWithScore,
+    LlmEntityList,
+)
 from graphrag_kb_server.service.lightrag.lightrag_centrality import (
-    get_sorted_centrality_scores_as_pd,
+    get_top_centrality_scores_by_type_as_pd,
 )
 from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.service.google_ai_client import structured_completion
@@ -77,8 +82,9 @@ async def match_entities_with_lightrag(
             return remove_abbreviations_from_match_output(matched_output_from_db)
 
     entity_types, entities_limit = query.entity_types, query.entities_limit
-    df = await get_sorted_centrality_scores_as_pd(project_dir)
-    df = df[df["entity_type"].isin(entity_types)][:entities_limit]
+    df = await get_top_centrality_scores_by_type_as_pd(
+        project_dir, list(entity_types), entities_limit
+    )
     all_entities = _convert_df_to_entities(df)
     entity_list = await match_entities(query, all_entities)
     entity_list = [
@@ -158,7 +164,7 @@ async def match_entities(
     entities = await structured_completion(
         system_prompt,
         user_contents,
-        EntityList,
+        LlmEntityList,
         model=lightrag_cfg.lightrag_model,
     )
 
@@ -166,7 +172,6 @@ async def match_entities(
         EntityWithScore(
             entity=e["entity"],
             score=e["score"],
-            reasoning=e["reasoning"],
             abstraction=e["abstraction"],
         )
         for e in entities["entities"]
