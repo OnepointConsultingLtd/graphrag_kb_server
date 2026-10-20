@@ -1,0 +1,17 @@
+[
+  {
+    "label": "Debug clustre_vimeo_scraper",
+    "adapter": "Debugpy",
+    "request": "launch",
+    "module": "graphrag_kb_server.service.parser.clustre_vimeo_scraper",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "python": "$ZED_WORKTREE_ROOT/.venv/Scripts/python.exe",
+    "envFile": "$ZED_WORKTREE_ROOT/.env",
+    "env": {
+      "CLUSTRE_VIMEO_SCHEMA": "gil_fernandes",
+      "CLUSTRE_VIMEO_PROJECT": "clustre_full_5",
+      "CLUSTRE_VIMEO_ENGINE": "lightrag"
+    },
+    "justMyCode": false
+  }
+]

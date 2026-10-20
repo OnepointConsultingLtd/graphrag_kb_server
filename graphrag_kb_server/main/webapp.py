@@ -22,7 +22,7 @@ from graphrag_kb_server.service.db.connection_pool import (
     close_connection_pool,
 )
 from graphrag_kb_server.main.bootstrap import bootstrap_database
-from graphrag_kb_server.service.parser.clustre_vimeo_parser import (
+from graphrag_kb_server.service.parser.clustre_vimeo_scraper import (
     run_clustre_vimeo_sync_loop,
 )
 

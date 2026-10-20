@@ -3,6 +3,11 @@ import logging.config
 
 
 def init_logger():
+    """Configure console logging and make sure the application logger is enabled.
+
+    Safe to call again after third party imports (e.g. lightrag) which reconfigure
+    the root logger to WARNING and disable previously created loggers.
+    """
     # Configure logging using dictConfig to ensure it overrides any previous configurations
     logging.config.dictConfig(
         {
@@ -25,6 +30,7 @@ def init_logger():
             "root": {"handlers": ["console"], "level": "INFO"},
         }
     )
+    logging.getLogger(__name__).disabled = False
 
 
 init_logger()

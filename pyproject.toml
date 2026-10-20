@@ -36,6 +36,7 @@ dependencies = [
     "uvicorn>=0.30.0",
     "pydub>=0.25.1",
     "audioop-lts>=0.2.2",
+    "yt-dlp[curl-cffi]>=2026.8.19",
 ]
 
 [project.scripts]

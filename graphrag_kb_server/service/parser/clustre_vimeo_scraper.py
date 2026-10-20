@@ -8,7 +8,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from graphrag_kb_server.config import cfg
-from graphrag_kb_server.logger import logger
+from graphrag_kb_server.logger import init_logger, logger
 from graphrag_kb_server.model.project import IndexingStatus
 from graphrag_kb_server.service.db.common_operations import get_project_id
 from graphrag_kb_server.service.db.connection_pool import close_connection_pool
@@ -24,8 +24,11 @@ from graphrag_kb_server.service.lightrag.lightrag_constants import (
 from graphrag_kb_server.service.lightrag.lightrag_index_support import lightrag_index
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.link_extraction_service import save_links
+from graphrag_kb_server.service.parser.vimeo_audio_transcription import (
+    transcribe_vimeo_audio,
+)
 
-CLUSTRE_VIDEOS_URL = "https://www.clustre.net/category/videos/"
+CLUSTRE_VIDEOS_URL = os.getenv("CLUSTRE_VIDEOS_URL", "https://www.clustre.net/category/videos/")
 USER_AGENT = "Mozilla/5.0 (compatible; graphrag-kb-server/1.0)"
 REQUEST_TIMEOUT = 30
 
@@ -36,6 +39,24 @@ VIMEO_API_ACCEPT = "application/vnd.vimeo.*+json;version=3.4"
 WEBSITE_VIDEOS_FOLDER = "website_videos"
 VTT_TIMESTAMP_PATTERN = re.compile(r"-->")
 VTT_TAG_PATTERN = re.compile(r"<[^>]+>")
+
+PAGE_CONTENT_SELECTOR = "#internalContent"
+PAGE_NOISE_SELECTORS = [
+    "script",
+    "style",
+    "noscript",
+    "iframe",
+    "form",
+    "nav",
+    "header",
+    "footer",
+    ".footerStyle",
+    "#inlinePopUp",
+    "#cookie-notice",
+]
+PAGE_TEXT_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote"]
+PAGE_TEXT_SECTION_TITLE = "Page text"
+TRANSCRIPT_SECTION_TITLE = "Video transcript"
 
 
 def extract_article_urls(html: str, page_url: str) -> list[str]:
@@ -107,11 +128,14 @@ async def parse_vimeo_mapping(
         logger.info(f"Found {len(article_urls)} articles in {start_url}")
         for article_url in article_urls:
             try:
+                logger.info(f"Extracting clustre url: {article_url}")
                 vimeo_links = extract_vimeo_links(await _fetch(client, article_url))
             except httpx.HTTPError as e:
                 logger.error(f"Failed to fetch {article_url}: {e}")
                 continue
             if vimeo_links:
+                for link in vimeo_links:
+                    logger.info(f"Clustre vimeo link: {article_url}: {link}")
                 mapping[article_url] = vimeo_links
     return mapping
 
@@ -173,12 +197,89 @@ def transcript_file_name(article_url: str, vimeo_id: str) -> str:
     return f"{slug}_{vimeo_id}.txt"
 
 
-def transcript_content(article_url: str, vimeo_id: str, transcript: str) -> str:
+def _normalize_whitespace(text: str) -> str:
+    return " ".join(text.split())
+
+
+def extract_page_title(soup: BeautifulSoup) -> str:
+    """Return the headline of the article, falling back to the html title without the site name."""
+    heading = soup.find("h1")
+    if heading is not None and heading.get_text(strip=True):
+        return _normalize_whitespace(heading.get_text(" "))
+    if soup.title is not None and soup.title.string:
+        return _normalize_whitespace(soup.title.string.split("|")[0])
+    return ""
+
+
+def extract_page_text(html: str) -> str:
+    """Extract the readable article text of a Clustre page, without menus, footer or popups.
+
+    The article body is the element PAGE_CONTENT_SELECTOR. For pages without it, the
+    whole body is used after removing the elements listed in PAGE_NOISE_SELECTORS.
+    The text is returned as the title followed by one paragraph per line.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    title = extract_page_title(soup)
+    container = soup.select_one(PAGE_CONTENT_SELECTOR) or soup.body or soup
+    for noise in container.select(", ".join(PAGE_NOISE_SELECTORS)):
+        noise.decompose()
+    # Only leaf blocks are used, otherwise the text of a list item containing a paragraph is doubled
+    paragraphs = [
+        _normalize_whitespace(block.get_text(" "))
+        for block in container.find_all(PAGE_TEXT_TAGS)
+        if block.find(PAGE_TEXT_TAGS) is None
+    ]
+    if not any(paragraphs):
+        paragraphs = [
+            _normalize_whitespace(line) for line in container.get_text("\n").split("\n")
+        ]
+    lines = [title] if title else []
+    for paragraph in paragraphs:
+        if paragraph and (not lines or lines[-1] != paragraph):
+            lines.append(paragraph)
+    return "\n".join(lines)
+
+
+def transcript_content(
+    article_url: str, vimeo_id: str, transcript: str, page_text: str = ""
+) -> str:
+    """Build the file content to index: video and page links, page text and video transcript.
+
+    The page text section is left out when the page has no extractable text.
+    """
+    header = f"Video: https://vimeo.com/{vimeo_id}\nWeb page: {article_url}\n\n"
+    if not page_text:
+        return f"{header}{transcript}\n"
     return (
-        f"Video: https://vimeo.com/{vimeo_id}\n"
-        f"Web page: {article_url}\n\n"
-        f"{transcript}\n"
+        f"{header}"
+        f"## {PAGE_TEXT_SECTION_TITLE}\n\n{page_text}\n\n"
+        f"## {TRANSCRIPT_SECTION_TITLE}\n\n{transcript}\n"
     )
+
+
+async def fetch_page_text(client: httpx.AsyncClient, article_url: str) -> str:
+    """Fetch an article and extract its text, returning an empty text if that fails."""
+    try:
+        return extract_page_text(await _fetch(client, article_url))
+    except httpx.HTTPError as e:
+        logger.error(f"Failed to fetch page text of {article_url}: {e}")
+        return ""
+
+
+async def fetch_transcript_with_audio_fallback(
+    client: httpx.AsyncClient, vimeo_id: str, article_url: str, token: str
+) -> str | None:
+    """Fetch the Vimeo text track and fall back to speech to text on the audio."""
+    transcript = await fetch_transcript(client, vimeo_id, token)
+    if transcript is not None:
+        return transcript
+    logger.info(f"Falling back to audio transcription for Vimeo video {vimeo_id}")
+    return await transcribe_vimeo_audio(vimeo_id, article_url, token=token)
+
+
+def format_progress(position: int, total: int) -> str:
+    """Format the position of an item in a batch for log messages, e.g. '[3/120]'."""
+    return f"[{position}/{total}]"
 
 
 async def write_transcripts(
@@ -186,26 +287,52 @@ async def write_transcripts(
 ) -> list[Path]:
     videos_folder.mkdir(parents=True, exist_ok=True)
     transcript_files: list[Path] = []
+    # A page can embed several videos, so its text is fetched only once
+    page_texts: dict[str, str] = {}
     async with httpx.AsyncClient(
         headers={"User-Agent": USER_AGENT},
         timeout=REQUEST_TIMEOUT,
         follow_redirects=True,
     ) as client:
+        total_videos = sum(len(vimeo_links) for vimeo_links in missing.values())
+        video_position = 0
         for article_url, vimeo_links in missing.items():
             for vimeo_link in vimeo_links:
+                video_position += 1
+                progress = format_progress(video_position, total_videos)
                 vimeo_id = extract_vimeo_id(vimeo_link)
                 if vimeo_id is None:
+                    logger.warning(f"{progress} No Vimeo id in {vimeo_link}, skipped")
                     continue
                 file = videos_folder / transcript_file_name(article_url, vimeo_id)
-                if not file.exists():
-                    transcript = await fetch_transcript(client, vimeo_id, token)
+                if file.exists():
+                    logger.info(f"{progress} Transcript already exists: {file.name}")
+                else:
+                    logger.info(
+                        f"{progress} Transcribing Vimeo video {vimeo_id} of {article_url}"
+                    )
+                    transcript = await fetch_transcript_with_audio_fallback(
+                        client, vimeo_id, article_url, token
+                    )
                     if transcript is None:
+                        logger.warning(
+                            f"{progress} No transcript for Vimeo video {vimeo_id}, skipped"
+                        )
                         continue
+                    if article_url not in page_texts:
+                        page_texts[article_url] = await fetch_page_text(
+                            client, article_url
+                        )
                     file.write_text(
-                        transcript_content(article_url, vimeo_id, transcript),
+                        transcript_content(
+                            article_url,
+                            vimeo_id,
+                            transcript,
+                            page_texts[article_url],
+                        ),
                         encoding="utf-8",
                     )
-                    logger.info(f"Wrote transcript {file}")
+                    logger.info(f"{progress} Wrote transcript {file}")
                 if file not in transcript_files:
                     transcript_files.append(file)
     return transcript_files
@@ -279,6 +406,8 @@ async def run_clustre_vimeo_sync_loop():
 
 
 async def main():
+    # Imports above (lightrag) reset the logging configuration, so restore it
+    init_logger()
     try:
         await sync_clustre_videos(*_target_project())
     finally:
