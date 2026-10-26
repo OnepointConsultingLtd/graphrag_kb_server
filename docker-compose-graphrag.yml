@@ -1,0 +1,84 @@
+services:
+  graphrag-kb-server:
+    image: graphrag_kb_server:deploy-7
+    container_name: graphrag-kb-server
+    restart: unless-stopped
+    ports:
+      - "9999:9999"
+    volumes:
+      - graphrag-kb-server:/var/graphrag
+    environment:
+      - ADMIN_TOKEN_EMAIL=${ADMIN_TOKEN_EMAIL}
+      - ADMIN_TOKEN_NAME=${ADMIN_TOKEN_NAME}
+      - ADMIN_TOKEN_PASSWORD=${ADMIN_TOKEN_PASSWORD}
+      - APIFY_TOKEN=${APIFY_TOKEN}
+      - CAG_MODEL=${CAG_MODEL:-gemini-3-flash-preview}
+      - CHROMEDRIVER=/development/tools/chrome-win64
+      - CLAIMS_ENABLED=${CLAIMS_ENABLED:-false}
+      - CONFIG_DIR=/var/graphrag/config
+      - ENABLE_RERANK=${ENABLE_RERANK:-false}
+      - EXTRACT_LINKS_ON_START=${EXTRACT_LINKS_ON_START:-true}
+      - FRPC_LOCAL_PORT=${FRPC_LOCAL_PORT:-9999}
+      - FRPC_PROXY_NAME=${FRPC_PROXY_NAME:-graphrag-engine}
+      - FRPC_REMOTE_PORT=${FRPC_REMOTE_PORT:-4447}
+      - FRPC_SERVER_ADDR=${FRPC_SERVER_ADDR:-frps.onepointltd.ai}
+      - FRPC_SERVER_PORT=${FRPC_SERVER_PORT:-7000}
+      - FRPC_TOKEN=${FRPC_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GLOBAL_CONTEXT_MAX_TOKENS=${GLOBAL_CONTEXT_MAX_TOKENS:-20000}
+      - GRAPHRAG_ROOT_DIR=/var/graphrag/tennants/
+      - INDEX_VERBOSE=${INDEX_VERBOSE:-false}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS512}
+      - JWT_GEN_FOLDER=/var/graphrag/jwt_gen
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_TIME_DELTA_MINUTES=${JWT_TIME_DELTA_MINUTES:-120}
+      - LIGHTRAG_LITE_MODEL=${LIGHTRAG_LITE_MODEL:-gemini-2.5-flash-lite}
+      - LIGHTRAG_MODEL_TYPE=${LIGHTRAG_MODEL_TYPE:-openrouter}
+      - LIGHTRAG_MODEL=${LIGHTRAG_MODEL:-google/gemini-3-flash-preview}
+      - LINKEDIN_PASSWORD_1=${LINKEDIN_PASSWORD_1}
+      - LINKEDIN_PASSWORD_2=${LINKEDIN_PASSWORD_2}
+      - LINKEDIN_SEARCH_1=${LINKEDIN_SEARCH_1:-Home}
+      - LINKEDIN_SEARCH_2=${LINKEDIN_SEARCH_2:-My Network}
+      - LINKEDIN_USER_1=${LINKEDIN_USER_1}
+      - LINKEDIN_USER_2=${LINKEDIN_USER_2}
+      - LOCAL_CONTEXT_MAX_TOKENS=${LOCAL_CONTEXT_MAX_TOKENS:-20000}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_MODEL_EMBEDDING=${OPENAI_API_MODEL_EMBEDDING:-text-embedding-3-small}
+      - OPENAI_API_MODEL=${OPENAI_API_MODEL:-gpt-4o-mini}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_MODEL_EMBEDDING=${OPENROUTER_MODEL_EMBEDDING:-google/gemini-2.5-flash-lite}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-google/gemini-3-flash-preview}
+      - OPENROUTER_PROVIDER=${OPENROUTER_PROVIDER:-google-ai-studio}
+      - PORT=9999
+      - POSTGRES_CONNECTION_POOL_MAX_SIZE=${POSTGRES_CONNECTION_POOL_MAX_SIZE:-10}
+      - POSTGRES_CONNECTION_POOL_MIN_SIZE=${POSTGRES_CONNECTION_POOL_MIN_SIZE:-1}
+      - POSTGRES_CONNECTION_STRING=${POSTGRES_CONNECTION_STRING}
+      - REPORT_RECIPIENTS=${REPORT_RECIPIENTS}
+      - REPORT_SCHEMA_NAME=${REPORT_SCHEMA_NAME:-gil_fernandes}
+      - SERVER_BASE_URL=${SERVER_BASE_URL:-http://localhost:9999}
+      - SMTP_FROM=${SMTP_FROM}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USE_SSL=${SMTP_USE_SSL:-}
+      - SERVER=0.0.0.0
+      - TOGETHERAI_API_KEY=${TOGETHERAI_API_KEY}
+      - TOGETHERAI_MODEL=${TOGETHERAI_MODEL:-deepseek-ai/DeepSeek-R1}
+      - UPLOAD_DIR=/var/graphrag/upload
+      - VECTOR_DB_DIR=output/lancedb
+      - WEBSOCKET_CORS_ALLOWED_ORIGINS=${WEBSOCKET_CORS_ALLOWED_ORIGINS:-*}
+    env_file:
+      - .env.docker.secrets
+    networks:
+      graphrag-net:
+        ipv4_address: 172.17.0.5
+
+volumes:
+  graphrag-kb-server:
+
+networks:
+  graphrag-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.17.0.0/16
+          gateway: 172.17.0.1

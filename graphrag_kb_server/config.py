@@ -213,6 +213,26 @@ class DBConfig:
     ), "Please specify the PostgreSQL connection pool maximum size"
 
 
+class ReportConfig:
+    """Configuration of the weekly usage report. Validated by the report job, not at import time."""
+
+    recipients = [
+        address.strip()
+        for address in os.getenv("REPORT_RECIPIENTS", "").split(",")
+        if address.strip()
+    ]
+    schema_name = os.getenv("REPORT_SCHEMA_NAME", "gil_fernandes")
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    # Implicit TLS (SMTPS). Defaults to true on port 465, otherwise STARTTLS is used.
+    smtp_use_ssl = (os.getenv("SMTP_USE_SSL") or str(smtp_port == 465)).strip().lower() in ("1", "true", "yes")
+    # Print the SMTP conversation (the password is sent base64-encoded, so do not share the output).
+    smtp_debug = (os.getenv("SMTP_DEBUG") or "false").strip().lower() in ("1", "true", "yes")
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_from = os.getenv("SMTP_FROM") or smtp_user
+
+
 websocket_cfg = WebsocketConfig()
 
 jwt_cfg = JWTConfig()
@@ -224,5 +244,7 @@ cag_cfg = CAGConfig()
 linkedin_cfg = LinkedInConfig()
 
 db_cfg = DBConfig()
+
+report_cfg = ReportConfig()
 
 admin_cfg = AdminConfig()

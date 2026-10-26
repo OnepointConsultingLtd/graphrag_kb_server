@@ -310,3 +310,19 @@ We have published a Docker image on Docker Hub that you can use: gilf/graphrag_k
 
 
 
+
+## Weekly usage report
+
+`graphrag_kb_server.service.reports.weekly_usage_job` builds a report of the previous Monday-Sunday week from
+`<REPORT_SCHEMA_NAME>.TB_SEARCH_HISTORY` and emails it with a PDF attachment. The email body lists the new users
+(first ever search within the week, identified by LinkedIn profile URL) and the days they searched; the PDF lists
+all users per day.
+
+Environment variables: `REPORT_RECIPIENTS` (comma separated), `REPORT_SCHEMA_NAME` (default `gil_fernandes`),
+`SMTP_HOST`, `SMTP_PORT` (default 587; use 465 for SMTPS), `SMTP_USE_SSL` (implicit TLS, defaults to true on port 465), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` (defaults to `SMTP_USER`).
+
+Schedule it on the host with cron, for example every Monday at 07:00:
+
+```
+0 7 * * 1 docker exec graphrag-kb-server /opt/graphrag_kb_server/docker/weekly_usage_report.sh
+```
