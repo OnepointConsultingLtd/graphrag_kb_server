@@ -22,7 +22,7 @@ def format_week_range(report: WeeklyReport) -> str:
     return f"{report.week_start.isoformat()} to {last_day.isoformat()}"
 
 
-def _render_activity_row(activity: UserDayActivity) -> str:
+def render_activity_row(activity: UserDayActivity) -> str:
     url = escape(activity.linkedin_profile_url)
     new_badge = ' <span class="new">NEW</span>' if activity.is_new else ""
     details = ", ".join(
@@ -37,7 +37,8 @@ def _render_activity_row(activity: UserDayActivity) -> str:
     )
     return (
         f'<tr><td><a href="{url}">{url}</a>{new_badge}</td><td>{details}</td>'
-        f"<td>{escape(', '.join(activity.topics))}</td><td>{activity.search_count}</td></tr>"
+        f"<td>{escape(', '.join(activity.topics))}</td><td>{escape(' | '.join(activity.biggest_challenges))}</td>"
+        f"<td>{activity.search_count}</td></tr>"
     )
 
 
@@ -45,10 +46,10 @@ def render_report_html(report: WeeklyReport) -> str:
     """Render the full report (all users, grouped by day) as an HTML document to be converted to PDF."""
     sections = []
     for day in sorted(report.activity_by_day):
-        rows = "".join(_render_activity_row(a) for a in report.activity_by_day[day])
+        rows = "".join(render_activity_row(a) for a in report.activity_by_day[day])
         sections.append(
             f"<h2>{day.strftime('%A %Y-%m-%d')}</h2>"
-            f"<table><tr><th>LinkedIn profile</th><th>Profile</th><th>Topics</th><th>Searches</th></tr>{rows}</table>"
+            f"<table><tr><th>LinkedIn profile</th><th>Profile</th><th>Topics</th><th>Biggest challenge</th><th>Searches</th></tr>{rows}</table>"
         )
     body = "".join(sections) or "<p>No searches were performed this week.</p>"
     return (
@@ -66,6 +67,7 @@ def render_email_body(report: WeeklyReport) -> tuple[str, str]:
         A tuple (plain_text, html).
     """
     new_users = report.new_users_activity
+    new_users_challenges = report.new_users_challenges
     heading = f"Clustre search usage {format_week_range(report)}"
     if not new_users:
         text = f"{heading}\n\nNo new users this week. Full details are in the attached PDF."
@@ -75,8 +77,10 @@ def render_email_body(report: WeeklyReport) -> tuple[str, str]:
     html_items = []
     for url, activities in new_users.items():
         days = ", ".join(a.search_date.strftime("%a %Y-%m-%d") for a in activities)
-        text_lines.append(f"- {url}: {days}")
-        html_items.append(f'<li><a href="{escape(url)}">{escape(url)}</a>: {escape(days)}</li>')
+        challenges = " | ".join(new_users_challenges[url])
+        challenge_text = f" (biggest challenge: {challenges})" if challenges else ""
+        text_lines.append(f"- {url}: {days}{challenge_text}")
+        html_items.append(f'<li><a href="{escape(url)}">{escape(url)}</a>: {escape(days)}{escape(challenge_text)}</li>')
     text_lines += ["", "Full details are in the attached PDF."]
     html = (
         f"<p><b>{heading}</b></p><p>{len(new_users)} new user(s):</p><ul>{''.join(html_items)}</ul>"

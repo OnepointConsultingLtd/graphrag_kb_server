@@ -326,3 +326,16 @@ Schedule it on the host with cron, for example every Monday at 07:00:
 ```
 0 7 * * 1 docker exec graphrag-kb-server /opt/graphrag_kb_server/docker/weekly_usage_report.sh
 ```
+
+## Daily new users report
+
+`graphrag_kb_server.service.reports.daily_usage_job` emails the users whose first ever search (by LinkedIn profile URL)
+happened today in the UK, with a PDF attachment. If there are no new users nothing is sent. It uses the same
+environment variables and email infrastructure as the weekly report.
+
+Schedule it on the host with cron every day at 23:59 UK time:
+
+```
+CRON_TZ=Europe/London
+59 23 * * * docker exec graphrag-kb-server /opt/graphrag_kb_server/docker/daily_usage_report.sh
+```

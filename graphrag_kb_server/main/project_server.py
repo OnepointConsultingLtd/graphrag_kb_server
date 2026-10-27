@@ -1509,6 +1509,160 @@ async def project_status(request: web.Request) -> web.Response:
     return await handle_error(handle_request, request=request)
 
 
+@routes.options("/protected/project/files")
+async def list_files_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.get("/protected/project/files")
+async def list_files(request: web.Request) -> web.Response:
+    """
+    Lists the indexed files
+    ---
+    summary: Lists the indexed files of a LightRAG project which can be removed with delete_file
+    tags:
+      - project
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system. Only LightRAG is supported.
+        schema:
+          type: string
+          enum: [lightrag]
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: The sorted paths of the indexed files, relative to the project input folder.
+        content:
+          application/json:
+            example:
+              files: ["report.txt", "docs/guide.txt"]
+      '400':
+        description: Bad Request - No project found or unsupported engine.
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        from graphrag_kb_server.service.lightrag.lightrag_file_removal import (
+            list_removable_files,
+        )
+
+        if find_engine_from_query(request) != Engine.LIGHTRAG:
+            return invalid_response(
+                "Unsupported engine", "Only LightRAG supports listing files."
+            )
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                files = await list_removable_files(project_dir)
+                return web.json_response({"files": files}, headers=CORS_HEADERS)
+
+    return await handle_error(handle_request, request=request)
+
+
+@routes.options("/protected/project/delete_file")
+async def delete_file_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.delete("/protected/project/delete_file")
+async def delete_file(request: web.Request) -> web.Response:
+    """
+    Removes a file from the index
+    ---
+    summary: Removes a single file from the LightRAG index and from the project folders
+    tags:
+      - project
+    parameters:
+      - name: project
+        in: query
+        required: true
+        description: The project name
+        schema:
+          type: string
+      - name: engine
+        in: query
+        required: true
+        description: The type of engine used to run the RAG system. Only LightRAG is supported.
+        schema:
+          type: string
+          enum: [lightrag]
+      - name: file_name
+        in: query
+        required: true
+        description: The path of the file relative to the project input folder, as it was uploaded.
+        schema:
+          type: string
+      - name: delete_unindexed
+        in: query
+        required: false
+        description: Also delete the files from disk when the file is not found in the index. By default nothing is deleted in that case.
+        schema:
+          type: boolean
+          default: false
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: The file was removed. Reports how many indexed documents and files were deleted.
+      '400':
+        description: Bad Request - No project found, invalid file name or unsupported engine.
+      '404':
+        description: The file is not in the index. Nothing was deleted.
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        from graphrag_kb_server.service.lightrag.lightrag_file_removal import (
+            remove_file_from_project,
+        )
+
+        file_name = request.query.get("file_name")
+        delete_unindexed = request.query.get("delete_unindexed", "false").lower() == "true"
+        if not file_name:
+            return invalid_response("No file name", "Please specify the file_name.")
+        if find_engine_from_query(request) != Engine.LIGHTRAG:
+            return invalid_response(
+                "Unsupported engine", "Only LightRAG supports removing files."
+            )
+        match match_process_dir(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as project_dir:
+                try:
+                    deleted_documents, deleted_files = await remove_file_from_project(
+                        project_dir, file_name, delete_unindexed=delete_unindexed
+                    )
+                except ValueError as e:
+                    return invalid_response("Invalid file name", str(e))
+                if deleted_documents == 0 and not deleted_files:
+                    return web.json_response(
+                        {
+                            "error": f"{file_name} was not found in the index. Nothing was deleted. "
+                            "Use the files endpoint to list the indexed files or set delete_unindexed=true "
+                            "to delete the files from disk anyway."
+                        },
+                        status=404,
+                        headers=CORS_HEADERS,
+                    )
+                return web.json_response(
+                    {
+                        "deleted_documents": deleted_documents,
+                        "deleted_files": len(deleted_files),
+                    },
+                    headers=CORS_HEADERS,
+                )
+
+    return await handle_error(handle_request, request=request)
+
+
 @routes.options("/protected/project/delete_index")
 async def delete_index_options(_: web.Request) -> web.Response:
     return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)

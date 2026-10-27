@@ -15,6 +15,7 @@ class UserDayActivity:
     user_organisation_type: str = ""
     user_business_type: str = ""
     topics: list[str] = field(default_factory=list)
+    biggest_challenges: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -36,6 +37,16 @@ class WeeklyReport:
         return new_users
 
     @property
+    def new_users_challenges(self) -> dict[str, list[str]]:
+        """Distinct biggest challenges of each new user across their days, keyed by LinkedIn profile URL."""
+        challenges_by_user: dict[str, list[str]] = {}
+        for url, activities in self.new_users_activity.items():
+            challenges = challenges_by_user.setdefault(url, [])
+            for activity in activities:
+                challenges.extend(c for c in activity.biggest_challenges if c not in challenges)
+        return challenges_by_user
+
+    @property
     def distinct_user_count(self) -> int:
         return len({a.linkedin_profile_url for acts in self.activity_by_day.values() for a in acts})
 
@@ -52,6 +63,15 @@ def _collect_topics(rows: list[dict]) -> list[str]:
             if topic and topic not in topics:
                 topics.append(topic)
     return topics
+
+
+def _collect_biggest_challenges(rows: list[dict]) -> list[str]:
+    challenges: list[str] = []
+    for row in rows:
+        challenge = row.get("biggest_challenge")
+        if challenge and challenge not in challenges:
+            challenges.append(challenge)
+    return challenges
 
 
 def build_weekly_report(
@@ -93,6 +113,7 @@ def build_weekly_report(
                 user_organisation_type=_first_non_empty([r.get("user_organisation_type") for r in user_rows]),
                 user_business_type=_first_non_empty([r.get("user_business_type") for r in user_rows]),
                 topics=_collect_topics(user_rows),
+                biggest_challenges=_collect_biggest_challenges(user_rows),
             )
         )
     return report

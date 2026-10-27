@@ -104,3 +104,17 @@ def test_validate_report_config_reports_missing_settings():
 
     with pytest.raises(ValueError, match="REPORT_RECIPIENTS.*SMTP_HOST"):
         validate_report_config(EmptyConfig)
+
+
+def test_biggest_challenge_is_collected_distinct_per_user_and_rendered():
+    rows = [
+        make_row(NEW_USER, date(2026, 10, 20), biggest_challenge="Legacy systems"),
+        make_row(NEW_USER, date(2026, 10, 20), biggest_challenge="Legacy systems"),
+        make_row(NEW_USER, date(2026, 10, 22), biggest_challenge="Hiring"),
+    ]
+    report = build_weekly_report(rows, {NEW_USER: date(2026, 10, 20)}, WEEK_START, WEEK_END)
+    assert report.activity_by_day[date(2026, 10, 20)][0].biggest_challenges == ["Legacy systems"]
+    assert report.new_users_challenges[NEW_USER] == ["Legacy systems", "Hiring"]
+    text, html = render_email_body(report)
+    assert "biggest challenge: Legacy systems | Hiring" in text
+    assert "Legacy systems" in render_report_html(report)

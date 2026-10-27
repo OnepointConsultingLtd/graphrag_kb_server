@@ -31,7 +31,7 @@ def validate_schema_name(schema_name: str) -> str:
     return schema_name
 
 
-def _to_start_of_day(day: date) -> datetime:
+def to_start_of_day(day: date) -> datetime:
     return datetime.combine(day, time.min)
 
 
@@ -49,8 +49,8 @@ async def fetch_weekly_activity(schema_name: str, week_start: date, week_end_exc
           AND created_at >= $1 AND created_at < $2
         ORDER BY created_at
         """,
-        _to_start_of_day(week_start),
-        _to_start_of_day(week_end_exclusive),
+        to_start_of_day(week_start),
+        to_start_of_day(week_end_exclusive),
     )
     return [dict(record) for record in records]
 
