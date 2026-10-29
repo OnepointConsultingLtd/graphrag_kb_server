@@ -1,8 +1,6 @@
-from typing import Tuple, Dict
 from pathlib import Path
 
 import asyncio
-import base64
 import contextlib
 from urllib.parse import urlparse
 
@@ -13,6 +11,8 @@ from graphrag_kb_server.config import cfg, websocket_cfg
 from graphrag_kb_server.main import all_routes, sio
 
 from graphrag_kb_server.main.multi_tennant_server import auth_middleware
+from graphrag_kb_server.main.multipart_support import multipart_form
+from graphrag_kb_server.service.indexing_job_registry import indexing_job_registry
 from graphrag_kb_server.logger import logger, init_logger
 from graphrag_kb_server.service.project import initialize_projects
 from graphrag_kb_server.service.snippet_generation_service import find_chat_assets
@@ -100,22 +100,6 @@ async def get_chat_ui(_: web.Request) -> web.Response:
     return web.FileResponse(CHAT_INDEX)
 
 
-async def multipart_form(request: web.Request) -> Tuple[Dict, bool]:
-    reader = await request.multipart()
-    d = {}
-    while True:
-        field = await reader.next()
-        if field is None:
-            break
-        field_name = field.name
-        if field_name == "file":
-            d[field_name] = base64.b64encode(await field.read())
-            d[f"{field_name}_name"] = field.filename
-        else:
-            d[field_name] = (await field.read()).decode("utf-8")
-    return d, True
-
-
 CLUSTRE_VIMEO_SYNC_TASK = web.AppKey("clustre_vimeo_sync_task", asyncio.Task)
 
 
@@ -137,6 +121,7 @@ async def on_cleanup(app: web.Application):
         sync_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await sync_task
+    await indexing_job_registry.cancel_all()
     await close_connection_pool()
 
 

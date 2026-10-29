@@ -1,7 +1,6 @@
 import zipfile
 import asyncio
 import io
-import re
 import uuid
 from pathlib import Path
 from typing import Callable, Awaitable
@@ -37,6 +36,17 @@ from graphrag_kb_server.main.error_handler import handle_error, invalid_response
 from graphrag_kb_server.main.project_request_functions import (
     extract_tennant_folder,
     handle_project_folder,
+    sanitize_project_name,
+)
+from graphrag_kb_server.model.indexing_job import IndexFilesResponse
+from graphrag_kb_server.service.indexing_job_registry import indexing_job_registry
+from graphrag_kb_server.service.lightrag.lightrag_file_indexing import (
+    UploadedFile,
+    indexed_message,
+    replace_files_in_index,
+    run_indexing_job,
+    submitted_message,
+    validate_uploaded_files,
 )
 from graphrag_kb_server.service.index_support import save_webpage_to_text, unzip_file
 from graphrag_kb_server.utils.file_support import write_uploaded_file
@@ -336,7 +346,7 @@ async def upload_index(request: web.Request) -> web.Response:
         engine_str = body["engine"]
         incremental = body["incremental"]
         asynchronous = body["asynchronous"]
-        sanitized_project_name = re.sub(r"[^a-z0-9_-]", "_", body["project"].lower())
+        sanitized_project_name = sanitize_project_name(body["project"])
         match extract_tennant_folder(request):
             case Response() as error_response:
                 return error_response
@@ -484,7 +494,7 @@ async def index_webpage(request: web.Request) -> web.Response:
         engine_str = body["engine"]
         max_crawl_pages = body["max_crawl_pages"] or 100
         asynchronous = body.get("asynchronous", False)
-        sanitized_project_name = re.sub(r"[^a-z0-9_-]", "_", body["project"].lower())
+        sanitized_project_name = sanitize_project_name(body["project"])
 
         match extract_tennant_folder(request):
             case Response() as error_response:
@@ -1661,6 +1671,206 @@ async def delete_file(request: web.Request) -> web.Response:
                 )
 
     return await handle_error(handle_request, request=request)
+
+
+def index_files_response(
+    response: IndexFilesResponse, status: int = 200
+) -> web.Response:
+    """Creates the JSON response of the index files endpoint."""
+    return web.json_response(response.model_dump(), status=status, headers=CORS_HEADERS)
+
+
+@routes.options("/protected/project/index_files")
+async def index_files_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.post("/protected/project/index_files")
+async def index_files(request: web.Request) -> web.Response:
+    """
+    Uploads and indexes single files
+    ---
+    summary: Uploads up to 5 text, markdown or PDF files into an existing LightRAG project and indexes them. Earlier versions of the same files are removed from the index first. PDF files are converted to text with an LLM.
+    tags:
+      - project
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [files, project, engine]
+            properties:
+              files:
+                type: array
+                description: Up to 5 files with the extension .txt, .md or .pdf.
+                items:
+                  type: string
+                  format: binary
+              project:
+                type: string
+                description: The name of an existing project
+              engine:
+                type: string
+                description: The type of engine used to run the RAG system. Only LightRAG is supported.
+                enum: [lightrag]
+              asynchronous:
+                type: boolean
+                default: false
+                description: Whether to index the files in the background. The response then contains a job id which can be used to query the status of the indexing.
+    responses:
+      "200":
+        description: The files were indexed.
+        content:
+          application/json:
+            example:
+              status: "success"
+              message: "2 file(s) indexed successfully in index my_project"
+              job_id: null
+      "202":
+        description: The files were accepted and are indexed in the background.
+        content:
+          application/json:
+            example:
+              status: "success"
+              message: "2 file(s) submitted for indexing in index my_project"
+              job_id: "8f7c1d5e-3a1b-4c2d-9e8f-0a1b2c3d4e5f"
+      "400":
+        description: Bad Request - Invalid files, project or engine.
+      "404":
+        description: The project does not exist.
+      "500":
+        description: The indexing failed.
+        content:
+          application/json:
+            example:
+              status: "error"
+              message: "Failed to convert PDF to markdown"
+              job_id: null
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        body = request["data"]["body"]
+        file_names = body.get("files_names", [])
+        file_contents = body.get("files", [])
+        # The engine is restricted to LightRAG by the swagger validation
+        project_name = sanitize_project_name(body.get("project", ""))
+        if not project_name:
+            return invalid_response("No project", "Please specify the project name.")
+        if validation_error := validate_uploaded_files(file_names):
+            return invalid_response("Invalid files", validation_error)
+        match extract_tennant_folder(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as tennant_folder:
+                project_folder = tennant_folder / Engine.LIGHTRAG.value / project_name
+                if not project_folder.is_dir():
+                    return invalid_response(
+                        "Project not found",
+                        f"There is no LightRAG project {project_name}.",
+                        status=404,
+                    )
+                uploaded_files = [
+                    UploadedFile(file_name, content)
+                    for file_name, content in zip(file_names, file_contents)
+                ]
+                if body.get("asynchronous", False):
+                    job = indexing_job_registry.create_job(
+                        tennant_folder.name, project_name, file_names
+                    )
+                    indexing_job_registry.run_in_background(
+                        job.job_id,
+                        run_indexing_job(job.job_id, project_folder, uploaded_files),
+                    )
+                    return index_files_response(
+                        IndexFilesResponse(
+                            status="success",
+                            message=submitted_message(len(uploaded_files), project_name),
+                            job_id=job.job_id,
+                        ),
+                        status=202,
+                    )
+                try:
+                    indexed_count = await replace_files_in_index(
+                        project_folder, uploaded_files
+                    )
+                except Exception as e:
+                    return index_files_response(
+                        IndexFilesResponse(status="error", message=str(e)), status=500
+                    )
+                return index_files_response(
+                    IndexFilesResponse(
+                        status="success",
+                        message=indexed_message(indexed_count, project_name),
+                    )
+                )
+
+    return await handle_error(
+        handle_request, request=request, response_format=Format.JSON.value
+    )
+
+
+@routes.options("/protected/project/index_files/{job_id}")
+async def index_files_job_options(_: web.Request) -> web.Response:
+    return web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
+
+
+@routes.get("/protected/project/index_files/{job_id}")
+async def index_files_job(request: web.Request) -> web.Response:
+    """
+    Status of an asynchronous file indexing job
+    ---
+    summary: Returns the status of a job started by an asynchronous call to /protected/project/index_files
+    tags:
+      - project
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: job_id
+        in: path
+        required: true
+        description: The job id returned by the index files endpoint
+        schema:
+          type: string
+    responses:
+      "200":
+        description: The job status. The status is one of not_started, preparing, in_progress, completed or failed.
+        content:
+          application/json:
+            example:
+              job_id: "8f7c1d5e-3a1b-4c2d-9e8f-0a1b2c3d4e5f"
+              project: "my_project"
+              engine: "lightrag"
+              file_names: ["report.pdf", "notes.md"]
+              status: "in_progress"
+              message: "Indexing 2 file(s)"
+              error: null
+              created_at: "2026-10-29T10:00:00"
+              updated_at: "2026-10-29T10:01:00"
+      "404":
+        description: There is no job with this id.
+    """
+
+    async def handle_request(request: web.Request) -> web.Response:
+        match extract_tennant_folder(request):
+            case Response() as error_response:
+                return error_response
+            case Path() as tennant_folder:
+                job_id = request.match_info["job_id"]
+                job = indexing_job_registry.get_job(tennant_folder.name, job_id)
+                if job is None:
+                    return invalid_response(
+                        "Job not found",
+                        f"There is no indexing job {job_id}. Jobs are kept for 24 hours after they finish.",
+                        status=404,
+                    )
+                return web.json_response(job.model_dump(), headers=CORS_HEADERS)
+
+    return await handle_error(
+        handle_request, request=request, response_format=Format.JSON.value
+    )
 
 
 @routes.options("/protected/project/delete_index")

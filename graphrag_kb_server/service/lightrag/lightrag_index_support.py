@@ -196,10 +196,17 @@ async def acreate_lightrag(
     return GenerationStatus.CREATED
 
 
-async def lightrag_index(rag: LightRAG, files_to_index: list[Path]):
+async def lightrag_index(rag: LightRAG, files_to_index: list[Path], tolerance: int = 3):
+    """Inserts the text files into the LightRAG index.
+
+    Args:
+        rag: The LightRAG instance of the project.
+        files_to_index: The text files to insert.
+        tolerance: How many files may fail before the indexing is aborted with
+            the error of the failing file. Use 0 to fail on the first error.
+    """
     count = len(files_to_index)
     assert count > 0, "No files to index"
-    tolerance = 3
     for i, file in enumerate(files_to_index):
         try:
             content = _sanitize_for_tiktoken(file.read_text(encoding="utf-8"))

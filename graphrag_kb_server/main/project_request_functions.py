@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from aiohttp import web
 from aiohttp.web import Response
@@ -23,6 +24,14 @@ def extract_tennant_folder(request: web.Request) -> Path | Response:
             f"Tennant folder was deleted: {tennant_folder.as_posix()}",
         )
     return tennant_folder
+
+
+def sanitize_project_name(project_name: str) -> str:
+    """Converts a project name to the lower case name used for the project folder.
+
+    Every character other than letters, digits, ``_`` and ``-`` is replaced with ``_``.
+    """
+    return re.sub(r"[^a-z0-9_-]", "_", project_name.lower())
 
 
 def handle_project_folder(
