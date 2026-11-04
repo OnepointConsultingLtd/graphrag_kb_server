@@ -82,17 +82,11 @@ GRAPHRAG_ROOT_DIR=/mnt/graphrag/tennants/
 # For GraphRAG the dtabase directory
 VECTOR_DB_DIR=output/lancedb
 
-# For GraphRAG the verbose mode
-INDEX_VERBOSE=false
-
 # The maximum number of tokens for the local context (GraphRAG)
 LOCAL_CONTEXT_MAX_TOKENS = 20000
 
 # The maximum number of tokens for the global context (GraphRAG)
 GLOBAL_CONTEXT_MAX_TOKENS = 20000
-
-# Whether claims are enabled (GraphRAG)
-CLAIMS_ENABLED=false
 
 # The websocket server (GraphRAG)
 SERVER=0.0.0.0
@@ -105,9 +99,6 @@ JWT_ALGORITHM=HS512
 
 # The JWT time delta in minutes
 JWT_TIME_DELTA_MINUTES=120
-
-# The JWT generation folder
-JWT_GEN_FOLDER=/tmp/data_wellness/jwt_gen
 
 # This needs to be generated. See README for instructions.
 ADMIN_JWT=<jwt>

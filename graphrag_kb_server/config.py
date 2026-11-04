@@ -45,10 +45,6 @@ class Config:
     assert (
         togetherai_api_key is not None
     ), "Please specify the TOGETHERAI_API_KEY environment variable."
-    togetherai_model = os.getenv("TOGETHERAI_MODEL")
-    assert (
-        togetherai_model is not None
-    ), "Please specify the TOGETHERAI_MODEL environment variable."
 
     config_dir = Path(__file__).parent.parent / "config"
     assert (
@@ -64,10 +60,6 @@ class Config:
     assert vector_db_dir is not None, "Please specify the vector database directory."
 
     claim_extraction_prompt_file = os.getenv("CLAIM_EXTRACTION_PROMPT_FILE")
-
-    index_verbose = os.getenv("INDEX_VERBOSE") == "true"
-
-    claims_enabled = os.getenv("CLAIMS_ENABLED") == "true"
 
     local_context_max_tokens_str = os.getenv("LOCAL_CONTEXT_MAX_TOKENS", "20000")
     local_context_max_tokens = int(local_context_max_tokens_str)
@@ -88,10 +80,6 @@ class Config:
     assert openrouter_api_key is not None, "Please specify the OpenRouter API key"
     openrouter_model = os.getenv("OPENROUTER_MODEL")
     assert openrouter_model is not None, "Please specify the OpenRouter model"
-    openrouter_model_embedding = os.getenv("OPENROUTER_MODEL_EMBEDDING")
-    assert (
-        openrouter_model_embedding is not None
-    ), "Please specify the OpenRouter model embedding"
     openrouter_provider = os.getenv(
         "OPENROUTER_PROVIDER"
     )  # Optional: specify provider (e.g., "openai", "anthropic", "mistral")
