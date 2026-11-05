@@ -17,6 +17,9 @@ from graphrag_kb_server.service.db.db_persistence_project import (
     create_project_table,
     create_project,
 )
+from graphrag_kb_server.service.db.db_persistence_project_keys import (
+    create_project_keys_table,
+)
 from graphrag_kb_server.service.db.db_persistence_relationships import (
     create_relationships_table,
 )
@@ -61,6 +64,7 @@ async def create_schemas_and_projects(tennants: list[Tennant]):
 async def create_tennant_tables(tennant: Tennant):
     await create_schema(tennant.folder_name)
     await create_project_table(tennant.folder_name)
+    await create_project_keys_table(tennant.folder_name)
     await create_profile_table(tennant.folder_name)
     await create_expanded_entities_table(tennant.folder_name)
     await create_search_history_tables(tennant.folder_name)

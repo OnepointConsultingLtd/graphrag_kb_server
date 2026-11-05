@@ -67,6 +67,11 @@ LIGHTRAG_MODEL=gemini-2.5-flash
 # LIGHTRAG_MODEL=gpt-4o-mini
 LIGHTRAG_LITE_MODEL=gemini-2.5-flash-lite
 
+# Optional: Fernet key used to encrypt per-project API keys stored in the database (TB_PROJECT_KEYS).
+# Generate one with: python graphrag_kb_server/cli/project_keys_main.py generate-key [--write-env]
+# The server starts without it, but storing or reading per-project secrets fails until it is set.
+PROJECT_KEYS_ENCRYPTION_KEY=<fernet key>
+
 # The CAG (Cached Augmented Generation) model - uses Gemini API
 CAG_MODEL=gemini-3-flash-preview
 

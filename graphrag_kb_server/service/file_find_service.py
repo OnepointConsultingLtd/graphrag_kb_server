@@ -57,11 +57,3 @@ def find_original_file(project_dir: Path, file_path: Path) -> Path | None:
         # Fallback: try with the drive prefix intact (map built on Windows)
         result = conversion_map.get(file_path.as_posix())
     return result
-
-
-if __name__ == "__main__":
-    project_dir = Path("C:/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full")
-    sample_file = Path(
-        "C:/var/graphrag/tennants/gil_fernandes/lightrag/clustre_full/input/clustre/Articles and PoVs"
-    )
-    find_original_file(project_dir, sample_file)

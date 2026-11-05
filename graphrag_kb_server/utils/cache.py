@@ -63,6 +63,14 @@ class GenericSimpleCache(Generic[T, U]):
             "timestamp": time.time(),
         }
 
+    def invalidate(self, key: U) -> None:
+        """Remove a single entry. Does nothing if the key is not cached."""
+        self.cache.pop(key, None)
+
+    def clear(self) -> None:
+        """Remove all entries."""
+        self.cache.clear()
+
 
 class PersistentSimpleCache(Generic[T]):
 
