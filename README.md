@@ -66,6 +66,9 @@ GEMINI_API_KEY=<key>
 LIGHTRAG_MODEL=gemini-2.5-flash
 # LIGHTRAG_MODEL=gpt-4o-mini
 LIGHTRAG_LITE_MODEL=gemini-2.5-flash-lite
+# Reasoning effort sent to OpenRouter LightRAG models (default: minimal).
+# OpenAI GPT-5.1+ models reject "minimal": use "none" or "low". Leave empty to use the model's default.
+# LIGHTRAG_REASONING_EFFORT=minimal
 
 # Optional: Fernet key used to encrypt per-project API keys stored in the database (TB_PROJECT_KEYS).
 # Generate one with: python graphrag_kb_server/cli/project_keys_main.py generate-key [--write-env]
@@ -121,6 +124,77 @@ POSTGRES_CONNECTION_POOL_MAX_SIZE = 10
 You will also need to install Weasyprint. Please check the installation instructions here:
 
 https://www.msys2.org/#installation
+
+## Per-project configuration
+
+By default every project uses the models and API keys from the `.env` file. Each project can override them, for example to use another model or to bill the usage to its own provider key. The overrides are stored in the `TB_PROJECT_KEYS` table of the tenant schema (one row per project; the table is created at startup).
+
+**Resolution rule:** for every setting, the value of the project is used if it has one, otherwise the value from `.env`. A project without overrides behaves exactly as before.
+
+| Setting | Secret | Used for |
+|---|---|---|
+| `OPENAI_API_KEY` | yes | OpenAI models, embeddings and audio transcription |
+| `OPENAI_API_MODEL` | | OpenAI model (legacy) |
+| `OPENAI_API_MODEL_EMBEDDING` | | LightRAG embeddings (see the note below) |
+| `AUDIO_MODEL` | | Audio transcription of uploaded audio files |
+| `GEMINI_API_KEY` | yes | Gemini (LightRAG, CAG, community reports) |
+| `OPENROUTER_API_KEY` | yes | OpenRouter (LightRAG, trendiness) |
+| `OPENROUTER_MODEL` | | OpenRouter model for the trendiness assessment |
+| `OPENROUTER_PROVIDER` | | Preferred OpenRouter provider |
+| `TOGETHERAI_API_KEY` | yes | TogetherAI |
+| `LIGHTRAG_MODEL` | | LightRAG model |
+| `LIGHTRAG_LITE_MODEL` | | LightRAG quick model |
+| `LIGHTRAG_MODEL_TYPE` | | One of `google`, `openai`, `togetherai`, `openrouter` |
+| `LIGHTRAG_REASONING_EFFORT` | | OpenRouter reasoning effort (default `minimal`; e.g. `none`/`low` for OpenAI GPT-5.1+; empty uses the model's default) |
+| `CAG_MODEL` | | CAG model (Gemini) |
+
+### Encryption of the API keys
+
+The secret settings are stored encrypted (Fernet) in the database. The encryption key is read from the `PROJECT_KEYS_ENCRYPTION_KEY` environment variable. Generate it once and keep a backup of it: **if the key is lost or changed, the stored API keys cannot be decrypted any more.**
+
+```
+python graphrag_kb_server/cli/project_keys_main.py generate-key --write-env
+```
+
+`--write-env` writes the key into `.env` (without it the key is only printed). Restart the server afterwards. For Docker, set `PROJECT_KEYS_ENCRYPTION_KEY` in `.env.docker.secrets`. The server starts without the key and models can be overridden without it; only reading or writing secrets fails (with a clear message) until it is set.
+
+### Managing the settings
+
+Only administrators can manage the settings (the email of the token must be listed in `config/administration.yaml`). The values of secrets are never returned in clear: secrets of a project are masked down to their last 4 characters and secrets taken from `.env` are always shown as `********`.
+
+With the API (see also the Swagger UI):
+
+```
+# Show the settings and where each value comes from ("project" or "env")
+curl -H "Authorization: Bearer <admin token>" \
+  "http://localhost:9999/protected/project/settings?project=<project>&engine=lightrag"
+
+# Set values; null resets a setting to the value of .env
+curl -X PATCH -H "Authorization: Bearer <admin token>" -H "Content-Type: application/json" \
+  -d '{"settings": {"LIGHTRAG_MODEL": "gpt-4o", "OPENAI_API_KEY": "sk-...", "CAG_MODEL": null}}' \
+  "http://localhost:9999/protected/project/settings?project=<project>&engine=lightrag"
+
+# Remove all the overrides of the project
+curl -X DELETE -H "Authorization: Bearer <admin token>" \
+  "http://localhost:9999/protected/project/settings?project=<project>&engine=lightrag"
+```
+
+Changes made through the API are effective immediately: the next request of the project uses the new settings. With the command line (the secret is asked with hidden input if `--value` is omitted):
+
+```
+python graphrag_kb_server/cli/project_keys_main.py set --schema <tenant> --project <project> --engine lightrag --setting OPENAI_API_KEY
+python graphrag_kb_server/cli/project_keys_main.py set --schema <tenant> --project <project> --setting LIGHTRAG_MODEL --value gpt-4o
+python graphrag_kb_server/cli/project_keys_main.py set --schema <tenant> --project <project> --setting LIGHTRAG_MODEL --reset
+python graphrag_kb_server/cli/project_keys_main.py list --schema <tenant> --project <project>
+```
+
+The command line runs in its own process, so a running server only uses the change for projects it has not loaded yet. Restart the server, or use the API, to apply it to projects which are already loaded.
+
+### Things to know
+
+- **Embedding model:** the embedding model decides the dimension of the vectors of a project, so it cannot be changed once the project has been indexed (the API answers `409`). Supported models: `text-embedding-3-small` (default), `text-embedding-3-large`, `text-embedding-ada-002`. Choose it before the first indexing.
+- **Not covered by the project keys:** the conversion of PDF, DOCX and PPTX files to Markdown and the transcription of Vimeo videos use the OpenAI key from `.env`.
+- **Costs per project:** the log lines with the token usage of the models are prefixed with `[<tenant>/<project>]`.
 
 # How the system works
 

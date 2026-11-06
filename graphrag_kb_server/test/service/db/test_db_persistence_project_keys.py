@@ -191,3 +191,102 @@ async def test_keys_deleted_when_project_is_removed():
             await drop_project_keys_table(schema_name)
 
     await create_test_project_wrapper(test_function)
+
+
+@pytest.mark.asyncio
+async def test_togetherai_key_is_encrypted_and_round_trips():
+    from graphrag_kb_server.service.db.connection_pool import fetch_one
+    from graphrag_kb_server.service.db.db_persistence_project_keys import (
+        TB_PROJECT_KEYS,
+        create_project_keys_table,
+        drop_project_keys_table,
+        find_project_keys,
+        upsert_project_keys,
+    )
+
+    async def test_function(
+        full_project: FullProject,
+        found_project: FullProject,
+        schema_name: str,
+        project_name: str,
+    ):
+        project_id = found_project.id
+        try:
+            await create_project_keys_table(schema_name)
+            await upsert_project_keys(
+                schema_name, project_id, {ProjectSetting.TOGETHERAI_API_KEY: "tg-plain"}
+            )
+            row = await fetch_one(
+                f"SELECT TOGETHERAI_API_KEY FROM {schema_name}.{TB_PROJECT_KEYS} WHERE PROJECT_ID = $1",
+                project_id,
+            )
+            assert "tg-plain" not in row["togetherai_api_key"]
+            assert await find_project_keys(schema_name, project_id) == {
+                ProjectSetting.TOGETHERAI_API_KEY: "tg-plain"
+            }
+        finally:
+            await drop_project_keys_table(schema_name)
+
+    await create_test_project_wrapper(test_function)
+
+
+@pytest.mark.asyncio
+async def test_create_adds_missing_columns_to_table_from_older_version():
+    """A table created before TOGETHERAI_API_KEY existed gets the column, keeping its data."""
+    from graphrag_kb_server.service.db.connection_pool import (
+        execute_query,
+        fetch_all,
+    )
+    from graphrag_kb_server.service.db.db_persistence_project_keys import (
+        TB_PROJECT_KEYS,
+        create_project_keys_table,
+        drop_project_keys_table,
+        find_project_keys,
+    )
+
+    async def test_function(
+        full_project: FullProject,
+        found_project: FullProject,
+        schema_name: str,
+        project_name: str,
+    ):
+        project_id = found_project.id
+        try:
+            await drop_project_keys_table(schema_name)
+            # The table layout of the first version: without TOGETHERAI_API_KEY.
+            await execute_query(
+                f"""
+CREATE TABLE {schema_name}.{TB_PROJECT_KEYS} (
+    ID SERIAL NOT NULL,
+    PROJECT_ID INTEGER NOT NULL,
+    CAG_MODEL TEXT,
+    CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (ID),
+    UNIQUE (PROJECT_ID),
+    FOREIGN KEY (PROJECT_ID) REFERENCES {schema_name}.TB_PROJECTS (ID) ON DELETE CASCADE
+);
+"""
+            )
+            await execute_query(
+                f"INSERT INTO {schema_name}.{TB_PROJECT_KEYS} (PROJECT_ID, CAG_MODEL) VALUES ($1, 'old-model')",
+                project_id,
+            )
+
+            await create_project_keys_table(schema_name)
+            await create_project_keys_table(schema_name)  # idempotent
+
+            columns = await fetch_all(
+                "SELECT column_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2",
+                schema_name.lower(),
+                TB_PROJECT_KEYS.lower(),
+            )
+            column_names = {row["column_name"] for row in columns}
+            assert {setting.value.lower() for setting in ProjectSetting} <= column_names
+            assert await find_project_keys(schema_name, project_id) == {
+                ProjectSetting.CAG_MODEL: "old-model"
+            }
+        finally:
+            await drop_project_keys_table(schema_name)
+
+    await create_test_project_wrapper(test_function)

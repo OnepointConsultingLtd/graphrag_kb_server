@@ -8,10 +8,11 @@ from .pdf_server import routes as pdf_routes
 from .search_server import routes as search_routes
 from .linkedin_server import routes as linkedin_routes
 from .trendiness_server import routes as trendiness_routes
+from .project_settings_server import routes as project_settings_routes
 
 sio = socketio.AsyncServer(
     async_mode="aiohttp",
     cors_allowed_origins=websocket_cfg.websocket_cors_allowed_origins,
 )
 
-all_routes = [tennant_routes, server_routes, pdf_routes, search_routes, linkedin_routes, trendiness_routes]
+all_routes = [tennant_routes, server_routes, pdf_routes, search_routes, linkedin_routes, trendiness_routes, project_settings_routes]

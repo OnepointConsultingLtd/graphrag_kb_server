@@ -13,8 +13,11 @@ from graphrag_kb_server.service.lightrag.lightrag_graph_support import (
     create_network_from_project_dir,
 )
 from google import genai
-from graphrag_kb_server.config import cfg, lightrag_cfg
 from graphrag_kb_server.service.lightrag.lightrag_model_support import openai_model_func
+from graphrag_kb_server.service.project_config_service import (
+    ProjectConfig,
+    get_project_config_for_dir,
+)
 
 Communities = list[Community]
 
@@ -29,7 +32,8 @@ async def cluster_graph_from_project_dir(
     communities = await asyncio.to_thread(
         _cluster_graph, graph, lightrag_max_cluster_size, True, 42
     )
-    client = genai.Client(api_key=cfg.gemini_api_key)
+    config = await get_project_config_for_dir(project_dir)
+    client = genai.Client(api_key=config.gemini_api_key)
 
     async def process_community(community: Community, index: int) -> Community:
         logger.info(
@@ -42,7 +46,9 @@ async def cluster_graph_from_project_dir(
         while retries > 0:
             try:
                 community_descriptors: CommunityDescriptors = (
-                    await _generate_community_report(graph, community, client)
+                    await _generate_community_report(
+                        graph, community, client, config
+                    )
                 )
                 community.name = community_descriptors.name
                 community.community_description = (
@@ -116,7 +122,10 @@ async def generate_communities_json(
 
 
 async def _generate_community_report(
-    graph: nx.classes.graph.Graph, community: Community, client: genai.Client
+    graph: nx.classes.graph.Graph,
+    community: Community,
+    client: genai.Client,
+    config: ProjectConfig,
 ) -> CommunityDescriptors:
     nodes_data = graph.nodes(data=True)
     nodes_data_list = []
@@ -140,11 +149,11 @@ The community is represented by a list of nodes and can be found between the <co
 The report should be a short description of the community, including a description of the most important nodes in the community and their relationships.
 
     """
-    model_type = lightrag_cfg.lightrag_model_type
+    model_type = config.lightrag_model_type
     match model_type:
         case "google":
             response = await client.aio.models.generate_content(
-                model=lightrag_cfg.lightrag_model,
+                model=config.lightrag_model,
                 contents=prompt,
                 config={
                     "response_mime_type": "application/json",
@@ -159,6 +168,7 @@ The report should be a short description of the community, including a descripti
                 history_messages=[],
                 structured_output=True,
                 structured_output_format=CommunityDescriptors,
+                config=config,
             )
             return CommunityDescriptors.model_validate(response)
         case "togetherai":

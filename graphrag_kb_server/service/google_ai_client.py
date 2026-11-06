@@ -23,8 +23,8 @@ from openrouter.errors import (
 
 from pydantic import BaseModel
 
-from graphrag_kb_server.config import cfg, lightrag_cfg
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.service.project_config_service import ProjectConfig
 
 _NON_RETRYABLE_ERRORS = (
     OpenAIAuthError,
@@ -60,9 +60,16 @@ async def structured_completion(
     system_message: str,
     user_message: str,
     response_schema: BaseModel,
-    model: str = lightrag_cfg.lightrag_model,
+    *,
+    config: ProjectConfig,
+    model: str | None = None,
 ) -> dict:
+    """Run a prompt and return the JSON answer matching the schema.
 
+    The API keys come from the project configuration. The model defaults to the project's
+    LightRAG model; the provider is chosen from the model name (gemini*, gpt*, otherwise OpenRouter).
+    """
+    model = model or config.lightrag_model
     raw_output = None
 
     for attempt in range(MAX_RETRIES):
@@ -73,7 +80,7 @@ async def structured_completion(
         system: {system_message}
         user:{user_message}
         """
-                    client = genai.Client(api_key=cfg.gemini_api_key)
+                    client = genai.Client(api_key=config.gemini_api_key)
                     response = await client.aio.models.generate_content(
                         model=model,
                         contents=[contents],
@@ -85,7 +92,8 @@ async def structured_completion(
                     raw_output = response.text
                     return jiter.from_json(raw_output.encode(encoding="utf-8"))
                 case model if model.startswith("gpt"):
-                    client = AsyncOpenAI()
+                    # An empty key means "not configured": let the SDK fall back to its own lookup.
+                    client = AsyncOpenAI(api_key=config.openai_api_key or None)
                     response = await client.beta.chat.completions.parse(
                         model=model,
                         messages=[
@@ -100,7 +108,7 @@ async def structured_completion(
                     schema_dict = response_schema.model_json_schema()
                     schema_name = schema_dict.get("title", response_schema.__name__)
 
-                    async with OpenRouter(api_key=cfg.openrouter_api_key) as client:
+                    async with OpenRouter(api_key=config.openrouter_api_key) as client:
                         config_dict = {
                             "model": model,
                             "messages": [
@@ -116,8 +124,10 @@ async def structured_completion(
                                 },
                             },
                         }
-                        if cfg.openrouter_provider:
-                            config_dict["provider"] = {"name": cfg.openrouter_provider}
+                        if config.openrouter_provider:
+                            config_dict["provider"] = {
+                                "name": config.openrouter_provider
+                            }
 
                         response = await client.chat.send_async(**config_dict)
                         raw_output = response.choices[0].message.content
@@ -127,6 +137,7 @@ async def structured_completion(
                 truncated_output = raw_output[:_RAW_OUTPUT_LOG_LIMIT]
                 logger.error(
                     f"JSON parse error: {e}\n"
+                    f"  Project: {config.project_label}\n"
                     f"  Model: {model}\n"
                     f"  System prompt (first 500 chars): {system_message[:500]}\n"
                     f"  User prompt (first 500 chars): {user_message[:500]}\n"

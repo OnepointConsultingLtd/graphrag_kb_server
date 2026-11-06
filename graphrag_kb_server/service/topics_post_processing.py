@@ -4,6 +4,7 @@ from graphrag_kb_server.model.topics import (
 )
 from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.service.google_ai_client import structured_completion
+from graphrag_kb_server.service.project_config_service import ProjectConfig
 
 
 def shorten(topics: SimilarityTopics):
@@ -18,6 +19,7 @@ def shorten(topics: SimilarityTopics):
 async def _execute_prompt(
     prompt_path: str,
     topics: SimilarityTopics | Topics,
+    config: ProjectConfig,
     topics_prompt: str | None = None,
 ) -> SimilarityTopics:
     shorten(topics)
@@ -30,18 +32,20 @@ async def _execute_prompt(
     user_prompt = prompts[prompt_path]["user_prompt"].format(**format_params)
     system_prompt = prompts[prompt_path]["system_prompt"]
     topics_dict = await structured_completion(
-        system_prompt, user_prompt, SimilarityTopics
+        system_prompt, user_prompt, SimilarityTopics, config=config
     )
     return SimilarityTopics(**topics_dict)
 
 
 async def post_process_topics(
-    topics: SimilarityTopics | Topics, topics_prompt: str
+    topics: SimilarityTopics | Topics, topics_prompt: str, config: ProjectConfig
 ) -> SimilarityTopics:
     prompt_path = "topics-post-processing"
-    return await _execute_prompt(prompt_path, topics, topics_prompt)
+    return await _execute_prompt(prompt_path, topics, config, topics_prompt)
 
 
-async def deduplicate_topics(topics: SimilarityTopics | Topics) -> SimilarityTopics:
+async def deduplicate_topics(
+    topics: SimilarityTopics | Topics, config: ProjectConfig
+) -> SimilarityTopics:
     prompt_path = "topics-deduplication"
-    return await _execute_prompt(prompt_path, topics)
+    return await _execute_prompt(prompt_path, topics, config)

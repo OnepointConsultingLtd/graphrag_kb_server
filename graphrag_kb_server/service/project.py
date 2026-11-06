@@ -7,7 +7,7 @@ from typing import Final
 
 from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
-from graphrag_kb_server.main.multi_tennant_server import local_list_tennants
+from graphrag_kb_server.service.tennant import list_tennants as local_list_tennants
 from graphrag_kb_server.model.project import (
     FullProject,
     Project,

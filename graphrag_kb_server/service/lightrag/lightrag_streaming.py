@@ -4,7 +4,6 @@ import jiter
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.rag_parameters import QueryParameters, ContextFormat
-from graphrag_kb_server.main.query_support import add_links_and_images_to_response
 from graphrag_kb_server.model.chat_response import ChatResponse
 from graphrag_kb_server.service.lightrag.lightrag_search import lightrag_search
 
@@ -105,6 +104,10 @@ async def _enrich_references(references: list[dict], project_dir: Path) -> list[
     links + images via the existing add_links_to_response pipeline."""
     if not references:
         return []
+
+    # Imported here and not at module level: the main package imports this module, so importing
+    # main.query_support at module level breaks when this module is the first one imported.
+    from graphrag_kb_server.main.query_support import add_links_and_images_to_response
 
     references = [ref for ref in references if ref.get("type") != "KG"]
     references = list({r.get("file", ""): r for r in references}.values())

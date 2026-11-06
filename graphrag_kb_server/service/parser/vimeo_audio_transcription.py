@@ -8,6 +8,7 @@ import yt_dlp
 
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.service.file_conversion import convert_audio
+from graphrag_kb_server.service.project_config_service import ProjectConfig
 
 AUDIO_FORMAT = "mp3"
 # The embeddable player page works without a Vimeo login, unlike the web client
@@ -202,7 +203,10 @@ async def download_audio(
 
 async def transcribe_audio_file(audio_file: Path, language: str) -> str | None:
     """Transcribe an audio file and return the stripped text, or None if it is empty."""
-    transcript_file = await convert_audio(audio_file, language=language)
+    # Not tied to a project, so the .env configuration is used.
+    transcript_file = await convert_audio(
+        audio_file, language=language, config=ProjectConfig.from_env()
+    )
     transcript = transcript_file.read_text(encoding="utf-8").strip()
     return transcript or None
 

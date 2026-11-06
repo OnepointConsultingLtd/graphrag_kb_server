@@ -37,7 +37,9 @@ async def test_transcribe_converts_downloaded_audio(monkeypatch):
         audio_file.write_bytes(b"audio")
         return audio_file
 
-    async def fake_convert_audio(audio_file: Path, language: str = "en") -> Path:
+    async def fake_convert_audio(
+        audio_file: Path, language: str = "en", *, config=None
+    ) -> Path:
         transcript_file = audio_file.parent / f"{audio_file.stem}.txt"
         transcript_file.write_text(" Hello world \n", encoding="utf-8")
         return transcript_file
@@ -55,7 +57,9 @@ async def test_transcribe_returns_none_instead_of_raising_on_failure(monkeypatch
         audio_file.write_bytes(b"audio")
         return audio_file
 
-    async def failing_convert_audio(audio_file: Path, language: str = "en") -> Path:
+    async def failing_convert_audio(
+        audio_file: Path, language: str = "en", *, config=None
+    ) -> Path:
         raise RuntimeError("transcription service down")
 
     monkeypatch.setattr(module, "download_vimeo_audio", fake_download)

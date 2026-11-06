@@ -5,6 +5,10 @@ from graphrag_kb_server.service.db.db_persistence_topics import (
     save_questions,
 )
 from graphrag_kb_server.service.google_ai_client import structured_completion
+from graphrag_kb_server.service.project_config_service import (
+    ProjectConfig,
+    get_project_config_for_dir,
+)
 from graphrag_kb_server.model.topics import (
     Topics,
     Topic,
@@ -63,21 +67,24 @@ async def generate_questions_from_topics(
                 for t in topics
             ]
 
+    config = await get_project_config_for_dir(project_dir)
     generated_questions = await generate_questions(
-        Topics(topics=topics), questions_query.system_prompt
+        Topics(topics=topics), questions_query.system_prompt, config
     )
 
     await save_questions(questions_query, generated_questions)
     return generated_questions
 
 
-async def generate_questions(topics: Topics, system_prompt: str) -> TopicQuestions:
+async def generate_questions(
+    topics: Topics, system_prompt: str, config: ProjectConfig
+) -> TopicQuestions:
     topics_str = "\n\n".join([topic.markdown() for topic in topics.topics])
     user_prompt = prompts["question-generation"]["user_prompt"].format(
         topics=topics_str
     )
     system_prompt = system_prompt or prompts["question-generation"]["system_prompt"]
     topic_questions_dict = await structured_completion(
-        system_prompt, user_prompt, TopicQuestions
+        system_prompt, user_prompt, TopicQuestions, config=config
     )
     return TopicQuestions(**topic_questions_dict)

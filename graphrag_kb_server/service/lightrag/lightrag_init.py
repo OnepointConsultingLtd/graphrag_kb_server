@@ -9,16 +9,27 @@ from lightrag.base import (
     BaseVectorStorage,
     DocStatusStorage,
 )
-from lightrag.llm.openai import openai_embed
 from lightrag.kg.shared_storage import get_namespace_data, initialize_pipeline_status
 
+from graphrag_kb_server.logger import logger
+from graphrag_kb_server.service.lightrag.lightrag_embedding import (
+    build_embedding_func,
+)
 from graphrag_kb_server.service.lightrag.lightrag_model_support import select_model_func
+from graphrag_kb_server.service.project_config_service import (
+    get_project_config_for_dir,
+    register_runtime_cache_invalidator,
+)
 from graphrag_kb_server.utils.cache import GenericProjectSimpleCache
 from graphrag_kb_server.utils.quick_json_loader import load_json
 from graphrag_kb_server.service.lightrag.lightrag_constants import LIGHTRAG_FOLDER
 
 
 lightrag_cache = GenericProjectSimpleCache[LightRAG]()
+
+# A LightRAG instance captures the project settings when it is built, so it has to be
+# dropped when the settings of the project change.
+register_runtime_cache_invalidator(lightrag_cache.clear)
 
 
 from lightrag.operate import chunking_by_token_size
@@ -76,11 +87,18 @@ async def initialize_rag(project_folder: Path) -> LightRAG:
     await asyncio.to_thread(working_dir.mkdir, parents=True, exist_ok=True)
     # Pass absolute path as string so LightRAG and JSON storage resolve paths correctly (e.g. on Windows)
     working_dir_str = str(working_dir)
-    llm_model_func = select_model_func()
+    config = await get_project_config_for_dir(project_folder)
+    logger.info(
+        f"Initializing LightRAG for {config.project_label} "
+        f"(model type: {config.lightrag_model_type}, model: {config.lightrag_model}, "
+        f"settings overridden by the project: "
+        f"{sorted(setting.value for setting in config.overridden_settings)})"
+    )
+    llm_model_func = select_model_func(config)
     rag = LightRAG(
         working_dir=working_dir_str,
         workspace=working_dir_str,
-        embedding_func=openai_embed,
+        embedding_func=build_embedding_func(config),
         llm_model_func=llm_model_func,
         chunking_func=chunking_with_special_tokens,
     )

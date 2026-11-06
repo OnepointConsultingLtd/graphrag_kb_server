@@ -46,24 +46,51 @@ async def store_project_setting(
 ) -> None:
     """Write (or reset, when value is None) one setting of a project in TB_PROJECT_KEYS.
 
+    Goes through the same checks as the settings endpoint (validation, protection of the
+    embedding model of an indexed project).
+
     The application imports are local because they load the full application config, which the
     other commands of this utility deliberately avoid.
     """
-    from graphrag_kb_server.model.project import SimpleProject
     from graphrag_kb_server.service.db.connection_pool import close_connection_pool
     from graphrag_kb_server.service.db.db_persistence_project_keys import (
         create_project_keys_table,
     )
-    from graphrag_kb_server.service.project_config_service import (
-        save_project_settings,
+    from graphrag_kb_server.service.project_settings_service import (
+        apply_settings_update,
     )
 
-    project = SimpleProject(
-        schema_name=schema_name, engine=engine, project_name=project_name
-    )
     try:
         await create_project_keys_table(schema_name)
-        await save_project_settings(project, {setting: value})
+        await apply_settings_update(
+            project_directory(schema_name, project_name, engine), {setting: value}
+        )
+    finally:
+        await close_connection_pool()
+
+
+def project_directory(schema_name: str, project_name: str, engine: Engine) -> Path:
+    """The folder of a project: <root>/<schema>/<engine>/<project>."""
+    from graphrag_kb_server.config import cfg
+
+    return cfg.graphrag_root_dir_path / schema_name / engine.value / project_name
+
+
+async def fetch_project_settings_view(
+    schema_name: str, project_name: str, engine: Engine
+):
+    """The settings of a project as shown by the API (secrets masked)."""
+    from graphrag_kb_server.service.db.connection_pool import close_connection_pool
+    from graphrag_kb_server.service.db.db_persistence_project_keys import (
+        create_project_keys_table,
+    )
+    from graphrag_kb_server.service.project_settings_service import get_settings_view
+
+    try:
+        await create_project_keys_table(schema_name)
+        return await get_settings_view(
+            project_directory(schema_name, project_name, engine)
+        )
     finally:
         await close_connection_pool()
 
@@ -169,6 +196,34 @@ def set_setting(
     click.echo(
         f"{setting} for {schema}/{project} ({engine}): {describe_value(project_setting, value)}"
     )
+    click.echo(
+        "Note: a running server only picks this up for projects it has not loaded yet. "
+        "Restart the server, or change the setting through the API, to apply it to loaded projects."
+    )
+
+
+@cli.command("list")
+@click.option("--schema", required=True, help="The tenant schema name.")
+@click.option("--project", required=True, help="The project name.")
+@click.option(
+    "--engine",
+    type=click.Choice([engine.value for engine in Engine]),
+    default=Engine.LIGHTRAG.value,
+    show_default=True,
+    help="The engine of the project.",
+)
+def list_settings(schema: str, project: str, engine: str):
+    """Show the settings of a project and where each value comes from (secrets are masked)."""
+    try:
+        settings_view = asyncio.run(
+            fetch_project_settings_view(schema, project, Engine(engine))
+        )
+    except Exception as error:
+        raise click.ClickException(str(error)) from error
+    name_width = max(len(setting.name) for setting in settings_view.settings)
+    for setting in settings_view.settings:
+        shown_value = setting.value if setting.value is not None else "(not set)"
+        click.echo(f"{setting.name:<{name_width}}  {setting.source.value:<8}  {shown_value}")
 
 
 if __name__ == "__main__":

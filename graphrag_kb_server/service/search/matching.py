@@ -18,7 +18,11 @@ from graphrag_kb_server.service.lightrag.lightrag_centrality import (
 )
 from graphrag_kb_server.prompt_loader import prompts
 from graphrag_kb_server.service.google_ai_client import structured_completion
-from graphrag_kb_server.config import lightrag_cfg, cfg
+from graphrag_kb_server.config import cfg
+from graphrag_kb_server.service.project_config_service import (
+    ProjectConfig,
+    get_project_config_for_dir,
+)
 from graphrag_kb_server.service.lightrag.lightrag_init import initialize_rag
 from graphrag_kb_server.service.db.db_persistence_expanded_entities import (
     get_expanded_entities,
@@ -86,7 +90,8 @@ async def match_entities_with_lightrag(
         project_dir, list(entity_types), entities_limit
     )
     all_entities = _convert_df_to_entities(df)
-    entity_list = await match_entities(query, all_entities)
+    config = await get_project_config_for_dir(project_dir)
+    entity_list = await match_entities(query, all_entities, config)
     entity_list = [
         entity
         for entity in entity_list.entities
@@ -143,7 +148,7 @@ def _convert_entities_to_str(entities: list[Entity]) -> str:
 
 
 async def match_entities(
-    query: MatchQuery, existing_entities: list[Entity]
+    query: MatchQuery, existing_entities: list[Entity], config: ProjectConfig
 ) -> EntityList:
     user_profile, topics_of_interest, question = (
         query.user_profile,
@@ -165,7 +170,7 @@ async def match_entities(
         system_prompt,
         user_contents,
         LlmEntityList,
-        model=lightrag_cfg.lightrag_model,
+        config=config,
     )
 
     entities_with_score = [

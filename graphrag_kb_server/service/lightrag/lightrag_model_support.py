@@ -1,3 +1,5 @@
+import re
+from functools import partial
 from typing import AsyncIterator, Callable, Awaitable, Union
 
 import jiter
@@ -5,17 +7,21 @@ from together import AsyncTogether
 from google import genai
 from google.genai import types
 from openai import AsyncOpenAI
+from openai.lib._pydantic import to_strict_json_schema
+from pydantic import BaseModel
 
 from lightrag.utils import TokenTracker
 
 from lightrag.llm.openai import openai_complete_if_cache
 from lightrag.types import GPTKeywordExtractionFormat
 
-from graphrag_kb_server.config import LightRAGModelType, cfg, lightrag_cfg
+from graphrag_kb_server.config import LightRAGModelType
+from graphrag_kb_server.service.project_config_service import ProjectConfig
 from graphrag_kb_server.model.chat_response import ResponseSchema
 from graphrag_kb_server.logger import logger
 
 from openrouter import OpenRouter
+from openrouter.errors import OpenRouterError
 
 
 def _gemini_contents(prompt, history_messages):
@@ -34,13 +40,13 @@ def _gemini_contents(prompt, history_messages):
 
 
 async def gemini_model_func(
-    prompt, system_prompt=None, history_messages=[], **kwargs
+    prompt, system_prompt=None, history_messages=[], *, config: ProjectConfig, **kwargs
 ) -> str:
-    # 1. Initialize the GenAI Client with your Gemini API Key
+    # 1. Initialize the GenAI Client with the Gemini API Key of the project
     assert (
-        cfg.gemini_api_key is not None
+        config.gemini_api_key is not None
     ), "Please specify the GEMINI_API_KEY environment variable."
-    client = genai.Client(api_key=cfg.gemini_api_key)
+    client = genai.Client(api_key=config.gemini_api_key)
 
     if history_messages is None:
         history_messages = []
@@ -68,7 +74,7 @@ async def gemini_model_func(
         config_dict["response_mime_type"] = "application/json"
 
     response = await client.aio.models.generate_content(
-        model=lightrag_cfg.lightrag_model,
+        model=config.lightrag_model,
         contents=_gemini_contents(prompt, history_messages),
         config=types.GenerateContentConfig(**config_dict),
     )
@@ -83,7 +89,7 @@ async def gemini_model_func(
     thinking_tokens = getattr(usage, "thoughts_token_count", 0) or 0
     cached_tokens = getattr(usage, "cached_content_token_count", 0) or 0
     logger.info(
-        f"[gemini] {lightrag_cfg.lightrag_model} tokens - input: {prompt_tokens:,} "
+        f"[gemini] [{config.project_label}] {config.lightrag_model} tokens - input: {prompt_tokens:,} "
         f"(cached: {cached_tokens:,}), thinking: {thinking_tokens:,}, "
         f"output: {completion_tokens:,}, total: {total_tokens:,}"
     )
@@ -112,17 +118,81 @@ def _is_anthropic_model(model_name: str) -> bool:
     return name.startswith("anthropic/") or name.startswith("claude")
 
 
+# Bare OpenAI model names: "gpt-..." or the reasoning series "o1", "o3-mini", "o4-mini", ...
+_BARE_OPENAI_MODEL_PATTERN = re.compile(r"^(gpt|o\d)")
+
+
+def _is_openai_model(model_name: str) -> bool:
+    """OpenAI models enforce the strict JSON schema rules of structured outputs
+    (``additionalProperties: false`` and every property required), unlike Gemini or Anthropic.
+    Matches the OpenRouter ``openai/`` prefix or a bare OpenAI model name."""
+    name = model_name.lower()
+    return name.startswith("openai/") or bool(_BARE_OPENAI_MODEL_PATTERN.match(name))
+
+
+def _build_reasoning_param(config: ProjectConfig) -> dict | None:
+    """Return the OpenRouter ``reasoning`` parameter for the configured effort.
+
+    Returns None when no effort is configured, so that the parameter is omitted and the
+    model uses its own default. This matters because the accepted values differ per model
+    (e.g. OpenAI GPT-5.1+ rejects "minimal").
+    """
+    reasoning_effort = (config.lightrag_reasoning_effort or "").strip()
+    if not reasoning_effort:
+        return None
+    return {"effort": reasoning_effort}
+
+
+def _build_json_schema_response_format(
+    schema_model: type[BaseModel], strict: bool, openai_strict_schema: bool
+) -> dict:
+    """Build an OpenAI style ``response_format`` of type ``json_schema`` for a Pydantic model.
+
+    ``strict`` sets the ``strict`` flag of the request. ``openai_strict_schema`` converts the
+    schema with the OpenAI SDK's own converter, which adds ``additionalProperties: false`` to
+    every object, makes every property required and removes defaults, as OpenAI's strict
+    structured outputs require. Without it the plain Pydantic schema is sent (accepted by
+    Gemini and Anthropic, also in strict mode).
+    """
+    schema_dict = (
+        to_strict_json_schema(schema_model)
+        if openai_strict_schema
+        else schema_model.model_json_schema()
+    )
+    json_schema = {
+        "name": schema_dict.get("title", schema_model.__name__),
+        "schema": schema_dict,
+    }
+    if strict:
+        json_schema["strict"] = True
+    return {"type": "json_schema", "json_schema": json_schema}
+
+
+def _log_openrouter_error(error: OpenRouterError, config: ProjectConfig) -> None:
+    """Log the full OpenRouter error response.
+
+    The SDK's error message is only the generic text (e.g. "Provider returned error"); the
+    upstream provider's actual message is in the response body (``error.metadata.raw``).
+    """
+    logger.error(
+        f"[{config.project_label}] OpenRouter call to {config.lightrag_model} failed with "
+        f"status {error.status_code}: {error.message}. Response body: {error.body}"
+    )
+
+
 async def structured_completion(
     client: AsyncTogether | AsyncOpenAI | OpenRouter,
     prompt,
     system_prompt=None,
     history_messages=[],
+    *,
+    config: ProjectConfig,
     **kwargs,
 ) -> Union[str, dict, AsyncIterator[str]]:
     messages = []
     is_openai = isinstance(client, AsyncOpenAI)
     is_openrouter = isinstance(client, OpenRouter)
-    model_name = lightrag_cfg.lightrag_model
+    model_name = config.lightrag_model
     needs_explicit_cache = is_openrouter and _is_anthropic_model(model_name)
 
     if system_prompt:
@@ -151,32 +221,22 @@ async def structured_completion(
 
     # Add provider parameter for OpenRouter if specified in config
     # OpenRouter expects provider as a dictionary matching ChatGenerationParamsProvider
-    if is_openrouter and cfg.openrouter_provider:
-        config_dict["provider"] = {"name": cfg.openrouter_provider}
+    if is_openrouter and config.openrouter_provider:
+        config_dict["provider"] = {"name": config.openrouter_provider}
     if is_openrouter:
-        config_dict["reasoning"] = {"effort": "minimal"}
+        reasoning = _build_reasoning_param(config)
+        if reasoning is not None:
+            config_dict["reasoning"] = reasoning
     if structured_output:
         if is_openai or is_openrouter:
             # OpenAI requires nested json_schema structure with name
-            if (
-                "structured_output_format" in kwargs
-                and kwargs["structured_output_format"] is not None
-            ):
-                schema_model = kwargs["structured_output_format"]
-                schema_dict = schema_model.model_json_schema()
-                # Extract name from schema title or use class name
-                schema_name = schema_dict.get("title", schema_model.__name__)
-            else:
-                # Default to ResponseSchema if no format specified
-                schema_dict = ResponseSchema.model_json_schema()
-                schema_name = schema_dict.get("title", ResponseSchema.__name__)
-
-            config_dict["response_format"] = {
-                "type": "json_schema",
-                "json_schema": {"name": schema_name, "schema": schema_dict},
-            }
-            if is_openrouter:
-                config_dict["response_format"]["json_schema"]["strict"] = True
+            schema_model = kwargs.get("structured_output_format") or ResponseSchema
+            config_dict["response_format"] = _build_json_schema_response_format(
+                schema_model,
+                strict=is_openrouter,
+                # OpenAI rejects a strict schema that does not follow its strict rules.
+                openai_strict_schema=is_openrouter and _is_openai_model(model_name),
+            )
         else:
             # Together AI uses simpler format
             config_dict["response_format"] = {"type": "json_schema"}
@@ -195,12 +255,18 @@ async def structured_completion(
     if stream:
         config_dict["stream"] = True
 
-    logger.info(f"Calling structured completion with config: {config_dict['model']}")
+    logger.info(
+        f"[{config.project_label}] Calling structured completion with config: {config_dict['model']}"
+    )
     logger.debug(
         f"Calling structured completion with system prompt: {config_dict['messages'][0]['content']}"
     )
     if is_openrouter:
-        response = await client.chat.send_async(**config_dict)
+        try:
+            response = await client.chat.send_async(**config_dict)
+        except OpenRouterError as error:
+            _log_openrouter_error(error, config)
+            raise
     else:
         response = await client.chat.completions.create(**config_dict)
 
@@ -211,7 +277,7 @@ async def structured_completion(
     prompt_details = getattr(usage, "prompt_tokens_details", None) or None
     completion_details = getattr(usage, "completion_tokens_details", None) or None
     logger.info(
-        f"[structured_completion] {model_name} tokens - "
+        f"[structured_completion] [{config.project_label}] {model_name} tokens - "
         f"input: {int(getattr(usage, 'prompt_tokens', 0) or 0):,} "
         f"(cached: {int(getattr(prompt_details, 'cached_tokens', 0) or 0):,}), "
         f"thinking: {int(getattr(completion_details, 'reasoning_tokens', 0) or 0):,}, "
@@ -246,38 +312,41 @@ async def _stream_tokens(response_stream, _client_ref=None) -> AsyncIterator[str
 
 
 async def togetherai_model_func(
-    prompt, system_prompt=None, history_messages=[], **kwargs
+    prompt, system_prompt=None, history_messages=[], *, config: ProjectConfig, **kwargs
 ) -> Union[str, dict, AsyncIterator[str]]:
-    client = AsyncTogether(api_key=cfg.togetherai_api_key)
+    client = AsyncTogether(api_key=config.togetherai_api_key)
     return await structured_completion(
-        client, prompt, system_prompt, history_messages, **kwargs
+        client, prompt, system_prompt, history_messages, config=config, **kwargs
     )
 
 
 async def openai_model_func(
-    prompt, system_prompt=None, history_messages=[], **kwargs
+    prompt, system_prompt=None, history_messages=[], *, config: ProjectConfig, **kwargs
 ) -> Union[str, dict, AsyncIterator[str]]:
-    client = AsyncOpenAI()
+    # An empty key means "not configured": let the SDK fall back to its own lookup.
+    client = AsyncOpenAI(api_key=config.openai_api_key or None)
     return await structured_completion(
-        client, prompt, system_prompt, history_messages, **kwargs
+        client, prompt, system_prompt, history_messages, config=config, **kwargs
     )
 
 
 async def openrouter_model_func(
-    prompt, system_prompt=None, history_messages=[], **kwargs
+    prompt, system_prompt=None, history_messages=[], *, config: ProjectConfig, **kwargs
 ) -> Union[str, dict, AsyncIterator[str]]:
     if kwargs.get("stream", False):
-        client = OpenRouter(api_key=cfg.openrouter_api_key)
+        client = OpenRouter(api_key=config.openrouter_api_key)
         return await structured_completion(
-            client, prompt, system_prompt, history_messages, **kwargs
+            client, prompt, system_prompt, history_messages, config=config, **kwargs
         )
-    with OpenRouter(api_key=cfg.openrouter_api_key) as client:
+    with OpenRouter(api_key=config.openrouter_api_key) as client:
         return await structured_completion(
-            client, prompt, system_prompt, history_messages, **kwargs
+            client, prompt, system_prompt, history_messages, config=config, **kwargs
         )
 
 
-def openai_model_func_factory(model: str) -> Callable[..., Awaitable[str]]:
+def openai_model_func_factory(
+    model: str, config: ProjectConfig
+) -> Callable[..., Awaitable[str]]:
     async def openai_model_func(
         prompt,
         system_prompt=None,
@@ -290,6 +359,7 @@ def openai_model_func_factory(model: str) -> Callable[..., Awaitable[str]]:
         keyword_extraction = kwargs.pop("keyword_extraction", None)
         if keyword_extraction:
             kwargs["response_format"] = GPTKeywordExtractionFormat
+        kwargs.setdefault("api_key", config.openai_api_key or None)
         return await openai_complete_if_cache(
             model,
             prompt,
@@ -301,25 +371,27 @@ def openai_model_func_factory(model: str) -> Callable[..., Awaitable[str]]:
     return openai_model_func
 
 
-def select_model_func() -> Callable[..., Awaitable[str]]:
-    match lightrag_cfg.lightrag_model_type:
+def select_model_func(config: ProjectConfig) -> Callable[..., Awaitable[str]]:
+    """Return the LLM function for the project, bound to the project's configuration.
+
+    Raises ValueError for a model type / model combination which is not supported.
+    """
+    match config.lightrag_model_type:
         case LightRAGModelType.GOOGLE:
-            return gemini_model_func
+            return partial(gemini_model_func, config=config)
         case LightRAGModelType.OPENAI:
-            match lightrag_cfg.lightrag_model:
-                case "gpt-4o-mini":
-                    return openai_model_func
-                case "gpt-4o":
-                    return openai_model_func
-                case model if model.startswith("gpt"):
-                    return openai_model_func
+            if config.lightrag_model.startswith("gpt"):
+                return partial(openai_model_func, config=config)
+            raise ValueError(
+                f"Unsupported OpenAI LightRAG model: {config.lightrag_model}"
+            )
         case LightRAGModelType.TOGETHERAI:
-            return togetherai_model_func
+            return partial(togetherai_model_func, config=config)
         case LightRAGModelType.OPENROUTER:
-            return openrouter_model_func
+            return partial(openrouter_model_func, config=config)
         case _:
             raise ValueError(
-                f"Invalid LightRAG model type: {lightrag_cfg.lightrag_model_type}"
+                f"Invalid LightRAG model type: {config.lightrag_model_type}"
             )
 
 
@@ -342,6 +414,7 @@ if __name__ == "__main__":
             history_messages=[],
             structured_output=True,
             structured_output_format=SearchResults,
+            config=ProjectConfig.from_env(),
         )
         print(response)
 

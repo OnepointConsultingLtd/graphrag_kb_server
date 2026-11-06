@@ -15,6 +15,9 @@ from graphrag_kb_server.service.file_find_service import (
     INPUT_FOLDER,
 )
 from graphrag_kb_server.service.linkedin.apify_service import apify_crawl_website
+from graphrag_kb_server.service.project_config_service import (
+    get_project_config_for_dir,
+)
 
 log = logging.getLogger(__name__)
 
@@ -84,10 +87,10 @@ async def unzip_file(upload_folder: Path, zip_file: Path):
                     zip_ref.extract(member, target_folder)
                 except Exception as e:
                     log.error(f"Failed to extract {member} from {zip_file.name}: {e}")
-    await convert_to_text(input_folder)
+    await convert_to_text(input_folder, upload_folder)
 
 
-async def convert_to_text(input_folder: Path):
+async def convert_to_text(input_folder: Path, project_dir: Path):
     """Convert all markdown files to text files."""
     for file in chain(
         input_folder.glob("**/*.pdf"),
@@ -103,12 +106,19 @@ async def convert_to_text(input_folder: Path):
         text = file.read_text(encoding="utf-8")
         file.with_suffix(".txt").write_text(text, encoding="utf-8")
     audio_extensions = ["mp3", "wav", "m4a", "ogg", "flac"]
-    for file in chain.from_iterable(
-        input_folder.glob(f"**/*.{ext}") for ext in audio_extensions
-    ):
+    audio_files = list(
+        chain.from_iterable(
+            input_folder.glob(f"**/*.{ext}") for ext in audio_extensions
+        )
+    )
+    if not audio_files:
+        return
+    # Only needed for the transcription, so resolved lazily.
+    config = await get_project_config_for_dir(project_dir)
+    for file in audio_files:
         try:
             await convert_audio(
-                file, language="en"
+                file, language="en", config=config
             )  # This is a strong assumption that the audio is in English
         except Exception as e:
             log.error(f"Failed to convert {file} to audio")

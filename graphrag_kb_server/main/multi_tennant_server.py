@@ -35,12 +35,18 @@ UNAUTHORIZED = 401
 TENNANT_CREATE_PATH = "/protected/tennant/create"
 TENNANT_DELETE_PATH = "/protected/tennant/delete_tennant"
 
+# Reading or changing the models and API keys of a project is reserved to administrators.
+PROJECT_SETTINGS_PATH = "/protected/project/settings"
+
 ADMIN_TOKEN_PATH = "/tennant/admin_token"
 ADMIN_CREATE_PATH = "/admin/create"
 ADMIN_DELETE_PATH = "/admin/delete"
 ADMIN_LIST_PATH = "/admin/list"
 
 TOKEN_DATA = "token_data"
+
+# HTTP methods that change data and therefore need the "write" permission.
+WRITE_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
 
 
 routes = web.RouteTableDef()
@@ -97,6 +103,14 @@ async def auth_middleware(request: web.Request, handler):
                     headers=CORS_HEADERS,
                 )
 
+        if request_path == PROJECT_SETTINGS_PATH and request.method != "OPTIONS":
+            if token_dict.get("email") not in await admin_cfg.get_administrators():
+                return web.json_response(
+                    {"error": "Only administrators can read or change project settings."},
+                    status=UNAUTHORIZED,
+                    headers=CORS_HEADERS,
+                )
+
         permissions = token_dict.get("permissions", ["read", "write"])
         allowed_post_paths = [
             "/protected/project/chat",
@@ -107,7 +121,7 @@ async def auth_middleware(request: web.Request, handler):
             "/protected/pdf/generate",
         ]
         if (
-            request.method in ["POST", "PATCH", "DELETE"]
+            request.method in WRITE_METHODS
             and "write" not in permissions
             and not any([request_path.startswith(path) for path in allowed_post_paths])
         ):

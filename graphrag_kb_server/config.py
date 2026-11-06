@@ -156,6 +156,9 @@ class LightRAGConfig:
     assert lightrag_model_type in [
         m.value for m in LightRAGModelType
     ], "Invalid LightRAG model type"
+    # Reasoning effort sent to OpenRouter (e.g. "minimal", "none", "low"). Empty omits the
+    # parameter so that the model uses its own default.
+    lightrag_reasoning_effort = os.getenv("LIGHTRAG_REASONING_EFFORT", "minimal")
 
 
 class CAGConfig:

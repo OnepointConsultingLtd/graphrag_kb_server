@@ -16,6 +16,9 @@ from graphrag_kb_server.service.trendiness_research import (
     TrendResult,
     assess_document_trendiness,
 )
+from graphrag_kb_server.service.project_config_service import (
+    ProjectConfig,
+)
 
 BASE_DIR = Path(__file__).parent.parent.parent.parent
 SAMPLE_JSONL_PATH = BASE_DIR / "data/results/sample1.jsonl"
@@ -87,7 +90,7 @@ async def run_trendiness_assessment() -> None:
 
         start = time.monotonic()
         try:
-            trend_result = await assess_document_trendiness(content)
+            trend_result = await assess_document_trendiness(content, ProjectConfig.from_env())
             elapsed = time.monotonic() - start
             entry = _build_result_entry(reference_id, content, trend_result, elapsed)
             print(

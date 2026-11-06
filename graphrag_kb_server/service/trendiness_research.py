@@ -11,12 +11,15 @@ from typing import Awaitable, Optional, Callable
 
 from openrouter import OpenRouter
 
-from graphrag_kb_server.config import cfg
 from graphrag_kb_server.logger import logger
 from graphrag_kb_server.model.document_trend_result import TrendResult, DocumentTrendResult
 from graphrag_kb_server.model.engines import Engine
 from graphrag_kb_server.service.db.common_operations import extract_elements_from_path, get_project_id_from_path
 from graphrag_kb_server.service.db.db_persistence_trend_result import get_document_trend_result_by_path, insert_document_trend_result
+from graphrag_kb_server.service.project_config_service import (
+    ProjectConfig,
+    get_project_config_for_dir,
+)
 from graphrag_kb_server.service.tennant import find_project_dir
 from graphrag_kb_server.utils.file_support import strip_drive
 from graphrag_kb_server.model.websocket_commands import Command
@@ -56,6 +59,7 @@ def _strip_code_fences(text: str) -> str:
 
 async def assess_document_trendiness(
     content: str,
+    config: ProjectConfig,
     model: Optional[str] = None,
     api_key: Optional[str] = None,
 ) -> TrendResult:
@@ -68,8 +72,9 @@ async def assess_document_trendiness(
 
     Args:
         content: Full text of the document (will be truncated to SNIPPET_MAX_CHARS).
-        model: OpenRouter model identifier. Falls back to OPENROUTER_MODEL env var.
-        api_key: OpenRouter API key. Falls back to OPENROUTER_API_KEY env var.
+        config: Configuration of the project the document belongs to.
+        model: OpenRouter model identifier. Falls back to the OpenRouter model of the config.
+        api_key: OpenRouter API key. Falls back to the OpenRouter key of the config.
 
     Returns:
         TrendResult with trend_class, confidence, reasoning, and recent_findings.
@@ -79,14 +84,14 @@ async def assess_document_trendiness(
         httpx.HTTPStatusError: If the OpenRouter API returns an error response.
         json.JSONDecodeError: If the model response cannot be parsed as JSON.
     """
-    effective_api_key = api_key or cfg.openrouter_api_key
+    effective_api_key = api_key or config.openrouter_api_key
     if not effective_api_key:
         raise ValueError("OPENROUTER_API_KEY is not set")
 
-    effective_model = model or cfg.openrouter_model
+    effective_model = model or config.openrouter_model
     snippet = content[:SNIPPET_MAX_CHARS]
 
-    client = OpenRouter(api_key=cfg.openrouter_api_key)
+    client = OpenRouter(api_key=effective_api_key)
     response = await client.chat.send_async(
         model=effective_model,
         messages=[
@@ -152,7 +157,8 @@ async def document_trendiness_processor_task(
             )
             return
         content = document_path.read_text(encoding="utf-8") if content is None else content
-        trend_result = await assess_document_trendiness(content)
+        config = await get_project_config_for_dir(project_dir)
+        trend_result = await assess_document_trendiness(content, config)
         await insert_document_trend_result(
             simple_project.schema_name,
             DocumentTrendResult.from_trend_result(

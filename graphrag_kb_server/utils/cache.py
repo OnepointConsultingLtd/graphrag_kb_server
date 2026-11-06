@@ -67,6 +67,20 @@ class GenericSimpleCache(Generic[T, U]):
         """Remove a single entry. Does nothing if the key is not cached."""
         self.cache.pop(key, None)
 
+    def invalidate_prefix(self, prefix: str) -> int:
+        """Remove every entry whose (string) key starts with the prefix. Returns how many were removed.
+
+        Keys that are not strings are never matched.
+        """
+        matching_keys = [
+            key
+            for key in self.cache
+            if isinstance(key, str) and key.startswith(prefix)
+        ]
+        for key in matching_keys:
+            del self.cache[key]
+        return len(matching_keys)
+
     def clear(self) -> None:
         """Remove all entries."""
         self.cache.clear()

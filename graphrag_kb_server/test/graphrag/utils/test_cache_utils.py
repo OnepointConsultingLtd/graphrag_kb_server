@@ -36,3 +36,30 @@ def test_generic_simple_cache_clear_removes_everything():
     cache.clear()
     assert cache.get("a") is None
     assert cache.get("b") is None
+
+
+def test_generic_simple_cache_invalidate_prefix_removes_only_matching_keys():
+    cache: GenericSimpleCache[str, str] = GenericSimpleCache(timeout=60)
+    cache.set("tenant/lightrag/p1-conv1", "1")
+    cache.set("tenant/lightrag/p1-conv2", "2")
+    cache.set("tenant/lightrag/p2-conv1", "3")
+    removed = cache.invalidate_prefix("tenant/lightrag/p1-")
+    assert removed == 2
+    assert cache.get("tenant/lightrag/p1-conv1") is None
+    assert cache.get("tenant/lightrag/p1-conv2") is None
+    assert cache.get("tenant/lightrag/p2-conv1") == "3"
+
+
+def test_generic_simple_cache_invalidate_prefix_without_match_removes_nothing():
+    cache: GenericSimpleCache[str, str] = GenericSimpleCache(timeout=60)
+    cache.set("a", "1")
+    assert cache.invalidate_prefix("zzz") == 0
+    assert cache.get("a") == "1"
+
+
+def test_generic_simple_cache_invalidate_prefix_ignores_non_string_keys():
+    cache: GenericSimpleCache[str, tuple] = GenericSimpleCache(timeout=60)
+    cache.set(("a", "b"), "1")
+    cache.set("abc", "2")
+    assert cache.invalidate_prefix("a") == 1
+    assert cache.get(("a", "b")) == "1"

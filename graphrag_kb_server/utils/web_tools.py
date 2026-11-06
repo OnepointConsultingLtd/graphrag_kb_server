@@ -53,4 +53,6 @@ async def main():
     with open("/tmp/output.md", "w", encoding="utf-8") as f:
         f.write(html)
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -3,6 +3,7 @@ from graphrag_kb_server.model.topics import Topic, Topics
 
 
 def test_generate_questions():
+    from graphrag_kb_server.service.project_config_service import ProjectConfig
     from graphrag_kb_server.service.question_generation_service import (
         generate_questions,
     )
@@ -129,7 +130,7 @@ Be Informed is an integrated business platform built from the ground up as one i
             ),
         ]
     )
-    topic_questions = asyncio.run(generate_questions(topics, ""))
+    topic_questions = asyncio.run(generate_questions(topics, "", ProjectConfig.from_env()))
     assert len(topic_questions.topic_questions) == 2
     for topic_question in topic_questions.topic_questions:
         print(f"Topic: {topic_question.name}")

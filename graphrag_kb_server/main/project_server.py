@@ -28,6 +28,9 @@ from graphrag_kb_server.config import cfg
 from graphrag_kb_server.main.cors import CORS_HEADERS
 
 from graphrag_kb_server.service.zip_service import zip_input
+from graphrag_kb_server.service.project_config_service import (
+    get_project_config_for_dir,
+)
 from graphrag_kb_server.service.question_generation_service import (
     generate_questions_from_topics,
 )
@@ -1163,13 +1166,14 @@ async def project_related_topics(request: web.Request) -> web.Response:
                 # No implementation for CAG yet
                 return None
         if similarity_topics_result is not None:
+            config = await get_project_config_for_dir(similarity_topics.project_dir)
             if similarity_topics.deduplicate_topics:
                 similarity_topics_result = await deduplicate_topics(
-                    similarity_topics_result
+                    similarity_topics_result, config
                 )
             if similarity_topics.topics_prompt:
                 similarity_topics_result = await post_process_topics(
-                    similarity_topics_result, similarity_topics.topics_prompt
+                    similarity_topics_result, similarity_topics.topics_prompt, config
                 )
         return similarity_topics_result
 

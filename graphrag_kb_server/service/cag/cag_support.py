@@ -5,9 +5,13 @@ from google import genai
 from google.genai import types
 
 
-from graphrag_kb_server.config import cfg, cag_cfg
 from graphrag_kb_server.utils.cache import GenericSimpleCache, PersistentSimpleCache
 from graphrag_kb_server.logger import logger
+from graphrag_kb_server.service.project_config_service import (
+    ProjectConfig,
+    get_project_config_for_dir,
+    register_runtime_cache_invalidator,
+)
 from graphrag_kb_server.model.topics import Topics
 
 CAG_TTL = 60 * 60 * 2  # 2 hours
@@ -18,6 +22,22 @@ TOPICS_CACHE = PersistentSimpleCache[Topics](key="topics")
 
 INITIAL_CONVERSATION_ID = "1"
 
+
+def _chat_cache_key(project_dir: Path, conversation_id: str) -> str:
+    return f"{project_dir.as_posix()}-{conversation_id}"
+
+
+def invalidate_chat_cache(project_dir: Path) -> None:
+    """Drop the cached chats of a project (they hold a client built with the project settings).
+
+    Prefix based, so projects whose name starts with "<name>-" lose their cached chats too;
+    they are simply recreated on the next message.
+    """
+    CHAT_CACHE.invalidate_prefix(f"{project_dir.as_posix()}-")
+
+
+register_runtime_cache_invalidator(invalidate_chat_cache)
+
 SYSTEM_INSTRUCTION = """
 You are a highly knowledgeable and detail-oriented AI assistant. 
 Your task is to carefully read and understand the document provided. 
@@ -26,16 +46,16 @@ Provide concise, clear, and contextually relevant responses while maintaining pr
 """
 
 
-def _create_client() -> genai.Client:
-    client = genai.Client(api_key=cfg.gemini_api_key)
+def _create_client(config: ProjectConfig) -> genai.Client:
+    client = genai.Client(api_key=config.gemini_api_key)
     return client
 
 
 async def _create_chat(
-    client: genai.Client, cache: types.CachedContent
+    client: genai.Client, cache: types.CachedContent, config: ProjectConfig
 ) -> genai.chats.Chat:
     chat = client.aio.chats.create(
-        model=cag_cfg.cag_model,
+        model=config.cag_model,
         config=types.GenerateContentConfig(cached_content=cache.name),
     )
     return chat
@@ -54,11 +74,12 @@ async def acreate_cag(
     conversation_id: str,
     system_instruction: str = SYSTEM_INSTRUCTION,
 ) -> genai.chats.Chat:
-    cache_key = f"{project_dir.as_posix()}-{conversation_id}"
+    cache_key = _chat_cache_key(project_dir, conversation_id)
     chat = CHAT_CACHE.get(cache_key)
     if chat is not None:
         return chat
-    client = _create_client()
+    config = await get_project_config_for_dir(project_dir)
+    client = _create_client(config)
     contents = _create_content(project_dir)
     cache_name = project_dir.stem
     try:
@@ -68,7 +89,7 @@ async def acreate_cag(
     except Exception as e:
         logger.warning(f"Error deleting cache {cache_name}: {e}")
         cache = await client.aio.caches.create(
-            model=cag_cfg.cag_model,
+            model=config.cag_model,
             config=types.CreateCachedContentConfig(
                 ttl=f"{CAG_TTL}s",
                 display_name=cache_name,
@@ -78,7 +99,7 @@ async def acreate_cag(
         )
     logger.info(f"Created cache {cache.display_name}")
     logger.info(f"Cache contents: {cache.usage_metadata.total_token_count}")
-    chat = await _create_chat(client, cache)
+    chat = await _create_chat(client, cache, config)
     CHAT_CACHE.set(cache_key, chat)
     if conversation_id == INITIAL_CONVERSATION_ID:
         await extract_main_topics(project_dir)
@@ -88,7 +109,8 @@ async def acreate_cag(
 async def extract_main_topics(project_dir: Path) -> Topics:
     if TOPICS_CACHE.get(project_dir) is not None:
         return TOPICS_CACHE.get(project_dir)
-    client = _create_client()
+    config = await get_project_config_for_dir(project_dir)
+    client = _create_client(config)
     system_instruction = """
     You are a highly knowledgeable and detail-oriented AI assistant. 
     Your task is to carefully read and understand the document provided and to extract the main topics of the document.
@@ -101,7 +123,7 @@ async def extract_main_topics(project_dir: Path) -> Topics:
     """
     contents = _create_content(project_dir)
     response = await client.aio.models.generate_content(
-        model=cag_cfg.cag_model,
+        model=config.cag_model,
         contents=[contents],
         config=types.GenerateContentConfig(
             response_schema=Topics,

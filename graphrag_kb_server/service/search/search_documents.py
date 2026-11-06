@@ -2,10 +2,6 @@ from pathlib import Path
 import asyncio
 import json
 
-from graphrag_kb_server.main.query_support import (
-    add_links_and_images_to_response,
-    _resolve_document_path,
-)
 from graphrag_kb_server.model.search.relationships import RelationshipsJSON
 from graphrag_kb_server.model.search.search import (
     DocumentSearchQuery,
@@ -106,6 +102,13 @@ async def retrieve_relevant_documents(
     Returns:
         A list of summarization responses with document paths
     """
+    # Imported here and not at module level: the main package imports this module, so importing
+    # main.query_support at module level breaks when this module is the first one imported.
+    from graphrag_kb_server.main.query_support import (
+        add_links_and_images_to_response,
+        _resolve_document_path,
+    )
+
     chat_response = await search_documents(project_dir, query, callback)
     documents = chat_response.response["documents"]
 

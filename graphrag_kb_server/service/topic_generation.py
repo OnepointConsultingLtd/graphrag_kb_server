@@ -8,6 +8,9 @@ from graphrag_kb_server.service.lightrag.lightrag_centrality import (
     get_sorted_centrality_scores_as_pd,
 )
 from graphrag_kb_server.service.cag.cag_support import extract_main_topics
+from graphrag_kb_server.service.project_config_service import (
+    get_project_config_for_dir,
+)
 from graphrag_kb_server.service.topics_post_processing import deduplicate_topics
 from graphrag_kb_server.service.db.db_persistence_topics import (
     save_topics_request,
@@ -27,7 +30,8 @@ async def generate_topics(topics_request: TopicsRequest) -> Topics:
     await save_topics_request(topics_request, result)
     result = await find_topics_by_project_name(topics_request)
     if topics_request.deduplicate_topics and result is not None:
-        result = await deduplicate_topics(result)
+        config = await get_project_config_for_dir(topics_request.project_dir)
+        result = await deduplicate_topics(result, config)
     return result
 
 

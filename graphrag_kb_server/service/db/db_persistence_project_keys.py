@@ -34,6 +34,25 @@ CREATE TABLE IF NOT EXISTS {schema_name}.{TB_PROJECT_KEYS} (
 );
 """
     )
+    await _add_missing_setting_columns(schema_name)
+
+
+async def _add_missing_setting_columns(schema_name: str):
+    """Add the setting columns that are missing from a table created by an older version.
+
+    CREATE TABLE IF NOT EXISTS does not add columns to an existing table, so every setting
+    column is added idempotently here. This keeps tenant schemas up to date when a new
+    setting is introduced.
+    """
+    add_columns_ddl = ",\n".join(
+        f"    ADD COLUMN IF NOT EXISTS {column} TEXT" for column in _SETTING_COLUMNS
+    )
+    await execute_query(
+        f"""
+ALTER TABLE {schema_name}.{TB_PROJECT_KEYS}
+{add_columns_ddl};
+"""
+    )
 
 
 async def drop_project_keys_table(schema_name: str):
