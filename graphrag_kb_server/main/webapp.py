@@ -25,6 +25,9 @@ from graphrag_kb_server.main.bootstrap import bootstrap_database
 from graphrag_kb_server.service.parser.clustre_vimeo_scraper import (
     run_clustre_vimeo_sync_loop,
 )
+from graphrag_kb_server.service.parser.clustre_article_scraper import (
+    run_clustre_article_sync_loop,
+)
 
 init_logger()
 
@@ -101,6 +104,7 @@ async def get_chat_ui(_: web.Request) -> web.Response:
 
 
 CLUSTRE_VIMEO_SYNC_TASK = web.AppKey("clustre_vimeo_sync_task", asyncio.Task)
+CLUSTRE_ARTICLE_SYNC_TASK = web.AppKey("clustre_article_sync_task", asyncio.Task)
 
 
 async def on_startup(app: web.Application):
@@ -113,14 +117,28 @@ async def on_startup(app: web.Application):
         app[CLUSTRE_VIMEO_SYNC_TASK] = asyncio.create_task(
             run_clustre_vimeo_sync_loop()
         )
+    if cfg.clustre_article_sync_enabled:
+        logger.info(
+            f"Starting Clustre article sync every {cfg.clustre_article_sync_interval_hours} hours"
+        )
+        app[CLUSTRE_ARTICLE_SYNC_TASK] = asyncio.create_task(
+            run_clustre_article_sync_loop()
+        )
+
+
+async def _cancel_task(app: web.Application, key: web.AppKey):
+    """Cancel the background task stored under key, if any, and wait until it stops."""
+    task = app.get(key)
+    if task is None:
+        return
+    task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await task
 
 
 async def on_cleanup(app: web.Application):
-    sync_task = app.get(CLUSTRE_VIMEO_SYNC_TASK)
-    if sync_task is not None:
-        sync_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await sync_task
+    await _cancel_task(app, CLUSTRE_VIMEO_SYNC_TASK)
+    await _cancel_task(app, CLUSTRE_ARTICLE_SYNC_TASK)
     await indexing_job_registry.cancel_all()
     await close_connection_pool()
 

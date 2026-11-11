@@ -107,6 +107,7 @@ COPY README.md .
 COPY config/security.yaml config/security.yaml
 COPY docker/run.sh docker/run.sh
 COPY docker/scrape_clustre_vimeo.sh docker/scrape_clustre_vimeo.sh
+COPY docker/scrape_clustre_articles.sh docker/scrape_clustre_articles.sh
 COPY docker/weekly_usage_report.sh docker/weekly_usage_report.sh
 COPY docker/daily_usage_report.sh docker/daily_usage_report.sh
 COPY templates/ ./templates/
@@ -115,6 +116,7 @@ COPY templates/ ./templates/
 RUN dos2unix run.sh && chmod +x run.sh && \
     dos2unix docker/run.sh && chmod +x docker/run.sh && \
     dos2unix docker/scrape_clustre_vimeo.sh && chmod +x docker/scrape_clustre_vimeo.sh && \
+    dos2unix docker/scrape_clustre_articles.sh && chmod +x docker/scrape_clustre_articles.sh && \
     dos2unix docker/weekly_usage_report.sh && chmod +x docker/weekly_usage_report.sh && \
     dos2unix docker/daily_usage_report.sh && chmod +x docker/daily_usage_report.sh && \
     dos2unix /frpc/run_frpc.sh && chmod +x /frpc/run_frpc.sh

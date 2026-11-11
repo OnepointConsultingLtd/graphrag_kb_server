@@ -94,6 +94,12 @@ class Config:
     clustre_vimeo_sync_interval_hours = float(
         os.getenv("CLUSTRE_VIMEO_SYNC_INTERVAL_HOURS", "4")
     )
+    clustre_article_sync_enabled = (
+        os.getenv("CLUSTRE_ARTICLE_SYNC_ENABLED", "false") == "true"
+    )
+    clustre_article_sync_interval_hours = float(
+        os.getenv("CLUSTRE_ARTICLE_SYNC_INTERVAL_HOURS", "24")
+    )
 
 
 class WebsocketConfig:
